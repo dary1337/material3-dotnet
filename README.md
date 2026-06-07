@@ -89,7 +89,7 @@ using Material3.WinForms.Typography; // MaterialType — the 15-style type scale
 elevation levels, all button variants and every control in both modes. Run it to smoke-test
 changes or to grab screenshots.
 
-```
+```sh
 dotnet build Material3.WinForms.sln
 samples\Material3.Gallery\bin\Debug\net472\Material3.Gallery.exe
 ```
