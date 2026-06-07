@@ -1,0 +1,173 @@
+language: en-US
+early_access: false
+enable_free_tier: true
+
+tone_instructions: >
+  Ruthless principal engineer reviewing a PUBLIC, dependency-free WinForms library (Material3.WinForms),
+  multi-targeting net472 and net8.0-windows. Terse, technical, no praise, no nits. Quote file:line, name the
+  failure mode, demand the specific fix. Top priorities: public-API stability and semver (any change to a
+  public signature is a breaking change — flag it and demand a major bump + note), the zero-external-dependency
+  invariant, GDI+ resource hygiene in owner-drawn paint, DPI-scaling correctness, theme correctness (colors only
+  from MaterialColors/ThemeManager), Win32 interop safety, and test coverage for geometry/math/parsing. Never
+  suggest adding descriptive or restating comments — this codebase keeps comments to non-obvious WHY only.
+
+reviews:
+  profile: assertive
+  request_changes_workflow: true
+  high_level_summary: true
+  review_status: true
+  poem: false
+  collapse_walkthrough: false
+  sequence_diagrams: false
+  changed_files_summary: true
+  abort_on_close: true
+
+  # Public API, but member-level XML docs are intentionally partial (CS1591 suppressed) and we document only
+  # non-obvious public surface. A coverage bar would force the exact noise comments our guidance forbids.
+  pre_merge_checks:
+    docstrings:
+      mode: off
+
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    drafts: true
+    base_branches:
+      - main
+      - release/.*
+    ignore_title_keywords:
+      - WIP
+      - "[skip review]"
+
+  path_filters:
+    - "!**/bin/**"
+    - "!**/obj/**"
+    - "!**/artifacts/**"
+    - "!**/*.Designer.cs"
+    - "!**/*.designer.cs"
+    - "!**/*.resx"
+    - "!**/Resources/icons/**"
+
+  path_instructions:
+    - path: "src/Material3.WinForms/**/*.cs"
+      instructions: >
+        Public, dependency-free library; multi-target net472 + net8.0-windows; nullable enabled. Enforce:
+        NO new external NuGet dependency (dependency-free is a selling point — flag any PackageReference);
+        no API or language construct unavailable on net472 (the lower TFM is the floor); any change to a PUBLIC
+        signature (rename/remove/retype/param change) is a breaking change — flag it, require it be additive or
+        call out the major-version bump. Dispose every IDisposable created locally (Pen/Brush/GraphicsPath/Font/
+        StringFormat/Region/Bitmap/Graphics) in the same scope, prefer using-declarations. StringComparison.Ordinal
+        for keys/identifiers; InvariantCulture for numeric/SVG parsing; CurrentCulture only for user-facing text.
+        No hardcoded color hex — read from MaterialColors/ThemeManager; no magic geometry numbers — use the Tokens
+        (Shape/Spacing/ComponentSizes/StateLayers/Motion/Elevation). Comments: non-obvious WHY only; never request
+        added/restating comments or name-echo XML docs.
+
+    - path: "src/Material3.WinForms/Controls/**/*.cs"
+      instructions: >
+        Owner-drawn controls. GDI+ hygiene is mandatory: Pen/Brush/GraphicsPath/Font/StringFormat/Region/Bitmap
+        created in OnPaint (or paint helpers) are disposed in the same scope; Bitmaps returned by
+        MaterialIconRenderer.Get are SHARED cache entries — callers must NOT dispose them. SetStyle in the ctor must
+        match the paint strategy (UserPaint + SupportsTransparentBackColor ⇒ OnPaint paints the full ClientRectangle
+        including background). DPI: scale FIXED sub-element sizes via Dpi.Scale(this, …); do NOT scale values derived
+        from Width/Height/ClientRectangle (already physical) nor sizes assigned in the ctor (AutoScale owns bounds for
+        designer-placed controls) — EXCEPT a control with an intrinsic fixed height/size MUST self-size from DeviceDpi
+        in OnHandleCreated + OnDpiChangedAfterParent, because runtime-added controls never get AutoScale; paint geometry
+        and hit-testing must use the SAME scaled math (a click must hit what is drawn); Dpi.Scale is identity at 96 DPI,
+        so no change is allowed to alter 100%-DPI rendering. Theme: subscribe via ThemeHook.Attach in the ctor and read
+        colors live from MaterialColors at paint. Designer: a public parameterless ctor is required; runtime/computed/
+        child-backed public properties get [Browsable(false)] + [DesignerSerializationVisibility(Hidden)]; settable
+        design-time properties get [DefaultValue]; guard timers/handle work behind DesignMode so the designer can't
+        crash. Dispose timers and detach event subscriptions whose target outlives the control; never touch the control
+        (Invalidate, layout) after a handler that disposes/removes it.
+
+    - path: "src/Material3.WinForms/Theming/**/*.cs"
+      instructions: >
+        Color science (CAM16/HCT/sRGB/tonal-palette port of material-color-utilities). Any change to a constant,
+        matrix coefficient, sign, clamp, or hue-wrap must preserve numeric fidelity vs the reference and be covered
+        by a test — flag changes that touch the math without a corresponding test. Guard NaN propagation, division by
+        zero, gamut clamping, ARGB byte order, and hue mod-360. ThemeManager holds mutable static state: flag
+        non-atomic reads of theme+mode, and any ThemeChanged subscribe without a matching unsubscribe.
+
+    - path: "src/Material3.WinForms/Drawing/**/*.cs"
+      instructions: >
+        MaterialIconRenderer/SvgGlyph. Cache invariants: returned Bitmaps are shared (no caller dispose); the cache key
+        includes EVERY parameter that affects the render (key, size, color); lock(Gate) wraps every cache mutation;
+        Register must invalidate the affected cached parse/bitmaps. SvgGlyph parses with InvariantCulture, and a missing
+        or malformed path must degrade (log + null/blank) rather than throw to the paint path. RasterizeGlyph must guard
+        a zero-area viewBox.
+
+    - path: "src/Material3.WinForms/Forms/**/*.cs"
+      instructions: >
+        BorderlessForm Win32: WM_NCHITTEST/WM_NCCALCSIZE handling and HTTRANSPARENT cascade must stay intact; caption
+        geometry must scale with DPI. MaterialDialog must set DialogResult deterministically (a Close without a result
+        is suspect). CalendarMath/TimeMath: boundary correctness (leap years, AM/PM, hour 0/12, month/year edges,
+        year-1) — logic changes require test coverage. MaterialMessageBox stays generic (no app-specific text/links).
+
+    - path: "src/Material3.WinForms/MaterialCursors.cs"
+      instructions: >
+        LoadCursor(NULL, IDC_*) returns SHARED OS cursor handles. Cursors must be static (never disposed). Cursor(IntPtr)
+        does not own the handle, so do not add DestroyCursor. Do not re-add legacy Cursors.* aliases — the point is the
+        user's current scheme via LoadCursor.
+
+    - path: "tests/**/*.cs"
+      instructions: >
+        Changes to geometry, color math, parsing, or calendar/time logic must add or extend a test. Reject weakened
+        assertions or tests narrowed just to pass. Prefer data-driven (Theory) coverage over one-off cases.
+
+    - path: "samples/Material3.Gallery/**/*.cs"
+      instructions: >
+        Demo / smoke-test app, not shipped — lower rigor than the library, but still flag real bugs, GDI+/event leaks,
+        and DPI layout regressions. The gallery must exercise every control in both light and dark; flag a new public
+        control that has no gallery page. App-specific layout helpers (PageBuilder/GalleryForm) may scale via Dpi.Scale.
+
+    - path: "**/*.csproj"
+      instructions: >
+        Demand: no new external dependency (dependency-free is intentional — the only allowed deps are the framework
+        references); PackageReference versions pinned (no floating "*"); both target frameworks preserved
+        (net472;net8.0-windows); <Version> bumps live with the change that warrants them and follow semver; package
+        metadata (PackageId, license, RepositoryUrl, PackageReadmeFile, tags) stays intact; the embedded-icon glob and
+        InternalsVisibleTo stay explicit.
+
+    - path: ".github/workflows/**/*.yml"
+      instructions: >
+        Demand: actions pinned by SHA or major version, never @latest; secrets referenced via secrets.* only; no
+        pull_request_target with checkout of PR head; permissions scoped to the minimum; the build runs both TFMs,
+        the tests, and a format/analyzer gate; NuGet push is gated on a tag and guards against republishing an
+        existing version.
+
+  labeling_instructions:
+    - label: "breaking-change"
+      instructions: "Apply when a public type/member signature is renamed, removed, retyped, or has its parameters changed."
+    - label: "new-dependency"
+      instructions: "Apply when a PackageReference is added to the library project or its transitive surface grows."
+    - label: "dpi"
+      instructions: "Apply when Dpi.Scale, OnHandleCreated/OnDpiChangedAfterParent sizing, or owner-drawn geometry changes."
+    - label: "gdi-leak"
+      instructions: "Apply when OnPaint or paint helpers create Pen/Brush/GraphicsPath/Font/Region/Bitmap without disposal."
+    - label: "theming"
+      instructions: "Apply when ColorScheme/MaterialColors/ThemeManager or the CAM16/HCT pipeline changes."
+    - label: "needs-tests"
+      instructions: "Apply when geometry/color/parsing/calendar logic changes without matching test coverage."
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  opt_out: false
+  learnings:
+    scope: auto
+  issues:
+    scope: auto
+  pull_requests:
+    scope: auto
+
+code_generation:
+  docstrings:
+    language: en-US
+    path_instructions:
+      - path: "src/**/*.cs"
+        instructions: >
+          XML doc comments only on PUBLIC API (public type/method/property) whose behavior is non-obvious — this is a
+          public library, so a concise one-line summary that aids IntelliSense is welcome, but never echo the symbol
+          name, never narrate the implementation, and never document private members or overrides the base already
+          documents. Document the why (constraints, invariants, units, gotchas), not the what.
