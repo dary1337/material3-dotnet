@@ -1,0 +1,30 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Derive version from tag
+        shell: pwsh
+        run: echo "VERSION=$($env:GITHUB_REF_NAME -replace '^v','')" >> $env:GITHUB_ENV
+      - name: Restore
+        run: dotnet restore Material3.WinForms.sln
+      - name: Build
+        run: dotnet build Material3.WinForms.sln -c Release --no-restore -p:Version=${{ env.VERSION }}
+      - name: Test
+        run: dotnet test Material3.WinForms.sln -c Release --no-build
+      - name: Pack
+        run: dotnet pack src/Material3.WinForms/Material3.WinForms.csproj -c Release --no-build -o artifacts -p:Version=${{ env.VERSION }}
+      - name: Push to NuGet
+        run: dotnet nuget push "artifacts/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
