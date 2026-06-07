@@ -98,7 +98,9 @@ namespace Material3.WinForms.Controls {
                     width += g.MeasureString(_actionText, MaterialType.LabelLarge, int.MaxValue, StringFormat.GenericTypographic).Width
                         + padX * 2;
                 }
-                Width = Math.Min((int)Math.Ceiling(width), Math.Max(Dpi.Scale(this, 200), host.ClientSize.Width - Dpi.Scale(this, 48)));
+                int available = host.ClientSize.Width - Dpi.Scale(this, 48);
+                int minWidth = Math.Min(Dpi.Scale(this, 200), available);
+                Width = Math.Min((int)Math.Ceiling(width), Math.Max(minWidth, available));
                 }
             }
             PositionIn(host, 0f);
