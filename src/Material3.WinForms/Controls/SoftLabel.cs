@@ -67,7 +67,7 @@ namespace Material3.WinForms.Controls {
             };
             if (AutoEllipsis) {
                 format.FormatFlags |= StringFormatFlags.NoWrap;
-                format.Trimming = StringTrimming.EllipsisPath;
+                format.Trimming = StringTrimming.EllipsisCharacter;
             }
             else {
                 format.Trimming = StringTrimming.None;
