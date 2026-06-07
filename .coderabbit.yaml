@@ -2,14 +2,7 @@ language: en-US
 early_access: false
 enable_free_tier: true
 
-tone_instructions: >
-  Ruthless principal engineer reviewing a PUBLIC, dependency-free WinForms library (Material3.WinForms),
-  multi-targeting net472 and net8.0-windows. Terse, technical, no praise, no nits. Quote file:line, name the
-  failure mode, demand the specific fix. Top priorities: public-API stability and semver (any change to a
-  public signature is a breaking change — flag it and demand a major bump + note), the zero-external-dependency
-  invariant, GDI+ resource hygiene in owner-drawn paint, DPI-scaling correctness, theme correctness (colors only
-  from MaterialColors/ThemeManager), Win32 interop safety, and test coverage for geometry/math/parsing. Never
-  suggest adding descriptive or restating comments — this codebase keeps comments to non-obvious WHY only.
+tone_instructions: "Ruthless principal reviewing a public, dependency-free WinForms library (net472+net8). Terse, no nits. Prioritize public API/semver, GDI+ disposal, DPI correctness, theming, Win32 safety, tests. Never suggest descriptive comments."
 
 reviews:
   profile: assertive
