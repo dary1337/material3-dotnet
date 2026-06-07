@@ -71,4 +71,4 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git tag ${{ steps.check.outputs.tag }}
           git push origin ${{ steps.check.outputs.tag }}
-          gh release create ${{ steps.check.outputs.tag }} --title ${{ steps.check.outputs.tag }} --generate-notes
+          gh release create ${{ steps.check.outputs.tag }} --title ${{ steps.check.outputs.tag }} --generate-notes samples/Material3.Gallery/bin/Release/net472/Material3.Gallery.exe
