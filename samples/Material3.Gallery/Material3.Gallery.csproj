@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net472</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <LangVersion>10.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Material3.Gallery</RootNamespace>
+    <AssemblyName>Material3.Gallery</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Material3.WinForms\Material3.WinForms.csproj" />
+  </ItemGroup>
+
+  <!-- Single-file distributable: Costura.Fody embeds Material3.WinForms into the .exe, like
+       YSM_Installer. .NET Framework 4.7.2 ships with Windows 10 1803+, so the result runs
+       anywhere with no install and no loose DLLs. -->
+  <ItemGroup>
+    <PackageReference Include="Costura.Fody" Version="6.0.0" PrivateAssets="all" />
+    <PackageReference Include="Fody" Version="6.9.2" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>
