@@ -61,7 +61,6 @@ namespace Material3.WinForms.Controls {
                     SetOutline(MaterialColors.OutlineVariant);
                     break;
             }
-            Padding = Spacing.Card;
             Invalidate();
         }
     }
