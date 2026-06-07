@@ -1,0 +1,24 @@
+## .NET / Visual Studio
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.cache
+
+## Build artifacts
+artifacts/
+*.nupkg
+*.snupkg
+
+## Fody (FodyWeavers.xml is committed; the .xsd is auto-generated)
+FodyWeavers.xsd
+
+## Test results
+TestResults/
+*.trx
+
+## OS noise
+Thumbs.db
+desktop.ini
+.DS_Store

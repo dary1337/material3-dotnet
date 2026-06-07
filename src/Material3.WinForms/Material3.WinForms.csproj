@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net472;net8.0-windows</TargetFrameworks>
+    <UseWindowsForms>true</UseWindowsForms>
+    <LangVersion>10.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Material3.WinForms</RootNamespace>
+    <AssemblyName>Material3.WinForms</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- CS8765/8767: net472 reference assemblies carry no nullability annotations, so every
+         Control/Form override would warn. CS1591: member-level XML docs are still being
+         written; class-level docs exist everywhere — re-enable before 1.0. -->
+    <NoWarn>$(NoWarn);CS8765;CS8767;CS1591</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Package">
+    <PackageId>Material3.WinForms</PackageId>
+    <Version>0.3.0</Version>
+    <Authors>dary1337</Authors>
+    <Description>Material 3 (Material You) controls and design tokens for Windows Forms: dynamic color from a seed (HCT tonal palettes), light/dark themes with runtime switching, full type scale, elevation, state layers and motion tokens.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/dary1337/material3-winforms</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/dary1337/material3-winforms</RepositoryUrl>
+    <PackageTags>material3;material-you;material-design;winforms;theme;dark-mode;ui;controls</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <!-- Internal calendar/grid math is unit tested without exposing it as public API. -->
+    <InternalsVisibleTo Include="Material3.WinForms.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Material Symbols shipped as embedded SVGs; MaterialIconRenderer locates them by
+         the ".icons.{key}.svg" resource-name suffix. -->
+    <EmbeddedResource Include="Resources\icons\*.svg" />
+  </ItemGroup>
+
+</Project>
