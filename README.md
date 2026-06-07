@@ -1,5 +1,8 @@
 # Material3.WinForms
 
+[![NuGet](https://img.shields.io/nuget/v/Material3.WinForms?logo=nuget)](https://www.nuget.org/packages/Material3.WinForms)
+[![Download the gallery demo](https://img.shields.io/badge/Download-Gallery%20demo-2962FF?logo=windows&logoColor=white)](https://github.com/dary1337/material3-winforms/releases/latest/download/Material3.Gallery.exe)
+
 **Material 3 (Material You) for Windows Forms** — design tokens and owner-drawn controls with
 dynamic color from a seed, light/dark themes with runtime switching, the full M3 type scale,
 elevation, state layers and motion tokens.
@@ -100,15 +103,15 @@ The controls scale their owner-drawn geometry to the monitor DPI (via `Control.D
 stay crisp at 125/150/200%. DPI awareness is a **process-level** setting that the host application
 must opt into — a referenced DLL cannot set it. In your app:
 
-- declare awareness in your `app.manifest` (`<dpiAware>true</dpiAware>`), **and on .NET Framework
-  also** add an `app.config` `<System.Windows.Forms.ApplicationConfigurationSection>` with
-  `<add key="DpiAwareness" value="System" />` — the manifest alone makes the process aware but does
-  *not* enable WinForms' `Control.DeviceDpi`, so without this section the controls can't scale
-  (on .NET 8 use `Application.SetHighDpiMode(...)` instead), and
+- declare awareness in your `app.manifest`: `<dpiAware>true</dpiAware>` (System-DPI) is enough for
+  `Control.DeviceDpi` to report the real DPI. For Per-Monitor V2, add
+  `<dpiAwareness>PerMonitorV2</dpiAwareness>` to the manifest — or, on .NET Framework, an `app.config`
+  `<System.Windows.Forms.ApplicationConfigurationSection>` with `<add key="DpiAwareness" value="PerMonitorV2" />`.
+  On .NET 8 you can instead call `Application.SetHighDpiMode(...)`.
 - set `AutoScaleMode = AutoScaleMode.Dpi` on your forms.
 
 That's all — the Material controls then render crisply with no extra code. See
-`samples/Material3.Gallery/app.manifest` and `App.config` for a working example. If you do your own owner-drawing with
+`samples/Material3.Gallery/app.manifest` for a working example. If you do your own owner-drawing with
 the shared tokens, `Material3.WinForms.Dpi.Scale(control, px)` is the same helper the controls use.
 
 ## Requirements
