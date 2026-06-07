@@ -34,6 +34,9 @@ namespace Material3.WinForms.Forms {
         public MaterialTimePickerDialog() : this(DateTime.Now.TimeOfDay) { }
 
         public MaterialTimePickerDialog(TimeSpan initial) {
+            if (initial < TimeSpan.Zero || initial >= TimeSpan.FromDays(1)) {
+                throw new ArgumentOutOfRangeException(nameof(initial), "Time of day must be within [00:00, 24:00).");
+            }
             _use24Hour = !CultureInfo.CurrentCulture.DateTimeFormat.ShortTimePattern.Contains("t");
             _value = new TimeSpan(initial.Hours, initial.Minutes, 0);
             _isPm = initial.Hours >= 12;
