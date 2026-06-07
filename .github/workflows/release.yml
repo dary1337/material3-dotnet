@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Resolve version and check tag
+        id: check
+        shell: pwsh
+        run: |
+          $csproj = 'src/Material3.WinForms/Material3.WinForms.csproj'
+          $version = (([xml](Get-Content $csproj)).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1)
+          if (-not $version) { throw 'Version not found in csproj' }
+          $version = $version.Trim()
+          $tag = "v$version"
+          if (git tag -l $tag) {
+            Write-Host "Tag $tag already exists - nothing to publish."
+            "publish=false" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "New version $version - will publish and tag $tag."
+            "publish=true" >> $env:GITHUB_OUTPUT
+            "version=$version" >> $env:GITHUB_OUTPUT
+            "tag=$tag" >> $env:GITHUB_OUTPUT
+          }
+      - name: Restore
+        if: steps.check.outputs.publish == 'true'
+        run: dotnet restore Material3.WinForms.sln
+      - name: Build
+        if: steps.check.outputs.publish == 'true'
+        run: dotnet build Material3.WinForms.sln -c Release --no-restore
+      - name: Test
+        if: steps.check.outputs.publish == 'true'
+        run: dotnet test Material3.WinForms.sln -c Release --no-build
+      - name: Pack
+        if: steps.check.outputs.publish == 'true'
+        run: dotnet pack src/Material3.WinForms/Material3.WinForms.csproj -c Release --no-build -o artifacts
+      - name: Push to NuGet
+        if: steps.check.outputs.publish == 'true'
+        run: dotnet nuget push "artifacts/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+      - name: Tag and create GitHub release
+        if: steps.check.outputs.publish == 'true'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag ${{ steps.check.outputs.tag }}
+          git push origin ${{ steps.check.outputs.tag }}
+          gh release create ${{ steps.check.outputs.tag }} --title ${{ steps.check.outputs.tag }} --generate-notes
