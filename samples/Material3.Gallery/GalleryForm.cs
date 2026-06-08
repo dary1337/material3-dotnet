@@ -27,9 +27,14 @@ namespace Material3.Gallery {
         private readonly MaterialButton _modeToggle;
         private readonly DropdownSelect _seedSelect;
         private readonly DropdownSelect _variantSelect;
+        private readonly SoftLabel _hueLabel;
+        private readonly MaterialSlider _hueSlider;
         private readonly List<RoundedButton> _navButtons = new List<RoundedButton>();
         private readonly Timer _relayout;
         private readonly Timer _navDebounce;
+        private readonly Timer _hueThrottle;
+        private int _pendingHue = -1;
+        private int _appliedHue = -1;
         private string? _pendingPage;
         private int _lastContentWidth = -1;
         private string _currentPage = PageColors;
@@ -96,6 +101,33 @@ namespace Material3.Gallery {
             _variantSelect.AddItem("Vibrant", SchemeVariant.Vibrant);
             _variantSelect.SelectedIndexChanged += (s, e) => RebuildTheme();
 
+            _hueLabel = new SoftLabel {
+                Text = "Seed hue — drag to recolor",
+                Font = MaterialType.LabelMedium,
+                ForeColor = MaterialColors.OnSurfaceVariant,
+            };
+            _hueSlider = new MaterialSlider { Minimum = 0, Maximum = 360, Value = (int)BaselineSeed.GetHue(), Animated = false };
+
+            // Apply the recolor ~30×/s, not once per pixel: the full-window repaint is what starved the
+            // slider's own paint. Stops itself when no new hue arrived since the last tick.
+            _hueThrottle = new Timer { Interval = 33 };
+            _hueThrottle.Tick += (s, e) => {
+                if (_pendingHue == _appliedHue) {
+                    _hueThrottle.Stop();
+                    return;
+                }
+                _appliedHue = _pendingHue;
+                ThemeManager.Theme = MaterialTheme.FromSeed(HueToSeed(_appliedHue), CurrentVariant());
+            };
+            // Don't recolor on the move itself — just record it; the throttle applies it. This keeps the
+            // mouse-move cheap (only the thumb repaints), so it stays under the cursor during a fast drag.
+            _hueSlider.ValueChanged += (s, e) => {
+                _pendingHue = _hueSlider.Value;
+                if (!_hueThrottle.Enabled) {
+                    _hueThrottle.Start();
+                }
+            };
+
             // Content wrap forwards edge hit-tests so resize works over the client area.
             // Inset the content from the window's rounded edges so controls don't ride the border.
             var wrap = new HitTestForwardingPanel {
@@ -125,6 +157,26 @@ namespace Material3.Gallery {
                     ShowPage(_pendingPage);
                 }
             };
+        }
+
+        private SchemeVariant CurrentVariant() =>
+            _variantSelect.SelectedTag is SchemeVariant v ? v : SchemeVariant.TonalSpot;
+
+        // Fixed saturation/value gives a pleasant, vivid-enough seed across the whole wheel.
+        private static Color HueToSeed(int hue) => HsvToColor(((hue % 360) + 360) % 360, 0.70, 0.85);
+
+        private static Color HsvToColor(double h, double s, double v) {
+            double c = v * s;
+            double x = c * (1 - Math.Abs(h / 60.0 % 2 - 1));
+            double m = v - c;
+            double r, g, b;
+            if (h < 60) { r = c; g = x; b = 0; }
+            else if (h < 120) { r = x; g = c; b = 0; }
+            else if (h < 180) { r = 0; g = c; b = x; }
+            else if (h < 240) { r = 0; g = x; b = c; }
+            else if (h < 300) { r = x; g = 0; b = c; }
+            else { r = c; g = 0; b = x; }
+            return Color.FromArgb((int)Math.Round((r + m) * 255), (int)Math.Round((g + m) * 255), (int)Math.Round((b + m) * 255));
         }
 
         private void RequestPage(string page) {
@@ -168,13 +220,15 @@ namespace Material3.Gallery {
             _relayout.Dispose();
             _navDebounce.Stop();
             _navDebounce.Dispose();
+            _hueThrottle.Stop();
+            _hueThrottle.Dispose();
             base.OnFormClosed(e);
         }
 
         private void OnThemeChanged(object? sender, EventArgs e) {
+            // Every control (incl. the gallery's swatches / type samples) recolors itself via ThemeHook,
+            // so no page rebuild is needed — that avoids the flicker a dispose+recreate would cause.
             ApplyThemeToChrome();
-            // Swatch tiles and type samples bake their colours at build time; rebuild to re-read them.
-            ShowPage(_currentPage);
         }
 
         private void RebuildTheme() {
@@ -199,6 +253,10 @@ namespace Material3.Gallery {
             _nav.Controls.Add(_seedSelect);
             _variantSelect.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             _nav.Controls.Add(_variantSelect);
+            _hueLabel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            _nav.Controls.Add(_hueLabel);
+            _hueSlider.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            _nav.Controls.Add(_hueSlider);
 
             foreach (string page in new[] {
                 PageColors, PageTypography, PageElevation, PageButtons, PageInputs, PageSelection,
@@ -239,7 +297,12 @@ namespace Material3.Gallery {
             y += Sc(ComponentSizes.DropdownHeight) + Sc(Spacing.Space2);
 
             _variantSelect.SetBounds(pad, y, width, Sc(ComponentSizes.DropdownHeight));
-            y += Sc(ComponentSizes.DropdownHeight) + Sc(Spacing.Space4);
+            y += Sc(ComponentSizes.DropdownHeight) + Sc(Spacing.Space2);
+
+            _hueLabel.SetBounds(pad, y, width, Sc(16));
+            y += Sc(16) + Sc(Spacing.Space1);
+            _hueSlider.SetBounds(pad, y, width, Sc(32));
+            y += Sc(32) + Sc(Spacing.Space4);
 
             foreach (RoundedButton button in _navButtons) {
                 button.SetBounds(pad, y, width, Sc(38));
@@ -301,42 +364,44 @@ namespace Material3.Gallery {
             b.Header("Color roles");
             b.Caption("Every role of the active scheme. Switch seed / variant / mode on the left — controls follow.");
 
-            ColorScheme s = ThemeManager.Scheme;
+            // Live role getters so the swatches recolor with the theme (e.g. while the hue slider drags)
+            // without rebuilding the page.
+            static Func<Color> Role(Func<ColorScheme, Color> get) => () => get(ThemeManager.Scheme);
             b.SwatchGroup("Primary", new[] {
-                ("Primary", s.Primary, s.OnPrimary),
-                ("OnPrimary", s.OnPrimary, s.Primary),
-                ("PrimaryContainer", s.PrimaryContainer, s.OnPrimaryContainer),
-                ("OnPrimaryContainer", s.OnPrimaryContainer, s.PrimaryContainer),
+                ("Primary", Role(s => s.Primary), Role(s => s.OnPrimary)),
+                ("OnPrimary", Role(s => s.OnPrimary), Role(s => s.Primary)),
+                ("PrimaryContainer", Role(s => s.PrimaryContainer), Role(s => s.OnPrimaryContainer)),
+                ("OnPrimaryContainer", Role(s => s.OnPrimaryContainer), Role(s => s.PrimaryContainer)),
             });
             b.SwatchGroup("Secondary / Tertiary", new[] {
-                ("Secondary", s.Secondary, s.OnSecondary),
-                ("SecondaryContainer", s.SecondaryContainer, s.OnSecondaryContainer),
-                ("Tertiary", s.Tertiary, s.OnTertiary),
-                ("TertiaryContainer", s.TertiaryContainer, s.OnTertiaryContainer),
+                ("Secondary", Role(s => s.Secondary), Role(s => s.OnSecondary)),
+                ("SecondaryContainer", Role(s => s.SecondaryContainer), Role(s => s.OnSecondaryContainer)),
+                ("Tertiary", Role(s => s.Tertiary), Role(s => s.OnTertiary)),
+                ("TertiaryContainer", Role(s => s.TertiaryContainer), Role(s => s.OnTertiaryContainer)),
             });
             b.SwatchGroup("Semantic", new[] {
-                ("Error", s.Error, s.OnError),
-                ("ErrorContainer", s.ErrorContainer, s.OnErrorContainer),
-                ("Success", s.Success, s.OnSuccess),
-                ("SuccessContainer", s.SuccessContainer, s.OnSuccessContainer),
-                ("Warning", s.Warning, s.OnWarning),
-                ("WarningContainer", s.WarningContainer, s.OnWarningContainer),
+                ("Error", Role(s => s.Error), Role(s => s.OnError)),
+                ("ErrorContainer", Role(s => s.ErrorContainer), Role(s => s.OnErrorContainer)),
+                ("Success", Role(s => s.Success), Role(s => s.OnSuccess)),
+                ("SuccessContainer", Role(s => s.SuccessContainer), Role(s => s.OnSuccessContainer)),
+                ("Warning", Role(s => s.Warning), Role(s => s.OnWarning)),
+                ("WarningContainer", Role(s => s.WarningContainer), Role(s => s.OnWarningContainer)),
             });
             b.SwatchGroup("Surfaces", new[] {
-                ("Surface", s.Surface, s.OnSurface),
-                ("SurfaceContainerLowest", s.SurfaceContainerLowest, s.OnSurface),
-                ("SurfaceContainerLow", s.SurfaceContainerLow, s.OnSurface),
-                ("SurfaceContainer", s.SurfaceContainer, s.OnSurface),
-                ("SurfaceContainerHigh", s.SurfaceContainerHigh, s.OnSurface),
-                ("SurfaceContainerHighest", s.SurfaceContainerHighest, s.OnSurface),
-                ("InverseSurface", s.InverseSurface, s.InverseOnSurface),
+                ("Surface", Role(s => s.Surface), Role(s => s.OnSurface)),
+                ("SurfaceContainerLowest", Role(s => s.SurfaceContainerLowest), Role(s => s.OnSurface)),
+                ("SurfaceContainerLow", Role(s => s.SurfaceContainerLow), Role(s => s.OnSurface)),
+                ("SurfaceContainer", Role(s => s.SurfaceContainer), Role(s => s.OnSurface)),
+                ("SurfaceContainerHigh", Role(s => s.SurfaceContainerHigh), Role(s => s.OnSurface)),
+                ("SurfaceContainerHighest", Role(s => s.SurfaceContainerHighest), Role(s => s.OnSurface)),
+                ("InverseSurface", Role(s => s.InverseSurface), Role(s => s.InverseOnSurface)),
             });
             b.SwatchGroup("Content & outline", new[] {
-                ("OnSurface", s.OnSurface, s.Surface),
-                ("OnSurfaceVariant", s.OnSurfaceVariant, s.Surface),
-                ("OnSurfaceMuted", s.OnSurfaceMuted, s.Surface),
-                ("Outline", s.Outline, s.Surface),
-                ("OutlineVariant", s.OutlineVariant, s.OnSurface),
+                ("OnSurface", Role(s => s.OnSurface), Role(s => s.Surface)),
+                ("OnSurfaceVariant", Role(s => s.OnSurfaceVariant), Role(s => s.Surface)),
+                ("OnSurfaceMuted", Role(s => s.OnSurfaceMuted), Role(s => s.Surface)),
+                ("Outline", Role(s => s.Outline), Role(s => s.Surface)),
+                ("OutlineVariant", Role(s => s.OutlineVariant), Role(s => s.OnSurface)),
             });
         }
 

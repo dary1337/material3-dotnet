@@ -129,7 +129,7 @@ namespace Material3.Gallery {
             _y = label.Bottom + S(Spacing.Space1);
         }
 
-        public void SwatchGroup(string title, (string name, Color fill, Color content)[] roles) {
+        public void SwatchGroup(string title, (string name, Func<Color> fill, Func<Color> content)[] roles) {
             Header(title);
             var flow = new FlowLayoutPanel {
                 AutoSize = true,
@@ -139,7 +139,7 @@ namespace Material3.Gallery {
                 MaximumSize = new Size(InnerWidth, 0),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left,
             };
-            foreach ((string name, Color fill, Color content) in roles) {
+            foreach ((string name, Func<Color> fill, Func<Color> content) in roles) {
                 flow.Controls.Add(new SwatchTile(name, fill, content));
             }
             _host.Controls.Add(flow);
@@ -220,16 +220,17 @@ namespace Material3.Gallery {
 
         private sealed class SwatchTile : Control {
             private readonly string _name;
-            private readonly Color _fill;
-            private readonly Color _content;
+            private readonly Func<Color> _fill;
+            private readonly Func<Color> _content;
 
-            public SwatchTile(string name, Color fill, Color content) {
+            public SwatchTile(string name, Func<Color> fill, Func<Color> content) {
                 _name = name;
                 _fill = fill;
                 _content = content;
                 Size = new Size(212, 64);
                 Margin = new Padding(0, 0, Spacing.Space2, Spacing.Space2);
                 SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer, true);
+                ThemeHook.Attach(this, Invalidate);
             }
 
             protected override void OnPaint(PaintEventArgs e) {
@@ -238,9 +239,11 @@ namespace Material3.Gallery {
                 g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
                 g.Clear(MaterialColors.Surface);
 
+                Color fill = _fill();
+                Color content = _content();
                 var rect = new Rectangle(0, 0, Width - 1, Height - 1);
                 using (var path = RoundedControlRenderer.GetFigurePath(rect, Shape.Medium)) {
-                    using (var brush = new SolidBrush(_fill)) {
+                    using (var brush = new SolidBrush(fill)) {
                         g.FillPath(brush, path);
                     }
                     using (var pen = new Pen(MaterialColors.OutlineVariant)) {
@@ -248,9 +251,9 @@ namespace Material3.Gallery {
                     }
                 }
 
-                string hex = $"#{_fill.R:X2}{_fill.G:X2}{_fill.B:X2}";
-                using (var nameBrush = new SolidBrush(_content))
-                using (var hexBrush = new SolidBrush(Color.FromArgb(200, _content))) {
+                string hex = $"#{fill.R:X2}{fill.G:X2}{fill.B:X2}";
+                using (var nameBrush = new SolidBrush(content))
+                using (var hexBrush = new SolidBrush(Color.FromArgb(200, content))) {
                     g.DrawString(_name, MaterialType.LabelMedium, nameBrush, 10, 8);
                     g.DrawString(hex, MaterialType.BodySmall, hexBrush, 10, Height - 26);
                 }
@@ -266,6 +269,7 @@ namespace Material3.Gallery {
                 _style = style;
                 ApplyIntrinsicHeight();
                 SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer, true);
+                ThemeHook.Attach(this, Invalidate);
             }
 
             // Spec line height + meta row, scaled to DPI: the pt-based sample font renders larger at
@@ -307,6 +311,7 @@ namespace Material3.Gallery {
             public ElevationRowControl() {
                 SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint
                     | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
+                ThemeHook.Attach(this, Invalidate);
             }
 
             protected override void OnPaint(PaintEventArgs e) {
@@ -335,6 +340,7 @@ namespace Material3.Gallery {
             public ShapeRowControl() {
                 SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint
                     | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
+                ThemeHook.Attach(this, Invalidate);
             }
 
             protected override void OnPaint(PaintEventArgs e) {
