@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Material3.WinForms;
 using Material3.WinForms.Controls;
@@ -42,11 +45,15 @@ namespace Material3.Gallery {
 
         private const int NavWidth = 220;
 
+        // M3 baseline primary (#6750A4): the default seed and the brand fill behind the app icon.
+        private static readonly Color BaselineSeed = Color.FromArgb(0x67, 0x50, 0xA4);
+
         public GalleryForm() {
             // Scale the layout (child bounds, fonts) with the monitor DPI; the owner-drawn controls
             // scale their internals via Dpi.Scale, so the whole gallery stays crisp at 125/150/200%.
             AutoScaleMode = AutoScaleMode.Dpi;
             Text = "Material 3 Gallery";
+            Icon = BuildAppIcon();
             Size = new Size(1060, 720);
             MinimumSize = new Size(860, 560);
             StartPosition = FormStartPosition.CenterScreen;
@@ -76,7 +83,7 @@ namespace Material3.Gallery {
             _seedSelect.AddItem("Platinum (grey)", Color.FromArgb(0x8E, 0x8C, 0x97));
             _seedSelect.AddItem("Google blue", Color.FromArgb(0x42, 0x85, 0xF4));
             _seedSelect.AddItem("Forest green", Color.FromArgb(0x2E, 0x7D, 0x32));
-            _seedSelect.AddItem("Deep purple", Color.FromArgb(0x67, 0x50, 0xA4));
+            _seedSelect.AddItem("Deep purple", BaselineSeed);
             _seedSelect.AddItem("Crimson", Color.FromArgb(0xC6, 0x28, 0x3C));
             _seedSelect.AddItem("Amber", Color.FromArgb(0xFF, 0xB3, 0x00));
             _seedSelect.SelectedIndexChanged += (s, e) => RebuildTheme();
@@ -364,6 +371,11 @@ namespace Material3.Gallery {
                         Margin = new Padding(0, 0, Spacing.Space2, 0),
                     });
                 }
+                flow.Controls.Add(new MaterialIconButton {
+                    ButtonStyle = MaterialIconButtonStyle.Tonal,
+                    IconGlyph = MaterialIcons.Copy,
+                    Margin = new Padding(0, 0, Spacing.Space2, 0),
+                });
             });
             b.Flow(flow => {
                 foreach (MaterialIconButtonStyle style in new[] {
@@ -467,6 +479,40 @@ namespace Material3.Gallery {
                 input.Removed += (s, e) => input.Parent?.Controls.Remove(input);
                 flow.Controls.Add(input);
                 flow.Controls.Add(new MaterialChip { Kind = MaterialChipKind.Suggestion, Text = "Try dark mode" });
+            });
+
+            b.Header("Chips — custom colors");
+            b.Caption("SetAccent(container, content) paints any semantic role; a transparent container + outline makes a brand chip.");
+            MaterialChip Accent(string text, string? icon, Color container, Color content) {
+                var chip = new MaterialChip { Kind = MaterialChipKind.Suggestion, Text = text };
+                if (icon != null) {
+                    chip.LeadingIcon = icon;
+                }
+                chip.SetAccent(container, content);
+                return chip;
+            }
+            b.Flow(flow => {
+                flow.Controls.Add(Accent("Needs attention", MaterialIcons.Warning, MaterialColors.WarningContainer, MaterialColors.OnWarningContainer));
+                flow.Controls.Add(Accent("Update available", MaterialIcons.Warning, MaterialColors.WarningContainer, MaterialColors.OnWarningContainer));
+                flow.Controls.Add(Accent("Not supported", MaterialIcons.ErrorFilled, MaterialColors.ErrorContainer, MaterialColors.OnErrorContainer));
+                flow.Controls.Add(Accent("Up to date", MaterialIcons.Check, MaterialColors.SuccessContainer, MaterialColors.OnSuccessContainer));
+                flow.Controls.Add(Accent("Recommended", null, MaterialColors.PrimaryContainer, MaterialColors.OnPrimaryContainer));
+            });
+            b.Flow(flow => {
+                // Outlined brand chip: transparent fill, brand color in text + border.
+                Color brandColor = Color.FromArgb(0x66, 0xC0, 0xF4);
+                var brand = new MaterialChip { Kind = MaterialChipKind.Suggestion, Text = "Cloud", LeadingIcon = MaterialIcons.Cloud };
+                brand.SetAccent(Color.Transparent, brandColor, brandColor);
+                flow.Controls.Add(brand);
+
+                Color violet = Color.FromArgb(0x7C, 0x4D, 0xFF);
+                var custom = new MaterialChip { Kind = MaterialChipKind.Suggestion, Text = "Custom #7C4DFF" };
+                custom.SetAccent(violet, Color.White);
+                flow.Controls.Add(custom);
+
+                var pill = new MaterialChip { Kind = MaterialChipKind.Suggestion, Text = "Beta", Pill = true, LeadingIcon = MaterialIcons.Info };
+                pill.SetAccent(MaterialColors.TertiaryContainer, MaterialColors.OnTertiaryContainer);
+                flow.Controls.Add(pill);
             });
 
             b.Header("Segmented button");
@@ -773,6 +819,58 @@ namespace Material3.Gallery {
                 flow.Controls.Add(new MaterialBadge { DotMode = true, Margin = new Padding(0, 8, Spacing.Space2, 0) });
             });
         }
+
+        // App/taskbar icon rendered from a library glyph on a brand-purple rounded square, so the
+        // sample carries its own mark instead of the default WinForms exe icon.
+        private static Icon BuildAppIcon() {
+            const int s = 256;
+            using (var bmp = new Bitmap(s, s, PixelFormat.Format32bppArgb)) {
+                using (Graphics g = Graphics.FromImage(bmp)) {
+                    g.SmoothingMode = SmoothingMode.AntiAlias;
+                    g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                    using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(new Rectangle(0, 0, s - 1, s - 1), s / 4))
+                    using (var brush = new SolidBrush(BaselineSeed)) {
+                        g.FillPath(brush, path);
+                    }
+                    int gpx = (int)(s * 0.56);
+                    Bitmap glyph = MaterialIconRenderer.Get(MaterialIcons.Layers, gpx, Color.White);
+                    // Center on the glyph's painted bounds, not the nominal box: Material Symbols
+                    // carry uneven internal padding, so geometric placement reads off-center.
+                    Rectangle cb = ContentBounds(glyph);
+                    int dx = (s - cb.Width) / 2 - cb.X;
+                    int dy = (s - cb.Height) / 2 - cb.Y;
+                    g.DrawImage(glyph, dx, dy, gpx, gpx);
+                }
+                IntPtr hicon = bmp.GetHicon();
+                try {
+                    using (Icon temp = Icon.FromHandle(hicon)) {
+                        return (Icon)temp.Clone();
+                    }
+                }
+                finally {
+                    DestroyIcon(hicon);
+                }
+            }
+        }
+
+        // Tight bounding box of the non-transparent pixels (one-time icon build, GetPixel is fine).
+        private static Rectangle ContentBounds(Bitmap bmp) {
+            int minX = bmp.Width, minY = bmp.Height, maxX = -1, maxY = -1;
+            for (int yy = 0; yy < bmp.Height; yy++) {
+                for (int xx = 0; xx < bmp.Width; xx++) {
+                    if (bmp.GetPixel(xx, yy).A > 8) {
+                        if (xx < minX) minX = xx;
+                        if (xx > maxX) maxX = xx;
+                        if (yy < minY) minY = yy;
+                        if (yy > maxY) maxY = yy;
+                    }
+                }
+            }
+            return maxX < 0 ? new Rectangle(0, 0, bmp.Width, bmp.Height) : Rectangle.FromLTRB(minX, minY, maxX + 1, maxY + 1);
+        }
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool DestroyIcon(IntPtr handle);
 
         // Double-buffered so the nav repaints in one frame during the theme cross-fade instead of
         // flickering a beat behind the (already buffered) title bar and content.

@@ -10,6 +10,7 @@ namespace Material3.WinForms.Drawing {
         public const string ChevronDown = "expand_more";
         public const string Close = "close";
         public const string Cloud = "cloud";
+        public const string Copy = "content_copy";
         public const string DeployedCode = "deployed_code";
         public const string Download = "download";
         public const string Error = "error";

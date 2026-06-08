@@ -39,6 +39,18 @@ namespace Material3.WinForms.Controls {
         private bool _pressed;
         private bool _removeHovered;
         private bool _pill;
+        private AccentColors? _accent;
+
+        private readonly struct AccentColors {
+            public AccentColors(Color container, Color content, Color? outline) {
+                Container = container;
+                Content = content;
+                Outline = outline;
+            }
+            public Color Container { get; }
+            public Color Content { get; }
+            public Color? Outline { get; }
+        }
 
         /// <summary>Fully-rounded (pill) corners instead of the default 8 dp Small shape.</summary>
         [Category("Material Design")]
@@ -65,6 +77,20 @@ namespace Material3.WinForms.Controls {
             Cursor = MaterialCursors.Pointer;
             Height = ChipHeight;
             ThemeHook.Attach(this, Invalidate);
+        }
+
+        /// <summary>Overrides the theme-derived colors so the chip can carry a semantic role
+        /// (Warning, Error, Success, brand, …). Pass a transparent <paramref name="container"/>
+        /// with an <paramref name="outline"/> for an outlined accent chip.</summary>
+        public void SetAccent(Color container, Color content, Color? outline = null) {
+            _accent = new AccentColors(container, content, outline);
+            Invalidate();
+        }
+
+        /// <summary>Returns to theme-driven colors after a <see cref="SetAccent"/> override.</summary>
+        public void ClearAccent() {
+            _accent = null;
+            Invalidate();
         }
 
         [Category("Material Design")]
@@ -216,14 +242,22 @@ namespace Material3.WinForms.Controls {
                 g.FillRectangle(bg, ClientRectangle);
             }
 
-            bool filled = ShowsCheck;
-            Color container = filled ? MaterialColors.SecondaryContainer : Color.Transparent;
+            AccentColors ac = _accent.GetValueOrDefault();
+            bool accent = _accent.HasValue;
+            // A disabled accent chip drops its fill so it reads as inert (muted text, outlined)
+            // instead of a vivid container sitting under greyed-out text.
+            Color container =
+                accent && Enabled ? ac.Container
+                : ShowsCheck ? MaterialColors.SecondaryContainer
+                : Color.Transparent;
             Color content = !Enabled
                 ? MaterialColors.OnSurfaceMuted
-                : filled ? MaterialColors.OnSecondaryContainer : MaterialColors.OnSurfaceVariant;
+                : accent ? ac.Content
+                : ShowsCheck ? MaterialColors.OnSecondaryContainer : MaterialColors.OnSurfaceVariant;
             Color label = !Enabled
                 ? MaterialColors.OnSurfaceMuted
-                : filled ? MaterialColors.OnSecondaryContainer : MaterialColors.OnSurface;
+                : accent ? ac.Content
+                : ShowsCheck ? MaterialColors.OnSecondaryContainer : MaterialColors.OnSurface;
 
             var rect = new Rectangle(0, 0, Width - 1, Height - 1);
             using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(rect, _pill ? Shape.Full : Shape.Small)) {
@@ -239,8 +273,13 @@ namespace Material3.WinForms.Controls {
                         g.FillPath(brush, path);
                     }
                 }
-                if (!filled) {
-                    Color outline = Enabled ? MaterialColors.Outline : MaterialColors.OnSurfaceMuted;
+                // A non-opaque container (outline chips, faint accents) needs a border to read; an
+                // accent with an explicit outline always draws one, even over an opaque fill.
+                bool accentOutline = accent && Enabled && ac.Outline.HasValue;
+                if (container.A < 255 || accentOutline) {
+                    Color outline = !Enabled ? MaterialColors.OnSurfaceMuted
+                        : accent ? (ac.Outline ?? ac.Content)
+                        : MaterialColors.Outline;
                     using (var pen = new Pen(outline, Dpi.Scale(this, 1f))) {
                         g.DrawPath(pen, path);
                     }
@@ -253,7 +292,7 @@ namespace Material3.WinForms.Controls {
             float midY = Height / 2f;
 
             if (ShowsLeading) {
-                int iconY = (int)(midY - iconPx / 2f);
+                int iconY = (int)Math.Round(midY - iconPx / 2f);
                 if (!ShowsCheck && _leadingImage != null) {
                     g.InterpolationMode = InterpolationMode.HighQualityBicubic;
                     g.DrawImage(_leadingImage, new Rectangle((int)x, iconY, iconPx, iconPx));
