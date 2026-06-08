@@ -35,6 +35,9 @@ namespace Material3.Gallery {
         private readonly Timer _hueThrottle;
         private int _pendingHue = -1;
         private int _appliedHue = -1;
+        private Color? _currentSeed;
+        private bool _syncingHue;
+        private bool _builtDark;
         private string? _pendingPage;
         private int _lastContentWidth = -1;
         private string _currentPage = PageColors;
@@ -93,18 +96,28 @@ namespace Material3.Gallery {
             _seedSelect.AddItem("Deep purple", BaselineSeed);
             _seedSelect.AddItem("Crimson", Color.FromArgb(0xC6, 0x28, 0x3C));
             _seedSelect.AddItem("Amber", Color.FromArgb(0xFF, 0xB3, 0x00));
-            _seedSelect.SelectedIndexChanged += (s, e) => RebuildTheme();
+            _seedSelect.SelectedIndexChanged += (s, e) => {
+                if (_seedSelect.SelectedTag is Color seed) {
+                    _currentSeed = seed;
+                    SyncHueSliderTo(seed);
+                    ApplySeed();
+                }
+            };
 
             _variantSelect = new DropdownSelect();
             _variantSelect.AddItem("Neutral", SchemeVariant.Neutral);
             _variantSelect.AddItem("Tonal spot (M3 default)", SchemeVariant.TonalSpot);
             _variantSelect.AddItem("Vibrant", SchemeVariant.Vibrant);
-            _variantSelect.SelectedIndexChanged += (s, e) => RebuildTheme();
+            _variantSelect.SelectedIndexChanged += (s, e) => ApplySeed();
 
             _hueLabel = new SoftLabel {
                 Text = "Seed hue — drag to recolor",
                 Font = MaterialType.LabelMedium,
                 ForeColor = MaterialColors.OnSurfaceVariant,
+                // Fixed single-line bounds (AutoSize fights the L+R anchor); ellipsize rather than wrap
+                // so it stays tight to the slider and never clips a second line in a narrow rail.
+                AutoSize = false,
+                AutoEllipsis = true,
             };
             _hueSlider = new MaterialSlider { Minimum = 0, Maximum = 360, Value = (int)BaselineSeed.GetHue(), Animated = false };
 
@@ -117,11 +130,15 @@ namespace Material3.Gallery {
                     return;
                 }
                 _appliedHue = _pendingHue;
-                ThemeManager.Theme = MaterialTheme.FromSeed(HueToSeed(_appliedHue), CurrentVariant());
+                _currentSeed = HueToSeed(_appliedHue);
+                ApplySeed();
             };
             // Don't recolor on the move itself — just record it; the throttle applies it. This keeps the
             // mouse-move cheap (only the thumb repaints), so it stays under the cursor during a fast drag.
             _hueSlider.ValueChanged += (s, e) => {
+                if (_syncingHue) {
+                    return; // programmatic move to match a picked preset — don't recolor from it
+                }
                 _pendingHue = _hueSlider.Value;
                 if (!_hueThrottle.Enabled) {
                     _hueThrottle.Start();
@@ -225,22 +242,49 @@ namespace Material3.Gallery {
             base.OnFormClosed(e);
         }
 
-        private void OnThemeChanged(object? sender, EventArgs e) {
-            // Every control (incl. the gallery's swatches / type samples) recolors itself via ThemeHook,
-            // so no page rebuild is needed — that avoids the flicker a dispose+recreate would cause.
-            ApplyThemeToChrome();
+        private const int WS_EX_COMPOSITED = 0x02000000;
+
+        protected override CreateParams CreateParams {
+            get {
+                // Composite the window so a theme switch repaints in one frame, not a per-control sweep.
+                // Costs a little scroll throughput — accepted here; consumers opt in on their own forms.
+                CreateParams cp = base.CreateParams;
+                cp.ExStyle |= WS_EX_COMPOSITED;
+                return cp;
+            }
         }
 
-        private void RebuildTheme() {
-            if (_seedSelect.SelectedTag is Color seed && _variantSelect.SelectedTag is SchemeVariant variant) {
-                ThemeManager.Theme = MaterialTheme.FromSeed(seed, variant);
+        private void OnThemeChanged(object? sender, EventArgs e) {
+            // Rebuild only on a light/dark flip: content labels bake their ForeColor, while a same-mode
+            // hue drag recolors live via ThemeHook (no rebuild — that drag fires ~30×/s).
+            ApplyThemeToChrome();
+            if (_builtDark != ThemeManager.IsDark) {
+                _builtDark = ThemeManager.IsDark;
+                ShowPage(_currentPage);
             }
+        }
+
+        // Single seed source: a variant change re-applies the active seed instead of snapping to the preset.
+        private void ApplySeed() {
+            Color seed = _currentSeed ?? (_seedSelect.SelectedTag as Color? ?? BaselineSeed);
+            ThemeManager.Theme = MaterialTheme.FromSeed(seed, CurrentVariant());
+        }
+
+        // Move the thumb to the preset's hue; the guard stops ValueChanged from re-recoloring from it.
+        private void SyncHueSliderTo(Color seed) {
+            _syncingHue = true;
+            int hue = (int)Math.Round(seed.GetHue());
+            _hueSlider.Value = hue;
+            _pendingHue = _appliedHue = hue;
+            _syncingHue = false;
         }
 
         private void ApplyThemeToChrome() {
             BackColor = MaterialColors.Surface;
             _nav.BackColor = MaterialColors.Surface;
             _content.BackColor = MaterialColors.Surface;
+            // The hue label is in the nav, not the rebuilt content page, so refresh its baked ForeColor here.
+            _hueLabel.ForeColor = MaterialColors.OnSurfaceVariant;
             foreach (RoundedButton b in _navButtons) {
                 StyleNavButton(b, (string)b.Tag! == _currentPage);
             }
@@ -299,8 +343,9 @@ namespace Material3.Gallery {
             _variantSelect.SetBounds(pad, y, width, Sc(ComponentSizes.DropdownHeight));
             y += Sc(ComponentSizes.DropdownHeight) + Sc(Spacing.Space2);
 
-            _hueLabel.SetBounds(pad, y, width, Sc(16));
-            y += Sc(16) + Sc(Spacing.Space1);
+            int hueLabelHeight = Sc(18); // single line, sits tight above the slider
+            _hueLabel.SetBounds(pad, y, width, hueLabelHeight);
+            y += hueLabelHeight + Sc(Spacing.Space1);
             _hueSlider.SetBounds(pad, y, width, Sc(32));
             y += Sc(32) + Sc(Spacing.Space4);
 
@@ -326,6 +371,7 @@ namespace Material3.Gallery {
 
         private void ShowPage(string page) {
             _currentPage = page;
+            _builtDark = ThemeManager.IsDark;
             foreach (RoundedButton b in _navButtons) {
                 StyleNavButton(b, (string)b.Tag! == page);
             }
@@ -744,7 +790,7 @@ namespace Material3.Gallery {
             var second = new MaterialOptionCard(
                 "Minimal install", "Core files only, fastest download",
                 fallbackGlyph: MaterialIcons.Download) { DetailText = "350 MB", Height = 68 };
-            second.SetAccentChip("needs update", MaterialColors.WarningContainer, MaterialColors.OnWarningContainer, glyph: MaterialIcons.Warning);
+            second.SetAccentChip("needs update", () => MaterialColors.WarningContainer, () => MaterialColors.OnWarningContainer, glyph: MaterialIcons.Warning);
             first.SelectedChanged += c => second.SetSelected(false);
             second.SelectedChanged += c => first.SetSelected(false);
             first.SetSelected(true);
