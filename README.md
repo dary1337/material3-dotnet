@@ -32,7 +32,7 @@ Rows: color roles · buttons & FAB · selection · cards & lists · overlays & p
 | ![Cards & lists, light theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/cards-lists-light.webp) | ![Cards & lists, dark theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/cards-lists-dark.webp) |
 | ![Overlays & pickers, light theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/overlays-light.webp) | ![Overlays & pickers, dark theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/overlays-dark.webp) |
 
-<sub>Screenshots and demos captured on **v0.5** with the *Platinum* seed.</sub>
+<sub>Screenshots and demos captured on **v0.5**.</sub>
 
 ## Features
 
