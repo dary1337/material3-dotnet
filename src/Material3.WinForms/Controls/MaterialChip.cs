@@ -151,22 +151,29 @@ namespace Material3.WinForms.Controls {
         private bool ShowsLeading => ShowsCheck || _leadingImage != null || !string.IsNullOrEmpty(_leadingIcon);
         private bool ShowsRemove => _kind == MaterialChipKind.Input;
 
+        private ChipRenderer.Metrics BuildMetrics() => new ChipRenderer.Metrics {
+            Height = Dpi.Scale(this, ChipHeight),
+            PadX = Dpi.Scale(this, PadX),
+            IconPx = Dpi.Scale(this, IconPx),
+            IconGap = Dpi.Scale(this, IconGap),
+            OutlineWidth = Dpi.Scale(this, 1f),
+            Font = MaterialType.LabelLarge,
+        };
+
         private void AutoSizeToContent() {
             if (!IsHandleCreated) {
                 return;
             }
             using (Graphics g = CreateGraphics()) {
-                float text = g.MeasureString(Text ?? string.Empty, MaterialType.LabelLarge,
-                    int.MaxValue, StringFormat.GenericTypographic).Width;
-                int width = (int)Math.Ceiling(text) + Dpi.Scale(this, PadX) * 2;
-                if (ShowsLeading) {
-                    width += Dpi.Scale(this, IconPx) + Dpi.Scale(this, IconGap);
-                }
+                ChipRenderer.Metrics metrics = BuildMetrics();
+                // Measure through ChipRenderer so the auto-size matches exactly how the label is laid
+                // out at paint time; the remove ✕ is control-specific and added on top.
+                int width = ChipRenderer.Measure(g, Text, ShowsLeading, metrics);
                 if (ShowsRemove) {
                     width += Dpi.Scale(this, RemoveBox) + Dpi.Scale(this, IconGap);
                 }
                 Width = width;
-                Height = Dpi.Scale(this, ChipHeight);
+                Height = metrics.Height;
             }
         }
 
@@ -259,57 +266,39 @@ namespace Material3.WinForms.Controls {
                 : accent ? ac.Content
                 : ShowsCheck ? MaterialColors.OnSecondaryContainer : MaterialColors.OnSurface;
 
-            var rect = new Rectangle(0, 0, Width - 1, Height - 1);
-            using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(rect, _pill ? Shape.Full : Shape.Small)) {
-                if (container.A > 0) {
-                    using (var brush = new SolidBrush(container)) {
-                        g.FillPath(brush, path);
-                    }
-                }
-                if (Enabled && (_hovered || _pressed)) {
-                    double overlay = _pressed ? StateLayers.Pressed : StateLayers.Hover;
-                    Color baseColor = container.A > 0 ? container : ResolveParentColor();
-                    using (var brush = new SolidBrush(ColorScheme.Overlay(baseColor, label, overlay))) {
-                        g.FillPath(brush, path);
-                    }
-                }
-                // A non-opaque container (outline chips, faint accents) needs a border to read; an
-                // accent with an explicit outline always draws one, even over an opaque fill.
-                bool accentOutline = accent && Enabled && ac.Outline.HasValue;
-                if (container.A < 255 || accentOutline) {
-                    Color outline = !Enabled ? MaterialColors.OnSurfaceMuted
-                        : accent ? (ac.Outline ?? ac.Content)
-                        : MaterialColors.Outline;
-                    using (var pen = new Pen(outline, Dpi.Scale(this, 1f))) {
-                        g.DrawPath(pen, path);
-                    }
-                }
+            // A non-opaque container (outline chips, faint accents) needs a border to read; an accent
+            // with an explicit outline always draws one, even over an opaque fill.
+            Color? outline = null;
+            if (container.A < 255 || (accent && Enabled && ac.Outline.HasValue)) {
+                outline = !Enabled ? MaterialColors.OnSurfaceMuted
+                    : accent ? (ac.Outline ?? ac.Content)
+                    : MaterialColors.Outline;
             }
 
-            int iconPx = Dpi.Scale(this, IconPx);
-            int iconGap = Dpi.Scale(this, IconGap);
-            float x = Dpi.Scale(this, PadX);
-            float midY = Height / 2f;
+            Color? stateOverlay = null;
+            if (Enabled && (_hovered || _pressed)) {
+                double layer = _pressed ? StateLayers.Pressed : StateLayers.Hover;
+                Color baseColor = container.A > 0 ? container : ResolveParentColor();
+                stateOverlay = ColorScheme.Overlay(baseColor, label, layer);
+            }
 
+            string? leadingGlyph = null;
+            Image? leadingImage = null;
             if (ShowsLeading) {
-                int iconY = (int)Math.Round(midY - iconPx / 2f);
-                if (!ShowsCheck && _leadingImage != null) {
-                    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                    g.DrawImage(_leadingImage, new Rectangle((int)x, iconY, iconPx, iconPx));
+                if (ShowsCheck) {
+                    leadingGlyph = MaterialIcons.Check;
+                }
+                else if (_leadingImage != null) {
+                    leadingImage = _leadingImage;
                 }
                 else {
-                    string glyph = ShowsCheck ? MaterialIcons.Check : _leadingIcon;
-                    Bitmap icon = MaterialIconRenderer.Get(glyph, iconPx, content);
-                    g.DrawImageUnscaled(icon, (int)x, iconY);
+                    leadingGlyph = _leadingIcon;
                 }
-                x += iconPx + iconGap;
             }
 
-            using (var brush = new SolidBrush(label))
-            using (var fmt = new StringFormat(StringFormat.GenericTypographic) { LineAlignment = StringAlignment.Center }) {
-                g.DrawString(Text ?? string.Empty, MaterialType.LabelLarge, brush,
-                    new RectangleF(x, 0, Width - x, Height), fmt);
-            }
+            ChipRenderer.Metrics metrics = BuildMetrics();
+            var style = new ChipRenderer.Style(container, content, label, outline, _pill, stateOverlay);
+            ChipRenderer.Draw(g, Text, leadingGlyph, leadingImage, style, metrics, 0, 0, Width);
 
             if (ShowsRemove) {
                 Rectangle remove = RemoveRect;
