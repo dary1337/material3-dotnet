@@ -9,7 +9,7 @@ Dynamic color from a single seed, runtime light/dark switching, the full M3 type
 state layers and motion. No mandatory base form, no native dependencies.
 
 <p align="center">
-  <img src="docs/img/dynamic-color.gif" alt="Dragging the seed hue recolors the whole palette live in the Material 3 gallery" width="820">
+  <img src="https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/dynamic-color.gif" alt="Dragging the seed hue recolors the whole palette live in the Material 3 gallery" width="820">
 </p>
 <p align="center"><sub>Drag the seed hue — the entire palette recolors live through the HCT pipeline.</sub></p>
 
@@ -26,11 +26,11 @@ Rows: color roles · buttons & FAB · selection · cards & lists · overlays & p
 
 | Light | Dark |
 |:---:|:---:|
-| ![Color roles, light theme](docs/img/color-roles-light.webp) | ![Color roles, dark theme](docs/img/color-roles-dark.webp) |
-| ![Buttons & FAB, light theme](docs/img/buttons-light.webp) | ![Buttons & FAB, dark theme](docs/img/buttons-dark.webp) |
-| ![Selection controls, light theme](docs/img/selection-light.webp) | ![Selection controls, dark theme](docs/img/selection-dark.webp) |
-| ![Cards & lists, light theme](docs/img/cards-lists-light.webp) | ![Cards & lists, dark theme](docs/img/cards-lists-dark.webp) |
-| ![Overlays & pickers, light theme](docs/img/overlays-light.webp) | ![Overlays & pickers, dark theme](docs/img/overlays-dark.webp) |
+| ![Color roles, light theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/color-roles-light.webp) | ![Color roles, dark theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/color-roles-dark.webp) |
+| ![Buttons & FAB, light theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/buttons-light.webp) | ![Buttons & FAB, dark theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/buttons-dark.webp) |
+| ![Selection controls, light theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/selection-light.webp) | ![Selection controls, dark theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/selection-dark.webp) |
+| ![Cards & lists, light theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/cards-lists-light.webp) | ![Cards & lists, dark theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/cards-lists-dark.webp) |
+| ![Overlays & pickers, light theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/overlays-light.webp) | ![Overlays & pickers, dark theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/overlays-dark.webp) |
 
 <sub>Screenshots and demos captured on **v0.5** with the *Platinum* seed.</sub>
 
