@@ -18,6 +18,9 @@ namespace Material3.WinForms.Controls {
         private int _minimum;
         private int _maximum = 100;
         private int _value;
+        private float _displayValue;
+        private readonly Timer _tween;
+        private bool _animated = true;
         private bool _dragging;
         private bool _hovered;
 
@@ -37,6 +40,31 @@ namespace Material3.WinForms.Controls {
             Cursor = MaterialCursors.Pointer;
             TabStop = true;
             ThemeHook.Attach(this, Invalidate);
+
+            // The handle eases toward the value instead of snapping (same tween as MaterialProgressBar),
+            // so dragging and click-to-position glide. ValueChanged still fires immediately.
+            _tween = new Timer { Interval = 16 };
+            _tween.Tick += OnTweenTick;
+        }
+
+        private void OnTweenTick(object? sender, EventArgs e) {
+            float delta = _value - _displayValue;
+            if (Math.Abs(delta) < 0.5f) {
+                _displayValue = _value;
+                _tween.Stop();
+            }
+            else {
+                _displayValue += delta * 0.4f;
+            }
+            Invalidate();
+        }
+
+        protected override void Dispose(bool disposing) {
+            if (disposing) {
+                _tween.Stop();
+                _tween.Dispose();
+            }
+            base.Dispose(disposing);
         }
 
         // Own the height so the DPI-scaled halo isn't clipped: AutoScale only sizes controls present at the form's scaling pass.
@@ -81,6 +109,21 @@ namespace Material3.WinForms.Controls {
         }
 
         [Category("Material Design")]
+        [Description("When true, the handle eases toward the value; when false, it snaps immediately.")]
+        [DefaultValue(true)]
+        public bool Animated {
+            get => _animated;
+            set {
+                _animated = value;
+                if (!_animated) {
+                    _tween.Stop();
+                    _displayValue = _value;
+                    Invalidate();
+                }
+            }
+        }
+
+        [Category("Material Design")]
         [Description("The current slider value within the range.")]
         [DefaultValue(0)]
         public int Value {
@@ -92,6 +135,13 @@ namespace Material3.WinForms.Controls {
                 }
                 _value = clamped;
                 ValueChanged?.Invoke(this, EventArgs.Empty);
+                if (!_animated || !IsHandleCreated) {
+                    _displayValue = _value;
+                    _tween.Stop();
+                }
+                else if (!_tween.Enabled) {
+                    _tween.Start();
+                }
                 Invalidate();
             }
         }
@@ -203,7 +253,7 @@ namespace Material3.WinForms.Controls {
             int stateLayerRadius = Dpi.Scale(this, StateLayerRadius);
             int trackWidth = Math.Max(1, Width - handleRadius * 2);
             int cy = Height / 2;
-            double fraction = _maximum > _minimum ? (double)(_value - _minimum) / (_maximum - _minimum) : 0.0;
+            double fraction = _maximum > _minimum ? (_displayValue - _minimum) / (_maximum - _minimum) : 0.0;
             int handleX = handleRadius + (int)Math.Round(fraction * trackWidth);
 
             var inactive = new Rectangle(handleRadius, cy - trackHeight / 2, trackWidth, trackHeight);
