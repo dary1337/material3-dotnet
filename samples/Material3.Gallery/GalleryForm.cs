@@ -371,6 +371,11 @@ namespace Material3.Gallery {
                         Margin = new Padding(0, 0, Spacing.Space2, 0),
                     });
                 }
+                flow.Controls.Add(new MaterialIconButton {
+                    ButtonStyle = MaterialIconButtonStyle.Tonal,
+                    IconGlyph = MaterialIcons.Copy,
+                    Margin = new Padding(0, 0, Spacing.Space2, 0),
+                });
             });
             b.Flow(flow => {
                 foreach (MaterialIconButtonStyle style in new[] {
@@ -474,6 +479,40 @@ namespace Material3.Gallery {
                 input.Removed += (s, e) => input.Parent?.Controls.Remove(input);
                 flow.Controls.Add(input);
                 flow.Controls.Add(new MaterialChip { Kind = MaterialChipKind.Suggestion, Text = "Try dark mode" });
+            });
+
+            b.Header("Chips — custom colors");
+            b.Caption("SetAccent(container, content) paints any semantic role; a transparent container + outline makes a brand chip.");
+            MaterialChip Accent(string text, string? icon, Color container, Color content) {
+                var chip = new MaterialChip { Kind = MaterialChipKind.Suggestion, Text = text };
+                if (icon != null) {
+                    chip.LeadingIcon = icon;
+                }
+                chip.SetAccent(container, content);
+                return chip;
+            }
+            b.Flow(flow => {
+                flow.Controls.Add(Accent("Needs attention", MaterialIcons.Warning, MaterialColors.WarningContainer, MaterialColors.OnWarningContainer));
+                flow.Controls.Add(Accent("Update available", MaterialIcons.Warning, MaterialColors.WarningContainer, MaterialColors.OnWarningContainer));
+                flow.Controls.Add(Accent("Not supported", MaterialIcons.ErrorFilled, MaterialColors.ErrorContainer, MaterialColors.OnErrorContainer));
+                flow.Controls.Add(Accent("Up to date", MaterialIcons.Check, MaterialColors.SuccessContainer, MaterialColors.OnSuccessContainer));
+                flow.Controls.Add(Accent("Recommended", null, MaterialColors.PrimaryContainer, MaterialColors.OnPrimaryContainer));
+            });
+            b.Flow(flow => {
+                // Outlined brand chip: transparent fill, brand color in text + border.
+                Color brandColor = Color.FromArgb(0x66, 0xC0, 0xF4);
+                var brand = new MaterialChip { Kind = MaterialChipKind.Suggestion, Text = "Cloud", LeadingIcon = MaterialIcons.Cloud };
+                brand.SetAccent(Color.Transparent, brandColor, brandColor);
+                flow.Controls.Add(brand);
+
+                Color violet = Color.FromArgb(0x7C, 0x4D, 0xFF);
+                var custom = new MaterialChip { Kind = MaterialChipKind.Suggestion, Text = "Custom #7C4DFF" };
+                custom.SetAccent(violet, Color.White);
+                flow.Controls.Add(custom);
+
+                var pill = new MaterialChip { Kind = MaterialChipKind.Suggestion, Text = "Beta", Pill = true, LeadingIcon = MaterialIcons.Info };
+                pill.SetAccent(MaterialColors.TertiaryContainer, MaterialColors.OnTertiaryContainer);
+                flow.Controls.Add(pill);
             });
 
             b.Header("Segmented button");
