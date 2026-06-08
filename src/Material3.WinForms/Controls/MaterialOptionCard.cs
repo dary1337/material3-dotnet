@@ -18,6 +18,9 @@ namespace Material3.WinForms.Controls {
         private string _title = string.Empty;
         private string _description = string.Empty;
         private string? _accentSuffix;
+        private ChipRenderer.Style? _accentChip;
+        private string _accentChipText = string.Empty;
+        private string? _accentChipGlyph;
         private Image? _customIcon;
         private string _fallbackGlyph = MaterialIcons.DeployedCode;
         private string _detailText = string.Empty;
@@ -137,6 +140,22 @@ namespace Material3.WinForms.Controls {
             set { _accentSuffix = value; Invalidate(); }
         }
 
+        /// <summary>Shows a colored chip after the title (e.g. a Warning "needs update"). Independent
+        /// of <see cref="AccentSuffix"/>; <see cref="ClearAccentChip"/> removes the chip entirely.</summary>
+        public void SetAccentChip(string text, Color container, Color content, Color? outline = null, string? glyph = null) {
+            _accentChipText = text ?? string.Empty;
+            _accentChip = new ChipRenderer.Style(container, content, content, outline, pill: true);
+            _accentChipGlyph = string.IsNullOrEmpty(glyph) ? null : glyph;
+            Invalidate();
+        }
+
+        public void ClearAccentChip() {
+            _accentChip = null;
+            _accentChipText = string.Empty;
+            _accentChipGlyph = null;
+            Invalidate();
+        }
+
         [Category("Material Design")]
         [Description("Leading icon image; overrides the fallback glyph when set.")]
         [DefaultValue(null)]
@@ -243,7 +262,21 @@ namespace Material3.WinForms.Controls {
                     g.DrawString(_title, MaterialType.TitleMedium, brush,
                         new RectangleF(textLeft, titleY, textRight - detailWidth - textLeft, Dpi.Scale(this, 22)), nearFmt);
                 }
-                if (!string.IsNullOrEmpty(_accentSuffix)) {
+                if (_accentChip.HasValue && !string.IsNullOrEmpty(_accentChipText)) {
+                    var chipMetrics = new ChipRenderer.Metrics {
+                        Height = Dpi.Scale(this, 20),
+                        PadX = Dpi.Scale(this, 8),
+                        IconPx = Dpi.Scale(this, 13),
+                        IconGap = Dpi.Scale(this, 4),
+                        OutlineWidth = Dpi.Scale(this, 1f),
+                        Font = MaterialType.LabelMedium,
+                    };
+                    int chipWidth = ChipRenderer.Measure(g, _accentChipText, _accentChipGlyph != null, chipMetrics);
+                    int chipX = (int)(textLeft + titleSize.Width) + Dpi.Scale(this, 6);
+                    int chipY = (int)titleY + (Dpi.Scale(this, 22) - chipMetrics.Height) / 2;
+                    ChipRenderer.Draw(g, _accentChipText, _accentChipGlyph, null, _accentChip.Value, chipMetrics, chipX, chipY, chipWidth);
+                }
+                else if (!string.IsNullOrEmpty(_accentSuffix)) {
                     using (var brush = new SolidBrush(MaterialColors.Primary)) {
                         g.DrawString(" · " + _accentSuffix, MaterialType.LabelMedium, brush,
                             new RectangleF(textLeft + titleSize.Width, titleY + Dpi.Scale(this, 1f), Dpi.Scale(this, 200), Dpi.Scale(this, 20)), nearFmt);

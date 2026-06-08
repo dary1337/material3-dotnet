@@ -653,6 +653,7 @@ namespace Material3.Gallery {
             var second = new MaterialOptionCard(
                 "Minimal install", "Core files only, fastest download",
                 fallbackGlyph: MaterialIcons.Download) { DetailText = "350 MB", Height = 68 };
+            second.SetAccentChip("needs update", MaterialColors.WarningContainer, MaterialColors.OnWarningContainer, glyph: MaterialIcons.Warning);
             first.SelectedChanged += c => second.SetSelected(false);
             second.SelectedChanged += c => first.SetSelected(false);
             first.SetSelected(true);
