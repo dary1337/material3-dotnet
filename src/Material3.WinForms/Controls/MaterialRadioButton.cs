@@ -97,15 +97,27 @@ namespace Material3.WinForms.Controls {
             Invalidate();
         }
 
+        private string? _prefText;
+        private int _prefDpi = -1;
+        private Size _prefSize;
+
+        // Cached: layout calls this several times per pass and each measure opens a device context.
         public override Size GetPreferredSize(Size proposedSize) {
+            string text = Text ?? string.Empty;
+            if (_prefDpi == DeviceDpi && _prefText == text) {
+                return _prefSize;
+            }
             int width = Dpi.Scale(this, RingSize + 10);
-            if (!string.IsNullOrEmpty(Text)) {
+            if (text.Length > 0) {
                 using (Graphics g = CreateGraphics()) {
                     width += Dpi.Scale(this, LabelGap) + (int)Math.Ceiling(
-                        g.MeasureString(Text, MaterialType.BodyMedium, int.MaxValue, StringFormat.GenericTypographic).Width);
+                        g.MeasureString(text, MaterialType.BodyMedium, int.MaxValue, StringFormat.GenericTypographic).Width);
                 }
             }
-            return new Size(width, Dpi.Scale(this, 28));
+            _prefText = text;
+            _prefDpi = DeviceDpi;
+            _prefSize = new Size(width, Dpi.Scale(this, 28));
+            return _prefSize;
         }
 
         protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); _hovered = true; Invalidate(); }
