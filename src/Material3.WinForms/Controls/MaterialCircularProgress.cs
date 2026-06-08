@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using Material3.WinForms.Theming;
+using Material3.WinForms.Tokens;
 
 namespace Material3.WinForms.Controls {
     /// <summary>Material 3 circular progress indicator with determinate (<see cref="Value"/>) and indeterminate spinner modes.</summary>
@@ -63,8 +64,8 @@ namespace Material3.WinForms.Controls {
                     return;
                 }
                 _value = normalized;
-                if (DesignMode) {
-                    // No timer runs in the designer; render the value immediately instead of a 0% arc.
+                if (DesignMode || !Motion.AnimationsEnabled) {
+                    // No animation: render the value immediately instead of easing from a 0% arc.
                     _displayValue = _value;
                     Invalidate();
                 }
@@ -73,7 +74,8 @@ namespace Material3.WinForms.Controls {
         }
 
         private void SyncTimer() {
-            if (DesignMode) {
+            // No animation: determinate snapped in the Value setter; the spinner stays a static arc.
+            if (DesignMode || !Motion.AnimationsEnabled) {
                 return;
             }
             bool needsFrames = _indeterminate || Math.Abs(_displayValue - _value) > 0.1f;
@@ -103,6 +105,13 @@ namespace Material3.WinForms.Controls {
         }
 
         private void OnTick(object? sender, EventArgs e) {
+            // SyncTimer's guard only blocks starting; this is the matching stop when the flag flips off.
+            if (!Motion.AnimationsEnabled) {
+                _displayValue = _value;
+                _timer.Stop();
+                Invalidate();
+                return;
+            }
             if (_indeterminate) {
                 _rotation = (_rotation + RotationPerFrame) % 360f;
                 _sweepPhase += 0.02f;

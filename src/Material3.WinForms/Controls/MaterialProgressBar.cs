@@ -12,8 +12,7 @@ namespace Material3.WinForms.Controls {
     [ToolboxItem(true)]
     public sealed class MaterialProgressBar : Control {
         private int _value;
-        private float _displayValue;
-        private readonly Timer _tween;
+        private readonly AnimatedValue _fill;
 
         public MaterialProgressBar() {
             SetStyle(
@@ -26,8 +25,7 @@ namespace Material3.WinForms.Controls {
             );
             Height = ComponentSizes.LinearProgressHeight;
             BackColor = Color.Transparent;
-            _tween = new Timer { Interval = 16 };
-            _tween.Tick += OnTweenTick;
+            _fill = new AnimatedValue(this, factor: 0.22f, threshold: 0.1f);
             ThemeHook.Attach(this, Invalidate);
         }
 
@@ -56,34 +54,19 @@ namespace Material3.WinForms.Controls {
                     return;
                 }
                 _value = normalized;
+                // No timer ticks in the designer; show the value immediately instead of an empty bar.
                 if (DesignMode) {
-                    // No timer runs in the designer; show the value immediately instead of an empty bar.
-                    _displayValue = _value;
-                    Invalidate();
+                    _fill.SnapTo(_value);
                 }
-                else if (!_tween.Enabled) {
-                    _tween.Start();
+                else {
+                    _fill.To(_value);
                 }
             }
-        }
-
-        private void OnTweenTick(object? sender, EventArgs e) {
-            // Exponential approach: each frame closes ~22% of remaining distance — settles in ~250ms.
-            float delta = _value - _displayValue;
-            if (Math.Abs(delta) < 0.1f) {
-                _displayValue = _value;
-                _tween.Stop();
-            }
-            else {
-                _displayValue += delta * 0.22f;
-            }
-            Invalidate();
         }
 
         protected override void Dispose(bool disposing) {
             if (disposing) {
-                _tween.Stop();
-                _tween.Dispose();
+                _fill.Dispose();
             }
             base.Dispose(disposing);
         }
@@ -103,7 +86,7 @@ namespace Material3.WinForms.Controls {
                 return;
             }
 
-            float fraction = _displayValue / 100f;
+            float fraction = _fill.Current / 100f;
             int trackGapReserve = Dpi.Scale(this, 6);
             int gapPx = Dpi.Scale(this, 4);
             int indicatorWidth = (int)Math.Round((width - trackGapReserve) * fraction);

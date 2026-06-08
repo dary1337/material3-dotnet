@@ -7,6 +7,14 @@ namespace Material3.WinForms.Tokens {
     /// web/Android implementations of the spec.
     /// </summary>
     public static class Motion {
+        /// <summary>Master switch for control animations — handle/thumb/fill tweens, switch and checkbox
+        /// glides, the indeterminate spinner. Set false for reduced-motion or deterministic tests; controls
+        /// then snap straight to their target instead of easing. Default true.
+        /// <para>Read on the UI thread at each animation frame: turning it off settles any in-flight glide
+        /// on the next frame. Turning it back on resumes easing on the next state change (an idle control
+        /// won't restart on its own), so set it before animations begin if you can.</para></summary>
+        public static bool AnimationsEnabled { get; set; } = true;
+
         // Durations (ms)
         public const int Short1 = 50;
         public const int Short2 = 100;

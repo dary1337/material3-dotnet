@@ -291,24 +291,37 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        private (string, Font, int, MaterialButtonVariant, bool) _prefKey;
+        private Size _prefSize;
+        private bool _prefValid;
+
+        // Cached: layout calls GetPreferredSize several times per pass, each opening a device context.
         public override Size GetPreferredSize(Size proposedSize) {
+            string text = Text ?? string.Empty;
+            bool hasIcon = _iconImage != null || !string.IsNullOrEmpty(_iconGlyph);
+            var key = (text, Font, DeviceDpi, _variant, hasIcon);
+            if (_prefValid && _prefKey.Equals(key)) {
+                return _prefSize;
+            }
+
             // Text buttons have no fill, so a tighter padding keeps inline link buttons compact.
             int horizontalPadding = Dpi.Scale(this, _variant == MaterialButtonVariant.Text ? 16 : 34);
             int iconPx = Dpi.Scale(this, 18);
             int iconGap = Dpi.Scale(this, 8);
-            string text = Text ?? string.Empty;
 
             using (Graphics g = CreateGraphics()) {
-                int textWidth = string.IsNullOrEmpty(text)
+                int textWidth = text.Length == 0
                     ? 0
                     : (int)Math.Ceiling(g.MeasureString(text, Font, int.MaxValue, StringFormat.GenericTypographic).Width);
-                bool hasIcon = _iconImage != null || !string.IsNullOrEmpty(_iconGlyph);
                 int iconWidth = !hasIcon
                     ? 0
-                    : iconPx + (string.IsNullOrEmpty(text) ? 0 : iconGap);
+                    : iconPx + (text.Length == 0 ? 0 : iconGap);
                 int width = horizontalPadding + iconWidth + textWidth + SurfaceInset * 2;
                 int height = Math.Max(Dpi.Scale(this, ComponentSizes.ButtonHeight), Font.Height + Dpi.Scale(this, 16)) + SurfaceInset * 2;
-                return new Size(width, height);
+                _prefKey = key;
+                _prefSize = new Size(width, height);
+                _prefValid = true;
+                return _prefSize;
             }
         }
 

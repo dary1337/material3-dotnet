@@ -20,8 +20,7 @@ namespace Material3.WinForms.Controls {
         private CheckState _state = CheckState.Unchecked;
         private bool _hovered;
         private bool _pressed;
-        private float _markProgress;
-        private readonly Timer _tween;
+        private readonly AnimatedValue _mark;
 
         public event EventHandler? CheckedChanged;
 
@@ -37,8 +36,7 @@ namespace Material3.WinForms.Controls {
             Cursor = MaterialCursors.Pointer;
             Size = new Size(140, 28);
             TabStop = true;
-            _tween = new Timer { Interval = 16 };
-            _tween.Tick += OnTweenTick;
+            _mark = new AnimatedValue(this, factor: 0.3f, threshold: 0.05f);
             ThemeHook.Attach(this, Invalidate);
         }
 
@@ -60,36 +58,34 @@ namespace Material3.WinForms.Controls {
                     return;
                 }
                 _state = value;
-                if (!_tween.Enabled) {
-                    _tween.Start();
-                }
+                _mark.To(_state == CheckState.Unchecked ? 0f : 1f);
                 CheckedChanged?.Invoke(this, EventArgs.Empty);
                 Invalidate();
             }
         }
 
-        private void OnTweenTick(object? sender, EventArgs e) {
-            float target = _state == CheckState.Unchecked ? 0f : 1f;
-            float delta = target - _markProgress;
-            if (Math.Abs(delta) < 0.05f) {
-                _markProgress = target;
-                _tween.Stop();
-            }
-            else {
-                _markProgress += delta * 0.3f;
-            }
-            Invalidate();
-        }
+        private string? _prefText;
+        private int _prefDpi = -1;
+        private Size _prefSize;
 
+        // Cached: the layout engine calls GetPreferredSize several times per pass, and each measure
+        // opens a device context (CreateGraphics). Recompute only when the text or DPI actually changes.
         public override Size GetPreferredSize(Size proposedSize) {
+            string text = Text ?? string.Empty;
+            if (_prefDpi == DeviceDpi && _prefText == text) {
+                return _prefSize;
+            }
             int width = Dpi.Scale(this, BoxSize + 10);
-            if (!string.IsNullOrEmpty(Text)) {
+            if (text.Length > 0) {
                 using (Graphics g = CreateGraphics()) {
                     width += Dpi.Scale(this, LabelGap) + (int)Math.Ceiling(
-                        g.MeasureString(Text, MaterialType.BodyMedium, int.MaxValue, StringFormat.GenericTypographic).Width);
+                        g.MeasureString(text, MaterialType.BodyMedium, int.MaxValue, StringFormat.GenericTypographic).Width);
                 }
             }
-            return new Size(width, Dpi.Scale(this, 28));
+            _prefText = text;
+            _prefDpi = DeviceDpi;
+            _prefSize = new Size(width, Dpi.Scale(this, 28));
+            return _prefSize;
         }
 
         protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); _hovered = true; Invalidate(); }
@@ -174,16 +170,17 @@ namespace Material3.WinForms.Controls {
                 }
             }
 
-            if (marked && _markProgress > 0.05f) {
+            float markProgress = _mark.Current;
+            if (marked && markProgress > 0.05f) {
                 using (var pen = new Pen(mark, Dpi.Scale(this, 2f))) {
                     pen.StartCap = LineCap.Round;
                     pen.EndCap = LineCap.Round;
                     pen.LineJoin = LineJoin.Round;
                     float bx = box.X + boxSize / 2f;
                     float by = box.Y + boxSize / 2f;
-                    float s = boxSize * 0.28f * _markProgress;
+                    float s = boxSize * 0.28f * markProgress;
                     if (_state == CheckState.Indeterminate) {
-                        float half = boxSize * 0.28f * _markProgress;
+                        float half = boxSize * 0.28f * markProgress;
                         g.DrawLine(pen, bx - half, by, bx + half, by);
                     }
                     else {
@@ -209,8 +206,7 @@ namespace Material3.WinForms.Controls {
 
         protected override void Dispose(bool disposing) {
             if (disposing) {
-                _tween.Stop();
-                _tween.Dispose();
+                _mark.Dispose();
             }
             base.Dispose(disposing);
         }

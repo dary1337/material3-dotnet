@@ -23,21 +23,40 @@ namespace Material3.WinForms.Controls {
         }
 
         // GDI+ DrawString measures a few px wider than the base TextRenderer AutoSize, so take the wider Width or our render wraps and drops text. Height stays from the base, which doesn't puff vertically.
+        private (string, Font, int, int, bool) _prefKey;
+        private Size _prefSize;
+        private bool _prefValid;
+
+        // Cached: re-measuring allocates a Bitmap + Graphics + StringFormat each call, and layout asks
+        // repeatedly. Keyed on text, font, DPI, proposed width (wrapping) and AutoEllipsis (it toggles
+        // NoWrap/Trimming in BuildFormat, which changes the measured width).
         public override Size GetPreferredSize(Size proposedSize) {
+            string text = Text ?? string.Empty;
+            var key = (text, Font, DeviceDpi, proposedSize.Width, AutoEllipsis);
+            if (_prefValid && _prefKey.Equals(key)) {
+                return _prefSize;
+            }
             Size baseSize = base.GetPreferredSize(proposedSize);
-            if (string.IsNullOrEmpty(Text)) {
-                return baseSize;
+            Size result;
+            if (text.Length == 0) {
+                result = baseSize;
             }
-            using (var bitmap = new Bitmap(1, 1))
-            using (Graphics g = Graphics.FromImage(bitmap))
-            using (var format = BuildFormat()) {
-                g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
-                SizeF layout = proposedSize.Width > 0 && proposedSize.Width < int.MaxValue
-                    ? new SizeF(proposedSize.Width, int.MaxValue)
-                    : new SizeF(float.MaxValue, float.MaxValue);
-                int gdiPlusWidth = (int)Math.Ceiling(g.MeasureString(Text, Font, layout, format).Width);
-                return new Size(Math.Max(baseSize.Width, gdiPlusWidth + 1), baseSize.Height);
+            else {
+                using (var bitmap = new Bitmap(1, 1))
+                using (Graphics g = Graphics.FromImage(bitmap))
+                using (var format = BuildFormat()) {
+                    g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+                    SizeF layout = proposedSize.Width > 0 && proposedSize.Width < int.MaxValue
+                        ? new SizeF(proposedSize.Width, int.MaxValue)
+                        : new SizeF(float.MaxValue, float.MaxValue);
+                    int gdiPlusWidth = (int)Math.Ceiling(g.MeasureString(text, Font, layout, format).Width);
+                    result = new Size(Math.Max(baseSize.Width, gdiPlusWidth + 1), baseSize.Height);
+                }
             }
+            _prefKey = key;
+            _prefSize = result;
+            _prefValid = true;
+            return result;
         }
 
         protected override void OnPaint(PaintEventArgs e) {

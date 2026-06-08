@@ -2,16 +2,37 @@
 
 [![NuGet](https://img.shields.io/nuget/v/Material3.WinForms?logo=nuget)](https://www.nuget.org/packages/Material3.WinForms)
 [![Download the gallery demo](https://img.shields.io/badge/Download-Gallery%20demo-2962FF?logo=windows&logoColor=white)](https://github.com/dary1337/material3-winforms/releases/latest/download/Material3.Gallery.exe)
+[![GitHub stars](https://img.shields.io/github/stars/dary1337/material3-winforms?style=social)](https://github.com/dary1337/material3-winforms)
 
-**Material 3 (Material You) for Windows Forms** — design tokens and owner-drawn controls with
-dynamic color from a seed, light/dark themes with runtime switching, the full M3 type scale,
-elevation, state layers and motion tokens.
+**Material 3 (Material You) for Windows Forms** — drop-in design tokens and owner-drawn controls.
+Dynamic color from a single seed, runtime light/dark switching, the full M3 type scale, elevation,
+state layers and motion. No mandatory base form, no native dependencies.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/dynamic-color.gif" alt="Dragging the seed hue recolors the whole palette live in the Material 3 gallery" width="820">
+</p>
+<p align="center"><sub>Drag the seed hue — the entire palette recolors live through the HCT pipeline.</sub></p>
 
 Existing "Material for WinForms" libraries implement Material **2** and are largely unmaintained.
 This project targets the current spec: HCT tonal palettes, color roles, surface containers and
 the 2023+ component look.
 
-> Status: **preview (0.3)**. Foundation and the core component catalog are complete.
+> Status: **preview (0.5)**. Foundation and the core component catalog are complete.
+
+## Screenshots
+
+The same gallery pages in **light and dark** — every control follows the active scheme.
+Rows: color roles · buttons & FAB · selection · cards & lists · overlays & pickers.
+
+| Light | Dark |
+|:---:|:---:|
+| ![Color roles, light theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/color-roles-light.webp) | ![Color roles, dark theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/color-roles-dark.webp) |
+| ![Buttons & FAB, light theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/buttons-light.webp) | ![Buttons & FAB, dark theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/buttons-dark.webp) |
+| ![Selection controls, light theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/selection-light.webp) | ![Selection controls, dark theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/selection-dark.webp) |
+| ![Cards & lists, light theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/cards-lists-light.webp) | ![Cards & lists, dark theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/cards-lists-dark.webp) |
+| ![Overlays & pickers, light theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/overlays-light.webp) | ![Overlays & pickers, dark theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/overlays-dark.webp) |
+
+<sub>Screenshots and demos captured on **v0.5** with the *Platinum* seed.</sub>
 
 ## Features
 

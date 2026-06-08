@@ -18,13 +18,17 @@ namespace Material3.WinForms.Controls {
         private string _title = string.Empty;
         private string _description = string.Empty;
         private string? _accentSuffix;
+        private Func<Color>? _accentContainer;
+        private Func<Color>? _accentContent;
+        private Func<Color>? _accentOutline;
+        private string _accentChipText = string.Empty;
+        private string? _accentChipGlyph;
         private Image? _customIcon;
         private string _fallbackGlyph = MaterialIcons.DeployedCode;
         private string _detailText = string.Empty;
         private bool _selected;
         private bool _hovered;
-        private float _selectionProgress;
-        private readonly Timer _selectionTween;
+        private readonly AnimatedValue _selection;
 
         private const int IconBox = 40;
         private const int RadioArea = 44;
@@ -41,8 +45,7 @@ namespace Material3.WinForms.Controls {
             Cursor = MaterialCursors.Pointer;
             UpdateSurface();
 
-            _selectionTween = new Timer { Interval = 16 };
-            _selectionTween.Tick += OnSelectionTweenTick;
+            _selection = new AnimatedValue(this, factor: 0.22f, threshold: 0.01f);
 
             Click += (s, e) => SelectCard();
             ThemeHook.Attach(this, UpdateSurface);
@@ -79,23 +82,9 @@ namespace Material3.WinForms.Controls {
             Height = min;
         }
 
-        private void OnSelectionTweenTick(object? sender, EventArgs e) {
-            float target = _selected ? 1f : 0f;
-            float delta = target - _selectionProgress;
-            if (Math.Abs(delta) < 0.01f) {
-                _selectionProgress = target;
-                _selectionTween.Stop();
-            }
-            else {
-                _selectionProgress += delta * 0.22f;
-            }
-            Invalidate();
-        }
-
         protected override void Dispose(bool disposing) {
             if (disposing) {
-                _selectionTween.Stop();
-                _selectionTween.Dispose();
+                _selection.Dispose();
             }
             base.Dispose(disposing);
         }
@@ -137,6 +126,34 @@ namespace Material3.WinForms.Controls {
             set { _accentSuffix = value; Invalidate(); }
         }
 
+        /// <summary>Shows a colored chip after the title (e.g. a Warning "needs update"). Independent
+        /// of <see cref="AccentSuffix"/>; <see cref="ClearAccentChip"/> removes the chip entirely.</summary>
+        public void SetAccentChip(string text, Color container, Color content, Color? outline = null, string? glyph = null) {
+            Color? frozenOutline = outline;
+            SetAccentChip(text, () => container, () => content,
+                frozenOutline.HasValue ? () => frozenOutline.Value : (Func<Color>?)null, glyph);
+        }
+
+        /// <summary>Color-getter overload: pass theme roles (e.g. <c>() =&gt; MaterialColors.WarningContainer</c>)
+        /// so the chip re-reads them each paint and tracks light/dark and seed changes.</summary>
+        public void SetAccentChip(string text, Func<Color> container, Func<Color> content, Func<Color>? outline = null, string? glyph = null) {
+            _accentChipText = text ?? string.Empty;
+            _accentContainer = container ?? throw new ArgumentNullException(nameof(container));
+            _accentContent = content ?? throw new ArgumentNullException(nameof(content));
+            _accentOutline = outline;
+            _accentChipGlyph = string.IsNullOrEmpty(glyph) ? null : glyph;
+            Invalidate();
+        }
+
+        public void ClearAccentChip() {
+            _accentContainer = null;
+            _accentContent = null;
+            _accentOutline = null;
+            _accentChipText = string.Empty;
+            _accentChipGlyph = null;
+            Invalidate();
+        }
+
         [Category("Material Design")]
         [Description("Leading icon image; overrides the fallback glyph when set.")]
         [DefaultValue(null)]
@@ -158,7 +175,7 @@ namespace Material3.WinForms.Controls {
                 return;
             }
             _selected = true;
-            _selectionTween.Start();
+            _selection.To(1f);
             UpdateSurface();
             SelectedChanged?.Invoke(this);
         }
@@ -168,7 +185,7 @@ namespace Material3.WinForms.Controls {
                 return;
             }
             _selected = selected;
-            _selectionTween.Start();
+            _selection.To(_selected ? 1f : 0f);
             UpdateSurface();
         }
 
@@ -243,7 +260,25 @@ namespace Material3.WinForms.Controls {
                     g.DrawString(_title, MaterialType.TitleMedium, brush,
                         new RectangleF(textLeft, titleY, textRight - detailWidth - textLeft, Dpi.Scale(this, 22)), nearFmt);
                 }
-                if (!string.IsNullOrEmpty(_accentSuffix)) {
+                if (_accentContainer != null && _accentContent != null && !string.IsNullOrEmpty(_accentChipText)) {
+                    // Resolve colors per paint so the chip tracks the theme; the shared resolver applies
+                    // the disabled-muting policy so every chip host stays inert the same way.
+                    var chipStyle = ChipRenderer.ResolveAccent(
+                        _accentContainer(), _accentContent(), _accentOutline?.Invoke(), Enabled);
+                    var chipMetrics = new ChipRenderer.Metrics {
+                        Height = Dpi.Scale(this, 20),
+                        PadX = Dpi.Scale(this, 8),
+                        IconPx = Dpi.Scale(this, 13),
+                        IconGap = Dpi.Scale(this, 4),
+                        OutlineWidth = Dpi.Scale(this, 1f),
+                        Font = MaterialType.LabelMedium,
+                    };
+                    int chipWidth = ChipRenderer.Measure(g, _accentChipText, _accentChipGlyph != null, chipMetrics);
+                    int chipX = (int)(textLeft + titleSize.Width) + Dpi.Scale(this, 6);
+                    int chipY = (int)titleY + (Dpi.Scale(this, 22) - chipMetrics.Height) / 2;
+                    ChipRenderer.Draw(g, _accentChipText, _accentChipGlyph, null, chipStyle, chipMetrics, chipX, chipY, chipWidth);
+                }
+                else if (!string.IsNullOrEmpty(_accentSuffix)) {
                     using (var brush = new SolidBrush(MaterialColors.Primary)) {
                         g.DrawString(" · " + _accentSuffix, MaterialType.LabelMedium, brush,
                             new RectangleF(textLeft + titleSize.Width, titleY + Dpi.Scale(this, 1f), Dpi.Scale(this, 200), Dpi.Scale(this, 20)), nearFmt);
@@ -270,12 +305,13 @@ namespace Material3.WinForms.Controls {
             int cx = Width - Dpi.Scale(this, RadioArea) / 2 - Dpi.Scale(this, 2);
             int cy = Height / 2;
             var outer = new Rectangle(cx - diameter / 2, cy - diameter / 2, diameter, diameter);
-            Color ringColor = ColorScheme.Overlay(MaterialColors.Outline, MaterialColors.Primary, _selectionProgress);
+            float selectionProgress = _selection.Current;
+            Color ringColor = ColorScheme.Overlay(MaterialColors.Outline, MaterialColors.Primary, selectionProgress);
             using (var pen = new Pen(ringColor, Dpi.Scale(this, 2f))) {
                 g.DrawEllipse(pen, outer);
             }
-            if (_selectionProgress > 0.01f) {
-                float innerDiameter = Dpi.Scale(this, 10f) * _selectionProgress;
+            if (selectionProgress > 0.01f) {
+                float innerDiameter = Dpi.Scale(this, 10f) * selectionProgress;
                 var inner = new RectangleF(cx - innerDiameter / 2f, cy - innerDiameter / 2f, innerDiameter, innerDiameter);
                 using (var brush = new SolidBrush(MaterialColors.Primary)) {
                     g.FillEllipse(brush, inner);

@@ -29,7 +29,6 @@ namespace Material3.WinForms.Controls {
         private const int OutlinedRadius = Shape.ExtraSmall;
 
         private readonly TextBox _editor;
-        private readonly Timer _floatTween;
         private MaterialTextFieldVariant _variant = MaterialTextFieldVariant.Filled;
         private string _labelText = string.Empty;
         private string _supportingText = string.Empty;
@@ -40,8 +39,7 @@ namespace Material3.WinForms.Controls {
         private bool _hovered;
 
         // 0 = label resting in the field, 1 = floated to the top. Animated on focus/content change.
-        private float _floatProgress;
-        private float _floatTarget;
+        private readonly AnimatedValue _float;
 
         /// <summary>Raised when the trailing icon is clicked (e.g. clear or visibility toggle).</summary>
         public event EventHandler? TrailingIconClick;
@@ -70,8 +68,7 @@ namespace Material3.WinForms.Controls {
             _editor.Visible = false;
             Controls.Add(_editor);
 
-            _floatTween = new Timer { Interval = 16 };
-            _floatTween.Tick += OnFloatTick;
+            _float = new AnimatedValue(this, factor: 0.25f, threshold: 0.04f);
 
             Click += (s, e) => ActivateEditor();
             ThemeHook.Attach(this, ApplyTheme);
@@ -184,14 +181,7 @@ namespace Material3.WinForms.Controls {
 
         private void UpdateFloatTarget() {
             SyncEditorVisibility();
-            float target = IsPopulated ? 1f : 0f;
-            if (Math.Abs(target - _floatTarget) < 0.001f) {
-                return;
-            }
-            _floatTarget = target;
-            if (!_floatTween.Enabled) {
-                _floatTween.Start();
-            }
+            _float.To(IsPopulated ? 1f : 0f);
         }
 
         // The opaque editor window would hide the painted resting label, so it only becomes visible once the field is active.
@@ -217,18 +207,6 @@ namespace Material3.WinForms.Controls {
             ActivateEditor();
         }
 
-        private void OnFloatTick(object? sender, EventArgs e) {
-            float delta = _floatTarget - _floatProgress;
-            if (Math.Abs(delta) < 0.04f) {
-                _floatProgress = _floatTarget;
-                _floatTween.Stop();
-            }
-            else {
-                // Exponential approach ≈ M3 short4 duration at 60fps.
-                _floatProgress += delta * 0.25f;
-            }
-            Invalidate();
-        }
 
         private void ApplyTheme() {
             BackColor = ResolveParentColor();
@@ -410,7 +388,7 @@ namespace Material3.WinForms.Controls {
             Font restFont = MaterialType.BodyLarge;
             Font floatFont = MaterialType.BodySmall;
 
-            float t = (float)Motion.Standard.Evaluate(_floatProgress);
+            float t = (float)Motion.Standard.Evaluate(_float.Current);
 
             SizeF floatSize = g.MeasureString(_labelText, floatFont, int.MaxValue, StringFormat.GenericTypographic);
 
@@ -476,8 +454,7 @@ namespace Material3.WinForms.Controls {
 
         protected override void Dispose(bool disposing) {
             if (disposing) {
-                _floatTween.Stop();
-                _floatTween.Dispose();
+                _float.Dispose();
             }
             base.Dispose(disposing);
         }

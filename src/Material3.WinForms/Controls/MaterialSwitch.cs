@@ -26,8 +26,7 @@ namespace Material3.WinForms.Controls {
         private bool _checked;
         private bool _hovered;
         private bool _pressed;
-        private float _progress; // 0 = off, 1 = on; animated
-        private readonly Timer _tween;
+        private readonly AnimatedValue _thumb; // 0 = off, 1 = on
 
         public event EventHandler? CheckedChanged;
 
@@ -43,8 +42,7 @@ namespace Material3.WinForms.Controls {
             Cursor = MaterialCursors.Pointer;
             Size = new Size(TrackWidth, ControlHeight);
             TabStop = true;
-            _tween = new Timer { Interval = 16 };
-            _tween.Tick += OnTweenTick;
+            _thumb = new AnimatedValue(this, factor: 0.28f, threshold: 0.03f);
             ThemeHook.Attach(this, Invalidate);
         }
 
@@ -58,36 +56,33 @@ namespace Material3.WinForms.Controls {
                     return;
                 }
                 _checked = value;
-                if (!_tween.Enabled) {
-                    _tween.Start();
-                }
+                _thumb.To(_checked ? 1f : 0f);
                 CheckedChanged?.Invoke(this, EventArgs.Empty);
                 Invalidate();
             }
         }
 
-        private void OnTweenTick(object? sender, EventArgs e) {
-            float target = _checked ? 1f : 0f;
-            float delta = target - _progress;
-            if (Math.Abs(delta) < 0.03f) {
-                _progress = target;
-                _tween.Stop();
-            }
-            else {
-                _progress += delta * 0.28f;
-            }
-            Invalidate();
-        }
+        private string? _prefText;
+        private int _prefDpi = -1;
+        private Size _prefSize;
 
+        // Cached: layout calls this several times per pass and each measure opens a device context.
         public override Size GetPreferredSize(Size proposedSize) {
+            string text = Text ?? string.Empty;
+            if (_prefDpi == DeviceDpi && _prefText == text) {
+                return _prefSize;
+            }
             int width = Dpi.Scale(this, TrackWidth);
-            if (!string.IsNullOrEmpty(Text)) {
+            if (text.Length > 0) {
                 using (Graphics g = CreateGraphics()) {
                     width += Dpi.Scale(this, LabelGap) + (int)Math.Ceiling(
-                        g.MeasureString(Text, MaterialType.BodyMedium, int.MaxValue, StringFormat.GenericTypographic).Width);
+                        g.MeasureString(text, MaterialType.BodyMedium, int.MaxValue, StringFormat.GenericTypographic).Width);
                 }
             }
-            return new Size(width, Dpi.Scale(this, ControlHeight));
+            _prefText = text;
+            _prefDpi = DeviceDpi;
+            _prefSize = new Size(width, Dpi.Scale(this, ControlHeight));
+            return _prefSize;
         }
 
         protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); _hovered = true; Invalidate(); }
@@ -137,7 +132,7 @@ namespace Material3.WinForms.Controls {
             int trackHeight = Dpi.Scale(this, TrackHeight);
             int trackY = (Height - trackHeight) / 2;
             var track = new Rectangle(0, trackY, trackWidth, trackHeight);
-            float t = (float)Motion.Standard.Evaluate(_progress);
+            float t = (float)Motion.Standard.Evaluate(_thumb.Current);
 
             Color trackFill;
             Color trackOutline;
@@ -210,8 +205,7 @@ namespace Material3.WinForms.Controls {
 
         protected override void Dispose(bool disposing) {
             if (disposing) {
-                _tween.Stop();
-                _tween.Dispose();
+                _thumb.Dispose();
             }
             base.Dispose(disposing);
         }

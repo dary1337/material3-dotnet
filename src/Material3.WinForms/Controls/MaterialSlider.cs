@@ -18,6 +18,7 @@ namespace Material3.WinForms.Controls {
         private int _minimum;
         private int _maximum = 100;
         private int _value;
+        private readonly AnimatedValue _handle;
         private bool _dragging;
         private bool _hovered;
 
@@ -37,6 +38,17 @@ namespace Material3.WinForms.Controls {
             Cursor = MaterialCursors.Pointer;
             TabStop = true;
             ThemeHook.Attach(this, Invalidate);
+
+            // The handle eases toward the value instead of snapping, so dragging and click-to-position
+            // glide. ValueChanged still fires immediately.
+            _handle = new AnimatedValue(this, factor: 0.4f, threshold: 0.5f);
+        }
+
+        protected override void Dispose(bool disposing) {
+            if (disposing) {
+                _handle.Dispose();
+            }
+            base.Dispose(disposing);
         }
 
         // Own the height so the DPI-scaled halo isn't clipped: AutoScale only sizes controls present at the form's scaling pass.
@@ -81,6 +93,14 @@ namespace Material3.WinForms.Controls {
         }
 
         [Category("Material Design")]
+        [Description("When true, the handle eases toward the value; when false, it snaps immediately.")]
+        [DefaultValue(true)]
+        public bool Animated {
+            get => _handle.Animated;
+            set => _handle.Animated = value;
+        }
+
+        [Category("Material Design")]
         [Description("The current slider value within the range.")]
         [DefaultValue(0)]
         public int Value {
@@ -92,6 +112,7 @@ namespace Material3.WinForms.Controls {
                 }
                 _value = clamped;
                 ValueChanged?.Invoke(this, EventArgs.Empty);
+                _handle.To(_value);
                 Invalidate();
             }
         }
@@ -203,7 +224,8 @@ namespace Material3.WinForms.Controls {
             int stateLayerRadius = Dpi.Scale(this, StateLayerRadius);
             int trackWidth = Math.Max(1, Width - handleRadius * 2);
             int cy = Height / 2;
-            double fraction = _maximum > _minimum ? (double)(_value - _minimum) / (_maximum - _minimum) : 0.0;
+            double fraction = _maximum > _minimum ? (_handle.Current - _minimum) / (_maximum - _minimum) : 0.0;
+            fraction = Math.Max(0.0, Math.Min(1.0, fraction));
             int handleX = handleRadius + (int)Math.Round(fraction * trackWidth);
 
             var inactive = new Rectangle(handleRadius, cy - trackHeight / 2, trackWidth, trackHeight);

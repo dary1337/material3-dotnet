@@ -27,8 +27,18 @@ namespace Material3.Gallery {
         private readonly MaterialButton _modeToggle;
         private readonly DropdownSelect _seedSelect;
         private readonly DropdownSelect _variantSelect;
+        private readonly SoftLabel _hueLabel;
+        private readonly MaterialSlider _hueSlider;
         private readonly List<RoundedButton> _navButtons = new List<RoundedButton>();
         private readonly Timer _relayout;
+        private readonly Timer _navDebounce;
+        private readonly Timer _hueThrottle;
+        private int _pendingHue = -1;
+        private int _appliedHue = -1;
+        private Color? _currentSeed;
+        private bool _syncingHue;
+        private bool _builtDark;
+        private string? _pendingPage;
         private int _lastContentWidth = -1;
         private string _currentPage = PageColors;
 
@@ -86,13 +96,54 @@ namespace Material3.Gallery {
             _seedSelect.AddItem("Deep purple", BaselineSeed);
             _seedSelect.AddItem("Crimson", Color.FromArgb(0xC6, 0x28, 0x3C));
             _seedSelect.AddItem("Amber", Color.FromArgb(0xFF, 0xB3, 0x00));
-            _seedSelect.SelectedIndexChanged += (s, e) => RebuildTheme();
+            _seedSelect.SelectedIndexChanged += (s, e) => {
+                if (_seedSelect.SelectedTag is Color seed) {
+                    _currentSeed = seed;
+                    SyncHueSliderTo(seed);
+                    ApplySeed();
+                }
+            };
 
             _variantSelect = new DropdownSelect();
             _variantSelect.AddItem("Neutral", SchemeVariant.Neutral);
             _variantSelect.AddItem("Tonal spot (M3 default)", SchemeVariant.TonalSpot);
             _variantSelect.AddItem("Vibrant", SchemeVariant.Vibrant);
-            _variantSelect.SelectedIndexChanged += (s, e) => RebuildTheme();
+            _variantSelect.SelectedIndexChanged += (s, e) => ApplySeed();
+
+            _hueLabel = new SoftLabel {
+                Text = "Seed hue — drag to recolor",
+                Font = MaterialType.LabelMedium,
+                ForeColor = MaterialColors.OnSurfaceVariant,
+                // Fixed single-line bounds (AutoSize fights the L+R anchor); ellipsize rather than wrap
+                // so it stays tight to the slider and never clips a second line in a narrow rail.
+                AutoSize = false,
+                AutoEllipsis = true,
+            };
+            _hueSlider = new MaterialSlider { Minimum = 0, Maximum = 360, Value = (int)BaselineSeed.GetHue(), Animated = false };
+
+            // Apply the recolor ~30×/s, not once per pixel: the full-window repaint is what starved the
+            // slider's own paint. Stops itself when no new hue arrived since the last tick.
+            _hueThrottle = new Timer { Interval = 33 };
+            _hueThrottle.Tick += (s, e) => {
+                if (_pendingHue == _appliedHue) {
+                    _hueThrottle.Stop();
+                    return;
+                }
+                _appliedHue = _pendingHue;
+                _currentSeed = HueToSeed(_appliedHue);
+                ApplySeed();
+            };
+            // Don't recolor on the move itself — just record it; the throttle applies it. This keeps the
+            // mouse-move cheap (only the thumb repaints), so it stays under the cursor during a fast drag.
+            _hueSlider.ValueChanged += (s, e) => {
+                if (_syncingHue) {
+                    return; // programmatic move to match a picked preset — don't recolor from it
+                }
+                _pendingHue = _hueSlider.Value;
+                if (!_hueThrottle.Enabled) {
+                    _hueThrottle.Start();
+                }
+            };
 
             // Content wrap forwards edge hit-tests so resize works over the client area.
             // Inset the content from the window's rounded edges so controls don't ride the border.
@@ -114,6 +165,44 @@ namespace Material3.Gallery {
 
             _relayout = new Timer { Interval = 90 };
             _relayout.Tick += (s, e) => { _relayout.Stop(); RebuildCurrentPage(); };
+
+            // Coalesce rapid tab clicks: highlight immediately, but only build the page the user lands on.
+            _navDebounce = new Timer { Interval = 60 };
+            _navDebounce.Tick += (s, e) => {
+                _navDebounce.Stop();
+                if (_pendingPage != null && _pendingPage != _currentPage) {
+                    ShowPage(_pendingPage);
+                }
+            };
+        }
+
+        private SchemeVariant CurrentVariant() =>
+            _variantSelect.SelectedTag is SchemeVariant v ? v : SchemeVariant.TonalSpot;
+
+        // Fixed saturation/value gives a pleasant, vivid-enough seed across the whole wheel.
+        private static Color HueToSeed(int hue) => HsvToColor(((hue % 360) + 360) % 360, 0.70, 0.85);
+
+        private static Color HsvToColor(double h, double s, double v) {
+            double c = v * s;
+            double x = c * (1 - Math.Abs(h / 60.0 % 2 - 1));
+            double m = v - c;
+            double r, g, b;
+            if (h < 60) { r = c; g = x; b = 0; }
+            else if (h < 120) { r = x; g = c; b = 0; }
+            else if (h < 180) { r = 0; g = c; b = x; }
+            else if (h < 240) { r = 0; g = x; b = c; }
+            else if (h < 300) { r = x; g = 0; b = c; }
+            else { r = c; g = 0; b = x; }
+            return Color.FromArgb((int)Math.Round((r + m) * 255), (int)Math.Round((g + m) * 255), (int)Math.Round((b + m) * 255));
+        }
+
+        private void RequestPage(string page) {
+            _pendingPage = page;
+            foreach (RoundedButton b in _navButtons) {
+                StyleNavButton(b, (string)b.Tag! == page);
+            }
+            _navDebounce.Stop();
+            _navDebounce.Start();
         }
 
         protected override void OnShown(EventArgs e) {
@@ -146,25 +235,56 @@ namespace Material3.Gallery {
             ThemeManager.ThemeChanged -= OnThemeChanged;
             _relayout.Stop();
             _relayout.Dispose();
+            _navDebounce.Stop();
+            _navDebounce.Dispose();
+            _hueThrottle.Stop();
+            _hueThrottle.Dispose();
             base.OnFormClosed(e);
         }
 
-        private void OnThemeChanged(object? sender, EventArgs e) {
-            ApplyThemeToChrome();
-            // Swatch tiles and type samples bake their colours at build time; rebuild to re-read them.
-            ShowPage(_currentPage);
+        private const int WS_EX_COMPOSITED = 0x02000000;
+
+        protected override CreateParams CreateParams {
+            get {
+                // Composite the window so a theme switch repaints in one frame, not a per-control sweep.
+                // Costs a little scroll throughput — accepted here; consumers opt in on their own forms.
+                CreateParams cp = base.CreateParams;
+                cp.ExStyle |= WS_EX_COMPOSITED;
+                return cp;
+            }
         }
 
-        private void RebuildTheme() {
-            if (_seedSelect.SelectedTag is Color seed && _variantSelect.SelectedTag is SchemeVariant variant) {
-                ThemeManager.Theme = MaterialTheme.FromSeed(seed, variant);
+        private void OnThemeChanged(object? sender, EventArgs e) {
+            // Rebuild only on a light/dark flip: content labels bake their ForeColor, while a same-mode
+            // hue drag recolors live via ThemeHook (no rebuild — that drag fires ~30×/s).
+            ApplyThemeToChrome();
+            if (_builtDark != ThemeManager.IsDark) {
+                _builtDark = ThemeManager.IsDark;
+                ShowPage(_currentPage);
             }
+        }
+
+        // Single seed source: a variant change re-applies the active seed instead of snapping to the preset.
+        private void ApplySeed() {
+            Color seed = _currentSeed ?? (_seedSelect.SelectedTag as Color? ?? BaselineSeed);
+            ThemeManager.Theme = MaterialTheme.FromSeed(seed, CurrentVariant());
+        }
+
+        // Move the thumb to the preset's hue; the guard stops ValueChanged from re-recoloring from it.
+        private void SyncHueSliderTo(Color seed) {
+            _syncingHue = true;
+            int hue = (int)Math.Round(seed.GetHue());
+            _hueSlider.Value = hue;
+            _pendingHue = _appliedHue = hue;
+            _syncingHue = false;
         }
 
         private void ApplyThemeToChrome() {
             BackColor = MaterialColors.Surface;
             _nav.BackColor = MaterialColors.Surface;
             _content.BackColor = MaterialColors.Surface;
+            // The hue label is in the nav, not the rebuilt content page, so refresh its baked ForeColor here.
+            _hueLabel.ForeColor = MaterialColors.OnSurfaceVariant;
             foreach (RoundedButton b in _navButtons) {
                 StyleNavButton(b, (string)b.Tag! == _currentPage);
             }
@@ -177,6 +297,10 @@ namespace Material3.Gallery {
             _nav.Controls.Add(_seedSelect);
             _variantSelect.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             _nav.Controls.Add(_variantSelect);
+            _hueLabel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            _nav.Controls.Add(_hueLabel);
+            _hueSlider.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            _nav.Controls.Add(_hueSlider);
 
             foreach (string page in new[] {
                 PageColors, PageTypography, PageElevation, PageButtons, PageInputs, PageSelection,
@@ -190,7 +314,7 @@ namespace Material3.Gallery {
                     Font = MaterialType.LabelLarge,
                     Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
                 };
-                button.Click += (s, e) => ShowPage((string)((Control)s!).Tag!);
+                button.Click += (s, e) => RequestPage((string)((Control)s!).Tag!);
                 _navButtons.Add(button);
                 _nav.Controls.Add(button);
             }
@@ -217,7 +341,13 @@ namespace Material3.Gallery {
             y += Sc(ComponentSizes.DropdownHeight) + Sc(Spacing.Space2);
 
             _variantSelect.SetBounds(pad, y, width, Sc(ComponentSizes.DropdownHeight));
-            y += Sc(ComponentSizes.DropdownHeight) + Sc(Spacing.Space4);
+            y += Sc(ComponentSizes.DropdownHeight) + Sc(Spacing.Space2);
+
+            int hueLabelHeight = Sc(18); // single line, sits tight above the slider
+            _hueLabel.SetBounds(pad, y, width, hueLabelHeight);
+            y += hueLabelHeight + Sc(Spacing.Space1);
+            _hueSlider.SetBounds(pad, y, width, Sc(32));
+            y += Sc(32) + Sc(Spacing.Space4);
 
             foreach (RoundedButton button in _navButtons) {
                 button.SetBounds(pad, y, width, Sc(38));
@@ -241,32 +371,37 @@ namespace Material3.Gallery {
 
         private void ShowPage(string page) {
             _currentPage = page;
+            _builtDark = ThemeManager.IsDark;
             foreach (RoundedButton b in _navButtons) {
                 StyleNavButton(b, (string)b.Tag! == page);
             }
 
             _content.ScrollToTop();
-            _content.ContentPanel.SuspendLayout();
-            foreach (Control c in _content.ContentPanel.Controls.Cast<Control>().ToArray()) {
-                _content.ContentPanel.Controls.Remove(c);
-                c.Dispose();
-            }
+            _content.BeginContentUpdate();
+            // finally: a throw in any BuildXPage must not leave the scroll panel's layout suspended.
+            try {
+                foreach (Control c in _content.ContentPanel.Controls.Cast<Control>().ToArray()) {
+                    _content.ContentPanel.Controls.Remove(c);
+                    c.Dispose();
+                }
 
-            var builder = new PageBuilder(_content.ContentPanel);
-            switch (page) {
-                case PageColors: BuildColorsPage(builder); break;
-                case PageTypography: BuildTypographyPage(builder); break;
-                case PageElevation: BuildElevationPage(builder); break;
-                case PageButtons: BuildButtonsPage(builder); break;
-                case PageInputs: BuildInputsPage(builder); break;
-                case PageSelection: BuildSelectionPage(builder); break;
-                case PageCards: BuildCardsPage(builder); break;
-                case PageProgress: BuildProgressPage(builder); break;
-                case PageNavigation: BuildNavigationPage(builder); break;
-                case PageOverlays: BuildOverlaysPage(builder); break;
+                var builder = new PageBuilder(_content.ContentPanel);
+                switch (page) {
+                    case PageColors: BuildColorsPage(builder); break;
+                    case PageTypography: BuildTypographyPage(builder); break;
+                    case PageElevation: BuildElevationPage(builder); break;
+                    case PageButtons: BuildButtonsPage(builder); break;
+                    case PageInputs: BuildInputsPage(builder); break;
+                    case PageSelection: BuildSelectionPage(builder); break;
+                    case PageCards: BuildCardsPage(builder); break;
+                    case PageProgress: BuildProgressPage(builder); break;
+                    case PageNavigation: BuildNavigationPage(builder); break;
+                    case PageOverlays: BuildOverlaysPage(builder); break;
+                }
             }
-
-            _content.ContentPanel.ResumeLayout(performLayout: true);
+            finally {
+                _content.EndContentUpdate();
+            }
         }
 
         // ---- pages ----
@@ -275,42 +410,44 @@ namespace Material3.Gallery {
             b.Header("Color roles");
             b.Caption("Every role of the active scheme. Switch seed / variant / mode on the left — controls follow.");
 
-            ColorScheme s = ThemeManager.Scheme;
+            // Live role getters so the swatches recolor with the theme (e.g. while the hue slider drags)
+            // without rebuilding the page.
+            static Func<Color> Role(Func<ColorScheme, Color> get) => () => get(ThemeManager.Scheme);
             b.SwatchGroup("Primary", new[] {
-                ("Primary", s.Primary, s.OnPrimary),
-                ("OnPrimary", s.OnPrimary, s.Primary),
-                ("PrimaryContainer", s.PrimaryContainer, s.OnPrimaryContainer),
-                ("OnPrimaryContainer", s.OnPrimaryContainer, s.PrimaryContainer),
+                ("Primary", Role(s => s.Primary), Role(s => s.OnPrimary)),
+                ("OnPrimary", Role(s => s.OnPrimary), Role(s => s.Primary)),
+                ("PrimaryContainer", Role(s => s.PrimaryContainer), Role(s => s.OnPrimaryContainer)),
+                ("OnPrimaryContainer", Role(s => s.OnPrimaryContainer), Role(s => s.PrimaryContainer)),
             });
             b.SwatchGroup("Secondary / Tertiary", new[] {
-                ("Secondary", s.Secondary, s.OnSecondary),
-                ("SecondaryContainer", s.SecondaryContainer, s.OnSecondaryContainer),
-                ("Tertiary", s.Tertiary, s.OnTertiary),
-                ("TertiaryContainer", s.TertiaryContainer, s.OnTertiaryContainer),
+                ("Secondary", Role(s => s.Secondary), Role(s => s.OnSecondary)),
+                ("SecondaryContainer", Role(s => s.SecondaryContainer), Role(s => s.OnSecondaryContainer)),
+                ("Tertiary", Role(s => s.Tertiary), Role(s => s.OnTertiary)),
+                ("TertiaryContainer", Role(s => s.TertiaryContainer), Role(s => s.OnTertiaryContainer)),
             });
             b.SwatchGroup("Semantic", new[] {
-                ("Error", s.Error, s.OnError),
-                ("ErrorContainer", s.ErrorContainer, s.OnErrorContainer),
-                ("Success", s.Success, s.OnSuccess),
-                ("SuccessContainer", s.SuccessContainer, s.OnSuccessContainer),
-                ("Warning", s.Warning, s.OnWarning),
-                ("WarningContainer", s.WarningContainer, s.OnWarningContainer),
+                ("Error", Role(s => s.Error), Role(s => s.OnError)),
+                ("ErrorContainer", Role(s => s.ErrorContainer), Role(s => s.OnErrorContainer)),
+                ("Success", Role(s => s.Success), Role(s => s.OnSuccess)),
+                ("SuccessContainer", Role(s => s.SuccessContainer), Role(s => s.OnSuccessContainer)),
+                ("Warning", Role(s => s.Warning), Role(s => s.OnWarning)),
+                ("WarningContainer", Role(s => s.WarningContainer), Role(s => s.OnWarningContainer)),
             });
             b.SwatchGroup("Surfaces", new[] {
-                ("Surface", s.Surface, s.OnSurface),
-                ("SurfaceContainerLowest", s.SurfaceContainerLowest, s.OnSurface),
-                ("SurfaceContainerLow", s.SurfaceContainerLow, s.OnSurface),
-                ("SurfaceContainer", s.SurfaceContainer, s.OnSurface),
-                ("SurfaceContainerHigh", s.SurfaceContainerHigh, s.OnSurface),
-                ("SurfaceContainerHighest", s.SurfaceContainerHighest, s.OnSurface),
-                ("InverseSurface", s.InverseSurface, s.InverseOnSurface),
+                ("Surface", Role(s => s.Surface), Role(s => s.OnSurface)),
+                ("SurfaceContainerLowest", Role(s => s.SurfaceContainerLowest), Role(s => s.OnSurface)),
+                ("SurfaceContainerLow", Role(s => s.SurfaceContainerLow), Role(s => s.OnSurface)),
+                ("SurfaceContainer", Role(s => s.SurfaceContainer), Role(s => s.OnSurface)),
+                ("SurfaceContainerHigh", Role(s => s.SurfaceContainerHigh), Role(s => s.OnSurface)),
+                ("SurfaceContainerHighest", Role(s => s.SurfaceContainerHighest), Role(s => s.OnSurface)),
+                ("InverseSurface", Role(s => s.InverseSurface), Role(s => s.InverseOnSurface)),
             });
             b.SwatchGroup("Content & outline", new[] {
-                ("OnSurface", s.OnSurface, s.Surface),
-                ("OnSurfaceVariant", s.OnSurfaceVariant, s.Surface),
-                ("OnSurfaceMuted", s.OnSurfaceMuted, s.Surface),
-                ("Outline", s.Outline, s.Surface),
-                ("OutlineVariant", s.OutlineVariant, s.OnSurface),
+                ("OnSurface", Role(s => s.OnSurface), Role(s => s.Surface)),
+                ("OnSurfaceVariant", Role(s => s.OnSurfaceVariant), Role(s => s.Surface)),
+                ("OnSurfaceMuted", Role(s => s.OnSurfaceMuted), Role(s => s.Surface)),
+                ("Outline", Role(s => s.Outline), Role(s => s.Surface)),
+                ("OutlineVariant", Role(s => s.OutlineVariant), Role(s => s.OnSurface)),
             });
         }
 
@@ -653,6 +790,7 @@ namespace Material3.Gallery {
             var second = new MaterialOptionCard(
                 "Minimal install", "Core files only, fastest download",
                 fallbackGlyph: MaterialIcons.Download) { DetailText = "350 MB", Height = 68 };
+            second.SetAccentChip("needs update", () => MaterialColors.WarningContainer, () => MaterialColors.OnWarningContainer, glyph: MaterialIcons.Warning);
             first.SelectedChanged += c => second.SetSelected(false);
             second.SelectedChanged += c => first.SetSelected(false);
             first.SetSelected(true);
@@ -853,20 +991,31 @@ namespace Material3.Gallery {
             }
         }
 
-        // Tight bounding box of the non-transparent pixels (one-time icon build, GetPixel is fine).
+        // Tight bounding box of the non-transparent pixels. LockBits + one Marshal.Copy instead of
+        // per-pixel GetPixel, which is ~60ms of interop over the glyph and showed up at startup.
         private static Rectangle ContentBounds(Bitmap bmp) {
-            int minX = bmp.Width, minY = bmp.Height, maxX = -1, maxY = -1;
-            for (int yy = 0; yy < bmp.Height; yy++) {
-                for (int xx = 0; xx < bmp.Width; xx++) {
-                    if (bmp.GetPixel(xx, yy).A > 8) {
-                        if (xx < minX) minX = xx;
-                        if (xx > maxX) maxX = xx;
-                        if (yy < minY) minY = yy;
-                        if (yy > maxY) maxY = yy;
+            BitmapData data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
+                ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            try {
+                byte[] buffer = new byte[data.Stride * bmp.Height];
+                Marshal.Copy(data.Scan0, buffer, 0, buffer.Length);
+                int minX = bmp.Width, minY = bmp.Height, maxX = -1, maxY = -1;
+                for (int yy = 0; yy < bmp.Height; yy++) {
+                    int row = yy * data.Stride;
+                    for (int xx = 0; xx < bmp.Width; xx++) {
+                        if (buffer[row + xx * 4 + 3] > 8) {
+                            if (xx < minX) minX = xx;
+                            if (xx > maxX) maxX = xx;
+                            if (yy < minY) minY = yy;
+                            if (yy > maxY) maxY = yy;
+                        }
                     }
                 }
+                return maxX < 0 ? new Rectangle(0, 0, bmp.Width, bmp.Height) : Rectangle.FromLTRB(minX, minY, maxX + 1, maxY + 1);
             }
-            return maxX < 0 ? new Rectangle(0, 0, bmp.Width, bmp.Height) : Rectangle.FromLTRB(minX, minY, maxX + 1, maxY + 1);
+            finally {
+                bmp.UnlockBits(data);
+            }
         }
 
         [DllImport("user32.dll", SetLastError = true)]

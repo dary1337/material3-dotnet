@@ -2,8 +2,9 @@ using System.Drawing;
 
 namespace Material3.WinForms.Theming {
     /// <summary>
-    /// A theme = seed color + variant + light/dark, with both schemes pre-built so runtime
-    /// switching between light and dark never recomputes palettes.
+    /// A theme = seed color + variant + light/dark. The palette is built up front; each scheme is
+    /// built on first access and cached, so a mode switch never recomputes the palette and recoloring
+    /// within one mode never builds the off-mode scheme.
     /// </summary>
     public sealed class MaterialTheme {
         /// <summary>Seed the palettes were derived from.</summary>
@@ -15,18 +16,20 @@ namespace Material3.WinForms.Theming {
         /// <summary>The palettes themselves — useful for custom roles and gallery swatches.</summary>
         public CorePalette Palette { get; }
 
-        /// <summary>Light role mapping.</summary>
-        public ColorScheme LightScheme { get; }
+        private ColorScheme? _lightScheme;
+        private ColorScheme? _darkScheme;
 
-        /// <summary>Dark role mapping.</summary>
-        public ColorScheme DarkScheme { get; }
+        /// <summary>Light role mapping. Built on first access: switching seed/hue while in one mode
+        /// (e.g. dragging the gallery hue slider) never pays for the off-mode scheme.</summary>
+        public ColorScheme LightScheme => _lightScheme ??= ColorScheme.Light(Palette);
+
+        /// <summary>Dark role mapping. Built on first access (see <see cref="LightScheme"/>).</summary>
+        public ColorScheme DarkScheme => _darkScheme ??= ColorScheme.Dark(Palette);
 
         private MaterialTheme(Color seed, SchemeVariant variant) {
             Seed = seed;
             Variant = variant;
             Palette = CorePalette.FromSeed(seed, variant);
-            LightScheme = ColorScheme.Light(Palette);
-            DarkScheme = ColorScheme.Dark(Palette);
         }
 
         /// <summary>Builds a full light+dark theme from one seed color.</summary>
