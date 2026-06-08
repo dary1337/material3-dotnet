@@ -1,7 +1,6 @@
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Windows.Forms;
 using Material3.WinForms.Tokens;
 
 namespace Material3.WinForms.Drawing {
@@ -43,13 +42,9 @@ namespace Material3.WinForms.Drawing {
             public Color? StateOverlay { get; }
         }
 
-        private const TextFormatFlags LabelFlags =
-            TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPadding;
-
         public static int Measure(Graphics g, string? text, bool hasLeading, in Metrics m) {
-            int textWidth = TextRenderer.MeasureText(g, text ?? string.Empty, m.Font,
-                new Size(int.MaxValue, m.Height), LabelFlags).Width;
-            return textWidth + m.PadX * 2 + (hasLeading ? m.IconPx + m.IconGap : 0);
+            float textWidth = g.MeasureString(text ?? string.Empty, m.Font, int.MaxValue, StringFormat.GenericTypographic).Width;
+            return (int)Math.Ceiling(textWidth) + m.PadX * 2 + (hasLeading ? m.IconPx + m.IconGap : 0);
         }
 
         /// <summary>Paints the chip body into <c>[x, y, width, Metrics.Height]</c>; returns the right edge
@@ -93,10 +88,19 @@ namespace Material3.WinForms.Drawing {
                 cx += m.IconPx + m.IconGap;
             }
 
-            // GDI TextRenderer for accurate vertical centering — Graphics.DrawString includes the
-            // font's internal leading and drifts the label a few px low.
-            var labelRect = new Rectangle((int)cx, y, x + width - (int)cx, m.Height - 1);
-            TextRenderer.DrawText(g, text ?? string.Empty, m.Font, labelRect, style.Label, LabelFlags);
+            // Center the font's cell box (ascent+descent), not the line box: DrawString anchors the
+            // line box, whose internal leading would sit the label low. This keeps GDI+ (no per-call
+            // GDI HDC round-trip like TextRenderer) while matching its vertical centering.
+            FontFamily family = m.Font.FontFamily;
+            // GDI+ simulates styles a family lacks natively; GetCellAscent on a simulated style throws,
+            // so fall back to Regular metrics (always present) for the centering math.
+            FontStyle fontStyle = family.IsStyleAvailable(m.Font.Style) ? m.Font.Style : FontStyle.Regular;
+            float cellHeight = m.Font.GetHeight(g)
+                * (family.GetCellAscent(fontStyle) + family.GetCellDescent(fontStyle))
+                / family.GetLineSpacing(fontStyle);
+            using (var brush = new SolidBrush(style.Label)) {
+                g.DrawString(text ?? string.Empty, m.Font, brush, cx, midY - cellHeight / 2f, StringFormat.GenericTypographic);
+            }
             return x + width;
         }
     }
