@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Text;
 using System.Windows.Forms;
+using Material3.WinForms.Drawing;
 using Material3.WinForms.Theming;
 using Material3.WinForms.Tokens;
 using Material3.WinForms.Typography;
@@ -18,8 +19,7 @@ namespace Material3.WinForms.Controls {
         private bool _checked;
         private bool _hovered;
         private bool _pressed;
-        private float _dotProgress;
-        private readonly Timer _tween;
+        private readonly AnimatedValue _dot;
 
         public event EventHandler? CheckedChanged;
 
@@ -35,8 +35,7 @@ namespace Material3.WinForms.Controls {
             Cursor = MaterialCursors.Pointer;
             Size = new Size(140, 28);
             TabStop = true;
-            _tween = new Timer { Interval = 16 };
-            _tween.Tick += OnTweenTick;
+            _dot = new AnimatedValue(this, factor: 0.3f, threshold: 0.05f);
             ThemeHook.Attach(this, Invalidate);
         }
 
@@ -53,9 +52,7 @@ namespace Material3.WinForms.Controls {
                 if (_checked) {
                     UncheckSiblings();
                 }
-                if (!_tween.Enabled) {
-                    _tween.Start();
-                }
+                _dot.To(_checked ? 1f : 0f);
                 CheckedChanged?.Invoke(this, EventArgs.Empty);
                 Invalidate();
             }
@@ -82,19 +79,6 @@ namespace Material3.WinForms.Controls {
                     UncheckIn(child.Controls);
                 }
             }
-        }
-
-        private void OnTweenTick(object? sender, EventArgs e) {
-            float target = _checked ? 1f : 0f;
-            float delta = target - _dotProgress;
-            if (Math.Abs(delta) < 0.05f) {
-                _dotProgress = target;
-                _tween.Stop();
-            }
-            else {
-                _dotProgress += delta * 0.3f;
-            }
-            Invalidate();
         }
 
         private string? _prefText;
@@ -184,8 +168,9 @@ namespace Material3.WinForms.Controls {
                 g.DrawEllipse(pen, ring);
             }
 
-            if (_dotProgress > 0.02f) {
-                float dot = Dpi.Scale(this, 10f) * _dotProgress;
+            float dotProgress = _dot.Current;
+            if (dotProgress > 0.02f) {
+                float dot = Dpi.Scale(this, 10f) * dotProgress;
                 Color dotColor = Enabled ? MaterialColors.Primary : MaterialColors.OnSurfaceMuted;
                 using (var brush = new SolidBrush(dotColor)) {
                     g.FillEllipse(brush,
@@ -208,8 +193,7 @@ namespace Material3.WinForms.Controls {
 
         protected override void Dispose(bool disposing) {
             if (disposing) {
-                _tween.Stop();
-                _tween.Dispose();
+                _dot.Dispose();
             }
             base.Dispose(disposing);
         }
