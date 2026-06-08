@@ -29,6 +29,8 @@ namespace Material3.Gallery {
         private readonly DropdownSelect _variantSelect;
         private readonly List<RoundedButton> _navButtons = new List<RoundedButton>();
         private readonly Timer _relayout;
+        private readonly Timer _navDebounce;
+        private string? _pendingPage;
         private int _lastContentWidth = -1;
         private string _currentPage = PageColors;
 
@@ -114,6 +116,24 @@ namespace Material3.Gallery {
 
             _relayout = new Timer { Interval = 90 };
             _relayout.Tick += (s, e) => { _relayout.Stop(); RebuildCurrentPage(); };
+
+            // Coalesce rapid tab clicks: highlight immediately, but only build the page the user lands on.
+            _navDebounce = new Timer { Interval = 60 };
+            _navDebounce.Tick += (s, e) => {
+                _navDebounce.Stop();
+                if (_pendingPage != null && _pendingPage != _currentPage) {
+                    ShowPage(_pendingPage);
+                }
+            };
+        }
+
+        private void RequestPage(string page) {
+            _pendingPage = page;
+            foreach (RoundedButton b in _navButtons) {
+                StyleNavButton(b, (string)b.Tag! == page);
+            }
+            _navDebounce.Stop();
+            _navDebounce.Start();
         }
 
         protected override void OnShown(EventArgs e) {
@@ -146,6 +166,8 @@ namespace Material3.Gallery {
             ThemeManager.ThemeChanged -= OnThemeChanged;
             _relayout.Stop();
             _relayout.Dispose();
+            _navDebounce.Stop();
+            _navDebounce.Dispose();
             base.OnFormClosed(e);
         }
 
@@ -190,7 +212,7 @@ namespace Material3.Gallery {
                     Font = MaterialType.LabelLarge,
                     Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
                 };
-                button.Click += (s, e) => ShowPage((string)((Control)s!).Tag!);
+                button.Click += (s, e) => RequestPage((string)((Control)s!).Tag!);
                 _navButtons.Add(button);
                 _nav.Controls.Add(button);
             }
@@ -246,27 +268,31 @@ namespace Material3.Gallery {
             }
 
             _content.ScrollToTop();
-            _content.ContentPanel.SuspendLayout();
-            foreach (Control c in _content.ContentPanel.Controls.Cast<Control>().ToArray()) {
-                _content.ContentPanel.Controls.Remove(c);
-                c.Dispose();
-            }
+            _content.BeginContentUpdate();
+            // finally: a throw in any BuildXPage must not leave the scroll panel's layout suspended.
+            try {
+                foreach (Control c in _content.ContentPanel.Controls.Cast<Control>().ToArray()) {
+                    _content.ContentPanel.Controls.Remove(c);
+                    c.Dispose();
+                }
 
-            var builder = new PageBuilder(_content.ContentPanel);
-            switch (page) {
-                case PageColors: BuildColorsPage(builder); break;
-                case PageTypography: BuildTypographyPage(builder); break;
-                case PageElevation: BuildElevationPage(builder); break;
-                case PageButtons: BuildButtonsPage(builder); break;
-                case PageInputs: BuildInputsPage(builder); break;
-                case PageSelection: BuildSelectionPage(builder); break;
-                case PageCards: BuildCardsPage(builder); break;
-                case PageProgress: BuildProgressPage(builder); break;
-                case PageNavigation: BuildNavigationPage(builder); break;
-                case PageOverlays: BuildOverlaysPage(builder); break;
+                var builder = new PageBuilder(_content.ContentPanel);
+                switch (page) {
+                    case PageColors: BuildColorsPage(builder); break;
+                    case PageTypography: BuildTypographyPage(builder); break;
+                    case PageElevation: BuildElevationPage(builder); break;
+                    case PageButtons: BuildButtonsPage(builder); break;
+                    case PageInputs: BuildInputsPage(builder); break;
+                    case PageSelection: BuildSelectionPage(builder); break;
+                    case PageCards: BuildCardsPage(builder); break;
+                    case PageProgress: BuildProgressPage(builder); break;
+                    case PageNavigation: BuildNavigationPage(builder); break;
+                    case PageOverlays: BuildOverlaysPage(builder); break;
+                }
             }
-
-            _content.ContentPanel.ResumeLayout(performLayout: true);
+            finally {
+                _content.EndContentUpdate();
+            }
         }
 
         // ---- pages ----
@@ -854,20 +880,31 @@ namespace Material3.Gallery {
             }
         }
 
-        // Tight bounding box of the non-transparent pixels (one-time icon build, GetPixel is fine).
+        // Tight bounding box of the non-transparent pixels. LockBits + one Marshal.Copy instead of
+        // per-pixel GetPixel, which is ~60ms of interop over the glyph and showed up at startup.
         private static Rectangle ContentBounds(Bitmap bmp) {
-            int minX = bmp.Width, minY = bmp.Height, maxX = -1, maxY = -1;
-            for (int yy = 0; yy < bmp.Height; yy++) {
-                for (int xx = 0; xx < bmp.Width; xx++) {
-                    if (bmp.GetPixel(xx, yy).A > 8) {
-                        if (xx < minX) minX = xx;
-                        if (xx > maxX) maxX = xx;
-                        if (yy < minY) minY = yy;
-                        if (yy > maxY) maxY = yy;
+            BitmapData data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
+                ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            try {
+                byte[] buffer = new byte[data.Stride * bmp.Height];
+                Marshal.Copy(data.Scan0, buffer, 0, buffer.Length);
+                int minX = bmp.Width, minY = bmp.Height, maxX = -1, maxY = -1;
+                for (int yy = 0; yy < bmp.Height; yy++) {
+                    int row = yy * data.Stride;
+                    for (int xx = 0; xx < bmp.Width; xx++) {
+                        if (buffer[row + xx * 4 + 3] > 8) {
+                            if (xx < minX) minX = xx;
+                            if (xx > maxX) maxX = xx;
+                            if (yy < minY) minY = yy;
+                            if (yy > maxY) maxY = yy;
+                        }
                     }
                 }
+                return maxX < 0 ? new Rectangle(0, 0, bmp.Width, bmp.Height) : Rectangle.FromLTRB(minX, minY, maxX + 1, maxY + 1);
             }
-            return maxX < 0 ? new Rectangle(0, 0, bmp.Width, bmp.Height) : Rectangle.FromLTRB(minX, minY, maxX + 1, maxY + 1);
+            finally {
+                bmp.UnlockBits(data);
+            }
         }
 
         [DllImport("user32.dll", SetLastError = true)]
