@@ -23,15 +23,16 @@ namespace Material3.WinForms.Controls {
         }
 
         // GDI+ DrawString measures a few px wider than the base TextRenderer AutoSize, so take the wider Width or our render wraps and drops text. Height stays from the base, which doesn't puff vertically.
-        private (string, Font, int, int) _prefKey;
+        private (string, Font, int, int, bool) _prefKey;
         private Size _prefSize;
         private bool _prefValid;
 
         // Cached: re-measuring allocates a Bitmap + Graphics + StringFormat each call, and layout asks
-        // repeatedly. Keyed on text, font, DPI and the proposed width (wrapping depends on it).
+        // repeatedly. Keyed on text, font, DPI, proposed width (wrapping) and AutoEllipsis (it toggles
+        // NoWrap/Trimming in BuildFormat, which changes the measured width).
         public override Size GetPreferredSize(Size proposedSize) {
             string text = Text ?? string.Empty;
-            var key = (text, Font, DeviceDpi, proposedSize.Width);
+            var key = (text, Font, DeviceDpi, proposedSize.Width, AutoEllipsis);
             if (_prefValid && _prefKey.Equals(key)) {
                 return _prefSize;
             }
