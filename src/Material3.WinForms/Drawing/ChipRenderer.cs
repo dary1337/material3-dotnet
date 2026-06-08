@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Concurrent;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using Material3.WinForms.Theming;
 using Material3.WinForms.Tokens;
 
 namespace Material3.WinForms.Drawing {
@@ -40,6 +42,17 @@ namespace Material3.WinForms.Drawing {
             public Color? Outline { get; }
             public bool Pill { get; }
             public Color? StateOverlay { get; }
+        }
+
+        /// <summary>Builds a chip <see cref="Style"/> from caller accent colors, applying a shared
+        /// disabled policy (an inert surface tone, no outline) so chip hosts don't each re-derive it.
+        /// Pass live theme roles for colors that should track the theme.</summary>
+        public static Style ResolveAccent(Color container, Color content, Color? outline, bool enabled) {
+            if (!enabled) {
+                return new Style(MaterialColors.SurfaceContainerHighest, MaterialColors.OnSurfaceMuted,
+                    MaterialColors.OnSurfaceMuted, null, pill: true);
+            }
+            return new Style(container, content, content, outline, pill: true);
         }
 
         public static int Measure(Graphics g, string? text, bool hasLeading, in Metrics m) {
@@ -95,13 +108,22 @@ namespace Material3.WinForms.Drawing {
             // GDI+ simulates styles a family lacks natively; GetCellAscent on a simulated style throws,
             // so fall back to Regular metrics (always present) for the centering math.
             FontStyle fontStyle = family.IsStyleAvailable(m.Font.Style) ? m.Font.Style : FontStyle.Regular;
-            float cellHeight = m.Font.GetHeight(g)
-                * (family.GetCellAscent(fontStyle) + family.GetCellDescent(fontStyle))
-                / family.GetLineSpacing(fontStyle);
+            float cellHeight = m.Font.GetHeight(g) * CellRatio(family, fontStyle);
             using (var brush = new SolidBrush(style.Label)) {
                 g.DrawString(text ?? string.Empty, m.Font, brush, cx, midY - cellHeight / 2f, StringFormat.GenericTypographic);
             }
             return x + width;
+        }
+
+        // (ascent+descent)/lineSpacing depends only on the family+style, not on DPI or per-paint state.
+        // Caching it keeps a chips-heavy page (and the theme-change repaint storm) off the GDI+ metric calls.
+        private static readonly ConcurrentDictionary<(string, FontStyle), float> CellRatioCache =
+            new ConcurrentDictionary<(string, FontStyle), float>();
+
+        private static float CellRatio(FontFamily family, FontStyle style) {
+            return CellRatioCache.GetOrAdd((family.Name, style),
+                _ => (family.GetCellAscent(style) + family.GetCellDescent(style))
+                    / (float)family.GetLineSpacing(style));
         }
     }
 }
