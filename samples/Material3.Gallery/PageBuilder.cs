@@ -285,7 +285,9 @@ namespace Material3.Gallery {
             }
 
             private void ApplyIntrinsicHeight() {
-                Height = Dpi.Scale(this, Math.Max(_style.LineHeight + 26, 44));
+                // Size to the real font height, not spec LineHeight: Segoe renders taller at the big
+                // display sizes and was clipping descenders. 16 clears the meta row, 8 is bottom margin.
+                Height = Dpi.Scale(this, Math.Max(16 + _style.Font.Height + 8, 44));
             }
 
             protected override void OnPaint(PaintEventArgs e) {
