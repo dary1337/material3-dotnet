@@ -37,6 +37,7 @@ namespace Material3.WinForms.Controls {
         // Releasing the gutter when content fits avoids a permanent empty strip on the right.
         private bool _trackReserved;
         private bool _inRelayout;
+        private int _contentUpdateDepth;
 
         // 0 = hidden, 1 = fully visible; driven by _fadeTimer toward _targetOpacity.
         private float _thumbOpacity;
@@ -105,7 +106,9 @@ namespace Material3.WinForms.Controls {
             }
             e.Control.SizeChanged += OnContentChildLayoutChanged;
             e.Control.LocationChanged += OnContentChildLayoutChanged;
-            Relayout();
+            if (_contentUpdateDepth == 0) {
+                Relayout();
+            }
         }
 
         private void OnContentChildRemoved(object? sender, ControlEventArgs e) {
@@ -114,11 +117,36 @@ namespace Material3.WinForms.Controls {
             }
             e.Control.SizeChanged -= OnContentChildLayoutChanged;
             e.Control.LocationChanged -= OnContentChildLayoutChanged;
-            Relayout();
+            if (_contentUpdateDepth == 0) {
+                Relayout();
+            }
         }
 
         private void OnContentChildLayoutChanged(object? sender, EventArgs e) {
-            Relayout();
+            if (_contentUpdateDepth == 0) {
+                Relayout();
+            }
+        }
+
+        /// <summary>Suspends the per-child relayout while a host bulk-adds content, then runs it once on
+        /// <see cref="EndContentUpdate"/>. Without this, every <c>Controls.Add</c> (and each child's
+        /// initial SizeChanged/LocationChanged) triggers a full relayout — O(n²) for a page of n controls.
+        /// Must be paired with <see cref="EndContentUpdate"/>; wrap the work in try/finally so an
+        /// exception mid-build can't leave layout permanently suspended.</summary>
+        public void BeginContentUpdate() {
+            _contentUpdateDepth++;
+            ContentPanel.SuspendLayout();
+        }
+
+        public void EndContentUpdate() {
+            // Resume while still suspended so child SizeChanged from the layout pass doesn't relayout per child.
+            ContentPanel.ResumeLayout(performLayout: true);
+            if (_contentUpdateDepth > 0) {
+                _contentUpdateDepth--;
+            }
+            if (_contentUpdateDepth == 0) {
+                Relayout();
+            }
         }
 
         /// <summary>Reset scroll to the top — useful when host swaps content (e.g. step navigation).</summary>
