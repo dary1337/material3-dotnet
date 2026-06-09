@@ -242,18 +242,6 @@ namespace Material3.Gallery {
             base.OnFormClosed(e);
         }
 
-        private const int WS_EX_COMPOSITED = 0x02000000;
-
-        protected override CreateParams CreateParams {
-            get {
-                // Composite the window so a theme switch repaints in one frame, not a per-control sweep.
-                // Costs a little scroll throughput — accepted here; consumers opt in on their own forms.
-                CreateParams cp = base.CreateParams;
-                cp.ExStyle |= WS_EX_COMPOSITED;
-                return cp;
-            }
-        }
-
         private void OnThemeChanged(object? sender, EventArgs e) {
             // Rebuild only on a light/dark flip: content labels bake their ForeColor, while a same-mode
             // hue drag recolors live via ThemeHook (no rebuild — that drag fires ~30×/s).
@@ -370,13 +358,18 @@ namespace Material3.Gallery {
         }
 
         private void ShowPage(string page) {
+            // Reset scroll only when navigating to a different page. A same-page rebuild (resize reflow
+            // or theme flip) keeps the offset, so resizing the window no longer throws scroll to the top.
+            bool pageChanged = page != _currentPage || _content.ContentPanel.Controls.Count == 0;
             _currentPage = page;
             _builtDark = ThemeManager.IsDark;
             foreach (RoundedButton b in _navButtons) {
                 StyleNavButton(b, (string)b.Tag! == page);
             }
 
-            _content.ScrollToTop();
+            if (pageChanged) {
+                _content.ScrollToTop();
+            }
             _content.BeginContentUpdate();
             // finally: a throw in any BuildXPage must not leave the scroll panel's layout suspended.
             try {
