@@ -27,6 +27,11 @@ namespace Material3.WinForms.Forms {
 
         private const int WM_NCCALCSIZE = 0x0083;
         private const int WM_NCHITTEST = 0x0084;
+        private const int WM_SIZE = 0x0005;
+        private const int WM_WINDOWPOSCHANGING = 0x0046;
+        private const int SIZE_RESTORED = 0;
+        private const int SIZE_MINIMIZED = 1;
+        private const uint SWP_NOSIZE = 0x0001;
 
         private const int DWMWA_NCRENDERING_POLICY = 2;
         private const int DWMNCRP_ENABLED = 2;
@@ -67,6 +72,13 @@ namespace Material3.WinForms.Forms {
         }
 
         [StructLayout(LayoutKind.Sequential)]
+        private struct WINDOWPOS {
+            public IntPtr hwnd, hwndInsertAfter;
+            public int x, y, cx, cy;
+            public uint flags;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
         private struct MONITORINFO {
             public int cbSize;
             public RECT rcMonitor;
@@ -93,6 +105,20 @@ namespace Material3.WinForms.Forms {
 
         private bool _aeroEnabled;
         private int _cachedCaptionHeight = -1;
+
+        // Restoring from minimized/maximized re-inflates the window rect by a WS_THICKFRAME border:
+        // WinForms sizes from ClientSize + frame, but WM_NCCALCSIZE strips that frame back into the
+        // client, so each restore cycle grows the window by a frame. We remember the last genuine
+        // Normal size and reassert it once the restore settles (see WM_SIZE).
+        private Size _normalSize;
+        private bool _haveNormalSize;
+        private FormWindowState _prevWindowState = FormWindowState.Normal;
+        private bool _wasMinimized;  // a minimize→restore is in flight: pin its frame-inflation away
+        private bool _restoring;     // guard the maximize→restore correction burst from capture
+
+        // The most a minimize→restore can inflate the window: one WS_THICKFRAME (a few dozen px even
+        // at high DPI). A larger delta is a real size change (restore to maximized) — never clamped.
+        private const int MaxFrameInflation = 96;
 
         // Static so per-form disposal never touches it; the library-wide default typeface.
         private static readonly Font DefaultUiFont = new Font("Segoe UI", 9f);
@@ -163,6 +189,66 @@ namespace Material3.WinForms.Forms {
 
         protected override void WndProc(ref Message m) {
             switch (m.Msg) {
+                case WM_WINDOWPOSCHANGING:
+                    // A minimize→restore doesn't really change size, but WinForms re-inflates the
+                    // window by a WS_THICKFRAME border (it sizes from ClientSize + frame, which
+                    // WM_NCCALCSIZE strips back into the client) — so each cycle grows by a frame.
+                    // The inflated frame can arrive after WinForms has already flipped the state back
+                    // to Normal (esp. via the taskbar/SC_RESTORE path), so we gate on _wasMinimized —
+                    // set on minimize, cleared only after the restore burst — not on the live state.
+                    // Pin just that frame-sized inflation to the remembered Normal size, leaving the
+                    // restore a true size no-op so resize-reactive consumers don't reflow or lose
+                    // scroll. A larger delta (restore to maximized) is a real change and untouched.
+                    if (_wasMinimized && _haveNormalSize) {
+                        var wp = Marshal.PtrToStructure<WINDOWPOS>(m.LParam);
+                        int dw = wp.cx - _normalSize.Width;
+                        int dh = wp.cy - _normalSize.Height;
+                        if ((wp.flags & SWP_NOSIZE) == 0 && (dw != 0 || dh != 0)
+                            && dw >= 0 && dw <= MaxFrameInflation
+                            && dh >= 0 && dh <= MaxFrameInflation) {
+                            wp.cx = _normalSize.Width;
+                            wp.cy = _normalSize.Height;
+                            Marshal.StructureToPtr(wp, m.LParam, false);
+                        }
+                    }
+                    break;
+
+                case WM_SIZE:
+                    base.WndProc(ref m);
+                    int sizeType = m.WParam.ToInt32();
+                    if (sizeType == SIZE_MINIMIZED) {
+                        _wasMinimized = true;
+                        _prevWindowState = FormWindowState.Minimized;
+                    } else if (sizeType == SIZE_RESTORED && WindowState == FormWindowState.Normal) {
+                        if (_prevWindowState == FormWindowState.Maximized && _haveNormalSize) {
+                            // Maximize→restore also lands inflated, but its width genuinely changed, so
+                            // content must re-wrap. Correct the inflation once the burst settles via a
+                            // real resize (which triggers that reflow).
+                            _restoring = true;
+                            BeginInvoke((Action)(() => {
+                                if (WindowState == FormWindowState.Normal && Size != _normalSize) {
+                                    Size = _normalSize;
+                                }
+                                _restoring = false;
+                            }));
+                        } else if (!_restoring && !_wasMinimized) {
+                            // Every genuine Normal-state size (startup, user resize, programmatic) is
+                            // the new baseline; restore bursts are excluded by the guards.
+                            _normalSize = Size;
+                            _haveNormalSize = true;
+                        }
+                        // Drop the minimize latch only after the synchronous restore burst — the
+                        // inflated frame can still arrive a couple of messages later.
+                        if (_wasMinimized) {
+                            BeginInvoke((Action)(() => _wasMinimized = false));
+                        }
+                        _prevWindowState = FormWindowState.Normal;
+                    } else {
+                        _wasMinimized = false;
+                        _prevWindowState = WindowState;
+                    }
+                    return;
+
                 case WM_NCCALCSIZE:
                     if (m.WParam != IntPtr.Zero) {
                         if (WindowState == FormWindowState.Maximized) {
