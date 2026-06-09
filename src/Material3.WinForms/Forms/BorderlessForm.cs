@@ -20,6 +20,8 @@ namespace Material3.WinForms.Forms {
         private const int WS_POPUP = unchecked((int)0x80000000);
         private const int WS_THICKFRAME = 0x00040000;
         private const int WS_CAPTION = 0x00C00000;
+        private const int WS_SYSMENU = 0x00080000;
+        private const int WS_MINIMIZEBOX = 0x00020000;
         private const int WS_EX_APPWINDOW = 0x00040000;
         private const int CS_DROPSHADOW = 0x00020000;
 
@@ -123,6 +125,10 @@ namespace Material3.WinForms.Forms {
                 // KEEP WS_CAPTION though invisible (NC area stripped by WM_NCCALCSIZE): omitting it
                 // breaks DWM-managed resize/drag.
                 cp.Style |= WS_POPUP | WS_THICKFRAME | WS_CAPTION;
+                // WS_SYSMENU | WS_MINIMIZEBOX: without these the shell won't minimize the active
+                // window when its taskbar button is clicked (FormBorderStyle.None drops them). The
+                // system menu stays invisible since WM_NCCALCSIZE strips the non-client area.
+                cp.Style |= WS_SYSMENU | WS_MINIMIZEBOX;
                 // Without WS_EX_APPWINDOW, WS_POPUP suppresses the taskbar button — a programmatic
                 // minimize would then hide the window with no way to restore it.
                 cp.ExStyle |= WS_EX_APPWINDOW;
