@@ -16,6 +16,14 @@ namespace Material3.WinForms.Forms {
         public bool EnableEdgeResize { get; protected set; } = true;
         protected bool EnableDragAnywhere { get; set; }
 
+        /// <summary>
+        /// Opt in to <c>WS_EX_COMPOSITED</c>: composites the whole window (all children) into one
+        /// buffer so a theme switch or heavy recolor repaints in a single frame. Trade-off: parts of
+        /// the window can stay unpainted briefly after a restore from minimized. Off by default —
+        /// the form already double-buffers and redraws on resize without it.
+        /// </summary>
+        protected bool UseCompositedPainting { get; set; }
+
         // ---- Win32 constants ----
         private const int WS_POPUP = unchecked((int)0x80000000);
         private const int WS_THICKFRAME = 0x00040000;
@@ -23,6 +31,7 @@ namespace Material3.WinForms.Forms {
         private const int WS_SYSMENU = 0x00080000;
         private const int WS_MINIMIZEBOX = 0x00020000;
         private const int WS_EX_APPWINDOW = 0x00040000;
+        private const int WS_EX_COMPOSITED = 0x02000000;
         private const int CS_DROPSHADOW = 0x00020000;
 
         private const int WM_NCCALCSIZE = 0x0083;
@@ -125,6 +134,11 @@ namespace Material3.WinForms.Forms {
 
         public BorderlessForm() {
             FormBorderStyle = FormBorderStyle.None;
+            // Repaint the whole client on resize and buffer it, so the owner-drawn titlebar and edges
+            // don't tear or leave unpainted strips while the window grows — the clean alternative to
+            // WS_EX_COMPOSITED (which fixes resize at the cost of unpainted regions after restore).
+            SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint
+                | ControlStyles.ResizeRedraw, true);
             Font = DefaultUiFont;
             // Sets the WNDCLASS background brush to Surface so the titlebar doesn't flash black
             // during the native open animation before our paint catches up.
@@ -158,6 +172,9 @@ namespace Material3.WinForms.Forms {
                 // Without WS_EX_APPWINDOW, WS_POPUP suppresses the taskbar button — a programmatic
                 // minimize would then hide the window with no way to restore it.
                 cp.ExStyle |= WS_EX_APPWINDOW;
+                if (UseCompositedPainting) {
+                    cp.ExStyle |= WS_EX_COMPOSITED;
+                }
                 if (!_aeroEnabled) {
                     cp.ClassStyle |= CS_DROPSHADOW;
                 }
