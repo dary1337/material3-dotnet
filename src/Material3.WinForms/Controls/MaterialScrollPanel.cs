@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Material3.WinForms.Theming;
 
@@ -134,6 +135,12 @@ namespace Material3.WinForms.Controls {
         /// Must be paired with <see cref="EndContentUpdate"/>; wrap the work in try/finally so an
         /// exception mid-build can't leave layout permanently suspended.</summary>
         public void BeginContentUpdate() {
+            if (_contentUpdateDepth == 0 && ContentPanel.IsHandleCreated) {
+                // Freeze painting for the whole bulk update: a host that clears and re-adds children
+                // (e.g. a resize-driven page rebuild) would otherwise flash every intermediate frame.
+                // Paired with the WM_SETREDRAW(true) + Invalidate in EndContentUpdate for one repaint.
+                SendMessage(ContentPanel.Handle, WM_SETREDRAW, IntPtr.Zero, IntPtr.Zero);
+            }
             _contentUpdateDepth++;
             ContentPanel.SuspendLayout();
         }
@@ -146,8 +153,18 @@ namespace Material3.WinForms.Controls {
             }
             if (_contentUpdateDepth == 0) {
                 Relayout();
+                if (ContentPanel.IsHandleCreated) {
+                    // Thaw and repaint once, now that every child is in its final place.
+                    SendMessage(ContentPanel.Handle, WM_SETREDRAW, (IntPtr)1, IntPtr.Zero);
+                    ContentPanel.Invalidate(true);
+                }
             }
         }
+
+        [DllImport("user32.dll")]
+        private static extern int SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
+
+        private const int WM_SETREDRAW = 0x000B;
 
         /// <summary>Reset scroll to the top — useful when host swaps content (e.g. step navigation).</summary>
         public void ScrollToTop() {
