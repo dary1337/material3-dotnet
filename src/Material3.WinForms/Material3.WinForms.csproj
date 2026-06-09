@@ -16,7 +16,7 @@
 
   <PropertyGroup Label="Package">
     <PackageId>Material3.WinForms</PackageId>
-    <Version>0.5.0</Version>
+    <Version>0.6.0</Version>
     <Authors>dary1337</Authors>
     <Description>Material 3 (Material You) controls and design tokens for Windows Forms: dynamic color from a seed (HCT tonal palettes), light/dark themes with runtime switching, full type scale, elevation, state layers and motion tokens.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
