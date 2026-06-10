@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using Material3.WinForms.Theming;
 using Material3.WinForms.Tokens;
 
 namespace Material3.WinForms.Controls {
@@ -28,6 +29,7 @@ namespace Material3.WinForms.Controls {
             BackColor = Color.Transparent; // rounded corners show whatever's behind the block
             Size = new Size(120, 16);
             SkeletonShimmer.Attach(this);
+            ThemeHook.Attach(this, Invalidate);
         }
 
         /// <summary>Corner radius in px; use half the height (or more) for a circle / pill.</summary>
