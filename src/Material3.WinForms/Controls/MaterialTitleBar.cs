@@ -221,6 +221,13 @@ namespace Material3.WinForms.Controls {
             HookForm();
         }
 
+        // Re-point the SizeChanged hook off the old form onto the new one if the bar is reparented
+        // without a handle recreation; HookForm is a no-op when the form is unchanged.
+        protected override void OnParentChanged(EventArgs e) {
+            base.OnParentChanged(e);
+            HookForm();
+        }
+
         protected override void OnDpiChangedAfterParent(EventArgs e) {
             base.OnDpiChangedAfterParent(e);
             ApplyIntrinsicHeight();
