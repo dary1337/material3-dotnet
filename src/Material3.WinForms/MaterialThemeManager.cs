@@ -34,8 +34,11 @@ namespace Material3.WinForms {
         public Color Seed {
             get => _seed;
             set {
+                if (_seed == value) {
+                    return;
+                }
                 _seed = value;
-                _theme = null;
+                _theme = null; // seed drives the HCT palette — force a rebuild
                 Apply();
             }
         }
@@ -47,8 +50,11 @@ namespace Material3.WinForms {
         public SchemeVariant Variant {
             get => _variant;
             set {
+                if (_variant == value) {
+                    return;
+                }
                 _variant = value;
-                _theme = null;
+                _theme = null; // variant drives the HCT palette — force a rebuild
                 Apply();
             }
         }
