@@ -11,6 +11,9 @@ artifacts/
 *.nupkg
 *.snupkg
 
+## Local NuGet-consumer test harness
+nuget-test/
+
 ## Fody (FodyWeavers.xml is committed; the .xsd is auto-generated)
 FodyWeavers.xsd
 
