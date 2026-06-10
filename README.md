@@ -17,7 +17,7 @@ Existing "Material for WinForms" libraries implement Material **2** and are larg
 This project targets the current spec: HCT tonal palettes, color roles, surface containers and
 the 2023+ component look.
 
-> Status: **preview (0.5)**. Foundation and the core component catalog are complete.
+> Status: **preview (0.6)**. Foundation, the core component catalog and WinForms designer support are complete.
 
 ## Screenshots
 
@@ -52,6 +52,10 @@ Rows: color roles · buttons & FAB · selection · cards & lists · overlays & p
   evaluated exactly like CSS timing functions.
 - **Material Symbols** — 30+ icons embedded as SVG, rasterized with caching and tinted to any
   role color.
+- **Designer support** — controls drop from the toolbox with their M3 properties grouped under a
+  *Material Design* category, and a non-visual `MaterialThemeManager` component drives the theme
+  from the property grid — no `ThemeManager.Apply` in `Main` — while previewing it live on the
+  design surface. SmartTags and a glyph picker on key controls (.NET Framework designer).
 
 ## Controls
 
@@ -61,10 +65,10 @@ Rows: color roles · buttons & FAB · selection · cards & lists · overlays & p
 | Text inputs | `MaterialTextField` (filled + outlined, floating label, error state, icons), `MaterialSearchBar` |
 | Selection | `MaterialSwitch`, `MaterialCheckBox` (incl. indeterminate), `MaterialRadioButton`, `MaterialChip` (assist / filter / input / suggestion), `MaterialSlider`, `MaterialOptionCard`, `DropdownSelect` |
 | Navigation | `MaterialTabs` (primary / secondary), `MaterialNavigationBar`, `MaterialNavigationRail`, `MaterialNavigationDrawer` |
-| Communication | `MaterialProgressBar` (linear), `MaterialCircularProgress` (determinate + indeterminate), `MaterialSnackbar`, `MaterialBadge`, `MaterialTooltip` (plain + rich), `SkeletonCard`, `StepChecklist` |
+| Communication | `MaterialProgressBar` (linear), `MaterialCircularProgress` (determinate + indeterminate), `MaterialSnackbar`, `MaterialBadge`, `MaterialTooltip` (plain + rich), `MaterialSkeleton` (compose any shimmer placeholder) + `SkeletonCard` preset, `StepChecklist` |
 | Containment | `MaterialCard` (elevated / filled / outlined), `MaterialListItem`, `MaterialDivider`, `RoundedPanel`, `MaterialScrollPanel` (overlay scrollbar), `MaterialMenu` |
 | Dialogs | `MaterialDialog`, `MaterialMessageBox` (themed info / error / confirm), `MaterialDatePickerDialog` (calendar grid), `MaterialTimePickerDialog` (time input) |
-| Window | `BorderlessForm` (native resize/snap without chrome), `MaterialTitleBar`, `WindowChrome` (DWM caption theming), `FormDragAnywhere`, `TaskbarProgress`, `FormAnimation` |
+| Window | `BorderlessForm` (native resize/snap without chrome), `MaterialTitleBar` (minimize / maximize / close, each hideable), `WindowChrome` (DWM caption theming), `FormDragAnywhere`, `TaskbarProgress`, `FormAnimation` |
 | Text | `SoftLabel` (consistent GDI+ rendering) |
 
 ## Quickstart
@@ -82,6 +86,10 @@ static void Main() {
     Application.Run(new MainForm());
 }
 ```
+
+Prefer the designer? Drop a **`MaterialThemeManager`** onto your form and set `Seed` / `Variant` /
+`IsDark` in the property grid — it applies the theme at run time (so you can skip the `Main` call
+above) and previews it on the design surface.
 
 ```csharp
 // Switch mode at runtime — all controls repaint themselves.
@@ -117,6 +125,23 @@ changes or to grab screenshots.
 dotnet build Material3.WinForms.sln
 samples\Material3.Gallery\bin\Debug\net472\Material3.Gallery.exe
 ```
+
+## Designer support
+
+The controls are built for the Visual Studio designer, not just code:
+
+- **Toolbox & property grid** — every control is a `[ToolboxItem]`; its M3 properties sit under a
+  *Material Design* category with descriptions and defaults, and the design surface paints with the
+  live theme instead of a blank rectangle.
+- **`MaterialThemeManager` component** — drop it on a form and pick `Seed` / `Variant` / `IsDark` in
+  the grid; it applies the theme at run time (no manual `ThemeManager.Apply`) and repaints the
+  preview so design-time matches the running app.
+- **SmartTags & editors** *(.NET Framework designer)* — quick `Variant` / glyph actions on
+  `MaterialButton` and `MaterialTextField`, plus a Material Symbols picker for `IconGlyph`.
+
+On .NET 8 the toolbox, property grid and live preview work the same; the SmartTag/editor extras are
+.NET Framework-only for now (the out-of-process .NET designer would need a separate design-time
+assembly).
 
 ## High-DPI
 
