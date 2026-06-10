@@ -828,6 +828,27 @@ namespace Material3.Gallery {
             b.Add(new SkeletonCard { Height = b.Scale(ComponentSizes.ListItemMinHeight) });
             b.Gap(Spacing.Space2);
             b.Add(new SkeletonCard { Height = b.Scale(ComponentSizes.ListItemMinHeight) });
+
+            b.Gap(Spacing.Space4);
+            b.Caption("Or compose MaterialSkeleton blocks for any layout — here a media card:");
+            var custom = new Panel {
+                Height = b.Scale(120),
+                BackColor = Color.Transparent,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
+            };
+            var image = new MaterialSkeleton { CornerRadius = 12 };
+            var avatar = new MaterialSkeleton { CornerRadius = 999 };
+            var line1 = new MaterialSkeleton { CornerRadius = 6 };
+            var line2 = new MaterialSkeleton { CornerRadius = 6 };
+            custom.Controls.AddRange(new Control[] { image, avatar, line1, line2 });
+            custom.Resize += (s, e) => {
+                int Sc(int px) => Dpi.Scale(custom, px);
+                image.SetBounds(0, 0, custom.Width, Sc(56));
+                avatar.SetBounds(0, Sc(66), Sc(40), Sc(40));
+                line1.SetBounds(Sc(52), Sc(68), Math.Max(Sc(80), custom.Width - Sc(52)), Sc(12));
+                line2.SetBounds(Sc(52), Sc(90), Sc(160), Sc(12));
+            };
+            b.Add(custom);
         }
 
         private static void BuildOverlaysPage(PageBuilder b) {
