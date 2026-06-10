@@ -9,6 +9,7 @@
     <RootNamespace>Material3.Gallery</RootNamespace>
     <AssemblyName>Material3.Gallery</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
