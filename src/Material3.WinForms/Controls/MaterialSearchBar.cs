@@ -36,7 +36,7 @@ namespace Material3.WinForms.Controls {
                 true);
             Height = BarHeight;
             Width = 320;
-            Cursor = MaterialCursors.IBeam;
+            MaterialCursors.Apply(this, MaterialCursors.IBeam);
 
             _editor = new TextBox {
                 BorderStyle = BorderStyle.None,

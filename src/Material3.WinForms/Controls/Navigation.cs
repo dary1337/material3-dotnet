@@ -43,7 +43,7 @@ namespace Material3.WinForms.Controls {
                     | ControlStyles.OptimizedDoubleBuffer
                     | ControlStyles.ResizeRedraw,
                 true);
-            Cursor = MaterialCursors.Pointer;
+            MaterialCursors.Apply(this, MaterialCursors.Pointer);
             ThemeHook.Attach(this, () => { ApplyTheme(); Invalidate(); });
         }
 

@@ -35,7 +35,7 @@ namespace Material3.WinForms.Controls {
                 true);
             Height = StateLayerRadius * 2;
             BackColor = Color.Transparent;
-            Cursor = MaterialCursors.Pointer;
+            MaterialCursors.Apply(this, MaterialCursors.Pointer);
             TabStop = true;
             ThemeHook.Attach(this, Invalidate);
 

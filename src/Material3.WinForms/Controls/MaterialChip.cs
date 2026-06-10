@@ -74,7 +74,7 @@ namespace Material3.WinForms.Controls {
                     | ControlStyles.SupportsTransparentBackColor,
                 true);
             BackColor = Color.Transparent;
-            Cursor = MaterialCursors.Pointer;
+            MaterialCursors.Apply(this, MaterialCursors.Pointer);
             Height = ChipHeight;
             ThemeHook.Attach(this, Invalidate);
         }

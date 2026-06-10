@@ -42,7 +42,7 @@ namespace Material3.WinForms.Controls {
 
         public MaterialOptionCard() : base(Shape.Medium) {
             MinimumSize = new Size(0, MinHeight);
-            Cursor = MaterialCursors.Pointer;
+            MaterialCursors.Apply(this, MaterialCursors.Pointer);
             UpdateSurface();
 
             _selection = new AnimatedValue(this, factor: 0.22f, threshold: 0.01f);

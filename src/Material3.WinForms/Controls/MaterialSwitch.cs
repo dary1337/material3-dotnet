@@ -39,7 +39,7 @@ namespace Material3.WinForms.Controls {
                     | ControlStyles.Selectable,
                 true);
             BackColor = Color.Transparent;
-            Cursor = MaterialCursors.Pointer;
+            MaterialCursors.Apply(this, MaterialCursors.Pointer);
             Size = new Size(TrackWidth, ControlHeight);
             TabStop = true;
             _thumb = new AnimatedValue(this, factor: 0.28f, threshold: 0.03f);

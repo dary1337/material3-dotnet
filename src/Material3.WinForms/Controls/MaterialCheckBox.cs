@@ -33,7 +33,7 @@ namespace Material3.WinForms.Controls {
                     | ControlStyles.Selectable,
                 true);
             BackColor = Color.Transparent;
-            Cursor = MaterialCursors.Pointer;
+            MaterialCursors.Apply(this, MaterialCursors.Pointer);
             Size = new Size(140, 28);
             TabStop = true;
             _mark = new AnimatedValue(this, factor: 0.3f, threshold: 0.05f);

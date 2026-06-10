@@ -37,7 +37,7 @@ namespace Material3.WinForms.Controls {
                     | ControlStyles.Selectable,
                 true);
             BackColor = Color.Transparent;
-            Cursor = MaterialCursors.Pointer;
+            MaterialCursors.Apply(this, MaterialCursors.Pointer);
             ApplySize();
             ThemeHook.Attach(this, Invalidate);
         }

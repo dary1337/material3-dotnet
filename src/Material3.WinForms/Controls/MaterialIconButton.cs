@@ -41,7 +41,7 @@ namespace Material3.WinForms.Controls {
                     | ControlStyles.Selectable,
                 true);
             BackColor = Color.Transparent;
-            Cursor = MaterialCursors.Pointer;
+            MaterialCursors.Apply(this, MaterialCursors.Pointer);
             Size = new Size(DefaultDiameter, DefaultDiameter);
             TabStop = true;
             ThemeHook.Attach(this, Invalidate);

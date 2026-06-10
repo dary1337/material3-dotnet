@@ -48,7 +48,7 @@ namespace Material3.WinForms.Controls {
                     | ControlStyles.SupportsTransparentBackColor,
                 true);
             BackColor = Color.Transparent;
-            Cursor = MaterialCursors.Pointer;
+            MaterialCursors.Apply(this, MaterialCursors.Pointer);
             Height = BarHeight;
             _slide = new Timer { Interval = 16 };
             _slide.Tick += OnSlideTick;

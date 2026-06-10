@@ -30,7 +30,7 @@ namespace Material3.WinForms.Controls {
             FlatAppearance.BorderColor = BackColor;
             FlatAppearance.BorderSize = 0;
             FlatStyle = FlatStyle.Flat;
-            Cursor = MaterialCursors.Pointer;
+            MaterialCursors.Apply(this, MaterialCursors.Pointer);
             ImageAlign = ContentAlignment.MiddleLeft;
             TextImageRelation = TextImageRelation.ImageBeforeText;
             // GDI TextRenderer (not GDI+) so the label is ClearType grid-fitted and crisp, matching

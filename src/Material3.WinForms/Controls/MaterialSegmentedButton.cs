@@ -35,7 +35,7 @@ namespace Material3.WinForms.Controls {
                     | ControlStyles.SupportsTransparentBackColor,
                 true);
             BackColor = Color.Transparent;
-            Cursor = MaterialCursors.Pointer;
+            MaterialCursors.Apply(this, MaterialCursors.Pointer);
             Height = SegmentHeight;
             ThemeHook.Attach(this, Invalidate);
         }
