@@ -204,6 +204,21 @@ namespace Material3.WinForms.Forms {
             }
         }
 
+        protected override void OnShown(EventArgs e) {
+            base.OnShown(e);
+            // Seed the Normal-size baseline for forms shown minimized/maximized, which never raise a
+            // Normal WM_SIZE first: without it the first restore runs with no baseline and the
+            // growth fix can't engage, so the window grows a frame per minimize cycle. RestoreBounds
+            // is the normal-state rect even while maximized.
+            if (!_haveNormalSize) {
+                Size baseline = WindowState == FormWindowState.Normal ? Size : RestoreBounds.Size;
+                if (baseline.Width > 0 && baseline.Height > 0) {
+                    _normalSize = baseline;
+                    _haveNormalSize = true;
+                }
+            }
+        }
+
         protected override void WndProc(ref Message m) {
             switch (m.Msg) {
                 case WM_WINDOWPOSCHANGING:
@@ -243,6 +258,9 @@ namespace Material3.WinForms.Forms {
                             // real resize (which triggers that reflow).
                             _restoring = true;
                             BeginInvoke((Action)(() => {
+                                if (IsDisposed) {
+                                    return;
+                                }
                                 if (WindowState == FormWindowState.Normal && Size != _normalSize) {
                                     Size = _normalSize;
                                 }
@@ -257,7 +275,11 @@ namespace Material3.WinForms.Forms {
                         // Drop the minimize latch only after the synchronous restore burst — the
                         // inflated frame can still arrive a couple of messages later.
                         if (_wasMinimized) {
-                            BeginInvoke((Action)(() => _wasMinimized = false));
+                            BeginInvoke((Action)(() => {
+                                if (!IsDisposed) {
+                                    _wasMinimized = false;
+                                }
+                            }));
                         }
                         _prevWindowState = FormWindowState.Normal;
                     } else {
