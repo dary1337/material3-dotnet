@@ -8,6 +8,7 @@ using Material3.WinForms.Drawing;
 namespace Material3.WinForms.Controls {
     /// <summary>Panel clipped to a rounded rectangle (HWND region) with an optional 1-px outline; base surface for cards and list items.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public class RoundedPanel : Panel {
         private int _cornerRadius;
         private Color _outlineColor = Color.Transparent;

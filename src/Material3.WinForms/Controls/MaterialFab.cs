@@ -19,6 +19,7 @@ namespace Material3.WinForms.Controls {
 
     /// <summary>Material 3 floating action button; set <see cref="Control.Text"/> for the extended (icon + label) variant.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialFab : Control {
         private const int ElevationLevel = 3;
 
@@ -37,7 +38,7 @@ namespace Material3.WinForms.Controls {
                     | ControlStyles.Selectable,
                 true);
             BackColor = Color.Transparent;
-            Cursor = MaterialCursors.Pointer;
+            MaterialCursors.Apply(this, MaterialCursors.Pointer);
             ApplySize();
             ThemeHook.Attach(this, Invalidate);
         }

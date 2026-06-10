@@ -12,6 +12,7 @@ using Material3.WinForms.Typography;
 namespace Material3.WinForms.Controls {
     /// <summary>Selectable Material 3 option card: leading icon, title with optional accent suffix, description, trailing detail text and radio.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialOptionCard : RoundedPanel {
         public event Action<MaterialOptionCard>? SelectedChanged;
 
@@ -42,7 +43,7 @@ namespace Material3.WinForms.Controls {
 
         public MaterialOptionCard() : base(Shape.Medium) {
             MinimumSize = new Size(0, MinHeight);
-            Cursor = MaterialCursors.Pointer;
+            MaterialCursors.Apply(this, MaterialCursors.Pointer);
             UpdateSurface();
 
             _selection = new AnimatedValue(this, factor: 0.22f, threshold: 0.01f);

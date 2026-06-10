@@ -17,6 +17,7 @@ namespace Material3.WinForms.Controls {
 
     /// <summary>Rounded Material 3 card. Pick the container style via <see cref="Variant"/>.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public class MaterialCard : RoundedPanel {
         private MaterialCardVariant _variant = MaterialCardVariant.Outlined;
 

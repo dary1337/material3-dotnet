@@ -242,18 +242,6 @@ namespace Material3.Gallery {
             base.OnFormClosed(e);
         }
 
-        private const int WS_EX_COMPOSITED = 0x02000000;
-
-        protected override CreateParams CreateParams {
-            get {
-                // Composite the window so a theme switch repaints in one frame, not a per-control sweep.
-                // Costs a little scroll throughput — accepted here; consumers opt in on their own forms.
-                CreateParams cp = base.CreateParams;
-                cp.ExStyle |= WS_EX_COMPOSITED;
-                return cp;
-            }
-        }
-
         private void OnThemeChanged(object? sender, EventArgs e) {
             // Rebuild only on a light/dark flip: content labels bake their ForeColor, while a same-mode
             // hue drag recolors live via ThemeHook (no rebuild — that drag fires ~30×/s).
@@ -370,13 +358,18 @@ namespace Material3.Gallery {
         }
 
         private void ShowPage(string page) {
+            // Reset scroll only when navigating to a different page. A same-page rebuild (resize reflow
+            // or theme flip) keeps the offset, so resizing the window no longer throws scroll to the top.
+            bool pageChanged = page != _currentPage || _content.ContentPanel.Controls.Count == 0;
             _currentPage = page;
             _builtDark = ThemeManager.IsDark;
             foreach (RoundedButton b in _navButtons) {
                 StyleNavButton(b, (string)b.Tag! == page);
             }
 
-            _content.ScrollToTop();
+            if (pageChanged) {
+                _content.ScrollToTop();
+            }
             _content.BeginContentUpdate();
             // finally: a throw in any BuildXPage must not leave the scroll panel's layout suspended.
             try {
@@ -835,6 +828,27 @@ namespace Material3.Gallery {
             b.Add(new SkeletonCard { Height = b.Scale(ComponentSizes.ListItemMinHeight) });
             b.Gap(Spacing.Space2);
             b.Add(new SkeletonCard { Height = b.Scale(ComponentSizes.ListItemMinHeight) });
+
+            b.Gap(Spacing.Space4);
+            b.Caption("Or compose MaterialSkeleton blocks for any layout — here a media card:");
+            var custom = new Panel {
+                Height = b.Scale(120),
+                BackColor = Color.Transparent,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
+            };
+            var image = new MaterialSkeleton { CornerRadius = 12 };
+            var avatar = new MaterialSkeleton { CornerRadius = 999 };
+            var line1 = new MaterialSkeleton { CornerRadius = 6 };
+            var line2 = new MaterialSkeleton { CornerRadius = 6 };
+            custom.Controls.AddRange(new Control[] { image, avatar, line1, line2 });
+            custom.Resize += (s, e) => {
+                int Sc(int px) => Dpi.Scale(custom, px);
+                image.SetBounds(0, 0, custom.Width, Sc(56));
+                avatar.SetBounds(0, Sc(66), Sc(40), Sc(40));
+                line1.SetBounds(Sc(52), Sc(68), Math.Max(Sc(80), custom.Width - Sc(52)), Sc(12));
+                line2.SetBounds(Sc(52), Sc(90), Sc(160), Sc(12));
+            };
+            b.Add(custom);
         }
 
         private static void BuildOverlaysPage(PageBuilder b) {

@@ -16,7 +16,7 @@
 
   <PropertyGroup Label="Package">
     <PackageId>Material3.WinForms</PackageId>
-    <Version>0.5.0</Version>
+    <Version>0.6.0</Version>
     <Authors>dary1337</Authors>
     <Description>Material 3 (Material You) controls and design tokens for Windows Forms: dynamic color from a seed (HCT tonal palettes), light/dark themes with runtime switching, full type scale, elevation, state layers and motion tokens.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -36,6 +36,15 @@
     <!-- Material Symbols shipped as embedded SVGs; MaterialIconRenderer locates them by
          the ".icons.{key}.svg" resource-name suffix. -->
     <EmbeddedResource Include="Resources\icons\*.svg" />
+    <!-- Shared 16x16 toolbox icon; controls point at it via [ToolboxBitmap(typeof(Dpi), "m3toolbox.png")]. -->
+    <EmbeddedResource Include="m3toolbox.png" />
+  </ItemGroup>
+
+  <!-- Design-time support (ControlDesigner / SmartTags / UITypeEditor) lives in System.Design,
+       which only exists in the in-process .NET Framework designer. net8 designer support would
+       need a separate out-of-process design-time assembly (see the Design/ files, all #if NET472). -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <Reference Include="System.Design" />
   </ItemGroup>
 
 </Project>

@@ -18,6 +18,7 @@ namespace Material3.WinForms.Controls {
 
     /// <summary>Material 3 icon button; optionally a toggle (<see cref="IsToggle"/>) that swaps colors when selected.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialIconButton : Control {
         private const int DefaultDiameter = 40;
         private const int GlyphSize = 24;
@@ -41,7 +42,7 @@ namespace Material3.WinForms.Controls {
                     | ControlStyles.Selectable,
                 true);
             BackColor = Color.Transparent;
-            Cursor = MaterialCursors.Pointer;
+            MaterialCursors.Apply(this, MaterialCursors.Pointer);
             Size = new Size(DefaultDiameter, DefaultDiameter);
             TabStop = true;
             ThemeHook.Attach(this, Invalidate);

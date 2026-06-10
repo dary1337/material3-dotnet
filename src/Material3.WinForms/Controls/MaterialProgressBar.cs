@@ -10,6 +10,7 @@ using Material3.WinForms.Tokens;
 namespace Material3.WinForms.Controls {
     /// <summary>Material 3 linear determinate progress indicator with a tweened fill; set <see cref="Value"/> in [0,100].</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialProgressBar : Control {
         private int _value;
         private readonly AnimatedValue _fill;

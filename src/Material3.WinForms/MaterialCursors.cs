@@ -42,5 +42,17 @@ namespace Material3.WinForms {
         public static readonly Cursor AppStarting = Load(32650);
         /// <summary>Arrow with a question mark.</summary>
         public static readonly Cursor Help = Load(32651);
+
+        /// <summary>
+        /// Assigns a Material cursor at run time only. In the designer it's skipped: these wrap raw OS
+        /// handles that <see cref="System.ComponentModel.TypeConverter"/> for <see cref="Cursor"/>
+        /// can't serialize into InitializeComponent, which would otherwise break code generation for
+        /// any form hosting the control. Leaving the design-time cursor at its default avoids that.
+        /// </summary>
+        public static void Apply(Control control, Cursor cursor) {
+            if (control != null && !Theming.DesignTime.Active) {
+                control.Cursor = cursor;
+            }
+        }
     }
 }

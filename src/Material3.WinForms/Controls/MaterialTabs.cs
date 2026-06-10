@@ -21,6 +21,7 @@ namespace Material3.WinForms.Controls {
 
     /// <summary>Material 3 tab bar (bar only — pair with your own content switching via <see cref="SelectedIndexChanged"/>); the active indicator slides between tabs.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialTabs : Control {
         private const int BarHeight = 48;
         private const int TabPadX = 16;
@@ -48,7 +49,7 @@ namespace Material3.WinForms.Controls {
                     | ControlStyles.SupportsTransparentBackColor,
                 true);
             BackColor = Color.Transparent;
-            Cursor = MaterialCursors.Pointer;
+            MaterialCursors.Apply(this, MaterialCursors.Pointer);
             Height = BarHeight;
             _slide = new Timer { Interval = 16 };
             _slide.Tick += OnSlideTick;

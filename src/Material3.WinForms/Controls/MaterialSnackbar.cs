@@ -10,6 +10,9 @@ using Material3.WinForms.Typography;
 
 namespace Material3.WinForms.Controls {
     /// <summary>Material 3 snackbar: a transient inverse-surface banner with an optional action; one per form, a new message replaces the current.</summary>
+    // Shown programmatically via Show(); it has no public parameterless ctor, so hide it from the
+    // toolbox — otherwise the designer offers it and throws MissingMethodException when dropped.
+    [System.ComponentModel.ToolboxItem(false)]
     public sealed class MaterialSnackbar : Control {
         private const int BarHeight = 48;
         private const int PadX = 16;
@@ -40,7 +43,7 @@ namespace Material3.WinForms.Controls {
                     | ControlStyles.OptimizedDoubleBuffer,
                 true);
             Height = BarHeight;
-            Cursor = MaterialCursors.Pointer;
+            MaterialCursors.Apply(this, MaterialCursors.Pointer);
 
             _animator = new Timer { Interval = 16 };
             _animator.Tick += OnAnimatorTick;

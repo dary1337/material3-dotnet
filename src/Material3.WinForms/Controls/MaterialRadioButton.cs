@@ -11,6 +11,7 @@ using Material3.WinForms.Typography;
 namespace Material3.WinForms.Controls {
     /// <summary>Material 3 radio button; checking it unchecks sibling <see cref="MaterialRadioButton"/>s, including ones nested in child containers.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialRadioButton : Control {
         private const int RingSize = 20;
         private const int LabelGap = 10;
@@ -32,7 +33,7 @@ namespace Material3.WinForms.Controls {
                     | ControlStyles.Selectable,
                 true);
             BackColor = Color.Transparent;
-            Cursor = MaterialCursors.Pointer;
+            MaterialCursors.Apply(this, MaterialCursors.Pointer);
             Size = new Size(140, 28);
             TabStop = true;
             _dot = new AnimatedValue(this, factor: 0.3f, threshold: 0.05f);

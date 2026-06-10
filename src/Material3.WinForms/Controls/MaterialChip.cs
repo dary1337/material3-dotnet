@@ -24,6 +24,7 @@ namespace Material3.WinForms.Controls {
 
     /// <summary>Material 3 chip with label, optional leading icon, filter selection and input removal.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialChip : Control {
         private const int ChipHeight = 32;
         private const int PadX = 12;
@@ -74,7 +75,7 @@ namespace Material3.WinForms.Controls {
                     | ControlStyles.SupportsTransparentBackColor,
                 true);
             BackColor = Color.Transparent;
-            Cursor = MaterialCursors.Pointer;
+            MaterialCursors.Apply(this, MaterialCursors.Pointer);
             Height = ChipHeight;
             ThemeHook.Attach(this, Invalidate);
         }

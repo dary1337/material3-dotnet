@@ -12,6 +12,7 @@ using Material3.WinForms.Typography;
 namespace Material3.WinForms.Controls {
     /// <summary>Standalone M3 badge: an Error-colored count pill, or an 8px dot in <see cref="DotMode"/>.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialBadge : Control {
         private const int PillHeight = 16;
         private const int DotSize = 8;

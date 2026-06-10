@@ -12,6 +12,7 @@ using Material3.WinForms.Typography;
 namespace Material3.WinForms.Controls {
     /// <summary>Material 3 checkbox with an animated check mark, optional label, and indeterminate state.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialCheckBox : Control {
         private const int BoxSize = 18;
         private const int LabelGap = 10;
@@ -33,7 +34,7 @@ namespace Material3.WinForms.Controls {
                     | ControlStyles.Selectable,
                 true);
             BackColor = Color.Transparent;
-            Cursor = MaterialCursors.Pointer;
+            MaterialCursors.Apply(this, MaterialCursors.Pointer);
             Size = new Size(140, 28);
             TabStop = true;
             _mark = new AnimatedValue(this, factor: 0.3f, threshold: 0.05f);

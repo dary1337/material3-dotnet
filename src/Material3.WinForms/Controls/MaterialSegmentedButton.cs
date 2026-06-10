@@ -14,6 +14,7 @@ using Material3.WinForms.Typography;
 namespace Material3.WinForms.Controls {
     /// <summary>Material 3 segmented button: equal-width segments in one outlined pill; single-select unless <see cref="MultiSelect"/> is set.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialSegmentedButton : Control {
         private const int SegmentHeight = 40;
         private const int CheckPx = 16;
@@ -35,7 +36,7 @@ namespace Material3.WinForms.Controls {
                     | ControlStyles.SupportsTransparentBackColor,
                 true);
             BackColor = Color.Transparent;
-            Cursor = MaterialCursors.Pointer;
+            MaterialCursors.Apply(this, MaterialCursors.Pointer);
             Height = SegmentHeight;
             ThemeHook.Attach(this, Invalidate);
         }

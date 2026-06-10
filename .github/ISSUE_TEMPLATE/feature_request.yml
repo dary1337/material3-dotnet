@@ -1,0 +1,62 @@
+name: Feature request
+description: Suggest a new control, variant, or capability.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea. This library tracks the current Material 3 spec — a link to the
+        relevant spec page helps a lot when proposing a component or behavior.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / use case
+      description: What are you trying to build, and where does the library fall short today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: The control, property, or behavior you'd like — API sketch welcome.
+      placeholder: |
+        e.g. Add a range mode to MaterialSlider:
+        slider.RangeMode = true; slider.LowerValue / slider.UpperValue
+    validations:
+      required: true
+
+  - type: input
+    id: area
+    attributes:
+      label: Related component / area
+      placeholder: e.g. MaterialSlider, a new Carousel, theming, designer support
+    validations:
+      required: false
+
+  - type: input
+    id: spec
+    attributes:
+      label: Material 3 spec reference
+      description: Link to m3.material.io if this maps to a spec component.
+      placeholder: https://m3.material.io/components/...
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Workarounds you've tried or other designs you weighed.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and this isn't already requested.
+          required: true

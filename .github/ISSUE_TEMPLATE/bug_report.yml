@@ -1,0 +1,109 @@
+name: Bug report
+description: Something in a Material control or form behaves incorrectly.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Please fill in the details below — a minimal repro and the
+        framework / DPI context resolve most issues much faster.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: A clear description of the bug and what you expected instead.
+      placeholder: e.g. MaterialTextField's floating label clips at 150% DPI.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Ideally a minimal snippet or the smallest form that shows it.
+      placeholder: |
+        1. Drop a MaterialButton on a form
+        2. Set Variant = Outlined
+        3. ...
+    validations:
+      required: true
+
+  - type: input
+    id: controls
+    attributes:
+      label: Control(s) involved
+      placeholder: e.g. MaterialButton, BorderlessForm, MaterialScrollPanel
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Material3.WinForms version
+      placeholder: e.g. 0.6.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: tfm
+    attributes:
+      label: Target framework
+      options:
+        - .NET Framework 4.7.2+ (net472)
+        - .NET 8 (net8.0-windows)
+        - Both
+    validations:
+      required: true
+
+  - type: dropdown
+    id: dpi
+    attributes:
+      label: Display scaling
+      description: The Windows scale of the monitor where it happens (DPI bugs are common).
+      options:
+        - 100%
+        - 125%
+        - 150%
+        - 175%
+        - 200%
+        - Mixed (multi-monitor, different scales)
+        - Other / not sure
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Windows version
+      placeholder: e.g. Windows 11 23H2, Windows 10 22H2
+    validations:
+      required: true
+
+  - type: textarea
+    id: theme
+    attributes:
+      label: Theme (for color / rendering issues)
+      description: Seed color, variant and light/dark — only if the bug is visual.
+      placeholder: e.g. seed #4285F4, Vibrant, dark
+    validations:
+      required: false
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshots / call stack / extra context
+      description: Drag images here. Paste any exception and stack trace.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and this isn't a duplicate.
+          required: true
+        - label: I reproduced this on the latest published version.
+          required: true

@@ -12,6 +12,7 @@ using Material3.WinForms.Typography;
 namespace Material3.WinForms.Controls {
     /// <summary>Material 3 list item with leading slot, headline, optional supporting text and a trailing slot; one or two lines.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialListItem : Control {
         private const int OneLineHeight = 56;
         private const int TwoLineHeight = 72;
@@ -37,7 +38,7 @@ namespace Material3.WinForms.Controls {
                     | ControlStyles.OptimizedDoubleBuffer
                     | ControlStyles.ResizeRedraw,
                 true);
-            Cursor = MaterialCursors.Pointer;
+            MaterialCursors.Apply(this, MaterialCursors.Pointer);
             ApplyIntrinsicHeight();
             ThemeHook.Attach(this, Invalidate);
         }

@@ -9,6 +9,7 @@ using Material3.WinForms.Tokens;
 namespace Material3.WinForms.Controls {
     /// <summary>Inline dropdown select that grows its own height to reveal the option list rather than opening a popup window.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class DropdownSelect : UserControl, IMessageFilter {
         private readonly RoundedPanel _header;
         private readonly Label _selectedLabel;

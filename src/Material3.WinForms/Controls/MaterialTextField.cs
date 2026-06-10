@@ -18,6 +18,10 @@ namespace Material3.WinForms.Controls {
 
     /// <summary>Material 3 text field (filled or outlined) with floating label, icons, supporting text and error state, hosting a real borderless <see cref="TextBox"/> inside the painted chrome.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
+#if NET472
+    [System.ComponentModel.Designer(typeof(Material3.WinForms.Design.MaterialTextFieldDesigner))]
+#endif
     public sealed class MaterialTextField : Control {
         private const int FieldHeight = 44;
         private const int SupportingHeight = 18;
@@ -53,7 +57,7 @@ namespace Material3.WinForms.Controls {
                 true);
             Height = LabelRise + FieldHeight + SupportingHeight;
             Width = 220;
-            Cursor = MaterialCursors.IBeam;
+            MaterialCursors.Apply(this, MaterialCursors.IBeam);
 
             _editor = new TextBox {
                 BorderStyle = BorderStyle.None,

@@ -10,6 +10,7 @@ using Material3.WinForms.Tokens;
 namespace Material3.WinForms.Controls {
     /// <summary>Material 3 continuous slider: a draggable handle over an active/inactive track, reporting an integer <see cref="Value"/> in [<see cref="Minimum"/>, <see cref="Maximum"/>].</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialSlider : Control {
         private const int HandleRadius = 10;
         private const int TrackHeight = 6;
@@ -35,7 +36,7 @@ namespace Material3.WinForms.Controls {
                 true);
             Height = StateLayerRadius * 2;
             BackColor = Color.Transparent;
-            Cursor = MaterialCursors.Pointer;
+            MaterialCursors.Apply(this, MaterialCursors.Pointer);
             TabStop = true;
             ThemeHook.Attach(this, Invalidate);
 

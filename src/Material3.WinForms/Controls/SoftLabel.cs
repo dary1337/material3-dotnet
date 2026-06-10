@@ -9,6 +9,7 @@ using Material3.WinForms.Theming;
 namespace Material3.WinForms.Controls {
     /// <summary>Drop-in <see cref="Label"/> replacement that owner-draws text via GDI+ with a controlled <see cref="TextRenderingHint"/>, staying consistent with the owner-drawn Material controls.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public class SoftLabel : Label {
         public SoftLabel() {
             SetStyle(

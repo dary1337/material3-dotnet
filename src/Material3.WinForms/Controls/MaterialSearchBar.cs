@@ -13,6 +13,7 @@ using Material3.WinForms.Typography;
 namespace Material3.WinForms.Controls {
     /// <summary>Material 3 search bar: a pill field with leading icon, hosted editor and a clear button; raises <see cref="QueryChanged"/> and <see cref="QuerySubmitted"/>.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialSearchBar : Control {
         private const int BarHeight = 48;
         private const int PadX = 16;
@@ -36,7 +37,7 @@ namespace Material3.WinForms.Controls {
                 true);
             Height = BarHeight;
             Width = 320;
-            Cursor = MaterialCursors.IBeam;
+            MaterialCursors.Apply(this, MaterialCursors.IBeam);
 
             _editor = new TextBox {
                 BorderStyle = BorderStyle.None,
