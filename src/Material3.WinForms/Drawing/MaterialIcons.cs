@@ -22,10 +22,12 @@ namespace Material3.WinForms.Drawing {
         public const string Info = "info";
         public const string InfoFilled = "info_filled";
         public const string Layers = "layers";
+        public const string Maximize = "maximize";
         public const string Minimize = "minimize";
         public const string OpenInNew = "open_in_new";
         public const string Play = "play_arrow";
         public const string PlayFilled = "play_arrow_filled";
+        public const string Restore = "restore";
         public const string RadioChecked = "radio_button_checked";
         public const string RadioUnchecked = "radio_button_unchecked";
         public const string Refresh = "refresh";

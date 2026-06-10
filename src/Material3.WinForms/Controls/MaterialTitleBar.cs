@@ -24,10 +24,14 @@ namespace Material3.WinForms.Controls {
         private const int IconTextGap = 8;
 
         private readonly MaterialButton _minimize;
+        private readonly MaterialButton _maximize;
         private readonly MaterialButton _close;
         private string _titleText = string.Empty;
         private Bitmap? _appIcon;
         private bool _showMinimize = true;
+        private bool _showMaximize = true;
+        private bool _showClose = true;
+        private Form? _hookedForm;
 
         [Category("Material Design")]
         [Description("Caption text shown next to the app icon.")]
@@ -66,6 +70,34 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <summary>Shows the maximize/restore caption button; fixed-size forms set this false.</summary>
+        [Category("Material Design")]
+        [Description("Shows the maximize/restore caption button; fixed-size forms set this false.")]
+        [DefaultValue(true)]
+        public bool ShowMaximize {
+            get => _showMaximize;
+            set {
+                if (_showMaximize == value) return;
+                _showMaximize = value;
+                _maximize.Visible = value;
+                PerformLayout();
+            }
+        }
+
+        /// <summary>Shows the close caption button; set false for a window closed only programmatically.</summary>
+        [Category("Material Design")]
+        [Description("Shows the close caption button; set false for a window closed only programmatically.")]
+        [DefaultValue(true)]
+        public bool ShowClose {
+            get => _showClose;
+            set {
+                if (_showClose == value) return;
+                _showClose = value;
+                _close.Visible = value;
+                PerformLayout();
+            }
+        }
+
         public MaterialTitleBar() {
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
@@ -80,6 +112,9 @@ namespace Material3.WinForms.Controls {
             _minimize = BuildCaptionButton(MaterialIcons.Minimize);
             _minimize.Click += OnMinimizeClick;
 
+            _maximize = BuildCaptionButton(MaterialIcons.Maximize);
+            _maximize.Click += OnMaximizeClick;
+
             _close = BuildCaptionButton(MaterialIcons.Close);
             _close.MouseEnter += OnCloseHoverEnter;
             _close.MouseLeave += OnCloseHoverLeave;
@@ -88,6 +123,7 @@ namespace Material3.WinForms.Controls {
             ApplyCaptionAccents();
 
             Controls.Add(_minimize);
+            Controls.Add(_maximize);
             Controls.Add(_close);
 
             Dock = DockStyle.Top;
@@ -108,6 +144,7 @@ namespace Material3.WinForms.Controls {
         // Caption-button accents are set absolutely (not theme-bound), so they must be re-applied on every theme switch.
         private void ApplyCaptionAccents() {
             _minimize.SetAccent(MaterialColors.OnSurfaceVariant, MaterialColors.OnSurface);
+            _maximize.SetAccent(MaterialColors.OnSurfaceVariant, MaterialColors.OnSurface);
             _close.SetAccent(MaterialColors.OnSurfaceVariant, MaterialColors.OnSurface);
         }
 
@@ -131,6 +168,40 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        private void OnMaximizeClick(object? sender, EventArgs e) {
+            Form? form = FindForm();
+            if (form != null) {
+                form.WindowState = form.WindowState == FormWindowState.Maximized
+                    ? FormWindowState.Normal
+                    : FormWindowState.Maximized;
+            }
+        }
+
+        // Keep the glyph in sync with the window state regardless of how it changed (button, caption
+        // double-click, Aero Snap, taskbar): the form raises SizeChanged on every state transition.
+        private void HookForm() {
+            Form? form = FindForm();
+            if (ReferenceEquals(form, _hookedForm)) {
+                UpdateMaximizeGlyph();
+                return;
+            }
+            if (_hookedForm != null) {
+                _hookedForm.SizeChanged -= OnFormSizeChanged;
+            }
+            _hookedForm = form;
+            if (_hookedForm != null) {
+                _hookedForm.SizeChanged += OnFormSizeChanged;
+            }
+            UpdateMaximizeGlyph();
+        }
+
+        private void OnFormSizeChanged(object? sender, EventArgs e) => UpdateMaximizeGlyph();
+
+        private void UpdateMaximizeGlyph() {
+            bool maximized = _hookedForm != null && _hookedForm.WindowState == FormWindowState.Maximized;
+            _maximize.IconGlyph = maximized ? MaterialIcons.Restore : MaterialIcons.Maximize;
+        }
+
         private void OnCloseClick(object? sender, EventArgs e) {
             FindForm()?.Close();
         }
@@ -146,6 +217,7 @@ namespace Material3.WinForms.Controls {
         protected override void OnHandleCreated(EventArgs e) {
             base.OnHandleCreated(e);
             ApplyIntrinsicHeight();
+            HookForm();
         }
 
         protected override void OnDpiChangedAfterParent(EventArgs e) {
@@ -164,9 +236,20 @@ namespace Material3.WinForms.Controls {
             int edgePadding = Dpi.Scale(this, EdgePadding);
             int buttonGap = Dpi.Scale(this, ButtonGap);
             int y = (Height - buttonHeight) / 2;
-            _close.SetBounds(Width - buttonWidth - edgePadding, y, buttonWidth, buttonHeight);
+            int right = Width - edgePadding;
+            if (_showClose) {
+                right -= buttonWidth;
+                _close.SetBounds(right, y, buttonWidth, buttonHeight);
+                right -= buttonGap;
+            }
+            if (_showMaximize) {
+                right -= buttonWidth;
+                _maximize.SetBounds(right, y, buttonWidth, buttonHeight);
+                right -= buttonGap;
+            }
             if (_showMinimize) {
-                _minimize.SetBounds(_close.Left - buttonWidth - buttonGap, y, buttonWidth, buttonHeight);
+                right -= buttonWidth;
+                _minimize.SetBounds(right, y, buttonWidth, buttonHeight);
             }
         }
 
@@ -187,7 +270,10 @@ namespace Material3.WinForms.Controls {
             }
 
             if (!string.IsNullOrEmpty(_titleText)) {
-                int rightReserved = Dpi.Scale(this, ButtonWidth) * 2 + Dpi.Scale(this, ButtonGap) + Dpi.Scale(this, EdgePadding) + Dpi.Scale(this, 4);
+                int buttons = (_showClose ? 1 : 0) + (_showMaximize ? 1 : 0) + (_showMinimize ? 1 : 0);
+                int rightReserved = buttons * Dpi.Scale(this, ButtonWidth)
+                    + Math.Max(0, buttons - 1) * Dpi.Scale(this, ButtonGap)
+                    + Dpi.Scale(this, EdgePadding) + Dpi.Scale(this, 4);
                 var textRect = new Rectangle(x, 0, Math.Max(0, Width - x - rightReserved), Height);
                 // TextRenderer (GDI) for accurate VerticalCenter; Graphics.DrawString includes font leading and drifts a few px off-center.
                 TextRenderer.DrawText(
@@ -217,6 +303,10 @@ namespace Material3.WinForms.Controls {
 
         protected override void Dispose(bool disposing) {
             if (disposing) {
+                if (_hookedForm != null) {
+                    _hookedForm.SizeChanged -= OnFormSizeChanged;
+                    _hookedForm = null;
+                }
                 _appIcon?.Dispose();
                 _appIcon = null;
             }
