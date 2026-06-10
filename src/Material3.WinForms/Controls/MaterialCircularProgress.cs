@@ -9,6 +9,7 @@ using Material3.WinForms.Tokens;
 namespace Material3.WinForms.Controls {
     /// <summary>Material 3 circular progress indicator with determinate (<see cref="Value"/>) and indeterminate spinner modes.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialCircularProgress : Control {
         private const float StrokeWidth = 4f;
         private const int FrameMs = 16;

@@ -18,6 +18,7 @@ namespace Material3.WinForms.Controls {
 
     /// <summary>Material 3 text field (filled or outlined) with floating label, icons, supporting text and error state, hosting a real borderless <see cref="TextBox"/> inside the painted chrome.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
 #if NET472
     [System.ComponentModel.Designer(typeof(Material3.WinForms.Design.MaterialTextFieldDesigner))]
 #endif

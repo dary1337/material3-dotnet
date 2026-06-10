@@ -22,6 +22,7 @@ namespace Material3.WinForms.Controls {
 
     /// <summary>Pill-shaped owner-drawn M3 button; inherits <see cref="Button"/> so DialogResult / AcceptButton work.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     [DefaultProperty(nameof(Variant))]
 #if NET472
     [Designer(typeof(Material3.WinForms.Design.MaterialButtonDesigner))]

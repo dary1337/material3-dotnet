@@ -175,6 +175,7 @@ namespace Material3.WinForms.Controls {
 
     /// <summary>Horizontal navigation bar (dock to the bottom): equal-width destinations with icon, label and an active pill.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialNavigationBar : MaterialNavigationBase {
         private const int BarHeight = 64;
         private const int IconPx = 22;
@@ -252,6 +253,7 @@ namespace Material3.WinForms.Controls {
 
     /// <summary>Vertical navigation rail (dock to the left, 80px wide): icon pill + small label per destination.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialNavigationRail : MaterialNavigationBase {
         private const int RailWidth = 80;
         private const int ItemHeight = 60;
@@ -322,6 +324,7 @@ namespace Material3.WinForms.Controls {
 
     /// <summary>Standard navigation drawer (dock to the left, 280px wide): full-width icon+label pills with an optional headline.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialNavigationDrawer : MaterialNavigationBase {
         private const int DrawerWidth = 280;
         private const int ItemHeight = 48;

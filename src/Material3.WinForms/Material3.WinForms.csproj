@@ -36,6 +36,8 @@
     <!-- Material Symbols shipped as embedded SVGs; MaterialIconRenderer locates them by
          the ".icons.{key}.svg" resource-name suffix. -->
     <EmbeddedResource Include="Resources\icons\*.svg" />
+    <!-- Shared 16x16 toolbox icon; controls point at it via [ToolboxBitmap(typeof(Dpi), "m3toolbox.png")]. -->
+    <EmbeddedResource Include="m3toolbox.png" />
   </ItemGroup>
 
   <!-- Design-time support (ControlDesigner / SmartTags / UITypeEditor) lives in System.Design,

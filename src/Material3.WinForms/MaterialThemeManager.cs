@@ -13,6 +13,7 @@ namespace Material3.WinForms {
     /// palette instead of the default Platinum scheme.
     /// </summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     [DesignerCategory("Component")]
 #if NET472
     [Designer(typeof(Material3.WinForms.Design.MaterialThemeManagerDesigner))]

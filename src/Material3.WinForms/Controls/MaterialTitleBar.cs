@@ -12,6 +12,7 @@ using Material3.WinForms.Typography;
 namespace Material3.WinForms.Controls {
     /// <summary>Custom Material titlebar replacing the native caption: paint-only title on the left (one big drag target), caption buttons on the right; drag is delegated to the parent <see cref="BorderlessForm"/>.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialTitleBar : Control {
         public const int BarHeight = ComponentSizes.TitleBarHeight;
 

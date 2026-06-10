@@ -12,6 +12,7 @@ using Material3.WinForms.Typography;
 namespace Material3.WinForms.Controls {
     /// <summary>Selectable Material 3 option card: leading icon, title with optional accent suffix, description, trailing detail text and radio.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialOptionCard : RoundedPanel {
         public event Action<MaterialOptionCard>? SelectedChanged;
 

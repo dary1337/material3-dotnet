@@ -9,6 +9,7 @@ using Material3.WinForms.Theming;
 namespace Material3.WinForms.Controls {
     /// <summary>Material You overlay scrollbar host: add content to <see cref="ContentPanel"/>; a pill thumb fades in over the right edge on overflow.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialScrollPanel : Panel {
         /// <summary>Host panel for scrollable content; add children here, not to the panel itself.</summary>
         [Browsable(false)]

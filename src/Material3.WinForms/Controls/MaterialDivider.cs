@@ -9,6 +9,7 @@ namespace Material3.WinForms.Controls {
     /// M3 divider: a 1px OutlineVariant rule, horizontal or vertical, with optional inset.
     /// </summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialDivider : Control {
         private bool _vertical;
         private int _inset;

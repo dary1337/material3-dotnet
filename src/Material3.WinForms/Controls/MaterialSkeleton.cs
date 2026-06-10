@@ -13,6 +13,7 @@ namespace Material3.WinForms.Controls {
     /// a fixed shape. <see cref="SkeletonCard"/> is a ready-made list-item preset built from these.
     /// </summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialSkeleton : Control {
         private int _cornerRadius = Shape.Small;
 

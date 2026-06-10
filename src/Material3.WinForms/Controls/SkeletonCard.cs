@@ -13,6 +13,7 @@ namespace Material3.WinForms.Controls {
     /// For any other layout, compose <see cref="MaterialSkeleton"/> blocks yourself.
     /// </summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class SkeletonCard : RoundedPanel {
         public SkeletonCard()
             : base(Shape.Medium) {

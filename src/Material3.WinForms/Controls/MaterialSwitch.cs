@@ -12,6 +12,7 @@ using Material3.WinForms.Typography;
 namespace Material3.WinForms.Controls {
     /// <summary>Material 3 switch: 52×32 track with an animated thumb that grows off→on, an optional label, toggled by click or Space.</summary>
     [ToolboxItem(true)]
+    [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialSwitch : Control {
         private const int TrackWidth = 52;
         private const int TrackHeight = 32;
