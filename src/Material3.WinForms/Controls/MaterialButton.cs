@@ -23,6 +23,9 @@ namespace Material3.WinForms.Controls {
     /// <summary>Pill-shaped owner-drawn M3 button; inherits <see cref="Button"/> so DialogResult / AcceptButton work.</summary>
     [ToolboxItem(true)]
     [DefaultProperty(nameof(Variant))]
+#if NET472
+    [Designer(typeof(Material3.WinForms.Design.MaterialButtonDesigner))]
+#endif
     public sealed class MaterialButton : Button {
         private MaterialButtonVariant _variant = MaterialButtonVariant.Filled;
         private string _iconGlyph = string.Empty;
@@ -49,7 +52,7 @@ namespace Material3.WinForms.Controls {
             FlatAppearance.BorderSize = 0;
             FlatAppearance.MouseOverBackColor = Color.Transparent;
             FlatAppearance.MouseDownBackColor = Color.Transparent;
-            Cursor = MaterialCursors.Pointer;
+            MaterialCursors.Apply(this, MaterialCursors.Pointer);
             Font = MaterialType.LabelLarge;
             AutoSize = false;
             Height = ComponentSizes.ButtonHeight;
@@ -89,6 +92,10 @@ namespace Material3.WinForms.Controls {
         [Category("Material Design")]
         [Description("Material Symbols key for the leading glyph (e.g. \"check\"). See MaterialIcons.")]
         [DefaultValue("")]
+#if NET472
+        [System.ComponentModel.Editor(typeof(Material3.WinForms.Design.IconGlyphEditor),
+            typeof(System.Drawing.Design.UITypeEditor))]
+#endif
         public string IconGlyph {
             get => _iconGlyph;
             set {

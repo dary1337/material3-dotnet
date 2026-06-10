@@ -38,4 +38,11 @@
     <EmbeddedResource Include="Resources\icons\*.svg" />
   </ItemGroup>
 
+  <!-- Design-time support (ControlDesigner / SmartTags / UITypeEditor) lives in System.Design,
+       which only exists in the in-process .NET Framework designer. net8 designer support would
+       need a separate out-of-process design-time assembly (see the Design/ files, all #if NET472). -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <Reference Include="System.Design" />
+  </ItemGroup>
+
 </Project>
