@@ -1,0 +1,703 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:m3="clr-namespace:Material3.Wpf">
+
+    <!-- Battle-tested Material 3 control styles. Self-contained: pulls in the radius tokens (Tokens.xaml) and
+         easing curves (Motion.xaml) it depends on, so a consumer can merge just this one dictionary and then
+         call M3Theme.Apply. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/Material3.Wpf;component/Tokens.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/Material3.Wpf;component/Motion.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <m3:RoundedClipConverter x:Key="RoundedClip" />
+
+    <!-- Kill the dotted focus rectangle app-wide — it draws black bars that clash with the dark theme. -->
+    <Style TargetType="Button"><Setter Property="FocusVisualStyle" Value="{x:Null}" /></Style>
+    <Style TargetType="ToggleButton"><Setter Property="FocusVisualStyle" Value="{x:Null}" /></Style>
+    <Style TargetType="RadioButton"><Setter Property="FocusVisualStyle" Value="{x:Null}" /></Style>
+    <Style TargetType="CheckBox"><Setter Property="FocusVisualStyle" Value="{x:Null}" /></Style>
+    <Style TargetType="ListBoxItem"><Setter Property="FocusVisualStyle" Value="{x:Null}" /></Style>
+    <Style TargetType="ComboBox"><Setter Property="FocusVisualStyle" Value="{x:Null}" /></Style>
+
+    <!-- Expander with an animated chevron icon (not the native arrow), hand cursor on the header. -->
+    <Style x:Key="M3Expander" TargetType="Expander">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Expander">
+                    <StackPanel>
+                        <ToggleButton Cursor="Hand" Focusable="False" HorizontalContentAlignment="Stretch"
+                                      Content="{TemplateBinding Header}"
+                                      IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border Background="Transparent" Padding="0,2">
+                                        <DockPanel LastChildFill="True">
+                                            <m3:M3Icon x:Name="Chevron" Kind="ChevronRight" DockPanel.Dock="Left"
+                                                         Width="20" Height="20" VerticalAlignment="Center" Margin="0,0,8,0"
+                                                         Foreground="{DynamicResource OnSurfaceVariant}" RenderTransformOrigin="0.5,0.5">
+                                                <m3:M3Icon.RenderTransform>
+                                                    <RotateTransform Angle="0" />
+                                                </m3:M3Icon.RenderTransform>
+                                            </m3:M3Icon>
+                                            <ContentPresenter VerticalAlignment="Center" />
+                                        </DockPanel>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsChecked" Value="True">
+                                            <Trigger.EnterActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetName="Chevron"
+                                                            Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                                                            To="90" Duration="0:0:0.18" />
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </Trigger.EnterActions>
+                                            <Trigger.ExitActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetName="Chevron"
+                                                            Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                                                            To="0" Duration="0:0:0.18" />
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </Trigger.ExitActions>
+                                        </Trigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Chevron" Property="Foreground" Value="{DynamicResource OnSurface}" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                        </ToggleButton>
+                        <ContentPresenter x:Name="ExpandSite" Visibility="Collapsed" />
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsExpanded" Value="True">
+                            <Setter TargetName="ExpandSite" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="TextBox">
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource OnSurface}" />
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainerHigh}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource OutlineVariant}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8">
+                        <Grid>
+                            <!-- Placeholder inside the same border/padding as the editable text, so hint and typed
+                                 text start at exactly the same spot. Set via m3:Ph.Text on the TextBox. -->
+                            <TextBlock x:Name="ph" Margin="{TemplateBinding Padding}" Padding="2,0,0,0"
+                                       Text="{Binding Path=(m3:Ph.Text), RelativeSource={RelativeSource TemplatedParent}}"
+                                       VerticalAlignment="{TemplateBinding VerticalContentAlignment}" HorizontalAlignment="Left"
+                                       Foreground="{DynamicResource OnSurfaceMuted}" IsHitTestVisible="False"
+                                       Visibility="Collapsed" TextTrimming="CharacterEllipsis" />
+                            <ScrollViewer x:Name="PART_ContentHost" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter Property="BorderBrush" Value="{DynamicResource Primary}" />
+                        </Trigger>
+                        <Trigger Property="Text" Value="">
+                            <Setter TargetName="ph" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- M3 progress bar (rounded track + primary indicator). -->
+    <Style x:Key="M3Progress" TargetType="ProgressBar">
+        <Setter Property="Height" Value="8" />
+        <Setter Property="Foreground" Value="{DynamicResource Primary}" />
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainerHighest}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ProgressBar">
+                    <Grid>
+                        <Border CornerRadius="{StaticResource RadiusXs}" Background="{TemplateBinding Background}" />
+                        <Border x:Name="PART_Track" />
+                        <!-- 4px gap between indicator and track (M3 gapped linear progress). -->
+                        <Border x:Name="PART_Indicator" CornerRadius="{StaticResource RadiusXs}" Background="{TemplateBinding Foreground}" HorizontalAlignment="Left" Margin="0,0,4,0" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Label style for the button content below: the icon inherits its colour from the ContentPresenter's
+         TextElement.Foreground, so no explicit Foreground here (it would break the disabled state). -->
+    <Style x:Key="ButtonLabel" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontSize" Value="14" />
+    </Style>
+
+    <!-- 40px pills with an M3 state-layer overlay on hover (0.08) / press (0.12). -->
+    <Style x:Key="TonalButton" TargetType="Button">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="ToolTipService.InitialShowDelay" Value="0" />
+        <Setter Property="ToolTipService.Placement" Value="Top" />
+        <Setter Property="ToolTipService.ShowDuration" Value="60000" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSecondaryContainer}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="b" Background="{DynamicResource SecondaryContainer}" CornerRadius="20">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.13">
+                                        <VisualTransition.GeneratedEasingFunction><StaticResource ResourceKey="M3StandardDecelerate" /></VisualTransition.GeneratedEasingFunction>
+                                    </VisualTransition>
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="MouseOver"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.08" Duration="0" /></Storyboard></VisualState>
+                                <VisualState x:Name="Pressed"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.12" Duration="0" /></Storyboard></VisualState>
+                                <VisualState x:Name="Disabled"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0" Duration="0" /></Storyboard></VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <Grid>
+                            <Border x:Name="state" Background="{DynamicResource OnSecondaryContainer}" Opacity="0" CornerRadius="20" />
+                            <ContentPresenter x:Name="c" Margin="17,0" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              TextElement.Foreground="{TemplateBinding Foreground}">
+                                <ContentPresenter.Resources>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource ButtonLabel}" />
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="b" Property="Background" Value="{DynamicResource SurfaceContainerHighest}" />
+                            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceMuted}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="FilledButton" TargetType="Button">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="ToolTipService.InitialShowDelay" Value="0" />
+        <Setter Property="ToolTipService.Placement" Value="Top" />
+        <Setter Property="ToolTipService.ShowDuration" Value="60000" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="Foreground" Value="{DynamicResource OnPrimary}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="b" Background="{DynamicResource Primary}" CornerRadius="20">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.13">
+                                        <VisualTransition.GeneratedEasingFunction><StaticResource ResourceKey="M3StandardDecelerate" /></VisualTransition.GeneratedEasingFunction>
+                                    </VisualTransition>
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="MouseOver"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.08" Duration="0" /></Storyboard></VisualState>
+                                <VisualState x:Name="Pressed"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.12" Duration="0" /></Storyboard></VisualState>
+                                <VisualState x:Name="Disabled"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0" Duration="0" /></Storyboard></VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <Grid>
+                            <Border x:Name="state" Background="{DynamicResource OnPrimary}" Opacity="0" CornerRadius="20" />
+                            <ContentPresenter x:Name="c" Margin="17,0" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              TextElement.Foreground="{TemplateBinding Foreground}">
+                                <ContentPresenter.Resources>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource ButtonLabel}" />
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="b" Property="Background" Value="{DynamicResource SurfaceContainerHighest}" />
+                            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceMuted}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- FilledButton with a periodic light "shine" sweep while enabled — draws the eye to a primary action;
+         the sweep is clipped to the pill and stops the moment the button disables. -->
+    <Style x:Key="ShinyButton" TargetType="Button" BasedOn="{StaticResource FilledButton}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="b" Background="{DynamicResource Primary}" CornerRadius="20">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.13">
+                                        <VisualTransition.GeneratedEasingFunction><StaticResource ResourceKey="M3StandardDecelerate" /></VisualTransition.GeneratedEasingFunction>
+                                    </VisualTransition>
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="MouseOver"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.08" Duration="0" /></Storyboard></VisualState>
+                                <VisualState x:Name="Pressed"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.12" Duration="0" /></Storyboard></VisualState>
+                                <VisualState x:Name="Disabled"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0" Duration="0" /></Storyboard></VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <Grid>
+                            <Grid.Clip>
+                                <MultiBinding Converter="{StaticResource RoundedClip}" ConverterParameter="20">
+                                    <Binding Path="ActualWidth" RelativeSource="{RelativeSource Self}" />
+                                    <Binding Path="ActualHeight" RelativeSource="{RelativeSource Self}" />
+                                </MultiBinding>
+                            </Grid.Clip>
+                            <Border x:Name="state" Background="{DynamicResource OnPrimary}" Opacity="0" CornerRadius="20" />
+                            <ContentPresenter x:Name="c" Margin="17,0" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              TextElement.Foreground="{TemplateBinding Foreground}">
+                                <ContentPresenter.Resources>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource ButtonLabel}" />
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
+                            <Border x:Name="shine" Width="32" HorizontalAlignment="Left" IsHitTestVisible="False">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#00FFFFFF" Offset="0" />
+                                        <GradientStop Color="#B3FFFFFF" Offset="0.5" />
+                                        <GradientStop Color="#00FFFFFF" Offset="1" />
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Border.RenderTransform>
+                                    <TransformGroup>
+                                        <SkewTransform AngleX="-18" />
+                                        <TranslateTransform x:Name="shineT" X="-60" />
+                                    </TransformGroup>
+                                </Border.RenderTransform>
+                            </Border>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <!-- Run the repeating shine ONLY while the button is both enabled and actually on screen —
+                             gating on IsVisible stops the perpetual clock when the button is collapsed/off a hidden
+                             tab, so an off-screen ShinyButton never leaks a running animation. -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsEnabled" Value="True" />
+                                <Condition Property="IsVisible" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <MultiTrigger.EnterActions>
+                                <BeginStoryboard Name="shineSb">
+                                    <Storyboard RepeatBehavior="Forever">
+                                        <DoubleAnimationUsingKeyFrames Storyboard.TargetName="shineT" Storyboard.TargetProperty="X">
+                                            <LinearDoubleKeyFrame KeyTime="0:0:0" Value="-60" />
+                                            <LinearDoubleKeyFrame KeyTime="0:0:1.0" Value="240" />
+                                            <DiscreteDoubleKeyFrame KeyTime="0:0:3.6" Value="240" />
+                                        </DoubleAnimationUsingKeyFrames>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </MultiTrigger.EnterActions>
+                            <MultiTrigger.ExitActions>
+                                <StopStoryboard BeginStoryboardName="shineSb" />
+                            </MultiTrigger.ExitActions>
+                        </MultiTrigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="b" Property="Background" Value="{DynamicResource SurfaceContainerHighest}" />
+                            <Setter TargetName="shine" Property="Opacity" Value="0" />
+                            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceMuted}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Filled action tinted for a WarningContainer banner: amber fill + dark label. -->
+    <Style x:Key="WarningFilledButton" TargetType="Button">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="Foreground" Value="{DynamicResource WarningContainer}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="b" Background="{DynamicResource OnWarningContainer}" CornerRadius="20">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.13">
+                                        <VisualTransition.GeneratedEasingFunction><StaticResource ResourceKey="M3StandardDecelerate" /></VisualTransition.GeneratedEasingFunction>
+                                    </VisualTransition>
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="MouseOver"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.10" Duration="0" /></Storyboard></VisualState>
+                                <VisualState x:Name="Pressed"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.16" Duration="0" /></Storyboard></VisualState>
+                                <VisualState x:Name="Disabled"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0" Duration="0" /></Storyboard></VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <Grid>
+                            <Border x:Name="state" Background="{DynamicResource WarningContainer}" Opacity="0" CornerRadius="20" />
+                            <ContentPresenter Margin="17,0" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              TextElement.Foreground="{TemplateBinding Foreground}">
+                                <ContentPresenter.Resources>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource ButtonLabel}" />
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- M3 text button: transparent, Primary label, Primary state-layer on hover/press. -->
+    <Style x:Key="TextButton" TargetType="Button">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="ToolTipService.InitialShowDelay" Value="0" />
+        <Setter Property="ToolTipService.Placement" Value="Top" />
+        <Setter Property="ToolTipService.ShowDuration" Value="60000" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="Foreground" Value="{DynamicResource Primary}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="b" Background="Transparent" CornerRadius="20" Padding="14,0">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.13">
+                                        <VisualTransition.GeneratedEasingFunction><StaticResource ResourceKey="M3StandardDecelerate" /></VisualTransition.GeneratedEasingFunction>
+                                    </VisualTransition>
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="MouseOver"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.08" Duration="0" /></Storyboard></VisualState>
+                                <VisualState x:Name="Pressed"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.12" Duration="0" /></Storyboard></VisualState>
+                                <VisualState x:Name="Disabled"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0" Duration="0" /></Storyboard></VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <Grid>
+                            <Border x:Name="state" Background="{DynamicResource Primary}" Opacity="0" CornerRadius="20" Margin="-14,0" />
+                            <ContentPresenter x:Name="c" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              TextElement.Foreground="{TemplateBinding Foreground}">
+                                <ContentPresenter.Resources>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource ButtonLabel}" />
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceMuted}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- M3 outlined button: transparent fill, 1px Outline border, Primary label + state-layer. -->
+    <Style x:Key="OutlinedButton" TargetType="Button">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="ToolTipService.InitialShowDelay" Value="0" />
+        <Setter Property="ToolTipService.Placement" Value="Top" />
+        <Setter Property="ToolTipService.ShowDuration" Value="60000" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="Foreground" Value="{DynamicResource Primary}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="b" Background="Transparent" BorderBrush="{DynamicResource Outline}"
+                            BorderThickness="1" CornerRadius="20">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.13">
+                                        <VisualTransition.GeneratedEasingFunction><StaticResource ResourceKey="M3StandardDecelerate" /></VisualTransition.GeneratedEasingFunction>
+                                    </VisualTransition>
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="MouseOver"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.08" Duration="0" /></Storyboard></VisualState>
+                                <VisualState x:Name="Pressed"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.12" Duration="0" /></Storyboard></VisualState>
+                                <VisualState x:Name="Disabled"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0" Duration="0" /></Storyboard></VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <Grid>
+                            <Border x:Name="state" Background="{DynamicResource Primary}" Opacity="0" CornerRadius="20" />
+                            <ContentPresenter x:Name="c" Margin="17,0" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              TextElement.Foreground="{TemplateBinding Foreground}">
+                                <ContentPresenter.Resources>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource ButtonLabel}" />
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource OutlineVariant}" />
+                            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceMuted}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Fully templated dark context menu (the native light menu + gutter clash with the M3 surface). -->
+    <Style TargetType="ContextMenu">
+        <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border Background="{DynamicResource SurfaceContainerHigh}" BorderBrush="{DynamicResource OutlineVariant}"
+                            BorderThickness="1" CornerRadius="10" Padding="5">
+                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style TargetType="MenuItem">
+        <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Border x:Name="b" Background="Transparent" CornerRadius="7" Padding="10,7" Margin="0,1" MinWidth="180">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="22" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <m3:M3Icon x:Name="check" Grid.Column="0" Kind="Check" Width="16" Height="16"
+                                         VerticalAlignment="Center" Foreground="{DynamicResource Primary}" Visibility="Collapsed" />
+                            <ContentPresenter Grid.Column="1" ContentSource="Header" VerticalAlignment="Center"
+                                              TextElement.Foreground="{DynamicResource OnSurface}" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="b" Property="Background" Value="{DynamicResource SurfaceContainerHighest}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="check" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style TargetType="Separator">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Separator">
+                    <Border Height="1" Background="{DynamicResource OutlineVariant}" Opacity="1.0" Margin="8,4" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Thin Material scrollbar — replaces the chunky native Windows one. -->
+    <Style x:Key="ThinThumb" TargetType="Thumb">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <!-- OnSurfaceVariant pill, 4px idle → 8px when the scrollbar is hovered. -->
+                    <Border x:Name="t" CornerRadius="4" Background="{DynamicResource OnSurfaceVariant}" Opacity="0.42" Margin="4,2" />
+                    <ControlTemplate.Triggers>
+                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ScrollBar}}" Value="True">
+                            <Setter TargetName="t" Property="Margin" Value="2,2" />
+                            <Setter TargetName="t" Property="Opacity" Value="0.85" />
+                        </DataTrigger>
+                        <Trigger Property="IsDragging" Value="True">
+                            <Setter TargetName="t" Property="Margin" Value="2,2" />
+                            <Setter TargetName="t" Property="Opacity" Value="1" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="ScrollBar">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Width" Value="12" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollBar">
+                    <Grid Background="Transparent">
+                        <Track x:Name="PART_Track" IsDirectionReversed="True">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0" Focusable="False" />
+                            </Track.DecreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb Style="{StaticResource ThinThumb}" />
+                            </Track.Thumb>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0" Focusable="False" />
+                            </Track.IncreaseRepeatButton>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="Orientation" Value="Horizontal">
+                <Setter Property="Width" Value="Auto" />
+                <Setter Property="Height" Value="12" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ScrollBar">
+                            <Grid Background="Transparent">
+                                <Track x:Name="PART_Track">
+                                    <Track.DecreaseRepeatButton>
+                                        <RepeatButton Command="ScrollBar.PageLeftCommand" Opacity="0" Focusable="False" />
+                                    </Track.DecreaseRepeatButton>
+                                    <Track.Thumb>
+                                        <Thumb Style="{StaticResource ThinThumb}" />
+                                    </Track.Thumb>
+                                    <Track.IncreaseRepeatButton>
+                                        <RepeatButton Command="ScrollBar.PageRightCommand" Opacity="0" Focusable="False" />
+                                    </Track.IncreaseRepeatButton>
+                                </Track>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- Themed tooltip: dark container, own shadow, wraps long text. Timing/placement are set via inheritable
+         ToolTipService properties on the window root (InitialShowDelay=0, Placement=Top). -->
+    <Style TargetType="ToolTip">
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToolTip">
+                    <Border Background="{DynamicResource SurfaceContainerHighest}" BorderBrush="{DynamicResource OutlineVariant}"
+                            BorderThickness="1" CornerRadius="8" Padding="10,7" MaxWidth="320">
+                        <Border.Effect><DropShadowEffect BlurRadius="14" ShadowDepth="0" Opacity="0.55" /></Border.Effect>
+                        <ContentPresenter TextElement.Foreground="{DynamicResource OnSurface}">
+                            <ContentPresenter.Resources>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="FontFamily" Value="Segoe UI" />
+                                    <Setter Property="FontSize" Value="12" />
+                                    <Setter Property="TextWrapping" Value="Wrap" />
+                                </Style>
+                            </ContentPresenter.Resources>
+                        </ContentPresenter>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="{x:Type m3:Chip}">
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="ToolTipService.InitialShowDelay" Value="0" />
+        <Setter Property="ToolTipService.Placement" Value="Top" />
+        <Setter Property="ToolTipService.ShowDuration" Value="60000" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type m3:Chip}">
+                    <Border x:Name="bg" CornerRadius="5" Padding="6,2" Background="{DynamicResource SurfaceContainerHighest}">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <m3:M3Icon x:Name="ic" Kind="{TemplateBinding IconKind}" Width="14" Height="14"
+                                         VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{DynamicResource OnSurfaceVariant}" />
+                            <TextBlock x:Name="tx" Text="{TemplateBinding Text}" FontSize="10" FontWeight="SemiBold"
+                                       VerticalAlignment="Center" Foreground="{DynamicResource OnSurfaceVariant}" />
+                        </StackPanel>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IconKind" Value="None">
+                            <Setter TargetName="ic" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="Severity" Value="Primary">
+                            <Setter TargetName="bg" Property="Background" Value="{DynamicResource SecondaryContainer}" />
+                            <Setter TargetName="ic" Property="Foreground" Value="{DynamicResource OnSecondaryContainer}" />
+                            <Setter TargetName="tx" Property="Foreground" Value="{DynamicResource OnSecondaryContainer}" />
+                        </Trigger>
+                        <Trigger Property="Severity" Value="Warning">
+                            <Setter TargetName="bg" Property="Background" Value="{DynamicResource WarningContainer}" />
+                            <Setter TargetName="ic" Property="Foreground" Value="{DynamicResource OnWarningContainer}" />
+                            <Setter TargetName="tx" Property="Foreground" Value="{DynamicResource OnWarningContainer}" />
+                        </Trigger>
+                        <Trigger Property="Severity" Value="Error">
+                            <Setter TargetName="bg" Property="Background" Value="{DynamicResource ErrorContainer}" />
+                            <Setter TargetName="ic" Property="Foreground" Value="{DynamicResource OnErrorContainer}" />
+                            <Setter TargetName="tx" Property="Foreground" Value="{DynamicResource OnErrorContainer}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Standard content card: SurfaceContainer fill, Md radius, 16 padding. -->
+    <Style x:Key="Card" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainer}" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
+        <Setter Property="Padding" Value="16" />
+    </Style>
+
+    <!-- Vertical popup-menu row: left-aligned content, used for dropdown overflow rows. -->
+    <Style x:Key="MenuItemButton" TargetType="Button">
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="b" Background="Transparent" CornerRadius="{StaticResource RadiusSm}">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.13"><VisualTransition.GeneratedEasingFunction><StaticResource ResourceKey="M3StandardDecelerate" /></VisualTransition.GeneratedEasingFunction></VisualTransition>
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="MouseOver"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="1" Duration="0" /></Storyboard></VisualState>
+                                <VisualState x:Name="Pressed"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="1" Duration="0" /></Storyboard></VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <Grid>
+                            <Border x:Name="state" Background="{DynamicResource SurfaceContainerHighest}" CornerRadius="{StaticResource RadiusSm}" Opacity="0" />
+                            <ContentPresenter VerticalAlignment="Center" Margin="11,8" />
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

@@ -1,0 +1,16 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:m3="clr-namespace:Material3.Wpf">
+
+    <!-- Material 3 motion easing tokens (cubic-bezier per the spec). Standard = simple UI moves; Emphasized =
+         the signature M3 feel for larger transitions; *Decelerate = enter, *Accelerate = exit. Reference these
+         instead of inline CubicEase. Merge this dictionary; durations stay inline per M3 (short 100/150/200ms,
+         medium 300/400ms). EasingMode=EaseIn applies the curve as authored. -->
+    <m3:CubicBezierEase x:Key="M3Standard"             EasingMode="EaseIn" X1="0.2"  Y1="0"   X2="0"   Y2="1" />
+    <m3:CubicBezierEase x:Key="M3StandardDecelerate"   EasingMode="EaseIn" X1="0"    Y1="0"   X2="0"   Y2="1" />
+    <m3:CubicBezierEase x:Key="M3StandardAccelerate"   EasingMode="EaseIn" X1="0.3"  Y1="0"   X2="1"   Y2="1" />
+    <m3:CubicBezierEase x:Key="M3Emphasized"           EasingMode="EaseIn" X1="0.2"  Y1="0"   X2="0"   Y2="1" />
+    <m3:CubicBezierEase x:Key="M3EmphasizedDecelerate" EasingMode="EaseIn" X1="0.05" Y1="0.7" X2="0.1" Y2="1" />
+    <m3:CubicBezierEase x:Key="M3EmphasizedAccelerate" EasingMode="EaseIn" X1="0.3"  Y1="0"   X2="0.8" Y2="0.15" />
+
+</ResourceDictionary>
