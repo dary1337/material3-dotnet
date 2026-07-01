@@ -366,6 +366,12 @@
                             </ContentPresenter>
                         </Grid>
                     </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="b" Property="Background" Value="{DynamicResource SurfaceContainerHighest}" />
+                            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceMuted}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

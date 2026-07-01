@@ -58,8 +58,11 @@ namespace Material3.Wpf {
         }
 
         protected override Size MeasureOverride(Size availableSize) {
-            double w = double.IsInfinity(availableSize.Width) ? 24 : availableSize.Width;
-            double h = double.IsInfinity(availableSize.Height) ? 24 : availableSize.Height;
+            // Intrinsic 24×24 (M3 default), clamped to the constraint — so an unsized icon in a non-Stretch
+            // slot stays 24 instead of ballooning to whatever finite space the parent offers.
+            const double natural = 24;
+            double w = double.IsInfinity(availableSize.Width) ? natural : Math.Min(natural, availableSize.Width);
+            double h = double.IsInfinity(availableSize.Height) ? natural : Math.Min(natural, availableSize.Height);
             return new Size(w, h);
         }
 
