@@ -12,9 +12,10 @@ using Material3.WinForms.Drawing;
 using Material3.WinForms.Forms;
 using Material3.WinForms.Theming;
 using Material3.WinForms.Tokens;
+using SchemeVariant = Material3.Core.SchemeVariant;
 using Material3.WinForms.Typography;
 
-namespace Material3.Gallery {
+namespace Material3.WinForms.Gallery {
     /// <summary>
     /// Component catalog: nav list on the left, live examples on the right, theme controls on
     /// top of the nav. Doubles as the library's smoke-test — every control renders here in both

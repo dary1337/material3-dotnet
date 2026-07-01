@@ -2,7 +2,7 @@ using System;
 using System.Windows.Forms;
 using Material3.WinForms.Theming;
 
-namespace Material3.Gallery {
+namespace Material3.WinForms.Gallery {
     internal static class Program {
         [STAThread]
         private static void Main() {

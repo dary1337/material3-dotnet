@@ -6,8 +6,8 @@
     <UseWindowsForms>true</UseWindowsForms>
     <LangVersion>10.0</LangVersion>
     <Nullable>enable</Nullable>
-    <RootNamespace>Material3.Gallery</RootNamespace>
-    <AssemblyName>Material3.Gallery</AssemblyName>
+    <RootNamespace>Material3.WinForms.Gallery</RootNamespace>
+    <AssemblyName>Material3.WinForms.Gallery</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>app.ico</ApplicationIcon>
   </PropertyGroup>
