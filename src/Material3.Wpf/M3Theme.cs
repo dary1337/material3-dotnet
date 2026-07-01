@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Windows;
@@ -36,12 +37,13 @@ namespace Material3.Wpf {
 
         /// <summary>The resource keys this manager owns. Reference them via DynamicResource; anything
         /// not listed here (e.g. app-specific tokens) stays under the app's own control.</summary>
-        public static readonly string[] Roles = RoleProps.Select(p => p.Name).ToArray();
+        public static readonly IReadOnlyList<string> Roles = RoleProps.Select(p => p.Name).ToArray();
 
         /// <summary>Builds the scheme for <paramref name="theme"/>/<paramref name="isDark"/> and publishes
         /// it into <paramref name="target"/> (typically <c>Application.Current.Resources</c>). Safe to call
         /// at startup before the UI loads and again on every theme change.</summary>
         public static void Apply(MaterialTheme theme, bool isDark, ResourceDictionary target) {
+            if (target == null) throw new ArgumentNullException(nameof(target));
             _theme = theme ?? _theme;
             _isDark = isDark;
             Publish(target, Scheme);
@@ -50,6 +52,8 @@ namespace Material3.Wpf {
 
         /// <summary>Writes the scheme's role brushes into <paramref name="d"/> without touching theme state.</summary>
         public static void Publish(ResourceDictionary d, ColorScheme s) {
+            if (d == null) throw new ArgumentNullException(nameof(d));
+            if (s == null) throw new ArgumentNullException(nameof(s));
             foreach (PropertyInfo p in RoleProps) Set(d, p.Name, (Argb)p.GetValue(s)!);
         }
 

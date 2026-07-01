@@ -9,7 +9,9 @@ namespace Material3.Wpf {
     /// everywhere. Easing comes from the M3* tokens in Motion.xaml (merge it); durations are inline per the M3 scale.
     /// </summary>
     public static class Motion {
-        private static IEasingFunction Ease(string key) => (IEasingFunction)Application.Current.FindResource(key);
+        // Null-safe: no Application (design-time / test host) or a missing token yields a linear (null) easing
+        // rather than throwing — animations still run.
+        private static IEasingFunction? Ease(string key) => Application.Current?.TryFindResource(key) as IEasingFunction;
         private static Duration Ms(int ms) => new Duration(TimeSpan.FromMilliseconds(ms));
 
         /// <summary>Modal in: scrim fades while the card scales up from 0.96 (M3 container enter).</summary>
