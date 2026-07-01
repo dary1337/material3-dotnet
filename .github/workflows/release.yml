@@ -51,7 +51,11 @@ jobs:
         run: dotnet test Material3.WinForms.sln -c Release --no-build
       - name: Pack
         if: steps.check.outputs.publish == 'true'
-        run: dotnet pack src/Material3.WinForms/Material3.WinForms.csproj -c Release --no-build -o artifacts
+        shell: bash
+        run: |
+          dotnet pack src/Material3.Core/Material3.Core.csproj -c Release --no-build -o artifacts
+          dotnet pack src/Material3.WinForms/Material3.WinForms.csproj -c Release --no-build -o artifacts
+          dotnet pack src/Material3.Wpf/Material3.Wpf.csproj -c Release --no-build -o artifacts
       - name: Push to NuGet
         if: steps.check.outputs.publish == 'true'
         shell: pwsh
@@ -71,4 +75,8 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git tag ${{ steps.check.outputs.tag }}
           git push origin ${{ steps.check.outputs.tag }}
-          gh release create ${{ steps.check.outputs.tag }} --title ${{ steps.check.outputs.tag }} --generate-notes samples/Material3.Gallery/bin/Release/net472/Material3.Gallery.exe artifacts/Material3.WinForms.${{ steps.check.outputs.version }}.nupkg
+          $assets = @(
+            'samples/Material3.WinForms.Gallery/bin/Release/net472/Material3.WinForms.Gallery.exe',
+            'samples/Material3.Wpf.Gallery/bin/Release/net472/Material3.Wpf.Gallery.exe'
+          ) + (Get-ChildItem artifacts/*.nupkg | ForEach-Object { $_.FullName })
+          gh release create ${{ steps.check.outputs.tag }} --title ${{ steps.check.outputs.tag }} --generate-notes @assets
