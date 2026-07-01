@@ -1,7 +1,11 @@
 # Material3.WinForms
 
-[![NuGet](https://img.shields.io/nuget/v/Material3.WinForms?logo=nuget)](https://www.nuget.org/packages/Material3.WinForms)
-[![Download the gallery demo](https://img.shields.io/badge/Download-Gallery%20demo-2962FF?logo=windows&logoColor=white)](https://github.com/dary1337/material3-winforms/releases/latest/download/Material3.WinForms.Gallery.exe)
+[![Material3.Core](https://img.shields.io/nuget/v/Material3.Core?logo=nuget&label=Material3.Core)](https://www.nuget.org/packages/Material3.Core)
+[![Material3.WinForms](https://img.shields.io/nuget/v/Material3.WinForms?logo=nuget&label=Material3.WinForms)](https://www.nuget.org/packages/Material3.WinForms)
+[![Material3.Wpf](https://img.shields.io/nuget/v/Material3.Wpf?logo=nuget&label=Material3.Wpf)](https://www.nuget.org/packages/Material3.Wpf)
+
+[![Download WinForms gallery](https://img.shields.io/badge/Download-WinForms%20gallery-2962FF?logo=windows&logoColor=white)](https://github.com/dary1337/material3-winforms/releases/latest/download/Material3.WinForms.Gallery.exe)
+[![Download WPF gallery](https://img.shields.io/badge/Download-WPF%20gallery-7C4DFF?logo=windows&logoColor=white)](https://github.com/dary1337/material3-winforms/releases/latest/download/Material3.Wpf.Gallery.exe)
 [![GitHub stars](https://img.shields.io/github/stars/dary1337/material3-winforms?style=social)](https://github.com/dary1337/material3-winforms)
 
 **Material 3 (Material You) for Windows Forms** — drop-in design tokens and owner-drawn controls.
