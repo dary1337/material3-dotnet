@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Material3.WinForms\Material3.WinForms.csproj" />
+    <ProjectReference Include="..\..\src\Material3.Core\Material3.Core.csproj" />
   </ItemGroup>
 
 </Project>
