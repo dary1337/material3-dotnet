@@ -16,4 +16,11 @@
     <ProjectReference Include="..\..\src\Material3.Wpf\Material3.Wpf.csproj" />
   </ItemGroup>
 
+  <!-- Single-file distributable: Costura.Fody embeds Material3.Core + Material3.Wpf into the .exe,
+       matching the WinForms gallery, so the released download is one self-contained file. -->
+  <ItemGroup>
+    <PackageReference Include="Costura.Fody" Version="6.0.0" PrivateAssets="all" />
+    <PackageReference Include="Fody" Version="6.9.2" PrivateAssets="all" />
+  </ItemGroup>
+
 </Project>
