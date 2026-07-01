@@ -1,7 +1,7 @@
 # Material3.WinForms
 
 [![NuGet](https://img.shields.io/nuget/v/Material3.WinForms?logo=nuget)](https://www.nuget.org/packages/Material3.WinForms)
-[![Download the gallery demo](https://img.shields.io/badge/Download-Gallery%20demo-2962FF?logo=windows&logoColor=white)](https://github.com/dary1337/material3-winforms/releases/latest/download/Material3.Gallery.exe)
+[![Download the gallery demo](https://img.shields.io/badge/Download-Gallery%20demo-2962FF?logo=windows&logoColor=white)](https://github.com/dary1337/material3-winforms/releases/latest/download/Material3.WinForms.Gallery.exe)
 [![GitHub stars](https://img.shields.io/github/stars/dary1337/material3-winforms?style=social)](https://github.com/dary1337/material3-winforms)
 
 **Material 3 (Material You) for Windows Forms** — drop-in design tokens and owner-drawn controls.
@@ -17,7 +17,60 @@ Existing "Material for WinForms" libraries implement Material **2** and are larg
 This project targets the current spec: HCT tonal palettes, color roles, surface containers and
 the 2023+ component look.
 
-> Status: **preview (0.6)**. Foundation, the core component catalog and WinForms designer support are complete.
+> Status (0.7): **WinForms** — foundation, component catalog and designer support complete.
+> **WPF** — the shared HCT engine, live dynamic-color theming, `M3Icon`, motion helpers, and a core set of
+> M3 controls (filled/tonal/outlined/text buttons, text field, chips, menus, tooltip, scrollbar, progress,
+> card, expander) all ship and work; the control suite is still growing toward WinForms parity
+> (selection, navigation and overlay components come next).
+
+## Packages
+
+One HCT engine, three packages — a shared `Core` plus two UI stacks:
+
+| Package | Target | Status |
+|---|---|---|
+| `Material3.Core` | netstandard2.0 | HCT/CAM16 engine, tonal palettes, color roles, `MaterialTheme` — platform-neutral `Argb`, no UI deps |
+| `Material3.WinForms` | net472 / net8 | Full M3 control catalog + Visual Studio designer support — **preview, usable** |
+| `Material3.Wpf` | net472 / net8 | Dynamic-color `M3Theme` (live `DynamicResource` brushes from one seed), `M3Icon`, motion helpers, plus a core M3 control set (see [coverage](#wpf-control-coverage)) — **usable; growing toward WinForms parity** |
+
+Two demo galleries are published with each release: **`Material3.WinForms.Gallery`** (WinForms) and **`Material3.Wpf.Gallery`** (WPF).
+
+## WPF control coverage
+
+The shared engine (dynamic color, type/shape scale, `M3Icon`, motion) is the same on both stacks. The
+**control suite** is where WPF is still catching up to WinForms — this is what ships today vs what's next.
+Legend: **✓ shipped · – planned**.
+
+| Category | Component | WPF | WinForms |
+|---|---|:---:|:---:|
+| **Foundation** | Dynamic color (`M3Theme` / `ThemeManager`) | ✓ | ✓ |
+| | Type scale · Shape scale | ✓ | ✓ |
+| | Icon (icon-set-agnostic) | ✓ | ✓ |
+| | Motion helpers | ✓ | ✓ |
+| | Painted elevation (levels 0–5) | – | ✓ |
+| **Actions** | Buttons — filled · tonal · outlined · text | ✓ | ✓ |
+| | Buttons — warning · shiny (attention) | ✓ | – |
+| | Icon button | – | ✓ |
+| | FAB | – | ✓ |
+| **Inputs & selection** | Text field | ✓ *(box + placeholder)* | ✓ *(filled/outlined, floating label)* |
+| | Chips | ✓ *(status)* | ✓ *(assist/filter/input/suggestion)* |
+| | Checkbox · Radio · Switch | – | ✓ |
+| | Segmented button | – | ✓ |
+| | Slider | – | ✓ |
+| **Containers** | Card | ✓ | ✓ *(elevated/filled/outlined)* |
+| | Expander | ✓ | – |
+| | List item · Divider | – | ✓ |
+| **Feedback** | Linear progress | ✓ | ✓ |
+| | Circular progress · Skeleton | – | ✓ |
+| | Snackbar | – | ✓ |
+| | Tooltip | ✓ | ✓ |
+| **Nav & overlays** | Menu · Context menu | ✓ | ✓ |
+| | Scrollbar | ✓ | ✓ |
+| | Dropdown select | – | ✓ |
+| | Dialog *(+ date/time pickers)* | – | ✓ |
+| | Tabs | – | ✓ |
+| | Navigation bar · rail · drawer | – | ✓ |
+| | Badge · Title bar | – | ✓ |
 
 ## Screenshots
 
@@ -117,13 +170,22 @@ using Material3.WinForms.Typography; // MaterialType — the 15-style type scale
 
 ## Gallery
 
-`samples/Material3.Gallery` is a live component catalog: every color role, the full type scale,
+`samples/Material3.WinForms.Gallery` is a live component catalog: every color role, the full type scale,
 elevation levels, all button variants and every control in both modes. Run it to smoke-test
 changes or to grab screenshots.
 
 ```sh
 dotnet build Material3.WinForms.sln
-samples\Material3.Gallery\bin\Debug\net472\Material3.Gallery.exe
+samples\Material3.WinForms.Gallery\bin\Debug\net472\Material3.WinForms.Gallery.exe
+```
+
+`samples/Material3.Wpf.Gallery` is the **WPF** counterpart (preview): pick a seed and the whole scheme
+regenerates and recolors live, with role swatches, a light/dark toggle and an M3-motion demo. It tracks
+what `Material3.Wpf` can do today (dynamic-color theming) while its control suite is built out.
+
+```sh
+dotnet build samples\Material3.Wpf.Gallery\Material3.Wpf.Gallery.csproj
+samples\Material3.Wpf.Gallery\bin\Debug\net472\Material3.Wpf.Gallery.exe
 ```
 
 ## Designer support
@@ -157,7 +219,7 @@ must opt into — a referenced DLL cannot set it. In your app:
 - set `AutoScaleMode = AutoScaleMode.Dpi` on your forms.
 
 That's all — the Material controls then render crisply with no extra code. See
-`samples/Material3.Gallery/app.manifest` for a working example. If you do your own owner-drawing with
+`samples/Material3.WinForms.Gallery/app.manifest` for a working example. If you do your own owner-drawing with
 the shared tokens, `Material3.WinForms.Dpi.Scale(control, px)` is the same helper the controls use.
 
 ## Requirements
