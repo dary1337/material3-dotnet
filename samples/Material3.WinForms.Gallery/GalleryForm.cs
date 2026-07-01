@@ -63,13 +63,13 @@ namespace Material3.WinForms.Gallery {
             // Scale the layout (child bounds, fonts) with the monitor DPI; the owner-drawn controls
             // scale their internals via Dpi.Scale, so the whole gallery stays crisp at 125/150/200%.
             AutoScaleMode = AutoScaleMode.Dpi;
-            Text = "Material 3 Gallery";
+            Text = "Material 3 Gallery — WinForms";
             Icon = BuildAppIcon();
             Size = new Size(1060, 720);
             MinimumSize = new Size(860, 560);
             StartPosition = FormStartPosition.CenterScreen;
 
-            _titleBar = new MaterialTitleBar { TitleText = "Material 3 Gallery" };
+            _titleBar = new MaterialTitleBar { TitleText = "Material 3 Gallery — WinForms" };
 
             _nav = new BufferedPanel {
                 Dock = DockStyle.Left,
