@@ -274,10 +274,10 @@
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0"
                         UseLayoutRounding="True" SnapsToDevicePixels="True">
-                <Button Style="{StaticResource CaptionButton}" Click="Minimize_Click" Margin="0,0,4,0">
+                <Button Style="{StaticResource CaptionButton}" Click="Minimize_Click" Margin="0,0,4,0" AutomationProperties.Name="Minimize">
                     <Rectangle Width="11" Height="1" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
                 </Button>
-                <Button Style="{StaticResource CaptionButton}" Click="MaxRestore_Click" Margin="0,0,4,0">
+                <Button Style="{StaticResource CaptionButton}" Click="MaxRestore_Click" Margin="0,0,4,0" AutomationProperties.Name="Maximize or restore">
                     <Grid>
                         <Rectangle x:Name="MaxGlyph" Width="10" Height="10" StrokeThickness="1"
                                    Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
@@ -289,7 +289,7 @@
                         </Grid>
                     </Grid>
                 </Button>
-                <Button Style="{StaticResource CloseCaptionButton}" Click="Close_Click">
+                <Button Style="{StaticResource CloseCaptionButton}" Click="Close_Click" AutomationProperties.Name="Close">
                     <Path Data="M0,0 L10,10 M0,10 L10,0" StrokeThickness="1"
                           Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
                 </Button>
