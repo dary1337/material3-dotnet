@@ -107,7 +107,7 @@ reviews:
         Changes to geometry, color math, parsing, or calendar/time logic must add or extend a test. Reject weakened
         assertions or tests narrowed just to pass. Prefer data-driven (Theory) coverage over one-off cases.
 
-    - path: "samples/Material3.Gallery/**/*.cs"
+    - path: "samples/Material3.WinForms.Gallery/**/*.cs"
       instructions: >
         Demo / smoke-test app, not shipped — lower rigor than the library, but still flag real bugs, GDI+/event leaks,
         and DPI layout regressions. The gallery must exercise every control in both light and dark; flag a new public
