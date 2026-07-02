@@ -33,13 +33,6 @@ namespace Material3.Wpf {
             st.BeginAnimation(ScaleTransform.ScaleYProperty, s);
         }
 
-        /// <summary>Modal out: scrim fades, then collapses (caller's cleanup runs after).</summary>
-        public static void CloseModal(UIElement scrim, Action? after = null) {
-            var a = new DoubleAnimation(1, 0, Ms(110)) { EasingFunction = Ease("M3StandardAccelerate") };
-            a.Completed += (_, __) => { scrim.BeginAnimation(UIElement.OpacityProperty, null); scrim.Visibility = Visibility.Collapsed; after?.Invoke(); };
-            scrim.BeginAnimation(UIElement.OpacityProperty, a);
-        }
-
         /// <summary>Modal out, symmetric to <see cref="OpenModal"/>: scrim fades while the card scales back to 0.96,
         /// then the scrim collapses (caller's cleanup runs after). Use when a separate window hosts the card.</summary>
         public static void CloseModal(UIElement scrim, FrameworkElement? card, Action? after = null) {
