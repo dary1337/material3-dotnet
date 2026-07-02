@@ -20,8 +20,8 @@
     <Authors>dary1337</Authors>
     <Description>Material 3 (Material You) controls and design tokens for Windows Forms: dynamic color from a seed (HCT tonal palettes), light/dark themes with runtime switching, full type scale, elevation, state layers and motion tokens.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/dary1337/material3-winforms</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/dary1337/material3-winforms</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/dary1337/material3-dotnet</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/dary1337/material3-dotnet</RepositoryUrl>
     <PackageTags>material3;material-you;material-design;winforms;theme;dark-mode;ui;controls</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

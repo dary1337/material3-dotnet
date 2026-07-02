@@ -18,8 +18,8 @@
     <Description>Material 3 (Material You) for WPF: a runtime theme (M3Theme) that generates the full M3 color-role scheme from one seed color (HCT) and publishes it as live DynamicResource brushes so the whole UI recolors on the fly, plus a set of themed M3 controls (filled/tonal/outlined/text buttons, text field, chips, menus, tooltip, scrollbar, progress, card, expander), an icon-set-agnostic M3Icon, and motion helpers. Built on Material3.Core.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageProjectUrl>https://github.com/dary1337/material3-winforms</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/dary1337/material3-winforms</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/dary1337/material3-dotnet</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/dary1337/material3-dotnet</RepositoryUrl>
     <PackageTags>material3;material-you;material-design;wpf;theme;dark-mode;dynamic-color;hct</PackageTags>
   </PropertyGroup>
 

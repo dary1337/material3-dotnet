@@ -5,9 +5,6 @@ on:
     branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 concurrency:
   group: release
   cancel-in-progress: false
@@ -15,6 +12,9 @@ concurrency:
 jobs:
   publish:
     runs-on: windows-latest
+    permissions:
+      contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -26,9 +26,6 @@ jobs:
         id: check
         shell: pwsh
         run: |
-          # All three packages release in lockstep under one v$version tag. Enforce it: a lone bump would
-          # otherwise be silently skipped by --skip-duplicate (or blocked by the existing tag) and ship a
-          # version mix where the newest package resolves a stale dependency from NuGet.
           $versions = @{}
           foreach ($csproj in @('src/Material3.Core/Material3.Core.csproj',
                                 'src/Material3.WinForms/Material3.WinForms.csproj',
@@ -68,11 +65,17 @@ jobs:
           dotnet pack src/Material3.Core/Material3.Core.csproj -c Release --no-build -o artifacts
           dotnet pack src/Material3.WinForms/Material3.WinForms.csproj -c Release --no-build -o artifacts
           dotnet pack src/Material3.Wpf/Material3.Wpf.csproj -c Release --no-build -o artifacts
+      - name: NuGet login (OIDC trusted publishing)
+        if: steps.check.outputs.publish == 'true'
+        uses: NuGet/login@v1
+        id: nuget-login
+        with:
+          user: dary1337
       - name: Push to NuGet
         if: steps.check.outputs.publish == 'true'
         shell: pwsh
         env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
         run: |
           Get-ChildItem artifacts/*.nupkg | ForEach-Object {
             dotnet nuget push $_.FullName --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate

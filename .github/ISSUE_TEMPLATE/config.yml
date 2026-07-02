@@ -1,7 +1,7 @@
 blank_issues_enabled: false
 contact_links:
   - name: Usage & docs
-    url: https://github.com/dary1337/material3-winforms#readme
+    url: https://github.com/dary1337/material3-dotnet#readme
     about: Quickstart, the full controls list, theming and high-DPI setup are in the README.
   - name: NuGet package
     url: https://www.nuget.org/packages/Material3.WinForms

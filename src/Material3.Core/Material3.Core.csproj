@@ -19,8 +19,8 @@
     <Description>Material 3 (Material You) dynamic-color engine for .NET: HCT color space, CAM16, tonal palettes and the full M3 light/dark color-role scheme generated from a single seed color. UI-framework agnostic (netstandard2.0); consumed by Material3.WinForms and Material3.Wpf.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageProjectUrl>https://github.com/dary1337/material3-winforms</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/dary1337/material3-winforms</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/dary1337/material3-dotnet</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/dary1337/material3-dotnet</RepositoryUrl>
     <PackageTags>material3;material-you;material-design;hct;dynamic-color;color-scheme;theme</PackageTags>
   </PropertyGroup>
 
