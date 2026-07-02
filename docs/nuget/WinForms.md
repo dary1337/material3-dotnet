@@ -18,7 +18,7 @@ dotnet add package Material3.WinForms
 ```csharp
 using Material3.WinForms.Theming;
 
-ThemeManager.Apply(seed: Color.FromArgb(0x67, 0x50, 0xA4), isDark: true);
+ThemeManager.Apply(MaterialTheme.FromSeed(Color.FromArgb(0x67, 0x50, 0xA4)), isDark: true);
 ```
 
 **Full guide:** https://github.com/dary1337/material3-dotnet/blob/main/docs/winforms.md
