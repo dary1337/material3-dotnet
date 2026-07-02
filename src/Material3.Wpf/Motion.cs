@@ -22,6 +22,13 @@ namespace Material3.Wpf {
             var st = new ScaleTransform(0.96, 0.96);
             card.RenderTransform = st;
             var s = new DoubleAnimation(0.96, 1, Ms(220)) { EasingFunction = Ease("M3EmphasizedDecelerate") };
+            // Release the held clock on completion so a HoldEnd animation doesn't stay pinned to the card after
+            // it's shown (a stacked close doesn't run through CloseModal, which is the only other place it's cleared).
+            s.Completed += (_, __) => {
+                st.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+                st.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+                st.ScaleX = 1; st.ScaleY = 1;
+            };
             st.BeginAnimation(ScaleTransform.ScaleXProperty, s);
             st.BeginAnimation(ScaleTransform.ScaleYProperty, s);
         }
