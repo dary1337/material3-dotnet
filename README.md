@@ -34,8 +34,8 @@ One HCT engine, three packages — a shared `Core` plus two UI stacks:
 | Package | Target | Status |
 |---|---|---|
 | `Material3.Core` | netstandard2.0 | HCT/CAM16 engine, tonal palettes, color roles, `MaterialTheme` — platform-neutral `Argb`, no UI deps |
-| `Material3.WinForms` | net472 / net8 | Full M3 control catalog + Visual Studio designer support — **preview, usable** |
-| `Material3.Wpf` | net472 / net8 | Dynamic-color `M3Theme` (live `DynamicResource` brushes from one seed), `M3Icon`, motion helpers, plus a core M3 control set (see [coverage](docs/wpf.md#control-coverage)) — **usable; growing toward WinForms parity** |
+| `Material3.WinForms` | net472 / net8.0-windows | Full M3 control catalog + Visual Studio designer support — **preview, usable** |
+| `Material3.Wpf` | net472 / net8.0-windows | Dynamic-color `M3Theme` (live `DynamicResource` brushes from one seed), `M3Icon`, motion helpers, plus a core M3 control set (see [coverage](docs/wpf.md#control-coverage)) — **usable; growing toward WinForms parity** |
 
 Two demo galleries are published with each release: **`Material3.WinForms.Gallery`** (WinForms) and **`Material3.Wpf.Gallery`** (WPF).
 
