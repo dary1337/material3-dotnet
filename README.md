@@ -72,6 +72,7 @@ Legend: **✓ shipped · – planned**.
 | | Scrollbar | ✓ | ✓ |
 | | Dropdown select | – | ✓ |
 | | Dialog *(+ date/time pickers)* | – | ✓ |
+| | Modal host + scrim (`M3Modal`) | ✓ | – |
 | | Tabs | – | ✓ |
 | | Navigation bar · rail · drawer | – | ✓ |
 | | Badge · Title bar | – | ✓ |
