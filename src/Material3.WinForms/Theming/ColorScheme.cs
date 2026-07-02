@@ -132,13 +132,9 @@ namespace Material3.WinForms.Theming {
             Shadow = c.Shadow.ToGdi(),
         };
 
-        /// <summary>Composites a translucent state-layer color over a solid base (M3 hover/press overlays).</summary>
-        public static Color Overlay(Color baseColor, Color layer, double opacity) {
-            double a = opacity < 0 ? 0 : opacity > 1 ? 1 : opacity;
-            int r = (int)Math.Round(baseColor.R + (layer.R - baseColor.R) * a);
-            int g = (int)Math.Round(baseColor.G + (layer.G - baseColor.G) * a);
-            int b = (int)Math.Round(baseColor.B + (layer.B - baseColor.B) * a);
-            return Color.FromArgb(255, r, g, b);
-        }
+        /// <summary>Composites a translucent state-layer color over a solid base (M3 hover/press overlays).
+        /// Delegates to the Core math — one implementation, one set of tests.</summary>
+        public static Color Overlay(Color baseColor, Color layer, double opacity) =>
+            Material3.Core.ColorScheme.Overlay(baseColor.ToM3(), layer.ToM3(), opacity).ToGdi();
     }
 }
