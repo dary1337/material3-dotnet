@@ -297,15 +297,17 @@
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
-                        <!-- Run the repeating shine ONLY while the button is both enabled and actually on screen —
-                             gating on IsVisible stops the perpetual clock when the button is collapsed/off a hidden
-                             tab, so an off-screen ShinyButton never leaks a running animation. -->
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsEnabled" Value="True" />
-                                <Condition Property="IsVisible" Value="True" />
-                            </MultiTrigger.Conditions>
-                            <MultiTrigger.EnterActions>
+                        <!-- Run the repeating shine ONLY while the button is enabled, on screen AND its window is
+                             active — a Forever storyboard keeps the composition thread ticking, so without the
+                             IsActive gate one shiny button drains CPU/battery for a backgrounded app. FallbackValue
+                             keeps non-Window hosts (popups) shining. -->
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsEnabled, RelativeSource={RelativeSource Self}}" Value="True" />
+                                <Condition Binding="{Binding IsVisible, RelativeSource={RelativeSource Self}}" Value="True" />
+                                <Condition Binding="{Binding IsActive, RelativeSource={RelativeSource AncestorType=Window}, FallbackValue=True}" Value="True" />
+                            </MultiDataTrigger.Conditions>
+                            <MultiDataTrigger.EnterActions>
                                 <BeginStoryboard Name="shineSb">
                                     <Storyboard RepeatBehavior="Forever">
                                         <DoubleAnimationUsingKeyFrames Storyboard.TargetName="shineT" Storyboard.TargetProperty="X">
@@ -315,11 +317,11 @@
                                         </DoubleAnimationUsingKeyFrames>
                                     </Storyboard>
                                 </BeginStoryboard>
-                            </MultiTrigger.EnterActions>
-                            <MultiTrigger.ExitActions>
+                            </MultiDataTrigger.EnterActions>
+                            <MultiDataTrigger.ExitActions>
                                 <StopStoryboard BeginStoryboardName="shineSb" />
-                            </MultiTrigger.ExitActions>
-                        </MultiTrigger>
+                            </MultiDataTrigger.ExitActions>
+                        </MultiDataTrigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="b" Property="Background" Value="{DynamicResource SurfaceContainerHighest}" />
                             <Setter TargetName="shine" Property="Opacity" Value="0" />
