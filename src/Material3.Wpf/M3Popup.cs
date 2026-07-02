@@ -14,16 +14,23 @@ namespace Material3.Wpf {
 
         private bool _closing;   // exit animation is running
         private bool _done;      // the animation finished → let the real close through
+        private int _cycle;      // bumped on every open; a close callback captured on an older cycle is stale → ignored
 
         private static object CoerceIsOpen(DependencyObject d, object baseValue) {
             var p = (AnimatedPopup)d;
-            if ((bool)baseValue) { p._done = false; return true; }   // opening
-            if (p._done) return false;        // the deferred close after the animation → allow it
+            if ((bool)baseValue) { p._done = false; p._closing = false; p._cycle++; return true; }   // opening → cancel any in-flight close
+            if (p._done) { p._done = false; return false; }   // the deferred close after the animation → allow it
             if (!p.IsOpen) return false;      // already closed → nothing to animate
             if (p._closing) return true;      // animation in flight → IGNORE repeat close requests (StaysOpen
                                               // click-away fires IsOpen=false several times, which used to cut it short)
+            if (!(p.Child is FrameworkElement)) return false;   // nothing to animate → close now (no synchronous re-entry)
             p._closing = true;
-            Motion.AnimatePopupClose(p, () => { p._done = true; p._closing = false; p.IsOpen = false; });
+            int cycle = p._cycle;
+            Motion.AnimatePopupClose(p, () => {
+                p._closing = false;
+                if (p._cycle != cycle) return;   // reopened during the animation → this callback is stale, don't force-close
+                p._done = true; p.IsOpen = false;
+            });
             return true;   // stay open until the exit animation finishes
         }
     }
