@@ -313,10 +313,11 @@ namespace Material3.Wpf.Gallery {
             PageTitle("Overlays & Pickers");
             Header("Tooltip");
             Caption("Themed M3 tooltip — dark container, soft shadow, wraps long text.");
-            PageHost.Children.Add(new Button {
+            var hover = new Button {
                 Content = "Hover me", Style = (Style)FindResource("OutlinedButton"), MinWidth = 120, HorizontalAlignment = HorizontalAlignment.Left,
-                ToolTip = "Themed M3 tooltip — dark container, soft shadow, wraps long text.",
-            });
+            };
+            Tip.SetText(hover, "Themed M3 tooltip — centered above the target, dark container, soft shadow, wraps long text.");
+            PageHost.Children.Add(hover);
 
             Header("Context menu");
             Caption("Right-click for a fully themed dark menu (checkable items + separator).");
@@ -357,6 +358,9 @@ namespace Material3.Wpf.Gallery {
             var row = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
             var cancel = StyledButton("TextButton", "Cancel");
             var ok = StyledButton("FilledButton", "Reset");
+            cancel.Height = ok.Height = 40;                 // identical box so the two actions read as one size
+            cancel.MinWidth = ok.MinWidth = 104;
+            cancel.Margin = new Thickness(0);
             ok.Margin = new Thickness(8, 0, 0, 0);
             row.Children.Add(cancel);
             row.Children.Add(ok);
