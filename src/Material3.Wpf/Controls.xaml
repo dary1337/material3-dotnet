@@ -26,7 +26,9 @@
             <Setter.Value>
                 <ControlTemplate TargetType="Expander">
                     <StackPanel>
-                        <ToggleButton Cursor="Hand" Focusable="False" HorizontalContentAlignment="Stretch"
+                        <!-- Focusable (default): the header must stay in the tab order so the expander can be
+                             toggled with Space, matching the native Expander's keyboard accessibility. -->
+                        <ToggleButton Cursor="Hand" HorizontalContentAlignment="Stretch"
                                       Content="{TemplateBinding Header}"
                                       IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                             <ToggleButton.Template>
