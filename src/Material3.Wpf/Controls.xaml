@@ -641,7 +641,7 @@
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <m3:M3Icon x:Name="ic" Kind="{TemplateBinding IconKind}" Width="14" Height="14"
                                          VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{DynamicResource OnSurfaceVariant}" />
-                            <TextBlock x:Name="tx" Text="{TemplateBinding Text}" FontSize="10" FontWeight="SemiBold"
+                            <TextBlock x:Name="tx" Text="{TemplateBinding Text}" FontSize="10" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
                                        VerticalAlignment="Center" Foreground="{DynamicResource OnSurfaceVariant}" />
                         </StackPanel>
                     </Border>
