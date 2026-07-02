@@ -53,38 +53,6 @@
             </Setter>
         </Style>
 
-        <!-- ===== Mode-toggle button — M3 state layer animated via the lib's easing token. NOT keyed "TonalButton":
-             that would shadow the library's TonalButton style and make BuildButtons/BuildOverlays' FindResource
-             resolve this local demo style instead of the real control. ===== -->
-        <Style x:Key="ModeToggleButton" TargetType="Button">
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Height" Value="40" />
-            <Setter Property="Foreground" Value="{DynamicResource OnSecondaryContainer}" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{DynamicResource SecondaryContainer}" CornerRadius="20">
-                            <VisualStateManager.VisualStateGroups>
-                                <VisualStateGroup x:Name="CommonStates">
-                                    <VisualStateGroup.Transitions>
-                                        <VisualTransition GeneratedDuration="0:0:0.13"><VisualTransition.GeneratedEasingFunction><StaticResource ResourceKey="M3StandardDecelerate" /></VisualTransition.GeneratedEasingFunction></VisualTransition>
-                                    </VisualStateGroup.Transitions>
-                                    <VisualState x:Name="Normal" />
-                                    <VisualState x:Name="MouseOver"><Storyboard><DoubleAnimation Storyboard.TargetName="st" Storyboard.TargetProperty="Opacity" To="0.08" Duration="0" /></Storyboard></VisualState>
-                                    <VisualState x:Name="Pressed"><Storyboard><DoubleAnimation Storyboard.TargetName="st" Storyboard.TargetProperty="Opacity" To="0.12" Duration="0" /></Storyboard></VisualState>
-                                </VisualStateGroup>
-                            </VisualStateManager.VisualStateGroups>
-                            <Grid>
-                                <Border x:Name="st" Background="{DynamicResource OnSecondaryContainer}" Opacity="0" CornerRadius="20" />
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" TextElement.Foreground="{TemplateBinding Foreground}" />
-                            </Grid>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
         <!-- ===== M3 dropdown (seed / variant) ===== -->
         <Style x:Key="M3ComboItem" TargetType="ComboBoxItem">
             <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
@@ -218,44 +186,8 @@
             </Setter>
         </Style>
 
-        <!-- thin Material scrollbar (copied from the toolkit) — pill widens + brightens on scrollbar hover / drag -->
-        <Style x:Key="ThinThumb" TargetType="Thumb">
-            <Setter Property="Focusable" Value="False" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Thumb">
-                        <Border x:Name="t" CornerRadius="4" Background="{DynamicResource OnSurfaceVariant}" Opacity="0.42" Margin="4,2" />
-                        <ControlTemplate.Triggers>
-                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ScrollBar}}" Value="True">
-                                <Setter TargetName="t" Property="Margin" Value="2,2" />
-                                <Setter TargetName="t" Property="Opacity" Value="0.85" />
-                            </DataTrigger>
-                            <Trigger Property="IsDragging" Value="True">
-                                <Setter TargetName="t" Property="Margin" Value="2,2" />
-                                <Setter TargetName="t" Property="Opacity" Value="1" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-        <Style TargetType="ScrollBar">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Width" Value="12" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ScrollBar">
-                        <Grid Background="Transparent">
-                            <Track x:Name="PART_Track" IsDirectionReversed="True">
-                                <Track.DecreaseRepeatButton><RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0" Focusable="False" /></Track.DecreaseRepeatButton>
-                                <Track.Thumb><Thumb Style="{StaticResource ThinThumb}" /></Track.Thumb>
-                                <Track.IncreaseRepeatButton><RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0" Focusable="False" /></Track.IncreaseRepeatButton>
-                            </Track>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+        <!-- Scrollbars intentionally NOT styled here: the library's ThinThumb/ScrollBar styles come in via the
+             App.xaml merge; a local copy would shadow them and the gallery would stop demoing the real thing. -->
     </Window.Resources>
 
     <m3:M3ModalLayer>
@@ -308,7 +240,9 @@
 
             <Border Grid.Column="0" Background="{DynamicResource Surface}">
                 <StackPanel Margin="12,12,12,12">
-                    <Button x:Name="ModeBtn" Style="{StaticResource ModeToggleButton}" Content="Light theme" Click="Mode_Click" Margin="0,0,0,8" />
+                    <!-- the library's own TonalButton (App.xaml merge) — the most-clicked control in the demo
+                         should BE the control it showcases, not a local fork of its template. -->
+                    <Button x:Name="ModeBtn" Style="{StaticResource TonalButton}" Height="40" Content="Light theme" Click="Mode_Click" Margin="0,0,0,8" />
                     <ComboBox x:Name="SeedCombo" Style="{StaticResource M3Combo}" Margin="0,0,0,8" SelectionChanged="Seed_Changed" />
                     <ComboBox x:Name="VariantCombo" Style="{StaticResource M3Combo}" Margin="0,0,0,12" SelectionChanged="Variant_Changed" />
                     <TextBlock Text="Seed hue — drag to recolor" Style="{StaticResource Caption}" Margin="2,0,0,6" />
