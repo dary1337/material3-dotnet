@@ -37,7 +37,7 @@ namespace Material3.Wpf {
 
         /// <summary>The resource keys this manager owns. Reference them via DynamicResource; anything
         /// not listed here (e.g. app-specific tokens) stays under the app's own control.</summary>
-        public static readonly IReadOnlyList<string> Roles = RoleProps.Select(p => p.Name).ToArray();
+        public static readonly IReadOnlyList<string> Roles = Array.AsReadOnly(RoleProps.Select(p => p.Name).ToArray());
 
         /// <summary>Builds the scheme for <paramref name="theme"/>/<paramref name="isDark"/> and publishes
         /// it into <paramref name="target"/> (typically <c>Application.Current.Resources</c>). Safe to call
