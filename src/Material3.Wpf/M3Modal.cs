@@ -84,6 +84,8 @@ namespace Material3.Wpf {
             M3ModalLayer layer = M3ModalLayer.Active
                 ?? throw new InvalidOperationException("No M3ModalLayer in the tree — wrap the window content in <m3:M3ModalLayer>.");
             if (layer.ModalHost == null || layer.Scrim == null) layer.ApplyTemplate();
+            if (layer.ModalHost == null || layer.Scrim == null)   // fail fast before mutating any state
+                throw new InvalidOperationException("M3ModalLayer template is missing PART_ModalHost / PART_Scrim.");
             ModalOptions opts = options ?? new ModalOptions();
 
             var e = new Entry { Content = content, Options = opts, Layer = layer, PrevFocus = Keyboard.FocusedElement };
