@@ -256,6 +256,7 @@
         </Style>
     </Window.Resources>
 
+    <m3:M3ModalLayer>
     <Grid x:Name="RootHost">
         <Grid.RowDefinitions>
             <RowDefinition Height="40" />
@@ -319,4 +320,5 @@
             </ScrollViewer>
         </Grid>
     </Grid>
+    </m3:M3ModalLayer>
 </Window>

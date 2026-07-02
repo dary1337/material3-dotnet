@@ -332,8 +332,40 @@ namespace Material3.Wpf.Gallery {
             rcBtn.ContextMenu = menu;
             PageHost.Children.Add(rcBtn);
 
-            Header("Dialog · Snackbar · Dropdown select");
-            Wip("Modal dialog, snackbar and dropdown-select picker");
+            Header("Modal dialog");
+            Caption("M3Modal.Show renders a card above an app-wide scrim (blocks the whole window; Esc / scrim-click closes).");
+            var openDialog = StyledButton("FilledButton", "Show dialog");
+            openDialog.Click += (_, __) => ShowDemoDialog();
+            PageHost.Children.Add(openDialog);
+
+            Header("Snackbar · Dropdown select");
+            Wip("Snackbar and dropdown-select picker");
+        }
+
+        private void ShowDemoDialog() {
+            var card = new Border {
+                Width = 380, CornerRadius = new CornerRadius(16), Padding = new Thickness(24),
+                Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 28, ShadowDepth = 0, Opacity = 0.5 },
+            };
+            card.SetResourceReference(Border.BackgroundProperty, "SurfaceContainerHigh");
+            var stack = new StackPanel();
+            stack.Children.Add(new TextBlock { Text = "Reset the gallery?", Style = (Style)FindResource("TitleMedium") });
+            stack.Children.Add(new TextBlock {
+                Text = "This is a real modal hosted by M3ModalLayer — the scrim covers the whole window, so the nav and content behind it are blocked until you close it.",
+                Style = (Style)FindResource("BodySmall"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 8, 0, 18),
+            });
+            var row = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+            var cancel = StyledButton("TextButton", "Cancel");
+            var ok = StyledButton("FilledButton", "Reset");
+            ok.Margin = new Thickness(8, 0, 0, 0);
+            row.Children.Add(cancel);
+            row.Children.Add(ok);
+            stack.Children.Add(row);
+            card.Child = stack;
+
+            IModalHandle handle = M3Modal.Show(card);
+            cancel.Click += (_, __) => handle.Close();
+            ok.Click += (_, __) => handle.Close();
         }
 
         // ---- window chrome ----
