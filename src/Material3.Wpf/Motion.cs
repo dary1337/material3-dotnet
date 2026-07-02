@@ -56,13 +56,21 @@ namespace Material3.Wpf {
             scrim.BeginAnimation(UIElement.OpacityProperty, a);
         }
 
+        // Marks a banner whose collapse animation is in flight, so ExpandBanner can cancel it instead of
+        // silently losing the expand (mid-collapse the banner is still Visible, which used to early-return).
+        private static readonly DependencyProperty CollapsingProperty = DependencyProperty.RegisterAttached(
+            "Collapsing", typeof(bool), typeof(Motion), new PropertyMetadata(false));
+
         /// <summary>Collapse a banner by animating its height (and fading) to 0 so the content below slides up.</summary>
         public static void CollapseBanner(FrameworkElement banner, Action? after = null) {
             if (banner.Visibility != Visibility.Visible || banner.ActualHeight <= 0) { banner.Visibility = Visibility.Collapsed; after?.Invoke(); return; }
             double h = banner.ActualHeight;
+            banner.SetValue(CollapsingProperty, true);
             banner.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(1, 0, Ms(120)));
             var ha = new DoubleAnimation(h, 0, Ms(200)) { EasingFunction = Ease("M3StandardAccelerate") };
             ha.Completed += (_, __) => {
+                if (!(bool)banner.GetValue(CollapsingProperty)) return;   // cancelled by an ExpandBanner mid-flight
+                banner.SetValue(CollapsingProperty, false);
                 banner.BeginAnimation(FrameworkElement.HeightProperty, null);
                 banner.Visibility = Visibility.Collapsed;
                 banner.Height = double.NaN;
@@ -115,6 +123,16 @@ namespace Material3.Wpf {
 
         /// <summary>Reveal a banner by expanding its height (and fading) from 0 — the inverse of CollapseBanner.</summary>
         public static void ExpandBanner(FrameworkElement banner) {
+            if ((bool)banner.GetValue(CollapsingProperty)) {
+                // Mid-collapse the banner is still Visible, so the check below would swallow the expand and the
+                // pending collapse would then hide it — cancel the collapse and snap back to natural size instead.
+                banner.SetValue(CollapsingProperty, false);
+                banner.BeginAnimation(FrameworkElement.HeightProperty, null);
+                banner.BeginAnimation(UIElement.OpacityProperty, null);
+                banner.Height = double.NaN;
+                banner.ClearValue(UIElement.OpacityProperty);
+                return;
+            }
             if (banner.Visibility == Visibility.Visible) return;
             banner.Opacity = 0;
             banner.Visibility = Visibility.Visible;
