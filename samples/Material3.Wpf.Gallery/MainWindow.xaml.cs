@@ -16,7 +16,6 @@ namespace Material3.Wpf.Gallery {
         private bool _syncingHue;
         private string _page = "Color roles";
         private readonly List<(string role, TextBlock hex)> _swatches = new();
-        private readonly List<RadioButton> _nav = new();
 
         private static readonly (string label, byte r, byte g, byte b)[] Seeds = {
             ("Platinum (grey)", 0x8E, 0x8C, 0x97), ("Google blue", 0x42, 0x85, 0xF4),
@@ -50,7 +49,6 @@ namespace Material3.Wpf.Gallery {
             foreach (string p in Pages) {
                 var rb = new RadioButton { Style = (Style)FindResource("NavPill"), GroupName = "nav", Content = p, Tag = p, IsChecked = p == _page };
                 rb.Checked += (s, e) => { ShowPage((string)((RadioButton)s).Tag); Motion.FadeIn(PageHost); };
-                _nav.Add(rb);
                 NavHost.Children.Add(rb);
             }
             M3Theme.ThemeChanged += (_, __) => RefreshHex();
