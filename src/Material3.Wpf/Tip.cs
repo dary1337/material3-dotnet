@@ -97,9 +97,15 @@ namespace Material3.Wpf {
             else el.SetValue(prop, new SolidColorBrush(fallback));   // theme-less app
         }
 
-        private static CustomPopupPlacement[] Place(Size popup, Size target, Point offset) =>
-            new[] { new CustomPopupPlacement(
+        // Above-target first; WPF falls through to the below-target candidate when the tip would clip at
+        // the top edge of the screen.
+        private static CustomPopupPlacement[] Place(Size popup, Size target, Point offset) => new[] {
+            new CustomPopupPlacement(
                 new Point((target.Width - popup.Width) / 2, -(popup.Height + GapAboveTarget)),
-                PopupPrimaryAxis.Horizontal) };
+                PopupPrimaryAxis.Horizontal),
+            new CustomPopupPlacement(
+                new Point((target.Width - popup.Width) / 2, target.Height + GapAboveTarget),
+                PopupPrimaryAxis.Horizontal),
+        };
     }
 }
