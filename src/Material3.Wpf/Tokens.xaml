@@ -1,0 +1,66 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:s="clr-namespace:System;assembly=mscorlib">
+
+    <!-- Material 3 design tokens for WPF: type scale, radius scale and the 8px spacing scale. Colours come
+         from M3Theme at runtime, so type styles reference their role via DynamicResource (lazy). Merge this
+         dictionary, then call M3Theme.Apply at startup. -->
+
+    <!-- No Foreground on the implicit style: it would beat inherited TextElement.Foreground and break control
+         content (labels must follow their control). Set the default text colour once on the window root. -->
+    <Style TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
+    </Style>
+
+    <Style x:Key="TitleLarge" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
+        <Setter Property="FontSize" Value="22" />
+        <Setter Property="FontWeight" Value="Normal" />
+    </Style>
+    <Style x:Key="TitleMedium" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style x:Key="Overline" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceVariant}" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style x:Key="Body" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="Normal" />
+    </Style>
+    <Style x:Key="BodySmall" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceVariant}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="Normal" />
+    </Style>
+    <Style x:Key="Caption" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceVariant}" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="Normal" />
+    </Style>
+    <!-- SIZE ONLY (13) — pair with an explicit Foreground; the compact role between BodySmall and Body. -->
+    <Style x:Key="BodyDense" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="Normal" />
+    </Style>
+
+    <CornerRadius x:Key="RadiusXs">4</CornerRadius>
+    <CornerRadius x:Key="RadiusSm">8</CornerRadius>
+    <CornerRadius x:Key="RadiusMd">12</CornerRadius>
+    <CornerRadius x:Key="RadiusLg">16</CornerRadius>
+    <CornerRadius x:Key="RadiusPill">20</CornerRadius>
+
+    <s:Double x:Key="Space1">4</s:Double>
+    <s:Double x:Key="Space2">8</s:Double>
+    <s:Double x:Key="Space3">12</s:Double>
+    <s:Double x:Key="Space4">16</s:Double>
+    <s:Double x:Key="Space5">24</s:Double>
+    <s:Double x:Key="Space6">32</s:Double>
+    <s:Double x:Key="Space7">48</s:Double>
+
+</ResourceDictionary>

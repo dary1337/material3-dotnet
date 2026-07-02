@@ -1,0 +1,12 @@
+<Application x:Class="Material3.Wpf.Gallery.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Controls.xaml is self-contained: it pulls in Tokens.xaml + Motion.xaml itself. -->
+                <ResourceDictionary Source="pack://application:,,,/Material3.Wpf;component/Controls.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

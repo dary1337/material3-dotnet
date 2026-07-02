@@ -1,7 +1,6 @@
 using System;
-using System.Drawing;
 
-namespace Material3.WinForms.Theming {
+namespace Material3.Core {
     /// <summary>
     /// CAM16 color appearance model — forward (color → appearance attributes) and inverse
     /// (attributes → color) transforms under standard viewing conditions. Ported from Google's
@@ -18,7 +17,7 @@ namespace Material3.WinForms.Theming {
             J = j;
         }
 
-        internal static Cam16 FromColor(Color color) {
+        internal static Cam16 FromColor(Argb color) {
             ViewingConditions vc = ViewingConditions.Default;
 
             double[] xyz = ColorUtils.XyzFromColor(color);
@@ -68,7 +67,7 @@ namespace Material3.WinForms.Theming {
         /// Inverse model: appearance attributes (J, chroma, hue) → sRGB color. Out-of-gamut
         /// component values are clamped, which the HCT solver exploits for gamut mapping.
         /// </summary>
-        internal static Color ToColor(double j, double chroma, double hue) {
+        internal static Argb ToColor(double j, double chroma, double hue) {
             ViewingConditions vc = ViewingConditions.Default;
 
             if (chroma < 1e-9 || j < 1e-9) {

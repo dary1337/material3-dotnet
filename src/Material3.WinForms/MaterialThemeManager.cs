@@ -3,6 +3,7 @@ using System.ComponentModel.Design;
 using System.Drawing;
 using System.Windows.Forms;
 using Material3.WinForms.Theming;
+using SchemeVariant = Material3.Core.SchemeVariant;
 
 namespace Material3.WinForms {
     /// <summary>

@@ -26,10 +26,22 @@ jobs:
         id: check
         shell: pwsh
         run: |
-          $csproj = 'src/Material3.WinForms/Material3.WinForms.csproj'
-          $version = (([xml](Get-Content $csproj)).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1)
-          if (-not $version) { throw 'Version not found in csproj' }
-          $version = $version.Trim()
+          # All three packages release in lockstep under one v$version tag. Enforce it: a lone bump would
+          # otherwise be silently skipped by --skip-duplicate (or blocked by the existing tag) and ship a
+          # version mix where the newest package resolves a stale dependency from NuGet.
+          $versions = @{}
+          foreach ($csproj in @('src/Material3.Core/Material3.Core.csproj',
+                                'src/Material3.WinForms/Material3.WinForms.csproj',
+                                'src/Material3.Wpf/Material3.Wpf.csproj')) {
+            $v = (([xml](Get-Content $csproj)).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1)
+            if (-not $v) { throw "Version not found in $csproj" }
+            $versions[$csproj] = $v.Trim()
+          }
+          if (($versions.Values | Select-Object -Unique).Count -ne 1) {
+            $versions.GetEnumerator() | ForEach-Object { Write-Host "$($_.Key) = $($_.Value)" }
+            throw 'Package versions diverged - bump all three csprojs together.'
+          }
+          $version = $versions.Values | Select-Object -First 1
           $tag = "v$version"
           if (git tag -l $tag) {
             Write-Host "Tag $tag already exists - nothing to publish."
@@ -51,7 +63,11 @@ jobs:
         run: dotnet test Material3.WinForms.sln -c Release --no-build
       - name: Pack
         if: steps.check.outputs.publish == 'true'
-        run: dotnet pack src/Material3.WinForms/Material3.WinForms.csproj -c Release --no-build -o artifacts
+        shell: bash
+        run: |
+          dotnet pack src/Material3.Core/Material3.Core.csproj -c Release --no-build -o artifacts
+          dotnet pack src/Material3.WinForms/Material3.WinForms.csproj -c Release --no-build -o artifacts
+          dotnet pack src/Material3.Wpf/Material3.Wpf.csproj -c Release --no-build -o artifacts
       - name: Push to NuGet
         if: steps.check.outputs.publish == 'true'
         shell: pwsh
@@ -66,9 +82,14 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.check.outputs.tag }}
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git tag ${{ steps.check.outputs.tag }}
-          git push origin ${{ steps.check.outputs.tag }}
-          gh release create ${{ steps.check.outputs.tag }} --title ${{ steps.check.outputs.tag }} --generate-notes samples/Material3.Gallery/bin/Release/net472/Material3.Gallery.exe artifacts/Material3.WinForms.${{ steps.check.outputs.version }}.nupkg
+          git tag $env:TAG
+          git push origin $env:TAG
+          $assets = @(
+            'samples/Material3.WinForms.Gallery/bin/Release/net472/Material3.WinForms.Gallery.exe',
+            'samples/Material3.Wpf.Gallery/bin/Release/net472/Material3.Wpf.Gallery.exe'
+          ) + (Get-ChildItem artifacts/*.nupkg | ForEach-Object { $_.FullName })
+          gh release create $env:TAG --title $env:TAG --generate-notes @assets

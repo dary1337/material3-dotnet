@@ -1,5 +1,4 @@
-using System.Drawing;
-using Material3.WinForms.Theming;
+using Material3.Core;
 using Xunit;
 
 namespace Material3.WinForms.Tests {
@@ -13,9 +12,9 @@ namespace Material3.WinForms.Tests {
         [InlineData(0x42, 0x85, 0xF4)]
         [InlineData(0x8E, 0x8C, 0x97)]
         public void MeasureThenSolve_RoundTripsCloseToOriginal(int r, int g, int b) {
-            Color original = Color.FromArgb(r, g, b);
+            Argb original = Argb.FromArgb(r, g, b);
             Hct measured = Hct.FromColor(original);
-            Color resolved = Hct.From(measured.Hue, measured.Chroma, measured.Tone).ToColor();
+            Argb resolved = Hct.From(measured.Hue, measured.Chroma, measured.Tone).ToColor();
 
             // The solver gamut-maps, so an exact byte match is not guaranteed — but a color
             // measured from sRGB is in-gamut by definition and must come back nearly intact.
@@ -30,22 +29,22 @@ namespace Material3.WinForms.Tests {
         [InlineData(60)]
         [InlineData(80)]
         public void SolvedColor_HasRequestedTone(double tone) {
-            Color color = Hct.From(265, 48, tone).ToColor();
+            Argb color = Hct.From(265, 48, tone).ToColor();
             double measured = Hct.FromColor(color).Tone;
             Assert.InRange(measured, tone - 1.0, tone + 1.0);
         }
 
         [Fact]
         public void ZeroChroma_ProducesGrey() {
-            Color color = Hct.From(120, 0, 50).ToColor();
+            Argb color = Hct.From(120, 0, 50).ToColor();
             Assert.True(System.Math.Abs(color.R - color.G) <= 1 && System.Math.Abs(color.G - color.B) <= 1,
                 $"Expected grey, got {color}");
         }
 
         [Fact]
         public void ExtremeTones_AreBlackAndWhite() {
-            Assert.Equal(Color.FromArgb(255, 0, 0, 0).ToArgb(), Hct.From(200, 50, 0).ToColor().ToArgb());
-            Assert.Equal(Color.FromArgb(255, 255, 255, 255).ToArgb(), Hct.From(200, 50, 100).ToColor().ToArgb());
+            Assert.Equal(Argb.FromArgb(255, 0, 0, 0).ToInt(), Hct.From(200, 50, 0).ToColor().ToInt());
+            Assert.Equal(Argb.FromArgb(255, 255, 255, 255).ToInt(), Hct.From(200, 50, 100).ToColor().ToInt());
         }
 
         [Theory]
@@ -56,8 +55,8 @@ namespace Material3.WinForms.Tests {
         [InlineData(40, 0x34, 0x3D, 0xFF)]
         [InlineData(10, 0x00, 0x00, 0x6E)]
         public void PureBlueTonalLadder_MatchesReferenceImplementation(int tone, int r, int g, int b) {
-            TonalPalette palette = TonalPalette.FromColor(Color.FromArgb(0, 0, 255));
-            Color actual = palette.Tone(tone);
+            TonalPalette palette = TonalPalette.FromColor(Argb.FromArgb(0, 0, 255));
+            Argb actual = palette.Tone(tone);
 
             // The analytic solver matches the reference to the byte; ±2 absorbs float drift in the
             // CAM16 measurement of the seed that feeds the palette's hue/chroma.

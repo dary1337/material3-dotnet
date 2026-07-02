@@ -1,7 +1,6 @@
 using System;
-using System.Drawing;
 
-namespace Material3.WinForms.Theming {
+namespace Material3.Core {
     /// <summary>
     /// sRGB / XYZ / L* conversions used by the CAM16 pipeline. Ported from Google's
     /// material-color-utilities (Apache 2.0); kept numerically identical so palettes match
@@ -44,7 +43,7 @@ namespace Material3.WinForms.Theming {
             return Clamp((int)Math.Round(delinearized * 255.0));
         }
 
-        internal static double[] XyzFromColor(Color color) {
+        internal static double[] XyzFromColor(Argb color) {
             double r = Linearized(color.R);
             double g = Linearized(color.G);
             double b = Linearized(color.B);
@@ -55,15 +54,15 @@ namespace Material3.WinForms.Theming {
             };
         }
 
-        internal static Color ColorFromXyz(double x, double y, double z) {
+        internal static Argb ColorFromXyz(double x, double y, double z) {
             double linearR = XyzToSrgb[0][0] * x + XyzToSrgb[0][1] * y + XyzToSrgb[0][2] * z;
             double linearG = XyzToSrgb[1][0] * x + XyzToSrgb[1][1] * y + XyzToSrgb[1][2] * z;
             double linearB = XyzToSrgb[2][0] * x + XyzToSrgb[2][1] * y + XyzToSrgb[2][2] * z;
-            return Color.FromArgb(255, Delinearized(linearR), Delinearized(linearG), Delinearized(linearB));
+            return Argb.FromArgb(255, Delinearized(linearR), Delinearized(linearG), Delinearized(linearB));
         }
 
         /// <summary>CIE L* (perceptual lightness, 0–100) of an sRGB color.</summary>
-        internal static double LstarFromColor(Color color) {
+        internal static double LstarFromColor(Argb color) {
             double y = XyzFromColor(color)[1];
             return 116.0 * LabF(y / 100.0) - 16.0;
         }
@@ -74,15 +73,15 @@ namespace Material3.WinForms.Theming {
         }
 
         /// <summary>Pure grey sRGB color with the given L*.</summary>
-        internal static Color ColorFromLstar(double lstar) {
+        internal static Argb ColorFromLstar(double lstar) {
             double y = YFromLstar(lstar);
             int component = Delinearized(y);
-            return Color.FromArgb(255, component, component, component);
+            return Argb.FromArgb(255, component, component, component);
         }
 
         /// <summary>sRGB color from linear-RGB channels (0–100), each delinearized independently.</summary>
-        internal static Color ColorFromLinrgb(double[] linrgb) {
-            return Color.FromArgb(255, Delinearized(linrgb[0]), Delinearized(linrgb[1]), Delinearized(linrgb[2]));
+        internal static Argb ColorFromLinrgb(double[] linrgb) {
+            return Argb.FromArgb(255, Delinearized(linrgb[0]), Delinearized(linrgb[1]), Delinearized(linrgb[2]));
         }
 
         private static double LabF(double t) {

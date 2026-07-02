@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
-    <UseWindowsForms>true</UseWindowsForms>
+    <TargetFrameworks>net472;net8.0-windows</TargetFrameworks>
+    <UseWPF>true</UseWPF>
     <LangVersion>10.0</LangVersion>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Material3.WinForms\Material3.WinForms.csproj" />
+    <ProjectReference Include="..\..\src\Material3.Wpf\Material3.Wpf.csproj" />
     <ProjectReference Include="..\..\src\Material3.Core\Material3.Core.csproj" />
   </ItemGroup>
 

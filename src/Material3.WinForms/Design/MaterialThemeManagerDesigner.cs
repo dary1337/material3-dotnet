@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.ComponentModel.Design;
 using System.Drawing;
 using Material3.WinForms.Theming;
+using SchemeVariant = Material3.Core.SchemeVariant;
 
 namespace Material3.WinForms.Design {
     /// <summary>SmartTags for <see cref="MaterialThemeManager"/>: seed, variant, dark toggle.</summary>

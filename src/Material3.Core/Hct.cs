@@ -1,7 +1,6 @@
 using System;
-using System.Drawing;
 
-namespace Material3.WinForms.Theming {
+namespace Material3.Core {
     /// <summary>
     /// A color in the HCT color space: Hue (0–360), Chroma (0–~150, gamut-dependent) and Tone
     /// (CIE L*, 0–100). HCT is the foundation of Material 3 dynamic color: tonal palettes are
@@ -21,13 +20,13 @@ namespace Material3.WinForms.Theming {
         public double Tone { get; }
 
         /// <summary>The sRGB color this HCT value maps to.</summary>
-        public Color ToColor() {
+        public Argb ToColor() {
             return _color;
         }
 
-        private readonly Color _color;
+        private readonly Argb _color;
 
-        private Hct(Color color) {
+        private Hct(Argb color) {
             Cam16 cam = Cam16.FromColor(color);
             Hue = cam.Hue;
             Chroma = cam.Chroma;
@@ -41,7 +40,7 @@ namespace Material3.WinForms.Theming {
         }
 
         /// <summary>Measures the HCT attributes of an existing color.</summary>
-        public static Hct FromColor(Color color) {
+        public static Hct FromColor(Argb color) {
             return new Hct(color);
         }
     }
@@ -156,7 +155,7 @@ namespace Material3.WinForms.Theming {
             97.78421388448044, 98.6670533535366, 99.55452497210776,
         };
 
-        internal static Color Solve(double hue, double chroma, double tone) {
+        internal static Argb Solve(double hue, double chroma, double tone) {
             if (chroma < 0.0001 || tone < 0.0001 || tone > 99.9999) {
                 return ColorUtils.ColorFromLstar(tone);
             }
@@ -165,7 +164,7 @@ namespace Material3.WinForms.Theming {
             double hueRadians = hue / 180.0 * Math.PI;
             double y = ColorUtils.YFromLstar(tone);
 
-            Color? exact = FindResultByJ(hueRadians, chroma, y);
+            Argb? exact = FindResultByJ(hueRadians, chroma, y);
             if (exact != null) {
                 return exact.Value;
             }
@@ -176,7 +175,7 @@ namespace Material3.WinForms.Theming {
 
         // Newton iteration on CAM16 lightness J for the exact in-gamut color. Returns null when no
         // in-gamut color exists for the requested chroma (caller then maximizes chroma via bisection).
-        private static Color? FindResultByJ(double hueRadians, double chroma, double y) {
+        private static Argb? FindResultByJ(double hueRadians, double chroma, double y) {
             double j = Math.Sqrt(y) * 11.0;
             ViewingConditions vc = ViewingConditions.Default;
 

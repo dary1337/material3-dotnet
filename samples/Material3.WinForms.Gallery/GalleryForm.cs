@@ -12,9 +12,10 @@ using Material3.WinForms.Drawing;
 using Material3.WinForms.Forms;
 using Material3.WinForms.Theming;
 using Material3.WinForms.Tokens;
+using SchemeVariant = Material3.Core.SchemeVariant;
 using Material3.WinForms.Typography;
 
-namespace Material3.Gallery {
+namespace Material3.WinForms.Gallery {
     /// <summary>
     /// Component catalog: nav list on the left, live examples on the right, theme controls on
     /// top of the nav. Doubles as the library's smoke-test — every control renders here in both
@@ -62,13 +63,13 @@ namespace Material3.Gallery {
             // Scale the layout (child bounds, fonts) with the monitor DPI; the owner-drawn controls
             // scale their internals via Dpi.Scale, so the whole gallery stays crisp at 125/150/200%.
             AutoScaleMode = AutoScaleMode.Dpi;
-            Text = "Material 3 Gallery";
+            Text = "Material 3 Gallery — WinForms";
             Icon = BuildAppIcon();
             Size = new Size(1060, 720);
             MinimumSize = new Size(860, 560);
             StartPosition = FormStartPosition.CenterScreen;
 
-            _titleBar = new MaterialTitleBar { TitleText = "Material 3 Gallery" };
+            _titleBar = new MaterialTitleBar { TitleText = "Material 3 Gallery — WinForms" };
 
             _nav = new BufferedPanel {
                 Dock = DockStyle.Left,

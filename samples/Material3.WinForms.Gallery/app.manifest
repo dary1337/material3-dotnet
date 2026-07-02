@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
-  <assemblyIdentity version="1.0.0.0" name="Material3.Gallery"/>
+  <assemblyIdentity version="1.0.0.0" name="Material3.WinForms.Gallery"/>
 
   <!-- Opt the process into System-DPI awareness so Windows stops bitmap-stretching the UI and
        Control.DeviceDpi reports the real DPI. The Material3 controls then scale their owner-drawn

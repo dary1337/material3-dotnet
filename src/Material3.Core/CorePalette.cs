@@ -1,6 +1,5 @@
-using System.Drawing;
 
-namespace Material3.WinForms.Theming {
+namespace Material3.Core {
     /// <summary>
     /// Controls how much chroma the generated palettes carry relative to the seed color.
     /// </summary>
@@ -65,7 +64,7 @@ namespace Material3.WinForms.Theming {
         }
 
         /// <summary>Derives all palettes from a seed color.</summary>
-        public static CorePalette FromSeed(Color seed, SchemeVariant variant = SchemeVariant.TonalSpot) {
+        public static CorePalette FromSeed(Argb seed, SchemeVariant variant = SchemeVariant.TonalSpot) {
             Hct hct = Hct.FromColor(seed);
             return new CorePalette(hct.Hue, hct.Chroma, variant);
         }

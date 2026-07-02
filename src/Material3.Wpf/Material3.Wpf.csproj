@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net472;net8.0-windows</TargetFrameworks>
+    <UseWPF>true</UseWPF>
+    <LangVersion>10.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Material3.Wpf</RootNamespace>
+    <AssemblyName>Material3.Wpf</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Package">
+    <PackageId>Material3.Wpf</PackageId>
+    <Version>0.7.0</Version>
+    <Authors>dary1337</Authors>
+    <Description>Material 3 (Material You) for WPF: a runtime theme (M3Theme) that generates the full M3 color-role scheme from one seed color (HCT) and publishes it as live DynamicResource brushes so the whole UI recolors on the fly, plus a set of themed M3 controls (filled/tonal/outlined/text buttons, text field, chips, menus, tooltip, scrollbar, progress, card, expander), an icon-set-agnostic M3Icon, and motion helpers. Built on Material3.Core.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/dary1337/material3-winforms</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/dary1337/material3-winforms</RepositoryUrl>
+    <PackageTags>material3;material-you;material-design;wpf;theme;dark-mode;dynamic-color;hct</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Material3.Core\Material3.Core.csproj" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

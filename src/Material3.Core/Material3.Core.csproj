@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>10.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Material3.Core</RootNamespace>
+    <AssemblyName>Material3.Core</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- CS1591: member-level XML docs still being written; class-level docs exist everywhere.
+         CS1574: a few <see cref> still point at ThemeManager (UI-layer, not in Core). -->
+    <NoWarn>$(NoWarn);CS1591;CS1574</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Package">
+    <PackageId>Material3.Core</PackageId>
+    <Version>0.7.0</Version>
+    <Authors>dary1337</Authors>
+    <Description>Material 3 (Material You) dynamic-color engine for .NET: HCT color space, CAM16, tonal palettes and the full M3 light/dark color-role scheme generated from a single seed color. UI-framework agnostic (netstandard2.0); consumed by Material3.WinForms and Material3.Wpf.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/dary1337/material3-winforms</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/dary1337/material3-winforms</RepositoryUrl>
+    <PackageTags>material3;material-you;material-design;hct;dynamic-color;color-scheme;theme</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

@@ -1,12 +1,11 @@
-using System.Drawing;
-using Material3.WinForms.Theming;
+using Material3.Core;
 using Xunit;
 
 namespace Material3.WinForms.Tests {
     public class ColorSchemeTests {
-        private static readonly Color Seed = Color.FromArgb(0x42, 0x85, 0xF4);
+        private static readonly Argb Seed = Argb.FromArgb(0x42, 0x85, 0xF4);
 
-        private static double Lstar(Color c) {
+        private static double Lstar(Argb c) {
             return Hct.FromColor(c).Tone;
         }
 
@@ -53,10 +52,10 @@ namespace Material3.WinForms.Tests {
 
         [Fact]
         public void Overlay_ZeroOpacityReturnsBase_FullOpacityReturnsLayer() {
-            Color baseColor = Color.FromArgb(10, 20, 30);
-            Color layer = Color.FromArgb(200, 100, 50);
-            Assert.Equal(baseColor.ToArgb(), ColorScheme.Overlay(baseColor, layer, 0).ToArgb());
-            Assert.Equal(layer.ToArgb(), ColorScheme.Overlay(baseColor, layer, 1).ToArgb());
+            Argb baseColor = Argb.FromArgb(10, 20, 30);
+            Argb layer = Argb.FromArgb(200, 100, 50);
+            Assert.Equal(baseColor.ToInt(), ColorScheme.Overlay(baseColor, layer, 0).ToInt());
+            Assert.Equal(layer.ToInt(), ColorScheme.Overlay(baseColor, layer, 1).ToInt());
         }
 
         [Fact]

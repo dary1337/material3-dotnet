@@ -10,7 +10,7 @@ using Material3.WinForms.Theming;
 using Material3.WinForms.Tokens;
 using Material3.WinForms.Typography;
 
-namespace Material3.Gallery {
+namespace Material3.WinForms.Gallery {
     /// <summary>
     /// Stacks demo blocks top-to-bottom inside the scroll panel's content. Width-tracking is
     /// done with anchors so pages reflow on window resize without rebuilding.
