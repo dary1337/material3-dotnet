@@ -39,6 +39,11 @@ One HCT engine, three packages — a shared `Core` plus two UI stacks:
 
 Two demo galleries are published with each release: **`Material3.WinForms.Gallery`** (WinForms) and **`Material3.Wpf.Gallery`** (WPF).
 
+> **Upgrading from 0.6:** the color engine moved out of `Material3.WinForms.Theming` into the new `Material3.Core`
+> package (`Hct`, `CorePalette`, `TonalPalette`, `SchemeVariant`, the scheme math). `Material3.Core` comes in as a
+> dependency automatically — fix compile errors by adding `using Material3.Core;`. The engine's color type is now the
+> UI-neutral `Argb`; convert at the boundary with `color.ToM3()` / `argb.ToGdi()` (`Material3.WinForms.Theming.GdiColor`).
+
 ## WPF control coverage
 
 The shared engine (dynamic color, type/shape scale, `M3Icon`, motion) is the same on both stacks. The
