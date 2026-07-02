@@ -20,13 +20,13 @@ namespace Material3.Core {
             B = b;
         }
 
-        /// <summary>Opaque color from 0–255 channels.</summary>
+        /// <summary>Opaque color from channels (each clamped to 0–255).</summary>
         public static Argb FromArgb(int red, int green, int blue) =>
-            new Argb(255, (byte)red, (byte)green, (byte)blue);
+            new Argb(255, (byte)ColorUtils.Clamp(red), (byte)ColorUtils.Clamp(green), (byte)ColorUtils.Clamp(blue));
 
-        /// <summary>Color from 0–255 channels including alpha.</summary>
+        /// <summary>Color from channels including alpha (each clamped to 0–255).</summary>
         public static Argb FromArgb(int alpha, int red, int green, int blue) =>
-            new Argb((byte)alpha, (byte)red, (byte)green, (byte)blue);
+            new Argb((byte)ColorUtils.Clamp(alpha), (byte)ColorUtils.Clamp(red), (byte)ColorUtils.Clamp(green), (byte)ColorUtils.Clamp(blue));
 
         /// <summary>Packs to 0xAARRGGBB.</summary>
         public int ToInt() => (A << 24) | (R << 16) | (G << 8) | B;
