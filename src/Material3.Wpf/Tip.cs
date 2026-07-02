@@ -42,7 +42,7 @@ namespace Material3.Wpf {
         private static void OnUnloaded(object sender, RoutedEventArgs e) => CloseIfTarget(sender as FrameworkElement);
 
         private static void CloseIfTarget(FrameworkElement? fe) {
-            if (_popup != null && ReferenceEquals(_popup.PlacementTarget, fe)) { _closing = false; _popup.IsOpen = false; }
+            if (_popup != null && ReferenceEquals(_popup.PlacementTarget, fe)) { _closing = false; _popup.IsOpen = false; _popup.PlacementTarget = null; }
         }
 
         private static void OnEnter(object sender, MouseEventArgs e) => ShowFor((FrameworkElement)sender);
@@ -62,7 +62,12 @@ namespace Material3.Wpf {
         private static void OnLeave(object sender, MouseEventArgs e) {
             if (_popup == null || !_popup.IsOpen || _closing) return;
             _closing = true;                   // fade + scale out, then actually close (unless re-targeted meanwhile)
-            Motion.AnimatePopupClose(_popup, () => { if (_closing) { _closing = false; _popup!.IsOpen = false; } });
+            Motion.AnimatePopupClose(_popup, () => {
+                if (!_closing) return;
+                _closing = false;
+                _popup!.IsOpen = false;
+                _popup.PlacementTarget = null;   // don't root the last hovered element (and its subtree) for the popup's static lifetime
+            });
         }
 
         private static void Ensure() {
