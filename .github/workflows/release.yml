@@ -70,13 +70,14 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.check.outputs.tag }}
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git tag ${{ steps.check.outputs.tag }}
-          git push origin ${{ steps.check.outputs.tag }}
+          git tag $env:TAG
+          git push origin $env:TAG
           $assets = @(
             'samples/Material3.WinForms.Gallery/bin/Release/net472/Material3.WinForms.Gallery.exe',
             'samples/Material3.Wpf.Gallery/bin/Release/net472/Material3.Wpf.Gallery.exe'
           ) + (Get-ChildItem artifacts/*.nupkg | ForEach-Object { $_.FullName })
-          gh release create ${{ steps.check.outputs.tag }} --title ${{ steps.check.outputs.tag }} --generate-notes @assets
+          gh release create $env:TAG --title $env:TAG --generate-notes @assets
