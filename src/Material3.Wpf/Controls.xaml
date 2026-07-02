@@ -638,12 +638,19 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type m3:Chip}">
                     <Border x:Name="bg" CornerRadius="5" Padding="6,2" Background="{DynamicResource SurfaceContainerHighest}">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <m3:M3Icon x:Name="ic" Kind="{TemplateBinding IconKind}" Width="14" Height="14"
+                        <!-- Grid (not StackPanel): a horizontal StackPanel measures the text at infinite width, so
+                             TextTrimming never fires and MaxWidth just hard-clips. A star text column gives tx a
+                             finite width to ellipsize into. -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <m3:M3Icon x:Name="ic" Grid.Column="0" Kind="{TemplateBinding IconKind}" Width="14" Height="14"
                                          VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{DynamicResource OnSurfaceVariant}" />
-                            <TextBlock x:Name="tx" Text="{TemplateBinding Text}" FontSize="10" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                            <TextBlock x:Name="tx" Grid.Column="1" Text="{TemplateBinding Text}" FontSize="10" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
                                        VerticalAlignment="Center" Foreground="{DynamicResource OnSurfaceVariant}" />
-                        </StackPanel>
+                        </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IconKind" Value="None">
