@@ -4,16 +4,16 @@
 [![Material3.WinForms](https://img.shields.io/nuget/v/Material3.WinForms?logo=nuget&label=Material3.WinForms)](https://www.nuget.org/packages/Material3.WinForms)
 [![Material3.Wpf](https://img.shields.io/nuget/v/Material3.Wpf?logo=nuget&label=Material3.Wpf)](https://www.nuget.org/packages/Material3.Wpf)
 
-[![Download WinForms gallery](https://img.shields.io/badge/Download-WinForms%20gallery-2962FF?logo=windows&logoColor=white)](https://github.com/dary1337/material3-winforms/releases/latest/download/Material3.WinForms.Gallery.exe)
-[![Download WPF gallery](https://img.shields.io/badge/Download-WPF%20gallery-7C4DFF?logo=windows&logoColor=white)](https://github.com/dary1337/material3-winforms/releases/latest/download/Material3.Wpf.Gallery.exe)
-[![GitHub stars](https://img.shields.io/github/stars/dary1337/material3-winforms?style=social)](https://github.com/dary1337/material3-winforms)
+[![Download WinForms gallery](https://img.shields.io/badge/Download-WinForms%20gallery-2962FF?logo=windows&logoColor=white)](https://github.com/dary1337/material3-dotnet/releases/latest/download/Material3.WinForms.Gallery.exe)
+[![Download WPF gallery](https://img.shields.io/badge/Download-WPF%20gallery-7C4DFF?logo=windows&logoColor=white)](https://github.com/dary1337/material3-dotnet/releases/latest/download/Material3.Wpf.Gallery.exe)
+[![GitHub stars](https://img.shields.io/github/stars/dary1337/material3-dotnet?style=social)](https://github.com/dary1337/material3-dotnet)
 
 **Material 3 (Material You) for Windows Forms** — drop-in design tokens and owner-drawn controls.
 Dynamic color from a single seed, runtime light/dark switching, the full M3 type scale, elevation,
 state layers and motion. No mandatory base form, no native dependencies.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/dynamic-color.gif" alt="Dragging the seed hue recolors the whole palette live in the Material 3 gallery" width="820">
+  <img src="https://raw.githubusercontent.com/dary1337/material3-dotnet/main/docs/img/dynamic-color.gif" alt="Dragging the seed hue recolors the whole palette live in the Material 3 gallery" width="820">
 </p>
 <p align="center"><sub>Drag the seed hue — the entire palette recolors live through the HCT pipeline.</sub></p>
 
@@ -92,11 +92,11 @@ Rows: color roles · buttons & FAB · selection · cards & lists · overlays & p
 
 | Light | Dark |
 |:---:|:---:|
-| ![Color roles, light theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/color-roles-light.webp) | ![Color roles, dark theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/color-roles-dark.webp) |
-| ![Buttons & FAB, light theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/buttons-light.webp) | ![Buttons & FAB, dark theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/buttons-dark.webp) |
-| ![Selection controls, light theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/selection-light.webp) | ![Selection controls, dark theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/selection-dark.webp) |
-| ![Cards & lists, light theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/cards-lists-light.webp) | ![Cards & lists, dark theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/cards-lists-dark.webp) |
-| ![Overlays & pickers, light theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/overlays-light.webp) | ![Overlays & pickers, dark theme](https://raw.githubusercontent.com/dary1337/material3-winforms/main/docs/img/overlays-dark.webp) |
+| ![Color roles, light theme](https://raw.githubusercontent.com/dary1337/material3-dotnet/main/docs/img/color-roles-light.webp) | ![Color roles, dark theme](https://raw.githubusercontent.com/dary1337/material3-dotnet/main/docs/img/color-roles-dark.webp) |
+| ![Buttons & FAB, light theme](https://raw.githubusercontent.com/dary1337/material3-dotnet/main/docs/img/buttons-light.webp) | ![Buttons & FAB, dark theme](https://raw.githubusercontent.com/dary1337/material3-dotnet/main/docs/img/buttons-dark.webp) |
+| ![Selection controls, light theme](https://raw.githubusercontent.com/dary1337/material3-dotnet/main/docs/img/selection-light.webp) | ![Selection controls, dark theme](https://raw.githubusercontent.com/dary1337/material3-dotnet/main/docs/img/selection-dark.webp) |
+| ![Cards & lists, light theme](https://raw.githubusercontent.com/dary1337/material3-dotnet/main/docs/img/cards-lists-light.webp) | ![Cards & lists, dark theme](https://raw.githubusercontent.com/dary1337/material3-dotnet/main/docs/img/cards-lists-dark.webp) |
+| ![Overlays & pickers, light theme](https://raw.githubusercontent.com/dary1337/material3-dotnet/main/docs/img/overlays-light.webp) | ![Overlays & pickers, dark theme](https://raw.githubusercontent.com/dary1337/material3-dotnet/main/docs/img/overlays-dark.webp) |
 
 <sub>Screenshots and demos captured on **v0.5**.</sub>
 
