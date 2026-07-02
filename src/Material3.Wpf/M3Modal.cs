@@ -87,6 +87,12 @@ namespace Material3.Wpf {
             if (layer.ModalHost == null || layer.Scrim == null)   // fail fast before mutating any state
                 throw new InvalidOperationException("M3ModalLayer template is missing PART_ModalHost / PART_Scrim.");
             ModalOptions opts = options ?? new ModalOptions();
+            // Guard the "already a child of another Visual" crash class with a clear message: refuse to re-show
+            // open content, or content still parented elsewhere, before touching the host or the stack.
+            if (Stack.Exists(x => ReferenceEquals(x.Content, content)))
+                throw new InvalidOperationException("M3Modal.Show: this content is already open as a modal.");
+            if (VisualTreeHelper.GetParent(content) != null)
+                throw new InvalidOperationException("M3Modal.Show: content already has a parent — remove it from its current host first.");
 
             var e = new Entry { Content = content, Options = opts, Layer = layer, PrevFocus = Keyboard.FocusedElement };
             content.HorizontalAlignment = opts.HorizontalAlignment;
