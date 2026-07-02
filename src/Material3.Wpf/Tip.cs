@@ -51,7 +51,6 @@ namespace Material3.Wpf {
             string? text = GetText(fe);
             if (string.IsNullOrEmpty(text)) return;
             Ensure();
-            ApplyTheme();                      // re-resolve brushes so a runtime theme swap isn't shown stale
             _closing = false;                  // cancel a pending fade-out (moved onto another tipped element)
             _label!.Text = text;
             _popup!.IsOpen = false;            // force a fresh placement pass for the new/updated target
@@ -81,6 +80,11 @@ namespace Material3.Wpf {
                 Effect = new DropShadowEffect { BlurRadius = 14, ShadowDepth = 0, Opacity = 0.55 },
                 Child = _label,
             };
+            // Resource REFERENCES, not resolved brushes: a runtime M3Theme swap replaces the brush objects in
+            // Application.Resources, and a reference re-resolves automatically — even while a tip is open.
+            Themed(_label, TextBlock.ForegroundProperty, "OnSurface", Colors.White);
+            Themed(_border, Border.BackgroundProperty, "SurfaceContainerHighest", Color.FromRgb(0x2D, 0x2C, 0x2E));
+            Themed(_border, Border.BorderBrushProperty, "OutlineVariant", Color.FromRgb(0x49, 0x45, 0x4F));
             _popup = new Popup {
                 AllowsTransparency = true, StaysOpen = true, Placement = PlacementMode.Custom, Child = _border,
             };
@@ -88,20 +92,14 @@ namespace Material3.Wpf {
             _popup.Opened += (_, __) => Motion.AnimatePopupOpen(_popup);   // M3 fade + subtle scale-in
         }
 
-        // Themed brushes are re-resolved on every show (not cached once in Ensure) so a runtime M3Theme swap —
-        // which replaces the brush objects in Application.Resources — is reflected instead of showing stale colors.
-        private static void ApplyTheme() {
-            _label!.Foreground = Brush("OnSurface", Colors.White);
-            _border!.Background = Brush("SurfaceContainerHighest", Color.FromRgb(0x2D, 0x2C, 0x2E));
-            _border.BorderBrush = Brush("OutlineVariant", Color.FromRgb(0x49, 0x45, 0x4F));
+        private static void Themed(FrameworkElement el, DependencyProperty prop, string key, Color fallback) {
+            if (Application.Current?.TryFindResource(key) is SolidColorBrush) el.SetResourceReference(prop, key);
+            else el.SetValue(prop, new SolidColorBrush(fallback));   // theme-less app
         }
 
         private static CustomPopupPlacement[] Place(Size popup, Size target, Point offset) =>
             new[] { new CustomPopupPlacement(
                 new Point((target.Width - popup.Width) / 2, -(popup.Height + GapAboveTarget)),
                 PopupPrimaryAxis.Horizontal) };
-
-        private static SolidColorBrush Brush(string key, Color fallback) =>
-            Application.Current?.TryFindResource(key) as SolidColorBrush ?? new SolidColorBrush(fallback);
     }
 }
