@@ -26,10 +26,22 @@ jobs:
         id: check
         shell: pwsh
         run: |
-          $csproj = 'src/Material3.WinForms/Material3.WinForms.csproj'
-          $version = (([xml](Get-Content $csproj)).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1)
-          if (-not $version) { throw 'Version not found in csproj' }
-          $version = $version.Trim()
+          # All three packages release in lockstep under one v$version tag. Enforce it: a lone bump would
+          # otherwise be silently skipped by --skip-duplicate (or blocked by the existing tag) and ship a
+          # version mix where the newest package resolves a stale dependency from NuGet.
+          $versions = @{}
+          foreach ($csproj in @('src/Material3.Core/Material3.Core.csproj',
+                                'src/Material3.WinForms/Material3.WinForms.csproj',
+                                'src/Material3.Wpf/Material3.Wpf.csproj')) {
+            $v = (([xml](Get-Content $csproj)).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1)
+            if (-not $v) { throw "Version not found in $csproj" }
+            $versions[$csproj] = $v.Trim()
+          }
+          if (($versions.Values | Select-Object -Unique).Count -ne 1) {
+            $versions.GetEnumerator() | ForEach-Object { Write-Host "$($_.Key) = $($_.Value)" }
+            throw 'Package versions diverged - bump all three csprojs together.'
+          }
+          $version = $versions.Values | Select-Object -First 1
           $tag = "v$version"
           if (git tag -l $tag) {
             Write-Host "Tag $tag already exists - nothing to publish."
