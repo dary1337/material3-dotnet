@@ -120,8 +120,15 @@ namespace Material3.Wpf {
                 if (e.PrevFocus != null) Keyboard.Focus(e.PrevFocus);
                 e.Options.OnClosed?.Invoke();
             }
-            if (Stack.Count == 0) Motion.CloseModal(layer.Scrim!, e.Content, RemoveAndRestore);   // last one out → fade scrim + scale the card down
-            else RemoveAndRestore();                                                    // scrim stays for the modals below
+            if (Stack.Count == 0) {
+                Motion.CloseModal(layer.Scrim!, e.Content, RemoveAndRestore);   // last one out → fade scrim + scale the card down
+            }
+            else {
+                RemoveAndRestore();                                             // a modal remains below → scrim stays up,
+                Entry below = Stack[Stack.Count - 1];                           // but reapply ITS dim setting (the closed
+                if (layer.Scrim != null)                                        // top's Dim may differ from the one below)
+                    layer.Scrim.Background = below.Options.Dim ? ScrimBrush(layer) : Brushes.Transparent;
+            }
         }
 
         private static Brush ScrimBrush(FrameworkElement fe) =>
