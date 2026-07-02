@@ -113,6 +113,14 @@ reviews:
         and DPI layout regressions. The gallery must exercise every control in both light and dark; flag a new public
         control that has no gallery page. App-specific layout helpers (PageBuilder/GalleryForm) may scale via Dpi.Scale.
 
+    - path: "samples/Material3.Wpf.Gallery/**/*.cs"
+      instructions: >
+        Demo / smoke-test app, not shipped — lower rigor than the library, but still flag real WPF bugs. Watch for:
+        DispatcherTimer / storyboard / animation not stopped on teardown; event or binding leaks; a local
+        Window/App resource whose x:Key shadows a library style so FindResource resolves the wrong template;
+        DependencyObject / IDisposable left undisposed. The gallery must exercise the M3Modal, AnimatedPopup and
+        navigation surfaces in both light and dark; flag a new public WPF control that has no gallery page.
+
     - path: "**/*.csproj"
       instructions: >
         Demand: no new external dependency (dependency-free is intentional — the only allowed deps are the framework
