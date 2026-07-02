@@ -79,11 +79,18 @@ namespace Material3.Wpf.Gallery {
             if (VariantCombo.SelectedItem is ComboBoxItem it && it.Tag is SchemeVariant v) { _variant = v; Apply(); }
         }
 
+        private bool _applyQueued;
+
         private void Hue_Changed(object sender, RoutedPropertyChangedEventArgs<double> e) {
             if (_syncingHue || !IsLoaded) return;
             Color c = HueToSeed((int)e.NewValue);
             _seed = Argb.FromArgb(c.R, c.G, c.B);
-            Apply();
+            // Coalesce to one re-theme per frame: ValueChanged fires per mouse-move during a drag, and each
+            // Apply rebuilds the palette + ~45 brushes + app-wide DynamicResource invalidations.
+            if (_applyQueued) return;
+            _applyQueued = true;
+            Dispatcher.BeginInvoke(new Action(() => { _applyQueued = false; Apply(); }),
+                System.Windows.Threading.DispatcherPriority.Render);
         }
 
         private void SyncHueTo(Color seed) {
