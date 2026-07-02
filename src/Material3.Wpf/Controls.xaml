@@ -706,4 +706,23 @@
         </Setter>
     </Style>
 
+    <!-- App-level modal host. Wrap the window's content in one M3ModalLayer; M3Modal.Show renders cards above
+         the PART_Scrim, which covers the whole layer (chrome + content) so an open modal blocks everything. -->
+    <Style TargetType="{x:Type m3:M3ModalLayer}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type m3:M3ModalLayer}">
+                    <Grid>
+                        <ContentPresenter />
+                        <Border x:Name="PART_Scrim" Panel.ZIndex="1" Visibility="Collapsed" Opacity="0"
+                                Margin="{TemplateBinding m3:M3ModalLayer.ChromeInset}"
+                                Background="{DynamicResource Scrim}" />
+                        <Grid x:Name="PART_ModalHost" Panel.ZIndex="2"
+                              Margin="{TemplateBinding m3:M3ModalLayer.ChromeInset}" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 </ResourceDictionary>
