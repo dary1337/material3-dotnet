@@ -73,10 +73,14 @@ namespace Material3.Wpf {
             public ModalOptions Options = null!;
             public M3ModalLayer Layer = null!;
             public IInputElement? PrevFocus;
+            // Pre-Show local values (ReadLocalValue) of everything Show overwrites on the content, so a close
+            // can put them back — re-homed content must not keep the forced alignments or the Cycle tab trap.
+            public object? PrevHAlign; public object? PrevVAlign; public object? PrevTabNav;
             public void Close() => CloseEntry(this);
         }
 
         private static readonly List<Entry> Stack = new List<Entry>();
+        private static Action? _pendingClose;   // last modal's cleanup, parked while its exit animation runs
 
         public static bool HasModal => Stack.Count > 0;
 
@@ -87,6 +91,9 @@ namespace Material3.Wpf {
             if (layer.ModalHost == null || layer.Scrim == null)   // fail fast before mutating any state
                 throw new InvalidOperationException("M3ModalLayer template is missing PART_ModalHost / PART_Scrim.");
             ModalOptions opts = options ?? new ModalOptions();
+            // A Show during the previous close's exit animation would strand that close forever: OpenModal
+            // replaces the scrim clock, so the Completed carrying its cleanup never fires. Flush it now.
+            Action? pending = _pendingClose; _pendingClose = null; pending?.Invoke();
             // Guard the "already a child of another Visual" crash class with a clear message: refuse to re-show
             // open content, or content still parented elsewhere, before touching the host or the stack.
             if (Stack.Exists(x => ReferenceEquals(x.Content, content)))
@@ -94,15 +101,20 @@ namespace Material3.Wpf {
             if (VisualTreeHelper.GetParent(content) != null)
                 throw new InvalidOperationException("M3Modal.Show: content already has a parent — remove it from its current host first.");
 
-            var e = new Entry { Content = content, Options = opts, Layer = layer, PrevFocus = Keyboard.FocusedElement };
+            var e = new Entry {
+                Content = content, Options = opts, Layer = layer, PrevFocus = Keyboard.FocusedElement,
+                PrevHAlign = content.ReadLocalValue(FrameworkElement.HorizontalAlignmentProperty),
+                PrevVAlign = content.ReadLocalValue(FrameworkElement.VerticalAlignmentProperty),
+                PrevTabNav = content.ReadLocalValue(KeyboardNavigation.TabNavigationProperty),
+            };
             content.HorizontalAlignment = opts.HorizontalAlignment;
             content.VerticalAlignment = opts.VerticalAlignment;
             KeyboardNavigation.SetTabNavigation(content, KeyboardNavigationMode.Cycle);   // trap Tab inside the modal
             layer.ModalHost!.Children.Add(content);
             Stack.Add(e);
 
-            layer.Scrim!.Background = opts.Dim ? ScrimBrush(layer) : Brushes.Transparent;
-            Motion.OpenModal(layer.Scrim, content);
+            ApplyScrim(layer, opts.Dim);
+            Motion.OpenModal(layer.Scrim!, content);
             content.Dispatcher.BeginInvoke(new Action(() => content.MoveFocus(new TraversalRequest(FocusNavigationDirection.First))),
                 System.Windows.Threading.DispatcherPriority.Input);
             return e;
@@ -123,21 +135,44 @@ namespace Material3.Wpf {
             M3ModalLayer layer = e.Layer;
             void RemoveAndRestore() {
                 layer.ModalHost?.Children.Remove(e.Content);
+                Restore(e.Content, FrameworkElement.HorizontalAlignmentProperty, e.PrevHAlign);
+                Restore(e.Content, FrameworkElement.VerticalAlignmentProperty, e.PrevVAlign);
+                Restore(e.Content, KeyboardNavigation.TabNavigationProperty, e.PrevTabNav);
                 if (e.PrevFocus != null) Keyboard.Focus(e.PrevFocus);
                 e.Options.OnClosed?.Invoke();
             }
             if (Stack.Count == 0) {
-                Motion.CloseModal(layer.Scrim!, e.Content, RemoveAndRestore);   // last one out → fade scrim + scale the card down
+                // Park the cleanup: if a Show interrupts the exit animation it flushes this itself, because
+                // OpenModal replaces the scrim clock and this Completed would then never fire.
+                Action cleanup = RemoveAndRestore;
+                _pendingClose = cleanup;
+                Motion.CloseModal(layer.Scrim!, e.Content, () => {   // last one out → fade scrim + scale the card down
+                    if (!ReferenceEquals(_pendingClose, cleanup)) return;
+                    _pendingClose = null;
+                    cleanup();
+                });
             }
             else {
-                RemoveAndRestore();                                             // a modal remains below → scrim stays up,
-                Entry below = Stack[Stack.Count - 1];                           // but reapply ITS dim setting (the closed
-                if (layer.Scrim != null)                                        // top's Dim may differ from the one below)
-                    layer.Scrim.Background = below.Options.Dim ? ScrimBrush(layer) : Brushes.Transparent;
+                RemoveAndRestore();                     // a modal remains below → scrim stays up, but reapply ITS
+                ApplyScrim(layer, Stack[Stack.Count - 1].Options.Dim);   // dim (the closed top's may differ)
             }
         }
 
-        private static Brush ScrimBrush(FrameworkElement fe) =>
-            fe.TryFindResource("Scrim") as Brush ?? new SolidColorBrush(Color.FromArgb(168, 0, 0, 0));
+        // Dim via a resource REFERENCE, not a resolved-brush local value: a local write would permanently
+        // outrank and sever the template's {DynamicResource Scrim}, freezing the scrim on the pre-swap theme.
+        private static void ApplyScrim(M3ModalLayer layer, bool dim) {
+            if (layer.Scrim == null) return;
+            if (!dim) layer.Scrim.Background = Brushes.Transparent;
+            else if (layer.TryFindResource("Scrim") is Brush) layer.Scrim.SetResourceReference(Border.BackgroundProperty, "Scrim");
+            else layer.Scrim.Background = new SolidColorBrush(Color.FromArgb(168, 0, 0, 0));   // theme-less app fallback
+        }
+
+        // Put back the pre-Show local value, binding, or lack thereof — Show's writes must not leak into
+        // content the app re-homes after close.
+        private static void Restore(FrameworkElement el, DependencyProperty prop, object? prev) {
+            if (prev == DependencyProperty.UnsetValue) el.ClearValue(prop);
+            else if (prev is System.Windows.Data.BindingExpressionBase b) System.Windows.Data.BindingOperations.SetBinding(el, prop, b.ParentBindingBase);
+            else el.SetValue(prop, prev!);
+        }
     }
 }
