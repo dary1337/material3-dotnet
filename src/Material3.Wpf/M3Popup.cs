@@ -29,7 +29,10 @@ namespace Material3.Wpf {
             Motion.AnimatePopupClose(p, () => {
                 p._closing = false;
                 if (p._cycle != cycle) return;   // reopened during the animation → this callback is stale, don't force-close
-                p._done = true; p.IsOpen = false;
+                p._done = true;
+                // SetCurrentValue, not a local set: a local IsOpen=false would replace (and kill) a OneWay
+                // IsOpen binding on the first animated close. Coercion still runs, so _done gates it through.
+                p.SetCurrentValue(IsOpenProperty, false);
             });
             return true;   // stay open until the exit animation finishes
         }
