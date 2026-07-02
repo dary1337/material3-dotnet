@@ -27,7 +27,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\docs\nuget\WinForms.md" Pack="true" PackagePath="\README.md" />
     <!-- Internal calendar/grid math is unit tested without exposing it as public API. -->
     <InternalsVisibleTo Include="Material3.WinForms.Tests" />
   </ItemGroup>
