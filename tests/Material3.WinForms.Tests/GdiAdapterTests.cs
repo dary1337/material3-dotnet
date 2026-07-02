@@ -32,21 +32,22 @@ namespace Material3.WinForms.Tests {
             CorePalette p = CorePalette.FromSeed(Seed);
             CoreScheme core = dark ? CoreScheme.Dark(p) : CoreScheme.Light(p);
             WfScheme wf = dark ? WfScheme.Dark(p) : WfScheme.Light(p);
-
             Assert.Equal(dark, wf.IsDark);
-            // A mis-wired role (e.g. Secondary←Tertiary) or an A/R/B swap surfaces here as a mismatch.
-            AssertSame(core.Primary, wf.Primary);
-            AssertSame(core.OnPrimary, wf.OnPrimary);
-            AssertSame(core.SecondaryContainer, wf.SecondaryContainer);
-            AssertSame(core.Tertiary, wf.Tertiary);
-            AssertSame(core.Error, wf.Error);
-            AssertSame(core.OnError, wf.OnError);
-            AssertSame(core.Surface, wf.Surface);
-            AssertSame(core.OnSurface, wf.OnSurface);
-            AssertSame(core.Outline, wf.Outline);
-        }
 
-        private static void AssertSame(Argb coreRole, System.Drawing.Color gdi) =>
-            Assert.Equal(coreRole.ToGdi().ToArgb(), gdi.ToArgb());
+            // Every Core role must surface under the same name with the same value — a copy-paste mis-wire in
+            // any of the ~43 From() assignments (or an A/R/B swap) fails here instead of shipping silently.
+            int matched = 0;
+            foreach (var coreProp in typeof(CoreScheme).GetProperties()) {
+                if (coreProp.PropertyType != typeof(Argb)) continue;
+                var wfProp = typeof(WfScheme).GetProperty(coreProp.Name);
+                Assert.True(wfProp != null && wfProp.PropertyType == typeof(System.Drawing.Color),
+                    $"WinForms scheme is missing role {coreProp.Name}");
+                var expected = ((Argb)coreProp.GetValue(core)!).ToGdi().ToArgb();
+                var actual = ((System.Drawing.Color)wfProp!.GetValue(wf)!).ToArgb();
+                Assert.True(expected == actual, $"Role {coreProp.Name} is mis-wired in the GDI adapter");
+                matched++;
+            }
+            Assert.True(matched >= 40, $"Only {matched} roles compared — the reflection sweep lost coverage");
+        }
     }
 }
