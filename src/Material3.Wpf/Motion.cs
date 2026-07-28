@@ -82,9 +82,9 @@ namespace Material3.Wpf {
 
         /// <summary>Dropdown/menu popups: fade + scale the popup's content up on open. Wire from Popup.Opened.</summary>
         // WPF places a popup from its child's RENDERED bounds, so scaling the child nudges an edge-aligned
-        // popup off its anchor; a centred placement re-centres the content and is immune.
+        // popup off its anchor; only CenterPopup's centred placement re-centres the content and is immune.
         private static bool ScaleIsSafe(System.Windows.Controls.Primitives.Popup popup) =>
-            popup.Placement == System.Windows.Controls.Primitives.PlacementMode.Custom;
+            popup.Placement == System.Windows.Controls.Primitives.PlacementMode.Custom && CenterPopup.GetEnable(popup);
 
         public static void AnimatePopupOpen(System.Windows.Controls.Primitives.Popup? popup) {
             if (!(popup?.Child is FrameworkElement c)) return;
