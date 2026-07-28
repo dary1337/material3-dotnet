@@ -18,11 +18,7 @@ namespace Material3.Wpf {
 
         private static void OnIsOpenChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             if (!(d is UIElement element)) return;
-            // A transform declared in a template or style can be frozen — BeginAnimation would throw on it.
-            if (!(element.RenderTransform is RotateTransform rotate) || rotate.IsFrozen) {
-                rotate = new RotateTransform();
-                element.RenderTransform = rotate;
-            }
+            RotateTransform rotate = EnsureRotate(element);
             element.RenderTransformOrigin = new Point(0.5, 0.5);
             bool open = (bool)e.NewValue;
             var spin = new DoubleAnimation(open ? 180 : 0, Spin) {
@@ -36,6 +32,30 @@ namespace Material3.Wpf {
                 rotate.Angle = open ? 180 : 0;
             };
             rotate.BeginAnimation(RotateTransform.AngleProperty, spin);
+        }
+
+        // Never drop a transform the template already applied (a scale, a flip): compose with it instead. A
+        // frozen transform can't be animated or added to, so it's replaced/copied into a fresh group.
+        private static RotateTransform EnsureRotate(UIElement element) {
+            Transform current = element.RenderTransform;
+            if (current is RotateTransform own && !own.IsFrozen) return own;
+            if (current is TransformGroup group && !group.IsFrozen) {
+                foreach (Transform t in group.Children)
+                    if (t is RotateTransform mine && !mine.IsFrozen) return mine;
+                var appended = new RotateTransform();
+                group.Children.Add(appended);
+                return appended;
+            }
+            var rotate = new RotateTransform();
+            if (current == null || current == Transform.Identity) {
+                element.RenderTransform = rotate;
+                return rotate;
+            }
+            var composed = new TransformGroup();
+            composed.Children.Add(current);
+            composed.Children.Add(rotate);
+            element.RenderTransform = composed;
+            return rotate;
         }
     }
 }
