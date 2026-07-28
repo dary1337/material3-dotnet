@@ -348,7 +348,6 @@ namespace Material3.Wpf.Gallery {
             };
             ScrollViewer.SetHorizontalScrollBarVisibility(list, ScrollBarVisibility.Disabled);
             VirtualizingPanel.SetIsVirtualizing(list, true);
-            VirtualizingPanel.SetVirtualizationMode(list, VirtualizationMode.Recycling);
             return list;
         }
 
