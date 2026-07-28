@@ -4,6 +4,10 @@ using System.Windows.Controls;
 namespace Material3.Wpf {
     public enum ChipSeverity { Neutral, Primary, Warning, Error }
 
+    /// <summary>Dense (default) reads as an annotation on a list row; Large carries its own weight next to a
+    /// 16pt title on a card.</summary>
+    public enum ChipSize { Dense, Large }
+
     // Compact status chip (icon + label, tinted by Severity). Styled by the implicit template in Controls.xaml.
     public sealed class Chip : Control {
         public static readonly DependencyProperty TextProperty =
@@ -17,5 +21,9 @@ namespace Material3.Wpf {
         public static readonly DependencyProperty SeverityProperty =
             DependencyProperty.Register(nameof(Severity), typeof(ChipSeverity), typeof(Chip), new PropertyMetadata(ChipSeverity.Neutral));
         public ChipSeverity Severity { get => (ChipSeverity)GetValue(SeverityProperty); set => SetValue(SeverityProperty, value); }
+
+        public static readonly DependencyProperty SizeProperty =
+            DependencyProperty.Register(nameof(Size), typeof(ChipSize), typeof(Chip), new PropertyMetadata(ChipSize.Dense));
+        public ChipSize Size { get => (ChipSize)GetValue(SizeProperty); set => SetValue(SizeProperty, value); }
     }
 }

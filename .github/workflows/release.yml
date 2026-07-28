@@ -51,13 +51,13 @@ jobs:
           }
       - name: Restore
         if: steps.check.outputs.publish == 'true'
-        run: dotnet restore Material3.WinForms.sln
+        run: dotnet restore Material3.sln
       - name: Build
         if: steps.check.outputs.publish == 'true'
-        run: dotnet build Material3.WinForms.sln -c Release --no-restore
+        run: dotnet build Material3.sln -c Release --no-restore
       - name: Test
         if: steps.check.outputs.publish == 'true'
-        run: dotnet test Material3.WinForms.sln -c Release --no-build
+        run: dotnet test Material3.sln -c Release --no-build
       - name: Pack
         if: steps.check.outputs.publish == 'true'
         shell: bash
