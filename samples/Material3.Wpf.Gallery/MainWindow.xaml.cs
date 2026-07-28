@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using Material3.Core;
 using Material3.Wpf;
 
@@ -44,11 +45,9 @@ namespace Material3.Wpf.Gallery {
             foreach (var v in Variants) VariantCombo.Items.Add(new ComboBoxItem { Content = v.label, Tag = v.v });
             SeedCombo.SelectedIndex = 3;    // Deep purple
             VariantCombo.SelectedIndex = 1; // Tonal spot
-            SeedCombo.DropDownOpened += (s, e) => AnimateCombo(SeedCombo);
-            VariantCombo.DropDownOpened += (s, e) => AnimateCombo(VariantCombo);
             foreach (string p in Pages) {
                 var rb = new RadioButton { Style = (Style)FindResource("NavPill"), GroupName = "nav", Content = p, Tag = p, IsChecked = p == _page };
-                rb.Checked += (s, e) => { ShowPage((string)((RadioButton)s).Tag); Motion.FadeIn(PageHost); };
+                rb.Checked += (s, e) => { ShowPage((string)((RadioButton)s).Tag); Scroller.ScrollToTop(); Motion.FadeIn(PageHost); };
                 NavHost.Children.Add(rb);
             }
             M3Theme.ThemeChanged += (_, __) => RefreshHex();
@@ -56,13 +55,6 @@ namespace Material3.Wpf.Gallery {
         }
 
         private void Apply() => M3Theme.Apply(MaterialTheme.FromSeed(_seed, _variant), _isDark, Application.Current.Resources);
-
-        private static void AnimateCombo(ComboBox cb) {
-            if (cb.Template.FindName("Pop", cb) is System.Windows.Controls.Primitives.Popup p) {
-                Motion.AnimatePopupOpen(p);
-            }
-        }
-
 
         // ---- sidebar controls ----
         private void Mode_Click(object sender, RoutedEventArgs e) {
@@ -405,14 +397,168 @@ namespace Material3.Wpf.Gallery {
                   + "close it instead of reopening, and Chevron.IsOpen flips the glyph while it is open.");
             PageHost.Children.Add(BuildDropdownDemo());
 
+            Header("Inline banner");
+            Caption("Motion.ExpandBanner / CollapseBanner animate a banner's height and opacity, so the content "
+                  + "below slides instead of jumping. Toggling mid-flight cancels the pending animation. The "
+                  + "trigger's own caption changes through Motion.SwapContent, which cross-fades the label and "
+                  + "eases the button's width to fit it.");
+            PageHost.Children.Add(BuildBannerDemo());
+
             Header("Modal dialog");
             Caption("M3Modal.Show renders a card above an app-wide scrim (blocks the whole window; Esc / scrim-click closes).");
             var openDialog = StyledButton("FilledButton", "Show dialog");
             openDialog.Click += (_, __) => ShowDemoDialog();
             PageHost.Children.Add(openDialog);
 
+            Header("Async confirm dialog");
+            Caption("A destructive confirm whose action runs asynchronously: the button turns busy, Cancel and both "
+                  + "dismiss gestures are blocked, and the dialog closes only once the work finishes. The first "
+                  + "attempt fails on purpose — the error surfaces in the dialog and it stays open.");
+            PageHost.Children.Add(BuildAsyncConfirmDemo());
+
             Header("Snackbar · Dropdown select");
             Wip("Snackbar and dropdown-select picker");
+        }
+
+        private FrameworkElement BuildBannerDemo() {
+            var text = new TextBlock { Text = "Heads up — this build is a preview.", VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap };
+            text.SetResourceReference(TextBlock.ForegroundProperty, "OnWarningContainer");
+            var icon = new M3Icon { Kind = "AlertCircle", Width = 18, Height = 18, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 0) };
+            icon.SetResourceReference(M3Icon.ForegroundProperty, "OnWarningContainer");
+            var row = new StackPanel { Orientation = Orientation.Horizontal };
+            row.Children.Add(icon);
+            row.Children.Add(text);
+            var banner = new Border {
+                Width = 420, HorizontalAlignment = HorizontalAlignment.Left, Padding = new Thickness(14, 12, 14, 12),
+                Margin = new Thickness(0, 0, 0, 10), Visibility = Visibility.Collapsed, Child = row,
+            };
+            banner.SetResourceReference(Border.BackgroundProperty, "WarningContainer");
+            banner.SetResourceReference(Border.CornerRadiusProperty, "RadiusMd");
+
+            bool shown = false;
+            var toggle = StyledButton("TonalButton", "Show banner");
+            // Sized by its own label, not stretched to the banner — SwapContent only eases a content-driven width.
+            toggle.HorizontalAlignment = HorizontalAlignment.Left;
+            toggle.Click += (_, __) => {
+                shown = !shown;
+                Motion.SwapContent(toggle, shown ? "Dismiss the banner" : "Show banner");
+                if (shown) Motion.ExpandBanner(banner); else Motion.CollapseBanner(banner);
+            };
+
+            var host = new StackPanel { HorizontalAlignment = HorizontalAlignment.Left };
+            host.Children.Add(banner);
+            host.Children.Add(toggle);
+            return host;
+        }
+
+        private FrameworkElement BuildAsyncConfirmDemo() {
+            var status = new TextBlock { Style = (Style)FindResource("BodySmall"), Margin = new Thickness(2, 8, 0, 0) };
+            var open = StyledButton("ErrorTonalButton", "Delete project…");
+            open.Click += (_, __) => ShowAsyncConfirmDialog(status);
+            var host = new StackPanel { HorizontalAlignment = HorizontalAlignment.Left };
+            host.Children.Add(open);
+            host.Children.Add(status);
+            return host;
+        }
+
+        // A busy pill: an arc (one dash of a dashed ellipse) spinning next to a label, tinted by the host button's
+        // Foreground so it follows every theme and state change.
+        private static (FrameworkElement content, RotateTransform spin) BusyContent(Button host, string label) {
+            var arc = new System.Windows.Shapes.Ellipse {
+                Width = 15, Height = 15, StrokeThickness = 2, StrokeDashCap = PenLineCap.Round,
+                StrokeDashArray = new DoubleCollection { 5, 16 }, RenderTransformOrigin = new Point(0.5, 0.5),
+                VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0),
+            };
+            var spin = new RotateTransform();
+            arc.RenderTransform = spin;
+            arc.SetBinding(System.Windows.Shapes.Shape.StrokeProperty,
+                new System.Windows.Data.Binding(nameof(Control.Foreground)) { Source = host });
+            var row = new StackPanel { Orientation = Orientation.Horizontal };
+            row.Children.Add(arc);
+            row.Children.Add(new TextBlock { Text = label, VerticalAlignment = VerticalAlignment.Center });
+            return (row, spin);
+        }
+
+        private void ShowAsyncConfirmDialog(TextBlock status) {
+            var card = new Border {
+                Width = 420, CornerRadius = new CornerRadius(16), Padding = new Thickness(24),
+                Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 28, ShadowDepth = 0, Opacity = 0.5 },
+            };
+            card.SetResourceReference(Border.BackgroundProperty, "SurfaceContainerHigh");
+
+            var stack = new StackPanel();
+            stack.Children.Add(new TextBlock { Text = "Delete “Aurora”?", Style = (Style)FindResource("TitleMedium") });
+            stack.Children.Add(new TextBlock {
+                Text = "The project and everything in it is removed. This cannot be undone.",
+                Style = (Style)FindResource("BodySmall"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 8, 0, 0),
+            });
+
+            var errorText = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 12 };
+            errorText.SetResourceReference(TextBlock.ForegroundProperty, "OnErrorContainer");
+            var errorBanner = new Border {
+                Padding = new Thickness(12, 10, 12, 10), Margin = new Thickness(0, 14, 0, 0),
+                Visibility = Visibility.Collapsed, Child = errorText,
+            };
+            errorBanner.SetResourceReference(Border.BackgroundProperty, "ErrorContainer");
+            errorBanner.SetResourceReference(Border.CornerRadiusProperty, "RadiusSm");
+            stack.Children.Add(errorBanner);
+
+            var row = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 18, 0, 0) };
+            var cancel = StyledButton("TextButton", "Cancel");
+            var confirm = StyledButton("ErrorTonalButton", "Delete");
+            cancel.Height = confirm.Height = 40;
+            cancel.MinWidth = 104;
+            confirm.MinWidth = 140;              // fits the busy label too, so the row never reflows mid-run
+            cancel.Margin = new Thickness(0);
+            confirm.Margin = new Thickness(8, 0, 0, 0);
+            row.Children.Add(cancel);
+            row.Children.Add(confirm);
+            stack.Children.Add(row);
+            card.Child = stack;
+
+            var opts = new ModalOptions();
+            IModalHandle handle = M3Modal.Show(card, opts);
+            (FrameworkElement busy, RotateTransform spin) = BusyContent(confirm, "Deleting…");
+            bool running = false;
+            int attempt = 0;
+
+            void SetRunning(bool on) {
+                running = on;
+                // Same instance the modal reads at dismiss time, so flipping these blocks Esc and scrim-click
+                // for exactly as long as the work runs.
+                opts.DismissOnEsc = opts.DismissOnScrimClick = !on;
+                cancel.IsEnabled = !on;
+                // The confirm stays enabled so the busy pill keeps its danger colour instead of going disabled-grey.
+                confirm.Content = on ? busy : "Delete";
+                spin.BeginAnimation(RotateTransform.AngleProperty, on
+                    ? new DoubleAnimation(0, 360, new Duration(TimeSpan.FromMilliseconds(900))) { RepeatBehavior = RepeatBehavior.Forever }
+                    : null);
+            }
+
+            cancel.Click += (_, __) => { if (!running) handle.Close(); };
+            confirm.Click += async (_, __) => {
+                if (running) return;
+                SetRunning(true);
+                try {
+                    await DeleteAsync(++attempt);
+                }
+                catch (InvalidOperationException ex) {
+                    SetRunning(false);
+                    errorText.Text = ex.Message;
+                    Motion.ExpandBanner(errorBanner);
+                    return;
+                }
+                handle.Close();                                             // only now, with the work actually done
+                spin.BeginAnimation(RotateTransform.AngleProperty, null);   // else the Forever clock outlives the card
+                status.Text = "Deleted “Aurora”.";
+            };
+        }
+
+        // Stand-in for real I/O. The first attempt always fails, so the demo shows the error path before the
+        // success path without needing a second control to arm it.
+        private static async System.Threading.Tasks.Task DeleteAsync(int attempt) {
+            await System.Threading.Tasks.Task.Delay(1400);
+            if (attempt == 1) throw new InvalidOperationException("“Aurora” is open in another window. Close it and try again.");
         }
 
         private FrameworkElement BuildDropdownDemo() {

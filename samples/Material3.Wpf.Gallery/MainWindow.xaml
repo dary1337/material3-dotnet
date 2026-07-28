@@ -24,12 +24,19 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Grid Background="Transparent">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualStateGroup.Transitions>
+                                        <VisualTransition GeneratedDuration="0:0:0.13"><VisualTransition.GeneratedEasingFunction><StaticResource ResourceKey="M3StandardDecelerate" /></VisualTransition.GeneratedEasingFunction></VisualTransition>
+                                    </VisualStateGroup.Transitions>
+                                    <VisualState x:Name="Normal" />
+                                    <VisualState x:Name="MouseOver"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.08" Duration="0" /></Storyboard></VisualState>
+                                    <VisualState x:Name="Pressed"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.12" Duration="0" /></Storyboard></VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
                             <Border x:Name="state" Background="{DynamicResource OnSurfaceVariant}" Opacity="0" CornerRadius="16" />
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="state" Property="Opacity" Value="0.08" /></Trigger>
-                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
@@ -39,12 +46,21 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Grid Background="Transparent">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualStateGroup.Transitions>
+                                        <VisualTransition GeneratedDuration="0:0:0.13"><VisualTransition.GeneratedEasingFunction><StaticResource ResourceKey="M3StandardDecelerate" /></VisualTransition.GeneratedEasingFunction></VisualTransition>
+                                    </VisualStateGroup.Transitions>
+                                    <VisualState x:Name="Normal" />
+                                    <VisualState x:Name="MouseOver"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.08" Duration="0" /></Storyboard></VisualState>
+                                    <VisualState x:Name="Pressed"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.12" Duration="0" /></Storyboard></VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
                             <Border x:Name="state" Background="{DynamicResource Error}" Opacity="0" CornerRadius="16" />
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="state" Property="Opacity" Value="0.08" />
                                 <Setter Property="Foreground" Value="{DynamicResource Error}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -61,10 +77,27 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ComboBoxItem">
                         <Border x:Name="b" Background="Transparent" CornerRadius="7" Padding="11,8" Margin="0,1">
-                            <ContentPresenter VerticalAlignment="Center" />
+                            <Grid>
+                                <!-- Fade a state layer rather than swapping Background: a brush swap cannot ease.
+                                     Driven by trigger actions, not the VisualStateManager, because ComboBoxItem
+                                     makes no promise about publishing CommonStates. -->
+                                <Border x:Name="st" Background="{DynamicResource SurfaceContainerHighest}" Opacity="0" CornerRadius="7" Margin="-11,-8" />
+                                <ContentPresenter VerticalAlignment="Center" />
+                            </Grid>
                         </Border>
                         <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Background" Value="{DynamicResource SurfaceContainerHighest}" /></Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard><DoubleAnimation Storyboard.TargetName="st" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.13" EasingFunction="{StaticResource M3StandardDecelerate}" /></Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard><DoubleAnimation Storyboard.TargetName="st" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.13" EasingFunction="{StaticResource M3StandardAccelerate}" /></Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
                             <Trigger Property="IsSelected" Value="True"><Setter TargetName="b" Property="Background" Value="{DynamicResource SecondaryContainer}" /></Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -90,7 +123,8 @@
                                                 <Border x:Name="st" Background="{DynamicResource OnSurface}" Opacity="0" CornerRadius="8" />
                                                 <DockPanel Margin="14,0,8,0">
                                                     <m3:M3Icon DockPanel.Dock="Right" Kind="ChevronDown" Width="20" Height="20"
-                                                               VerticalAlignment="Center" Foreground="{DynamicResource OnSurfaceVariant}" />
+                                                               VerticalAlignment="Center" Foreground="{DynamicResource OnSurfaceVariant}"
+                                                               m3:Chevron.IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource AncestorType=ComboBox}}" />
                                                     <ContentPresenter Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
                                                                       VerticalAlignment="Center" TextElement.Foreground="{DynamicResource OnSurface}" />
                                                 </DockPanel>
@@ -103,13 +137,18 @@
                                     </ControlTemplate>
                                 </ToggleButton.Template>
                             </ToggleButton>
-                            <Popup x:Name="Pop" IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" AllowsTransparency="True" Focusable="False">
+                            <!-- AnimatedPopup, not Popup: the library then plays BOTH the M3 enter and exit (a bare
+                                 popup can only ever fade in, since it is gone before an exit could run). WatchAnchor
+                                 is off because this trigger sits in the fixed sidebar, not in a scrolling region. -->
+                            <m3:AnimatedPopup x:Name="Pop" IsOpen="{TemplateBinding IsDropDownOpen}" WatchAnchor="False"
+                                              m3:CenterPopup.Enable="True" AllowsTransparency="True" Focusable="False"
+                                              PlacementTarget="{Binding RelativeSource={RelativeSource TemplatedParent}}">
                                 <Border Background="{DynamicResource SurfaceContainerHigh}" BorderBrush="{DynamicResource OutlineVariant}"
-                                        BorderThickness="1" CornerRadius="8" Padding="5" Margin="0,4,0,0"
+                                        BorderThickness="1" CornerRadius="8" Padding="5"
                                         MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
                                     <ItemsPresenter />
                                 </Border>
-                            </Popup>
+                            </m3:AnimatedPopup>
                         </Grid>
                     </ControlTemplate>
                 </Setter.Value>
@@ -168,14 +207,26 @@
                                 </VisualStateGroup>
                             </VisualStateManager.VisualStateGroups>
                             <Grid>
+                                <!-- Selection rides its own layer so it can fade in; the pill's own Background
+                                     could only be swapped, and the indicator would pop between nav items. -->
+                                <Border x:Name="sel" Background="{DynamicResource SecondaryContainer}" Opacity="0" CornerRadius="20" />
                                 <Border x:Name="st" Background="{DynamicResource OnSurface}" Opacity="0" CornerRadius="20" />
                                 <ContentPresenter VerticalAlignment="Center" Margin="16,9" TextElement.Foreground="{TemplateBinding Foreground}" />
                             </Grid>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="pill" Property="Background" Value="{DynamicResource SecondaryContainer}" />
                                 <Setter Property="Foreground" Value="{DynamicResource OnSecondaryContainer}" />
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard><DoubleAnimation Storyboard.TargetName="sel" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.16" EasingFunction="{StaticResource M3StandardDecelerate}" /></Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard><DoubleAnimation Storyboard.TargetName="sel" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.16" EasingFunction="{StaticResource M3StandardAccelerate}" /></Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
