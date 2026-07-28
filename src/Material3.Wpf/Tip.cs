@@ -89,6 +89,7 @@ namespace Material3.Wpf {
                 AllowsTransparency = true, StaysOpen = true, Placement = PlacementMode.Custom, Child = _border,
             };
             _popup.CustomPopupPlacementCallback = Place;
+            Motion.SetScaleOnOpen(_popup, true);   // Place centres the tip on its target, so the scale can't shift it
             _popup.Opened += (_, __) => Motion.AnimatePopupOpen(_popup);   // M3 fade + subtle scale-in
         }
 

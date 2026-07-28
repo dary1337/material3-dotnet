@@ -32,7 +32,14 @@ namespace Material3.Wpf {
 
         private static object CoerceIsOpen(DependencyObject d, object baseValue) {
             var p = (AnimatedPopup)d;
-            if ((bool)baseValue) { p._done = false; p._closing = false; p._cycle++; return true; }   // opening → cancel any in-flight close
+            if ((bool)baseValue) {
+                bool wasClosing = p._closing;
+                p._done = false; p._closing = false; p._cycle++;
+                // Reopened mid-exit: the popup never actually closed, so Opened won't fire — replay the enter
+                // animation here or the child stays stuck on the exit fade's tail.
+                if (wasClosing) Motion.AnimatePopupOpen(p);
+                return true;
+            }
             if (p._done) { p._done = false; return false; }   // the deferred close after the animation → allow it
             if (!p.IsOpen) return false;      // already closed → nothing to animate
             if (p._closing) return true;      // animation in flight → IGNORE repeat close requests (StaysOpen

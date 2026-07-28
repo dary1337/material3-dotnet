@@ -142,15 +142,18 @@ namespace Material3.Wpf {
                 e.Options.OnClosed?.Invoke();
             }
             if (Stack.Count == 0) {
-                // Park the cleanup: if a Show interrupts the exit animation it flushes this itself, because
-                // OpenModal replaces the scrim clock and this Completed would then never fire.
-                Action cleanup = RemoveAndRestore;
-                _pendingClose = cleanup;
-                Motion.CloseModal(layer.Scrim!, e.Content, () => {   // last one out → fade scrim + scale the card down
-                    if (!ReferenceEquals(_pendingClose, cleanup)) return;
-                    _pendingClose = null;
-                    cleanup();
-                });
+                bool done = false;
+                Action? finish = null;
+                void Once() {
+                    if (done) return;
+                    done = true;
+                    if (ReferenceEquals(_pendingClose, finish)) _pendingClose = null;
+                    RemoveAndRestore();
+                }
+                // last one out → fade scrim + fade/scale the card down. Park the exit's tail: a Show during the
+                // animation replaces the scrim clock, so the completion carrying this would never fire.
+                finish = Motion.CloseModal(layer.Scrim!, e.Content, Once);
+                _pendingClose = finish;
             }
             else {
                 RemoveAndRestore();                     // a modal remains below → scrim stays up, but reapply ITS

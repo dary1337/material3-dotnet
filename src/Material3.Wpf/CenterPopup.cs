@@ -26,6 +26,7 @@ namespace Material3.Wpf {
             if (d is Popup popup && (bool)e.NewValue) {
                 popup.Placement = PlacementMode.Custom;
                 popup.CustomPopupPlacementCallback = (p, t, o) => Place(p, t, GetPreferAbove(popup));
+                Motion.SetScaleOnOpen(popup, true);
             }
         }
 
