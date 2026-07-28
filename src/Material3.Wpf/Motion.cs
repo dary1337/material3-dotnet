@@ -140,10 +140,13 @@ namespace Material3.Wpf {
                 if (popup.IsOpen) return;   // reopened mid-exit → the enter animation owns the child; don't cut it
                 // Reset the child so the NEXT open's placement measures the full, untransformed size. A held
                 // 0.96 scale otherwise shrinks the popupSize WPF passes to a CustomPopupPlacementCallback, which
-                // shifts an above-anchored popup down onto its trigger.
-                st.BeginAnimation(ScaleTransform.ScaleXProperty, null);
-                st.BeginAnimation(ScaleTransform.ScaleYProperty, null);
-                st.ScaleX = 1; st.ScaleY = 1;
+                // shifts an above-anchored popup down onto its trigger. Only when the scale was OURS: without it
+                // the transform belongs to the app, and resetting it would undo whatever the app does with it.
+                if (GetScaleOnOpen(popup)) {
+                    st.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+                    st.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+                    st.ScaleX = 1; st.ScaleY = 1;
+                }
                 c.BeginAnimation(UIElement.OpacityProperty, null);
                 c.Opacity = 1;
             };
