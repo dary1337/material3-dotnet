@@ -65,6 +65,13 @@ Rows: color roles · buttons & FAB · selection · cards & lists · overlays & p
 - .NET Framework 4.7.2+ or .NET 8 (`net8.0-windows`)
 - Windows 10+ recommended (DWM caption theming and rounded corners degrade gracefully on older builds)
 
+## Building
+
+```sh
+dotnet build Material3.sln -c Release
+dotnet test Material3.sln -c Release
+```
+
 ## Acknowledgements
 
 The HCT color pipeline is a C# port of Google's
