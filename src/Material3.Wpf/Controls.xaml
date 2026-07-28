@@ -381,6 +381,103 @@
         </Setter>
     </Style>
 
+    <!-- The WarningFilledButton twin for an ErrorContainer banner: inverted container colours so it reads as
+         THE action of the danger banner. -->
+    <Style x:Key="ErrorFilledButton" TargetType="Button">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="Foreground" Value="{DynamicResource ErrorContainer}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="b" Background="{DynamicResource OnErrorContainer}" CornerRadius="20">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.13">
+                                        <VisualTransition.GeneratedEasingFunction><StaticResource ResourceKey="M3StandardDecelerate" /></VisualTransition.GeneratedEasingFunction>
+                                    </VisualTransition>
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="MouseOver"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.10" Duration="0" /></Storyboard></VisualState>
+                                <VisualState x:Name="Pressed"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.16" Duration="0" /></Storyboard></VisualState>
+                                <VisualState x:Name="Disabled"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0" Duration="0" /></Storyboard></VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <Grid>
+                            <Border x:Name="state" Background="{DynamicResource ErrorContainer}" Opacity="0" CornerRadius="20" />
+                            <ContentPresenter Margin="17,0" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              TextElement.Foreground="{TemplateBinding Foreground}">
+                                <ContentPresenter.Resources>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource ButtonLabel}" />
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="b" Property="Background" Value="{DynamicResource SurfaceContainerHighest}" />
+                            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceMuted}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- TonalButton in error colours: the container fill reads as "destructive, but still a choice" — for a
+         dialog's confirm. Its ErrorFilledButton twin above is inverted, for THE action of an error banner. -->
+    <Style x:Key="ErrorTonalButton" TargetType="Button">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="ToolTipService.InitialShowDelay" Value="0" />
+        <Setter Property="ToolTipService.Placement" Value="Top" />
+        <Setter Property="ToolTipService.ShowDuration" Value="60000" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="Foreground" Value="{DynamicResource OnErrorContainer}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="b" Background="{DynamicResource ErrorContainer}" CornerRadius="20">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.13">
+                                        <VisualTransition.GeneratedEasingFunction><StaticResource ResourceKey="M3StandardDecelerate" /></VisualTransition.GeneratedEasingFunction>
+                                    </VisualTransition>
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="MouseOver"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.08" Duration="0" /></Storyboard></VisualState>
+                                <VisualState x:Name="Pressed"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.12" Duration="0" /></Storyboard></VisualState>
+                                <VisualState x:Name="Disabled"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0" Duration="0" /></Storyboard></VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <Grid>
+                            <Border x:Name="state" Background="{DynamicResource OnErrorContainer}" Opacity="0" CornerRadius="20" />
+                            <ContentPresenter Margin="17,0" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              TextElement.Foreground="{TemplateBinding Foreground}">
+                                <ContentPresenter.Resources>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource ButtonLabel}" />
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="b" Property="Background" Value="{DynamicResource SurfaceContainerHighest}" />
+                            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceMuted}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- M3 text button: transparent, Primary label, Primary state-layer on hover/press. -->
     <Style x:Key="TextButton" TargetType="Button">
         <Setter Property="Cursor" Value="Hand" />
