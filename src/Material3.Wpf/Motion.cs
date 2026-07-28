@@ -198,5 +198,69 @@ namespace Material3.Wpf {
             };
             banner.BeginAnimation(FrameworkElement.HeightProperty, ha);
         }
+
+        // The swap that currently owns Width, 0 for none: a superseded run's Completed must not hand Width back
+        // mid-flight, and our own pin must not read as an app-set width on the next swap.
+        private static readonly DependencyProperty SwapRunProperty = DependencyProperty.RegisterAttached(
+            "SwapRun", typeof(int), typeof(Motion), new PropertyMetadata(0));
+
+        /// <summary>Replace a control's content without the snap: the label cross-fades while the control's width
+        /// eases from its old size to the new one. For a toggle whose caption changes with the state it drives —
+        /// "Show banner" ↔ "Hide banner" — so the button reads as one continuous motion with what it opened.
+        /// A control whose width its parent dictates only cross-fades — see <see cref="IsContentSized"/>.</summary>
+        public static void SwapContent(ContentControl target, object? newContent) {
+            double from = target.ActualWidth;
+            target.Content = newContent;
+            if (from <= 0 || target.Visibility != Visibility.Visible || !IsContentSized(target)) { CrossFadeLabel(target); return; }
+
+            // Drop an in-flight swap before measuring, or the pass below reads the width that clock is driving
+            // instead of the natural one for the new content.
+            target.BeginAnimation(FrameworkElement.WidthProperty, null);
+            target.Width = double.NaN;
+            target.UpdateLayout();
+            double to = target.ActualWidth;
+            if (to <= 0 || Math.Abs(to - from) < 0.5) { target.SetValue(SwapRunProperty, 0); CrossFadeLabel(target); return; }
+            target.Width = from;   // same dispatcher message as the measure, so no frame renders at the new size
+
+            int run = (int)target.GetValue(SwapRunProperty) + 1;
+            target.SetValue(SwapRunProperty, run);
+            CrossFadeLabel(target);
+
+            var wa = new DoubleAnimation(from, to, Ms(180)) { EasingFunction = Ease("M3StandardDecelerate") };
+            wa.Completed += (_, __) => {
+                if ((int)target.GetValue(SwapRunProperty) != run) return;
+                target.SetValue(SwapRunProperty, 0);
+                target.BeginAnimation(FrameworkElement.WidthProperty, null);
+                target.Width = double.NaN;   // back to auto — a held clock would pin the control at this size
+            };
+            target.BeginAnimation(FrameworkElement.WidthProperty, wa);
+        }
+
+        // Only a content-driven width has a change to animate, and pinning Width on a stretched control makes WPF
+        // centre it in its slot instead — the swap jumps to the middle in one frame and spreads out from there.
+        private static bool IsContentSized(FrameworkElement el) =>
+            (double.IsNaN(el.Width) || (int)el.GetValue(SwapRunProperty) != 0)
+            && el.HorizontalAlignment != HorizontalAlignment.Stretch;
+
+        // Fades the presenter, not the control: fading the control would take its background and border with it.
+        private static void CrossFadeLabel(DependencyObject target) {
+            if (!(FindPresenter(target) is UIElement presenter)) return;
+            var fade = new DoubleAnimation(0, 1, Ms(160)) { EasingFunction = Ease("M3StandardDecelerate") };
+            fade.Completed += (_, __) => {
+                presenter.BeginAnimation(UIElement.OpacityProperty, null);
+                presenter.Opacity = 1;
+            };
+            presenter.BeginAnimation(UIElement.OpacityProperty, fade);
+        }
+
+        private static ContentPresenter? FindPresenter(DependencyObject root) {
+            int count = VisualTreeHelper.GetChildrenCount(root);
+            for (int i = 0; i < count; i++) {
+                DependencyObject child = VisualTreeHelper.GetChild(root, i);
+                if (child is ContentPresenter presenter) return presenter;
+                if (FindPresenter(child) is ContentPresenter nested) return nested;
+            }
+            return null;
+        }
     }
 }
