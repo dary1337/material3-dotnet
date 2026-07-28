@@ -12,7 +12,7 @@ namespace Material3.Wpf.Tests {
     // Ground truth: does VirtualizingWrapPanel actually virtualize inside a real ListBox? Runs on a manual
     // STA thread (WPF requires STA; xUnit is MTA by default), lays out 1000 items in an 800x400 box, and
     // counts realized item containers. A WrapPanel would realize all 1000; the VWP must realize ~viewport.
-    [Trait("Category", "Slow")]
+    [Trait("Category", "Ui")]
     public class VwpRealizationTests {
         private readonly ITestOutputHelper _o;
         public VwpRealizationTests(ITestOutputHelper o) => _o = o;
