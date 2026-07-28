@@ -14,7 +14,7 @@
 
   <PropertyGroup Label="Package">
     <PackageId>Material3.Core</PackageId>
-    <Version>0.7.0</Version>
+    <Version>0.8.0</Version>
     <Authors>dary1337</Authors>
     <Description>Material 3 (Material You) dynamic-color engine for .NET: HCT color space, CAM16, tonal palettes and the full M3 light/dark color-role scheme generated from a single seed color. UI-framework agnostic (netstandard2.0); consumed by Material3.WinForms and Material3.Wpf.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
