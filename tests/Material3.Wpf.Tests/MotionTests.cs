@@ -20,8 +20,9 @@ namespace Material3.Wpf.Tests {
             w.Content = el;
             Settle(w);
             Motion.FadeIn(el);
-            Spin(w, 500);
-            el.Opacity = 0.3;
+            // The end state IS "a write takes": while the clock holds the property every assignment is dropped.
+            SpinUntil(w, () => Math.Abs(el.Opacity - 0.3) < 0.001, "FadeIn never handed Opacity back",
+                each: () => el.Opacity = 0.3);
             Assert.Equal(0.3, el.Opacity, 3);
         });
 
@@ -52,8 +53,7 @@ namespace Material3.Wpf.Tests {
 
             var card = new Border { Width = 200, Height = 120 };
             IModalHandle handle = M3Modal.Show(card);
-            Spin(w, 450);
-            Assert.NotNull(VisualTreeHelper.GetParent(card));
+            SpinUntil(w, () => VisualTreeHelper.GetParent(card) != null, "the modal never put the card in the tree");
 
             handle.Close();
             SpinUntil(w, () => VisualTreeHelper.GetParent(card) == null, "the exit never took the card out of the tree");
