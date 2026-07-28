@@ -89,7 +89,7 @@
                                             <Grid>
                                                 <Border x:Name="st" Background="{DynamicResource OnSurface}" Opacity="0" CornerRadius="8" />
                                                 <DockPanel Margin="14,0,8,0">
-                                                    <m3:M3Icon DockPanel.Dock="Right" Kind="chevron-down" Width="20" Height="20"
+                                                    <m3:M3Icon DockPanel.Dock="Right" Kind="ChevronDown" Width="20" Height="20"
                                                                VerticalAlignment="Center" Foreground="{DynamicResource OnSurfaceVariant}" />
                                                     <ContentPresenter Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
                                                                       VerticalAlignment="Center" TextElement.Foreground="{DynamicResource OnSurface}" />
@@ -201,7 +201,7 @@
         <Grid Grid.Row="0" Background="{DynamicResource Surface}">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
                 <Border Width="22" Height="22" CornerRadius="6" Background="{DynamicResource Primary}">
-                    <m3:M3Icon Kind="layers" Width="14" Height="14" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    <m3:M3Icon Kind="Layers" Width="14" Height="14" HorizontalAlignment="Center" VerticalAlignment="Center"
                                Foreground="{DynamicResource OnPrimary}" />
                 </Border>
                 <TextBlock Text="Material 3 Gallery — WPF" Foreground="{DynamicResource OnSurface}" FontSize="14" FontWeight="SemiBold"
