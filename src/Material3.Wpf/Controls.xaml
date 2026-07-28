@@ -757,6 +757,11 @@
                         <Trigger Property="IconKind" Value="None">
                             <Setter TargetName="ic" Property="Visibility" Value="Collapsed" />
                         </Trigger>
+                        <Trigger Property="Size" Value="Large">
+                            <Setter TargetName="bg" Property="CornerRadius" Value="10" />
+                            <Setter TargetName="bg" Property="Padding" Value="8,2,8,3" />
+                            <Setter TargetName="tx" Property="FontSize" Value="12" />
+                        </Trigger>
                         <Trigger Property="Severity" Value="Primary">
                             <Setter TargetName="bg" Property="Background" Value="{DynamicResource SecondaryContainer}" />
                             <Setter TargetName="ic" Property="Foreground" Value="{DynamicResource OnSecondaryContainer}" />
