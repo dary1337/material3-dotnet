@@ -46,7 +46,7 @@ Legend: **✓ shipped · – planned**.
 | | Motion helpers | ✓ | ✓ |
 | | Painted elevation (levels 0–5) | – | ✓ |
 | **Actions** | Buttons — filled · tonal · outlined · text | ✓ | ✓ |
-| | Buttons — warning · shiny (attention) | ✓ | – |
+| | Buttons — warning · error *(filled + tonal)* · shiny (attention) | ✓ | – |
 | | Icon button | – | ✓ |
 | | FAB | – | ✓ |
 | **Inputs & selection** | Text field | ✓ *(box + placeholder)* | ✓ *(filled/outlined, floating label)* |
@@ -66,6 +66,35 @@ Legend: **✓ shipped · – planned**.
 | | Dropdown select | – | ✓ |
 | | Dialog *(+ date/time pickers)* | – | ✓ |
 | | Modal host + scrim (`M3Modal`) | ✓ | – |
+| | Popup helpers (`CenterPopup` · `PopupWatch` · `PopupToggle` · `Chevron`) | ✓ | – |
 | | Tabs | – | ✓ |
 | | Navigation bar · rail · drawer | – | ✓ |
 | | Badge · Title bar | – | ✓ |
+| **Layout** | `VirtualizingWrapPanel` | ✓ | – |
+
+## Popup helpers
+
+- `m3:CenterPopup.Enable="True"` centers a popup over its trigger and places it below, flipping above when
+  below would clip; add `m3:CenterPopup.PreferAbove="True"` for a bottom-anchored trigger.
+- `m3:AnimatedPopup` plays the open animation and watches its own anchor — no `Opened` handler to wire per
+  view. Set `WatchAnchor="False"` when the anchor is not inside a scrolling region.
+- `PopupWatch.Watch(popup)` does that watching for a plain `Popup`: it closes once the anchor scrolls or
+  virtualizes out of view — a WPF popup otherwise stays put while its target moves away.
+- `m3:Chevron.IsOpen` on a trigger's trailing glyph rotates it 180° while the menu is open — bind the popup's
+  `IsOpen` or the flag behind it. The glyph points at the side the menu opens on: `ChevronDown` for a menu
+  that drops down, `ChevronUp` for one that rises.
+- `PopupToggle.Open(popup)` (or a `ToggleGuard` per popup for a bound `IsOpen`) makes a trigger button
+  actually toggle a `StaysOpen=False` popup: such a popup closes on mouse-DOWN outside it, so the trigger's
+  `Click` on mouse-UP would otherwise reopen what the user just dismissed.
+
+## VirtualizingWrapPanel
+
+WPF ships no virtualizing wrap panel — `WrapPanel` realizes every item. Use it as an `ItemsPanelTemplate` and
+give it the exact cell size (item + margins):
+
+```xml
+<ItemsPanelTemplate><m3:VirtualizingWrapPanel ItemWidth="200" ItemHeight="128" /></ItemsPanelTemplate>
+```
+
+A grid revealed from `Collapsed` paints on the first pass, and removing an item does not desync the
+container generator.
