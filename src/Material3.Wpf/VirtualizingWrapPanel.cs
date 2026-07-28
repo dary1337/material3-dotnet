@@ -93,8 +93,10 @@ namespace Material3.Wpf {
             switch (args.Action) {
                 case NotifyCollectionChangedAction.Remove:
                 case NotifyCollectionChangedAction.Replace:
-                case NotifyCollectionChangedAction.Move:
                     RemoveInternalChildRange(args.Position.Index, args.ItemUICount);
+                    break;
+                case NotifyCollectionChangedAction.Move:
+                    RemoveInternalChildRange(args.OldPosition.Index, args.ItemUICount);   // Position is where it landed
                     break;
                 case NotifyCollectionChangedAction.Reset:
                     RemoveInternalChildRange(0, InternalChildren.Count);
