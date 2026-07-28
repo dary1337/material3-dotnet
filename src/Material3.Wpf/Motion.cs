@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -81,12 +81,18 @@ namespace Material3.Wpf {
         }
 
         /// <summary>Dropdown/menu popups: fade + scale the popup's content up on open. Wire from Popup.Opened.</summary>
+        // WPF places a popup from its child's RENDERED bounds, so scaling the child nudges an edge-aligned
+        // popup off its anchor; a centred placement re-centres the content and is immune.
+        private static bool ScaleIsSafe(System.Windows.Controls.Primitives.Popup popup) =>
+            popup.Placement == System.Windows.Controls.Primitives.PlacementMode.Custom;
+
         public static void AnimatePopupOpen(System.Windows.Controls.Primitives.Popup? popup) {
             if (!(popup?.Child is FrameworkElement c)) return;
+            c.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, 1, Ms(110)) { EasingFunction = Ease("M3StandardDecelerate") });
+            if (!ScaleIsSafe(popup)) return;
             c.RenderTransformOrigin = new Point(0.5, 0.5);
             var st = new ScaleTransform(0.96, 0.96);
             c.RenderTransform = st;
-            c.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, 1, Ms(110)) { EasingFunction = Ease("M3StandardDecelerate") });
             var s = new DoubleAnimation(0.96, 1, Ms(170)) { EasingFunction = Ease("M3EmphasizedDecelerate") };
             st.BeginAnimation(ScaleTransform.ScaleXProperty, s);
             st.BeginAnimation(ScaleTransform.ScaleYProperty, s);
@@ -96,12 +102,14 @@ namespace Material3.Wpf {
         /// (which actually closes the popup). Shorter than the open, per M3 (exit is quicker than enter).</summary>
         public static void AnimatePopupClose(System.Windows.Controls.Primitives.Popup? popup, Action after) {
             if (!(popup?.Child is FrameworkElement c)) { after(); return; }
-            c.RenderTransformOrigin = new Point(0.5, 0.5);
             var st = c.RenderTransform as ScaleTransform ?? new ScaleTransform(1, 1);
-            c.RenderTransform = st;
-            var s = new DoubleAnimation(1, 0.96, Ms(120)) { EasingFunction = Ease("M3StandardAccelerate") };
-            st.BeginAnimation(ScaleTransform.ScaleXProperty, s);
-            st.BeginAnimation(ScaleTransform.ScaleYProperty, s);
+            if (ScaleIsSafe(popup)) {
+                c.RenderTransformOrigin = new Point(0.5, 0.5);
+                c.RenderTransform = st;
+                var s = new DoubleAnimation(1, 0.96, Ms(120)) { EasingFunction = Ease("M3StandardAccelerate") };
+                st.BeginAnimation(ScaleTransform.ScaleXProperty, s);
+                st.BeginAnimation(ScaleTransform.ScaleYProperty, s);
+            }
             var fade = new DoubleAnimation(1, 0, Ms(120)) { EasingFunction = Ease("M3StandardAccelerate") };
             fade.Completed += (_, __) => {
                 after();   // actually closes the popup
