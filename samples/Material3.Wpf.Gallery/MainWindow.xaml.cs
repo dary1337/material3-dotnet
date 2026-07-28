@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -58,8 +58,11 @@ namespace Material3.Wpf.Gallery {
         private void Apply() => M3Theme.Apply(MaterialTheme.FromSeed(_seed, _variant), _isDark, Application.Current.Resources);
 
         private static void AnimateCombo(ComboBox cb) {
-            if (cb.Template.FindName("Pop", cb) is System.Windows.Controls.Primitives.Popup p) Motion.AnimatePopupOpen(p);
+            if (cb.Template.FindName("Pop", cb) is System.Windows.Controls.Primitives.Popup p) {
+                Motion.AnimatePopupOpen(p);
+            }
         }
+
 
         // ---- sidebar controls ----
         private void Mode_Click(object sender, RoutedEventArgs e) {
@@ -228,13 +231,22 @@ namespace Material3.Wpf.Gallery {
         private void BuildButtons() {
             PageTitle("Buttons & FAB");
             Header("Buttons");
-            Caption("Filled · Tonal · Outlined · Text · Warning · Shiny. Hover and press to see the state layers.");
+            Caption("Filled · Tonal · Outlined · Text · Shiny. Hover and press to see the state layers.");
             var row = new WrapPanel();
             foreach (var (label, style) in new[] {
                 ("Filled", "FilledButton"), ("Tonal", "TonalButton"), ("Outlined", "OutlinedButton"),
-                ("Text", "TextButton"), ("Warning", "WarningFilledButton"), ("Shiny", "ShinyButton"),
+                ("Text", "TextButton"), ("Shiny", "ShinyButton"),
             }) row.Children.Add(StyledButton(style, label));
             PageHost.Children.Add(row);
+
+            Header("Semantic");
+            Caption("Warning and error variants. Filled inverts the container pair so it reads as THE action of a "
+                  + "banner in that colour; tonal keeps the container fill, for a destructive choice in a dialog.");
+            var semantic = new WrapPanel();
+            foreach (var (label, style) in new[] {
+                ("Warning", "WarningFilledButton"), ("Error filled", "ErrorFilledButton"), ("Error tonal", "ErrorTonalButton"),
+            }) semantic.Children.Add(StyledButton(style, label));
+            PageHost.Children.Add(semantic);
 
             Header("With icon");
             var iconRow = new WrapPanel();
@@ -274,6 +286,19 @@ namespace Material3.Wpf.Gallery {
                 ("Update", ChipSeverity.Warning, "AlertCircle"), ("Error", ChipSeverity.Error, "AlertCircle"),
             }) chips.Children.Add(new Chip { Text = text, Severity = sev, IconKind = icon, Margin = new Thickness(0, 0, 8, 0) });
             PageHost.Children.Add(chips);
+
+            Header("Chip size");
+            Caption("Dense (default) reads as an annotation on a list row; Large carries its own weight beside a "
+                  + "16pt title on a card.");
+            var sizes = new WrapPanel();
+            foreach (ChipSize size in new[] { ChipSize.Dense, ChipSize.Large }) {
+                sizes.Children.Add(new Chip {
+                    Text = size.ToString(), Size = size, Severity = ChipSeverity.Primary, IconKind = "Check",
+                    Margin = new Thickness(0, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center,
+                });
+            }
+            PageHost.Children.Add(sizes);
+
             Header("Switch · Checkbox · Radio · Segmented · Slider");
             Wip("Switch, checkbox, radio, segmented button and slider");
         }
@@ -295,8 +320,44 @@ namespace Material3.Wpf.Gallery {
                 Content = new TextBlock { Text = "Content revealed below the header.", Style = (Style)FindResource("BodySmall"), Margin = new Thickness(28, 4, 0, 0) },
             });
 
+            Header("Virtualizing wrap panel");
+            Caption("WPF ships no virtualizing WrapPanel — a plain one realizes every item. This holds 600 tiles "
+                  + "and realizes only the visible rows; give it the exact cell size (item + margins).");
+            PageHost.Children.Add(BuildVirtualizingWrapDemo());
+
             Header("Elevated / Filled / Outlined card variants");
             Wip("Card variants and list rows");
+        }
+
+        private FrameworkElement BuildVirtualizingWrapDemo() {
+            var panel = new FrameworkElementFactory(typeof(VirtualizingWrapPanel));
+            panel.SetValue(VirtualizingWrapPanel.ItemWidthProperty, 92.0);
+            panel.SetValue(VirtualizingWrapPanel.ItemHeightProperty, 68.0);
+
+            var tile = new FrameworkElementFactory(typeof(Border));
+            tile.SetValue(FrameworkElement.WidthProperty, 84.0);
+            tile.SetValue(FrameworkElement.HeightProperty, 60.0);
+            tile.SetValue(FrameworkElement.MarginProperty, new Thickness(0, 0, 8, 8));
+            tile.SetResourceReference(Border.BackgroundProperty, "SurfaceContainerHighest");
+            tile.SetResourceReference(Border.CornerRadiusProperty, "RadiusSm");
+            var text = new FrameworkElementFactory(typeof(TextBlock));
+            text.SetBinding(TextBlock.TextProperty, new System.Windows.Data.Binding());
+            text.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Center);
+            text.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
+            text.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+            tile.AppendChild(text);
+
+            var list = new ListBox {
+                Width = 420, Height = 240, HorizontalAlignment = HorizontalAlignment.Left,
+                BorderThickness = new Thickness(0), Background = System.Windows.Media.Brushes.Transparent,
+                ItemsPanel = new ItemsPanelTemplate(panel),
+                ItemTemplate = new DataTemplate { VisualTree = tile },
+                ItemsSource = System.Linq.Enumerable.Range(1, 600),
+            };
+            ScrollViewer.SetHorizontalScrollBarVisibility(list, ScrollBarVisibility.Disabled);
+            VirtualizingPanel.SetIsVirtualizing(list, true);
+            VirtualizingPanel.SetVirtualizationMode(list, VirtualizationMode.Recycling);
+            return list;
         }
 
         private void BuildProgress() {
@@ -338,6 +399,12 @@ namespace Material3.Wpf.Gallery {
             rcBtn.ContextMenu = menu;
             PageHost.Children.Add(rcBtn);
 
+            Header("Dropdown menu");
+            Caption("One trigger, four helpers: AnimatedPopup animates itself open/closed and calls PopupWatch on "
+                  + "its own anchor, CenterPopup centers it under the trigger, PopupToggle makes a second click "
+                  + "close it instead of reopening, and Chevron.IsOpen flips the glyph while it is open.");
+            PageHost.Children.Add(BuildDropdownDemo());
+
             Header("Modal dialog");
             Caption("M3Modal.Show renders a card above an app-wide scrim (blocks the whole window; Esc / scrim-click closes).");
             var openDialog = StyledButton("FilledButton", "Show dialog");
@@ -346,6 +413,52 @@ namespace Material3.Wpf.Gallery {
 
             Header("Snackbar · Dropdown select");
             Wip("Snackbar and dropdown-select picker");
+        }
+
+        private FrameworkElement BuildDropdownDemo() {
+            var label = new TextBlock { Text = "Sort by", VerticalAlignment = VerticalAlignment.Center };
+            var chevron = new M3Icon {
+                Kind = "ChevronDown", Width = 16, Height = 16,
+                VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(6, 0, 0, 0),
+            };
+            var content = new StackPanel { Orientation = Orientation.Horizontal };
+            content.Children.Add(label);
+            content.Children.Add(chevron);
+            var trigger = new Button {
+                Style = (Style)FindResource("TonalButton"), Content = content,
+                HorizontalAlignment = HorizontalAlignment.Left, MinWidth = 160,
+            };
+
+            var items = new StackPanel();
+            var card = new Border {
+                Padding = new Thickness(5), MinWidth = 180, Margin = new Thickness(0, 0, 10, 10),
+                BorderThickness = new Thickness(1), Child = items,
+                Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 18, ShadowDepth = 0, Opacity = 0.45 },
+            };
+            card.SetResourceReference(Border.BackgroundProperty, "SurfaceContainerHigh");
+            card.SetResourceReference(Border.BorderBrushProperty, "OutlineVariant");
+            card.SetResourceReference(Border.CornerRadiusProperty, "RadiusMd");
+
+            var popup = new AnimatedPopup { PlacementTarget = trigger, StaysOpen = false, AllowsTransparency = true, Child = card };
+            CenterPopup.SetEnable(popup, true);
+            chevron.SetBinding(Chevron.IsOpenProperty,
+                new System.Windows.Data.Binding(nameof(AnimatedPopup.IsOpen)) { Source = popup });
+
+            foreach (string option in new[] { "Name", "Date added", "Size" }) {
+                string picked = option;
+                var item = new Button {
+                    Style = (Style)FindResource("MenuItemButton"),
+                    Content = new TextBlock { Text = option, VerticalAlignment = VerticalAlignment.Center },
+                };
+                item.Click += (_, __) => { popup.IsOpen = false; label.Text = "Sort by: " + picked; };
+                items.Children.Add(item);
+            }
+            trigger.Click += (_, __) => PopupToggle.Open(popup);
+
+            var host = new Grid { HorizontalAlignment = HorizontalAlignment.Left };
+            host.Children.Add(trigger);
+            host.Children.Add(popup);
+            return host;
         }
 
         private void ShowDemoDialog() {
