@@ -582,10 +582,24 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ContextMenu">
-                    <Border Background="{DynamicResource SurfaceContainerHigh}" BorderBrush="{DynamicResource OutlineVariant}"
+                    <Border x:Name="surface" Background="{DynamicResource SurfaceContainerHigh}" BorderBrush="{DynamicResource OutlineVariant}"
                             BorderThickness="1" CornerRadius="10" Padding="5">
                         <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
                     </Border>
+                    <ControlTemplate.Triggers>
+                        <!-- Fade only: the hosting popup is sized from the rendered child, so a scale would drag
+                             the menu off the click point. Opened (not an IsOpen trigger) also covers the first
+                             show, where the template is applied with IsOpen already true. -->
+                        <EventTrigger RoutedEvent="ContextMenu.Opened">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="surface" Storyboard.TargetProperty="Opacity"
+                                                     From="0" To="1" Duration="0:0:0.11"
+                                                     EasingFunction="{StaticResource M3StandardDecelerate}" />
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
