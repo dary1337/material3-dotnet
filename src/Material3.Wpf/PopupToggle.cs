@@ -8,11 +8,13 @@ namespace Material3.Wpf {
     /// dismiss. Feed the open/close intent through <see cref="Allow"/>; an open landing right after a close is
     /// rejected. Use one instance per popup, or <see cref="PopupToggle"/> for code-driven popups.</summary>
     public sealed class ToggleGuard {
-        private int _closedTick = int.MinValue / 2;   // far in the past → first open is never blocked
+        private bool _closed;
+        private int _closedTick;
 
         public bool Allow(bool opening, bool currentlyOpen) {
-            if (opening && !currentlyOpen && Environment.TickCount - _closedTick < 250) return false;
-            if (!opening && currentlyOpen) _closedTick = Environment.TickCount;
+            // Unsigned diff so the ~49-day TickCount wrap reads as "long ago", not as a fresh close.
+            if (opening && !currentlyOpen && _closed && (uint)(Environment.TickCount - _closedTick) < 250) return false;
+            if (!opening && currentlyOpen) { _closed = true; _closedTick = Environment.TickCount; }
             return true;
         }
     }
