@@ -11,6 +11,9 @@ namespace Material3.Wpf {
     /// (scale + opacity) in and out. Attach with <c>m3:Tip.Text="…"</c> (string or binding) on any element.</summary>
     public static class Tip {
         private const double GapAboveTarget = 5;
+        // Room for the shadow inside the popup: a Popup sizes itself to its child, and an Effect that
+        // reaches past that child is cut off square — which is what a "ragged edge" on a tip really is.
+        private const double ShadowRoom = 10;
 
         public static readonly DependencyProperty TextProperty =
             DependencyProperty.RegisterAttached("Text", typeof(string), typeof(Tip),
@@ -85,8 +88,12 @@ namespace Material3.Wpf {
             Themed(_label, TextBlock.ForegroundProperty, "OnSurface", Colors.White);
             Themed(_border, Border.BackgroundProperty, "SurfaceContainerHighest", Color.FromRgb(0x2D, 0x2C, 0x2E));
             Themed(_border, Border.BorderBrushProperty, "OutlineVariant", Color.FromRgb(0x49, 0x45, 0x4F));
+            var room = new Border {
+                Padding = new Thickness(ShadowRoom), Background = Brushes.Transparent,
+                IsHitTestVisible = false, SnapsToDevicePixels = true, UseLayoutRounding = true, Child = _border,
+            };
             _popup = new Popup {
-                AllowsTransparency = true, StaysOpen = true, Placement = PlacementMode.Custom, Child = _border,
+                AllowsTransparency = true, StaysOpen = true, Placement = PlacementMode.Custom, Child = room,
             };
             _popup.CustomPopupPlacementCallback = Place;
             Motion.SetScaleOnOpen(_popup, true);   // Place centres the tip on its target, so the scale can't shift it
@@ -100,12 +107,14 @@ namespace Material3.Wpf {
 
         // Above-target first; WPF falls through to the below-target candidate when the tip would clip at
         // the top edge of the screen.
+        // popup here is the padded host, so the shadow room comes back off both offsets — the visible gap is
+        // measured from the tip's own edge, not from the transparent frame around it.
         private static CustomPopupPlacement[] Place(Size popup, Size target, Point offset) => new[] {
             new CustomPopupPlacement(
-                new Point((target.Width - popup.Width) / 2, -(popup.Height + GapAboveTarget)),
+                new Point((target.Width - popup.Width) / 2, -(popup.Height + GapAboveTarget - ShadowRoom)),
                 PopupPrimaryAxis.Horizontal),
             new CustomPopupPlacement(
-                new Point((target.Width - popup.Width) / 2, target.Height + GapAboveTarget),
+                new Point((target.Width - popup.Width) / 2, target.Height + GapAboveTarget - ShadowRoom),
                 PopupPrimaryAxis.Horizontal),
         };
     }
