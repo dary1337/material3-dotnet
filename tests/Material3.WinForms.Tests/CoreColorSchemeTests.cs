@@ -2,8 +2,8 @@ using Material3.Core;
 using Xunit;
 
 namespace Material3.WinForms.Tests {
-    // Locks the Material3.Core engine port: Platinum dark must reproduce the values the WARNO toolkit
-    // shipped in Theme.xaml 1:1, the Argb struct must round-trip, and seeded schemes must vary cohesively.
+    // Locks the Material3.Core engine port: Platinum dark must reproduce the reference palette 1:1, the
+    // Argb struct must round-trip, and seeded schemes must vary cohesively.
     public class CoreColorSchemeTests {
         private static string Hex(Argb c) => c.ToString();
 
