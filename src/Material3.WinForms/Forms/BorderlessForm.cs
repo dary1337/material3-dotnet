@@ -44,8 +44,6 @@ namespace Material3.WinForms.Forms {
 
         private const int DWMWA_NCRENDERING_POLICY = 2;
         private const int DWMNCRP_ENABLED = 2;
-        private const int DWMWA_WINDOW_CORNER_PREFERENCE = 33;
-        private const int DWMWCP_ROUND = 2;
 
         public const int ResizeBorderThickness = 4;
 
@@ -192,8 +190,7 @@ namespace Material3.WinForms.Forms {
                 var margins = new MARGINS { leftWidth = 1, rightWidth = 1, topHeight = 1, bottomHeight = 1 };
                 DwmExtendFrameIntoClientArea(Handle, ref margins);
                 // Win11 rounded corners (silently ignored on Win10 — attribute unknown).
-                int corner = DWMWCP_ROUND;
-                DwmSetWindowAttribute(Handle, DWMWA_WINDOW_CORNER_PREFERENCE, ref corner, sizeof(int));
+                WindowChrome.RoundCorners(Handle, WindowCornerPreference.Round);
             }
         }
 
