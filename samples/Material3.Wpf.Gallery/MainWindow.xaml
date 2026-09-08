@@ -13,7 +13,7 @@
     </shell:WindowChrome.WindowChrome>
 
     <Window.Resources>
-        <!-- ===== window caption buttons (copied from the toolkit title bar) ===== -->
+        <!-- ===== window caption buttons ===== -->
         <Style x:Key="CaptionButton" TargetType="Button">
             <Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True" />
             <Setter Property="Width" Value="44" />
