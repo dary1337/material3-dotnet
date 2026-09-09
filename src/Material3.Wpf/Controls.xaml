@@ -925,6 +925,11 @@
                             <Setter TargetName="icon" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="spin" Property="Visibility" Value="Visible" />
                         </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="icon" Property="Foreground" Value="{DynamicResource OnSurfaceMuted}" />
+                            <Setter Property="Opacity" Value="0.38" />
+                            <Setter Property="Cursor" Value="Arrow" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -1158,12 +1163,12 @@
                     <Border x:Name="root" CornerRadius="{StaticResource RadiusMd}" Padding="12,8" BorderThickness="0"
                             Background="{DynamicResource WarningContainer}">
                         <DockPanel>
-                            <Border x:Name="PART_Dismiss" DockPanel.Dock="Right" Cursor="Hand" Background="Transparent"
-                                    Width="24" Height="24" VerticalAlignment="Center" Margin="10,0,0,0">
+                            <Button x:Name="PART_Dismiss" DockPanel.Dock="Right" Style="{StaticResource IconButton}"
+                                    VerticalAlignment="Center" Margin="6,0,0,0">
                                 <m3:M3Icon x:Name="dismissIcon" Kind="Close" Width="16" Height="16"
                                            HorizontalAlignment="Center" VerticalAlignment="Center"
                                            Foreground="{DynamicResource OnWarningContainer}" />
-                            </Border>
+                            </Button>
                             <ContentPresenter DockPanel.Dock="Right" VerticalAlignment="Center"
                                               Content="{TemplateBinding Actions}" />
                             <m3:M3Icon x:Name="icon" Kind="{TemplateBinding IconKind}" Width="16" Height="16"

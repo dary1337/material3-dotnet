@@ -1,6 +1,7 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 
 namespace Material3.Wpf {
@@ -84,18 +85,18 @@ namespace Material3.Wpf {
         /// <summary>Whether the dismiss button shows.</summary>
         public bool CanDismiss { get => (bool)GetValue(CanDismissProperty); set => SetValue(CanDismissProperty, value); }
 
-        private UIElement? _dismiss;
+        private ButtonBase? _dismiss;
 
         /// <inheritdoc />
         // Detach first: OnApplyTemplate runs again on every re-template, and a second subscription would raise
         // Dismissed twice per click.
         public override void OnApplyTemplate() {
             base.OnApplyTemplate();
-            if (_dismiss != null) _dismiss.MouseLeftButtonUp -= OnDismissClick;
-            _dismiss = GetTemplateChild(PartDismiss) as UIElement;
-            if (_dismiss != null) _dismiss.MouseLeftButtonUp += OnDismissClick;
+            if (_dismiss != null) _dismiss.Click -= OnDismissClick;
+            _dismiss = GetTemplateChild(PartDismiss) as ButtonBase;
+            if (_dismiss != null) _dismiss.Click += OnDismissClick;
         }
 
-        private void OnDismissClick(object sender, MouseButtonEventArgs e) => Dismiss();
+        private void OnDismissClick(object sender, RoutedEventArgs e) => Dismiss();
     }
 }
