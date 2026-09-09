@@ -98,9 +98,10 @@ namespace Material3.Wpf {
             Pending next = Waiting.Dequeue();
 
             AdornerLayer? layer = ResolveLayer(next.Anchor, out UIElement? host, out Window? owner);
-            // No adorner layer means no window yet (or a detached element) — drop the message rather than
-            // holding a queue that would flush at some unrelated later moment.
+            // No adorner layer means no window yet (or a detached element) — drop the whole queue rather than
+            // hold it for a later Enqueue to flush all at once.
             if (layer == null || host == null) {
+                Waiting.Clear();
                 _current = null;
                 return;
             }
@@ -110,8 +111,11 @@ namespace Material3.Wpf {
             };
             var adorner = new SnackbarAdorner(host, bar, next.Duration);
             bar.Dismissed = adorner.Hide;
+            // Guarded: a cancelled adorner's exit can still complete after the next message took over, and
+            // an unguarded callback would take that one down with it.
             adorner.Closed = () => {
                 layer.Remove(adorner);
+                if (!ReferenceEquals(_current, adorner)) return;
                 _current = null;
                 ShowNext();
             };
@@ -121,6 +125,7 @@ namespace Material3.Wpf {
             if (owner != null) {
                 void OnOwnerClosed(object? s, EventArgs e) {
                     owner.Closed -= OnOwnerClosed;
+                    adorner.Cancel();
                     if (!ReferenceEquals(_current, adorner)) return;
                     _current = null;
                     Waiting.Clear();
@@ -188,6 +193,12 @@ namespace Material3.Wpf {
                 _slide.BeginAnimation(TranslateTransform.YProperty,
                     new DoubleAnimation(SlidePx, 0, TimeSpan.FromMilliseconds(220)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
                 _timer.Start();
+            }
+
+            // The window is gone: stop the clock rather than let it tick into a Hide on a dead visual.
+            internal void Cancel() {
+                _hiding = true;
+                _timer.Stop();
             }
 
             internal void Hide() {
