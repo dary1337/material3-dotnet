@@ -116,14 +116,18 @@ namespace Material3.Wpf.Tests {
             Assert.Equal(Expected(slider, 25), centre, 1);
         });
 
+        // Off means it jumps, not that it stops being drawn: the template has no Track, so these handlers are
+        // the only thing that places the thumb at all.
         [Fact]
-        public void TurningTheTravelOffLeavesTheValueAlone() => Ui.InWindow(w => {
+        public void TurningTheTravelOffMakesItJumpInTheSameFrame() => Ui.InWindow(w => {
             Slider slider = Shown(w, value: 10);
 
             SliderMotion.SetAnimated(slider, false);
             slider.Value = 20;
+            Ui.Settle(w);
 
             Assert.Equal(20, slider.Value);
+            Assert.Equal(Expected(slider, 20), Active(slider).Width, 1);
         });
 
         private static Slider Shown(Window w, double value) {

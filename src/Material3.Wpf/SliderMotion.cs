@@ -27,7 +27,7 @@ namespace Material3.Wpf {
             DependencyProperty.RegisterAttached("Animated", typeof(bool), typeof(SliderMotion),
                 new PropertyMetadata(false, OnAnimatedChanged));
 
-        /// <summary>Turns the eased travel on for a slider carrying the shipped template.</summary>
+        /// <summary>Turns the eased travel on. The chrome is placed either way — off means it jumps.</summary>
         public static void SetAnimated(DependencyObject o, bool value) => o.SetValue(AnimatedProperty, value);
 
         /// <summary>Reads whether the eased travel is on.</summary>
@@ -48,10 +48,8 @@ namespace Material3.Wpf {
             slider.PreviewMouseMove -= OnDrag;
             slider.PreviewMouseLeftButtonUp -= OnRelease;
             slider.Unloaded -= OnUnloaded;
-            if (!(bool)e.NewValue) {
-                slider.BeginAnimation(DrawnProperty, null);
-                return;
-            }
+            // Attached either way: the template has no Track, so these handlers are the only thing that places
+            // the thumb. Turning the property off chooses an instant jump, not a frozen slider.
             slider.ValueChanged += OnValueChanged;
             slider.SizeChanged += OnSizeChanged;
             slider.Loaded += OnLoaded;
@@ -72,6 +70,10 @@ namespace Material3.Wpf {
 
         private static void OnValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
             var slider = (Slider)sender;
+            if (!GetAnimated(slider)) {
+                Snap(slider);
+                return;
+            }
             slider.BeginAnimation(DrawnProperty, new DoubleAnimation(Fraction(slider), Travel) {
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
                 FillBehavior = FillBehavior.HoldEnd,
