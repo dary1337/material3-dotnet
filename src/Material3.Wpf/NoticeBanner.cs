@@ -66,7 +66,8 @@ namespace Material3.Wpf {
 
         /// <summary>Identifies the <see cref="Text"/> property.</summary>
         public static readonly DependencyProperty TextProperty = DependencyProperty.Register(
-            nameof(Text), typeof(string), typeof(NoticeBanner), new PropertyMetadata(string.Empty));
+            nameof(Text), typeof(string), typeof(NoticeBanner),
+            new FrameworkPropertyMetadata(string.Empty, null, CoerceText));
 
         /// <summary>The notice body. Wraps.</summary>
         public string Text { get => (string)GetValue(TextProperty); set => SetValue(TextProperty, value); }
@@ -98,5 +99,7 @@ namespace Material3.Wpf {
         }
 
         private void OnDismissClick(object sender, RoutedEventArgs e) => Dismiss();
+
+        private static object CoerceText(DependencyObject d, object value) => value ?? string.Empty;
     }
 }
