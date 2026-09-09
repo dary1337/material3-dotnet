@@ -69,24 +69,19 @@ namespace Material3.Wpf {
         public IReadOnlyList<int> SelectedIndices {
             get {
                 var hits = new List<int>();
-                int i = 0;
-                foreach (SegmentedItem segment in Containers()) {
-                    if (segment.IsChecked == true) hits.Add(i);
-                    i++;
+                for (int i = 0; i < Items.Count; i++) {
+                    if (Container(i)?.IsChecked == true) hits.Add(i);
                 }
                 return hits;
             }
         }
 
         /// <summary>Whether the segment at <paramref name="index"/> is on. False for an index out of range.</summary>
-        public bool IsSelected(int index) {
-            SegmentedItem? item = Containers().ElementAtOrDefault(index);
-            return item != null && item.IsChecked == true;
-        }
+        public bool IsSelected(int index) => Container(index)?.IsChecked == true;
 
         /// <summary>Turns one segment on or off, applying the single-select rule.</summary>
         public void SetSelected(int index, bool selected) {
-            SegmentedItem? item = Containers().ElementAtOrDefault(index);
+            SegmentedItem? item = Container(index);
             if (item != null) item.IsChecked = selected;
         }
 
@@ -127,10 +122,9 @@ namespace Material3.Wpf {
             int wanted = (int)e.NewValue;
             row._syncing = true;
             try {
-                int i = 0;
-                foreach (SegmentedItem segment in row.Containers()) {
-                    segment.IsChecked = i == wanted;
-                    i++;
+                for (int i = 0; i < row.Items.Count; i++) {
+                    SegmentedItem? segment = row.Container(i);
+                    if (segment != null) segment.IsChecked = i == wanted;
                 }
             }
             finally { row._syncing = false; }
@@ -176,9 +170,15 @@ namespace Material3.Wpf {
             }
         }
 
+        // By item index, never by a running count: a container that is not realized yet must leave a gap
+        // rather than shift every segment after it onto the wrong ordinal.
+        private SegmentedItem? Container(int index) =>
+            index < 0 || index >= Items.Count ? null : ItemContainerGenerator.ContainerFromIndex(index) as SegmentedItem;
+
         private IEnumerable<SegmentedItem> Containers() {
             for (int i = 0; i < Items.Count; i++) {
-                if (ItemContainerGenerator.ContainerFromIndex(i) is SegmentedItem segment) yield return segment;
+                SegmentedItem? segment = Container(i);
+                if (segment != null) yield return segment;
             }
         }
     }
