@@ -28,6 +28,19 @@ namespace Material3.Wpf.Tests {
         public void ATransparentWindowIsNeverRounded() => Ui.InWindow(w => Assert.False(DwmWindow.IsRounded(w)),
             transparent: true, withControls: false);
 
+        // The corner attribute is write-only, so a preference applied through the Window overload is the only
+        // way IsRounded can know the caller asked for square corners.
+        [Fact]
+        public void AnAppliedDoNotRoundIsHonoured() => Ui.InWindow(w => {
+            DwmWindow.TrySetCornerPreference(w, WindowCornerPreference.Round);
+            bool rounded = DwmWindow.IsRounded(w);
+
+            DwmWindow.TrySetCornerPreference(w, WindowCornerPreference.DoNotRound);
+
+            Assert.Equal(DwmWindow.IsSupported, rounded);
+            Assert.False(DwmWindow.IsRounded(w));
+        }, withControls: false);
+
         [Fact]
         public void AMaximizedWindowIsNeverRounded() => Ui.InWindow(w => {
             // Hidden first: maximizing snaps the window onto a monitor, and a test must never paint over

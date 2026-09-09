@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
@@ -66,17 +67,31 @@ namespace Material3.Wpf {
             catch (EntryPointNotFoundException) { return false; }
         }
 
+        // What a caller asked for, per window. A weak table so the entry dies with the window; DWM cannot be
+        // asked back, since the corner attribute is write-only.
+        private static readonly ConditionalWeakTable<Window, object> Applied = new ConditionalWeakTable<Window, object>();
+
         /// <summary>Asks the compositor to round a window. No-op before the handle exists.</summary>
-        public static bool TrySetCornerPreference(Window window, WindowCornerPreference preference) =>
-            window != null && TrySetCornerPreference(new WindowInteropHelper(window).Handle, preference);
+        public static bool TrySetCornerPreference(Window window, WindowCornerPreference preference) {
+            if (window == null) return false;
+            if (!TrySetCornerPreference(new WindowInteropHelper(window).Handle, preference)) return false;
+            Applied.Remove(window);
+            Applied.Add(window, preference);
+            return true;
+        }
 
         /// <summary>
         /// Whether this window actually ends up rounded. The compositor only rounds a frame it composes itself:
         /// <see cref="Window.AllowsTransparency"/> makes the window layered and hands compositing to WPF, and a
-        /// maximized window is never rounded.
+        /// maximized window is never rounded. A preference applied through the <see cref="Window"/> overload is
+        /// honoured; one applied to a bare handle cannot be seen from here.
         /// </summary>
-        public static bool IsRounded(Window window) =>
-            IsSupported && window != null && !window.AllowsTransparency && window.WindowState != WindowState.Maximized;
+        public static bool IsRounded(Window window) {
+            if (!IsSupported || window == null || window.AllowsTransparency || window.WindowState == WindowState.Maximized) {
+                return false;
+            }
+            return !(Applied.TryGetValue(window, out object? asked) && (WindowCornerPreference)asked == WindowCornerPreference.DoNotRound);
+        }
 
         // RtlGetVersion, not Environment.OSVersion: the latter is shimmed down to 6.2 unless the HOST app's
         // manifest declares a Windows 10 supportedOS GUID, and a library cannot control the host's manifest.
