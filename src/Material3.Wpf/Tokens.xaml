@@ -1,6 +1,9 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:s="clr-namespace:System;assembly=mscorlib">
+                    xmlns:s="clr-namespace:System;assembly=mscorlib"
+                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                    xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options"
+                    mc:Ignorable="po">
 
     <!-- Material 3 design tokens for WPF: type scale, radius scale and the 8px spacing scale. Colours come
          from M3Theme at runtime, so type styles reference their role via DynamicResource (lazy). Merge this
@@ -60,11 +63,11 @@
          not the Shadow role: an Effect takes a Color, and no DynamicResource can re-supply one on a theme
          switch — M3 derives Shadow as neutral tone 0 in both schemes anyway. Level 0 is the absence of an
          effect: leave Effect unset rather than assign one. -->
-    <DropShadowEffect x:Key="Elevation1" Direction="270" ShadowDepth="1" BlurRadius="6" Opacity="0.20" Color="Black" />
-    <DropShadowEffect x:Key="Elevation2" Direction="270" ShadowDepth="2" BlurRadius="12" Opacity="0.24" Color="Black" />
-    <DropShadowEffect x:Key="Elevation3" Direction="270" ShadowDepth="4" BlurRadius="16" Opacity="0.28" Color="Black" />
-    <DropShadowEffect x:Key="Elevation4" Direction="270" ShadowDepth="6" BlurRadius="20" Opacity="0.32" Color="Black" />
-    <DropShadowEffect x:Key="Elevation5" Direction="270" ShadowDepth="8" BlurRadius="24" Opacity="0.36" Color="Black" />
+    <DropShadowEffect x:Key="Elevation1" Direction="270" ShadowDepth="1" BlurRadius="6" Opacity="0.20" Color="Black" po:Freeze="True" />
+    <DropShadowEffect x:Key="Elevation2" Direction="270" ShadowDepth="2" BlurRadius="12" Opacity="0.24" Color="Black" po:Freeze="True" />
+    <DropShadowEffect x:Key="Elevation3" Direction="270" ShadowDepth="4" BlurRadius="16" Opacity="0.28" Color="Black" po:Freeze="True" />
+    <DropShadowEffect x:Key="Elevation4" Direction="270" ShadowDepth="6" BlurRadius="20" Opacity="0.32" Color="Black" po:Freeze="True" />
+    <DropShadowEffect x:Key="Elevation5" Direction="270" ShadowDepth="8" BlurRadius="24" Opacity="0.36" Color="Black" po:Freeze="True" />
 
     <s:Double x:Key="Space1">4</s:Double>
     <s:Double x:Key="Space2">8</s:Double>
