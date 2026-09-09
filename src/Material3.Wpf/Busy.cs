@@ -48,12 +48,14 @@ namespace Material3.Wpf {
             if (!(d is M3Icon icon)) return;
             if ((bool)e.NewValue) {
                 icon.SetValue(SavedKindProperty, icon.Kind);
-                icon.Kind = SpinnerKind;
+                // SetCurrentValue, not the CLR setter: a plain assignment replaces whatever expression the caller
+                // put on Kind, so a bound glyph would never come back after the spin.
+                icon.SetCurrentValue(M3Icon.KindProperty, SpinnerKind);
                 Start(icon);
             }
             else {
                 Stop(icon);
-                icon.Kind = (string)icon.GetValue(SavedKindProperty);
+                icon.SetCurrentValue(M3Icon.KindProperty, icon.GetValue(SavedKindProperty));
             }
         }
 
@@ -76,7 +78,9 @@ namespace Material3.Wpf {
         }
 
         // A fresh transform every start: one declared in a template/style can be frozen → BeginAnimation throws.
+        // Stop first, or a second start abandons the previous Forever clock on a transform nobody holds any more.
         private static void Start(M3Icon icon) {
+            Stop(icon);
             var rt = new RotateTransform();
             icon.RenderTransformOrigin = new Point(0.5, 0.5);
             icon.RenderTransform = rt;
