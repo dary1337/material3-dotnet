@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows;
@@ -15,11 +16,27 @@ namespace Material3.Wpf.Tests {
         private const int WsExToolWindow = 0x00000080;
         private const uint GenericAll = 0x10000000;
 
-        [DllImport("user32.dll", EntryPoint = "GetWindowLongPtr")]
-        private static extern IntPtr GetWindowLongPtr(IntPtr hwnd, int index);
+        // GetWindowLongPtr/SetWindowLongPtr are macros on 32-bit Windows and export no such symbol there,
+        // so a single declaration works on exactly one bitness.
+        [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
+        private static extern IntPtr GetWindowLongPtr64(IntPtr hwnd, int index);
 
-        [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")]
-        private static extern IntPtr SetWindowLongPtr(IntPtr hwnd, int index, IntPtr value);
+        [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW")]
+        private static extern IntPtr SetWindowLongPtr64(IntPtr hwnd, int index, IntPtr value);
+
+        [DllImport("user32.dll", EntryPoint = "GetWindowLongW")]
+        private static extern int GetWindowLong32(IntPtr hwnd, int index);
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowLongW")]
+        private static extern int SetWindowLong32(IntPtr hwnd, int index, int value);
+
+        private static long GetExStyle(IntPtr hwnd) =>
+            IntPtr.Size == 8 ? GetWindowLongPtr64(hwnd, GwlExStyle).ToInt64() : GetWindowLong32(hwnd, GwlExStyle);
+
+        private static void SetExStyle(IntPtr hwnd, long style) {
+            if (IntPtr.Size == 8) SetWindowLongPtr64(hwnd, GwlExStyle, (IntPtr)style);
+            else SetWindowLong32(hwnd, GwlExStyle, (int)style);
+        }
 
         [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         private static extern IntPtr CreateDesktop(string desktop, IntPtr device, IntPtr devmode, int flags, uint access, IntPtr sa);
@@ -55,7 +72,8 @@ namespace Material3.Wpf.Tests {
             t.SetApartmentState(ApartmentState.STA);
             t.Start();
             t.Join();
-            if (err != null) throw new Exception("UI body threw: " + err, err);
+            // Rethrown as itself: wrapping turns every assertion failure into one opaque Exception in the report.
+            if (err != null) ExceptionDispatchInfo.Capture(err).Throw();
         }
 
         // WS_EX_NOACTIVATE on top of ShowActivated=false is belt and braces for the case where the isolated
@@ -73,8 +91,7 @@ namespace Material3.Wpf.Tests {
                     };
                     w.SourceInitialized += (s, e) => {
                         IntPtr hwnd = new WindowInteropHelper((Window)s!).Handle;
-                        IntPtr style = GetWindowLongPtr(hwnd, GwlExStyle);
-                        SetWindowLongPtr(hwnd, GwlExStyle, (IntPtr)(style.ToInt64() | WsExNoActivate | WsExToolWindow));
+                        SetExStyle(hwnd, GetExStyle(hwnd) | WsExNoActivate | WsExToolWindow);
                     };
                     if (withControls) {
                         w.Resources.MergedDictionaries.Add(new ResourceDictionary {
