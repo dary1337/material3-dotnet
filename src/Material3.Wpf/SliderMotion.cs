@@ -59,6 +59,8 @@ namespace Material3.Wpf {
             slider.PreviewMouseMove += OnDrag;
             slider.PreviewMouseLeftButtonUp += OnRelease;
             slider.Unloaded += OnUnloaded;
+            // Switched on after the slider was already up: Loaded has been and gone, so place it now.
+            if (slider.IsLoaded) Snap(slider);
         }
 
         private static void OnLoaded(object sender, RoutedEventArgs e) => Snap((Slider)sender);
@@ -114,9 +116,14 @@ namespace Material3.Wpf {
             double travel = Math.Max(1, slider.ActualWidth - ThumbSize);
             double fraction = Clamp((x - ThumbSize / 2) / travel);
             double raw = slider.Minimum + fraction * (slider.Maximum - slider.Minimum);
-            return slider.IsSnapToTickEnabled && slider.TickFrequency > 0
-                ? slider.Minimum + Math.Round((raw - slider.Minimum) / slider.TickFrequency) * slider.TickFrequency
-                : raw;
+            if (!slider.IsSnapToTickEnabled || slider.TickFrequency <= 0) return raw;
+            // The ends are snap candidates of their own, as they are for WPF's own SnapToTick: a frequency that
+            // does not divide the range would otherwise leave the maximum unreachable.
+            double snapped = slider.Minimum + Math.Round((raw - slider.Minimum) / slider.TickFrequency) * slider.TickFrequency;
+            snapped = snapped < slider.Minimum ? slider.Minimum : snapped > slider.Maximum ? slider.Maximum : snapped;
+            return Math.Abs(raw - slider.Maximum) < Math.Abs(raw - snapped) ? slider.Maximum
+                : Math.Abs(raw - slider.Minimum) < Math.Abs(raw - snapped) ? slider.Minimum
+                : snapped;
         }
 
         private static void Place(Slider slider) {
@@ -128,14 +135,21 @@ namespace Material3.Wpf {
             double travel = Math.Max(0, area.ActualWidth - ThumbSize);
             double centre = ThumbSize / 2 + Clamp((double)slider.GetValue(DrawnProperty)) * travel;
             active.Width = centre;
-            Canvas.SetLeft(thumb, centre - thumb.Width / 2);
-            Canvas.SetTop(thumb, (area.ActualHeight - thumb.Height) / 2);
+            // Measured, not declared: a template that sizes its thumb by content leaves Width NaN, and NaN on a
+            // Canvas offset takes the thumb off screen entirely.
+            double thumbW = Sized(thumb.Width, thumb.ActualWidth);
+            double thumbH = Sized(thumb.Height, thumb.ActualHeight);
+            Canvas.SetLeft(thumb, centre - thumbW / 2);
+            Canvas.SetTop(thumb, (area.ActualHeight - thumbH) / 2);
         }
 
         private static double Fraction(Slider slider) {
             double span = slider.Maximum - slider.Minimum;
             return span <= 0 ? 0 : Clamp((slider.Value - slider.Minimum) / span);
         }
+
+        private static double Sized(double declared, double measured) =>
+            !double.IsNaN(declared) && declared > 0 ? declared : measured > 0 ? measured : ThumbSize;
 
         private static double Clamp(double v) => v < 0 ? 0 : v > 1 ? 1 : v;
     }

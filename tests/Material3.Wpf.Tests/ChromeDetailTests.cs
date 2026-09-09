@@ -92,6 +92,20 @@ namespace Material3.Wpf.Tests {
             Assert.Equal(slider.Maximum, SliderMotion.ValueAt(slider, slider.ActualWidth));
         });
 
+        // A frequency that does not divide the range puts the last step past the end, and Value would then
+        // be coerced back to a position the pointer never asked for.
+        [Theory]
+        [InlineData(7.0)]
+        [InlineData(30.0)]
+        public void SnappingNeverOvershootsTheEnds(double tick) => Ui.InWindow(w => {
+            Slider slider = Shown(w, value: 0);
+            slider.IsSnapToTickEnabled = true;
+            slider.TickFrequency = tick;
+
+            Assert.Equal(slider.Maximum, SliderMotion.ValueAt(slider, slider.ActualWidth));
+            Assert.Equal(slider.Minimum, SliderMotion.ValueAt(slider, 0));
+        });
+
         [Fact]
         public void TheThumbSitsOnTheValue() => Ui.InWindow(w => {
             Slider slider = Shown(w, value: 25);
