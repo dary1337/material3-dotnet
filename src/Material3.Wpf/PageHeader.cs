@@ -28,7 +28,8 @@ namespace Material3.Wpf {
 
         /// <summary>Identifies the <see cref="Title"/> property.</summary>
         public static readonly DependencyProperty TitleProperty = DependencyProperty.Register(
-            nameof(Title), typeof(string), typeof(PageHeader), new PropertyMetadata(string.Empty));
+            nameof(Title), typeof(string), typeof(PageHeader),
+            new FrameworkPropertyMetadata(string.Empty, null, CoerceText));
 
         /// <summary>The page title.</summary>
         public string Title { get => (string)GetValue(TitleProperty); set => SetValue(TitleProperty, value); }
