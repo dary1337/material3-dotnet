@@ -108,7 +108,9 @@ namespace Material3.Wpf.Tests {
         private static Path Indicator(CircularProgress ring) =>
             (Path)ring.Template.FindName("PART_Indicator", ring);
 
+        // The control assigns its own transform to the spin host, so the host is what the test has to ask.
         private static bool IsSpinning(CircularProgress ring) =>
-            ring.Template?.FindName("PART_Rotate", ring) is RotateTransform rotate && rotate.HasAnimatedProperties;
+            ring.Template?.FindName("PART_Spin", ring) is UIElement spin
+            && spin.RenderTransform is RotateTransform rotate && rotate.HasAnimatedProperties;
     }
 }

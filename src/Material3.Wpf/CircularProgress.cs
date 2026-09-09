@@ -17,7 +17,7 @@ namespace Material3.Wpf {
     public class CircularProgress : Control {
         private const string PartTrack = "PART_Track";
         private const string PartIndicator = "PART_Indicator";
-        private const string PartRotate = "PART_Rotate";
+        private const string PartSpin = "PART_Spin";
         private const double TurnSeconds = 1.3;
         private const double BreatheSeconds = 1.4;
         private const double MinSweep = 20;
@@ -105,7 +105,13 @@ namespace Material3.Wpf {
             StopSpin();
             _track = GetTemplateChild(PartTrack) as Path;
             _indicator = GetTemplateChild(PartIndicator) as Path;
-            _rotate = GetTemplateChild(PartRotate) as RotateTransform;
+            // The control's own transform, not one the template declares: a template-declared freezable can come
+            // back frozen, and BeginAnimation on a frozen transform throws.
+            _rotate = null;
+            if (GetTemplateChild(PartSpin) is UIElement spin) {
+                _rotate = new RotateTransform();
+                spin.RenderTransform = _rotate;
+            }
             ApplySweepSource();
             Redraw();
             Sync();
