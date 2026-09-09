@@ -1500,6 +1500,7 @@
                                            Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
                             </StackPanel>
                             <TextBlock x:Name="trailingText" Grid.Column="2" Margin="16,0,0,0" VerticalAlignment="Center"
+                                       Visibility="Collapsed"
                                        Text="{TemplateBinding TrailingText}" Style="{StaticResource BodySmall}" />
                             <ContentPresenter x:Name="trailing" Grid.Column="2" Margin="16,0,0,0" VerticalAlignment="Center"
                                               Content="{TemplateBinding Trailing}" />
@@ -1517,8 +1518,11 @@
                         <Trigger Property="IconKind" Value="{x:Null}">
                             <Setter TargetName="icon" Property="Visibility" Value="Collapsed" />
                         </Trigger>
+                        <!-- Trailing content wins: both live in the same column, so the text only shows when the
+                             slot is empty, and then only when there is text to show. -->
                         <Trigger Property="Trailing" Value="{x:Null}">
                             <Setter TargetName="trailing" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="trailingText" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <Trigger Property="TrailingText" Value="">
                             <Setter TargetName="trailingText" Property="Visibility" Value="Collapsed" />

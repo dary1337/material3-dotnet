@@ -31,11 +31,35 @@ namespace Material3.Wpf.Tests {
             Assert.Equal(56, row.ActualHeight);
         });
 
+        // Both live in the same column, so one of them has to lose — and the slot is the richer of the two.
+        [Fact]
+        public void TrailingContentWinsOverTrailingText() => Ui.InWindow(w => {
+            M3ListItem both = Shown(w, new M3ListItem {
+                Headline = "Trash", TrailingText = "128",
+                Trailing = new CheckBox { Style = (Style)w.FindResource("M3Switch") },
+            });
+            Assert.Equal(Visibility.Collapsed, Slot(both, "trailingText").Visibility);
+            Assert.Equal(Visibility.Visible, Slot(both, "trailing").Visibility);
+
+            M3ListItem textOnly = Shown(w, new M3ListItem { Headline = "All items", TrailingText = "128" });
+            Assert.Equal(Visibility.Visible, Slot(textOnly, "trailingText").Visibility);
+        });
+
+        // A pointer cannot be faked on an off-screen desktop, so the invariant is read where it lives: the
+        // last matching trigger wins, so the selected one has to be declared after the hover one.
         [Fact]
         public void SelectionOutranksHover() => Ui.InWindow(w => {
             M3ListItem row = Shown(w, new M3ListItem { Headline = "Documents", IsSelected = true });
             var chrome = (Border)row.Template.FindName("b", row);
             Assert.Equal(row.TryFindResource("SecondaryContainer"), chrome.Background);
+
+            int hover = -1, selected = -1;
+            for (int i = 0; i < row.Template.Triggers.Count; i++) {
+                if (!(row.Template.Triggers[i] is Trigger trigger)) continue;
+                if (trigger.Property == UIElement.IsMouseOverProperty) hover = i;
+                if (trigger.Property == M3ListItem.IsSelectedProperty) selected = i;
+            }
+            Assert.True(hover >= 0 && selected > hover, "the selected fill does not outrank the hover fill");
         });
 
         // A selected row is a container of its own, so its text has to move to the matching "on" role — the
@@ -78,6 +102,8 @@ namespace Material3.Wpf.Tests {
             Ui.Settle(w);
             return box;
         }
+
+        private static FrameworkElement Slot(M3ListItem row, string name) => (FrameworkElement)row.Template.FindName(name, row);
 
         private static TextBlock Headline(M3ListItem row) => (TextBlock)row.Template.FindName("headline", row);
 
