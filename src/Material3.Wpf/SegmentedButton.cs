@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -52,7 +51,7 @@ namespace Material3.Wpf {
 
         /// <summary>Identifies the <see cref="MultiSelect"/> property.</summary>
         public static readonly DependencyProperty MultiSelectProperty = DependencyProperty.Register(
-            nameof(MultiSelect), typeof(bool), typeof(SegmentedButton), new PropertyMetadata(false));
+            nameof(MultiSelect), typeof(bool), typeof(SegmentedButton), new PropertyMetadata(false, OnMultiSelectChanged));
 
         /// <summary>Whether several segments can be on at once. Off by default — one choice, like a radio group.</summary>
         public bool MultiSelect { get => (bool)GetValue(MultiSelectProperty); set => SetValue(MultiSelectProperty, value); }
@@ -116,6 +115,25 @@ namespace Material3.Wpf {
             UpdatePositions();
         }
 
+        // Narrowing to one choice has to make the row honest immediately: leaving several on would contradict
+        // the rule every later click enforces. Widening never invalidates anything.
+        private static void OnMultiSelectChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+            var row = (SegmentedButton)d;
+            if ((bool)e.NewValue) return;
+            IReadOnlyList<int> selected = row.SelectedIndices;
+            if (selected.Count < 2) return;
+            row._syncing = true;
+            try {
+                for (int i = 1; i < selected.Count; i++) {
+                    SegmentedItem? extra = row.Container(selected[i]);
+                    if (extra != null) extra.IsChecked = false;
+                }
+                row.SelectedIndex = selected[0];
+            }
+            finally { row._syncing = false; }
+            row.SelectionChanged?.Invoke(row, EventArgs.Empty);
+        }
+
         private static void OnSelectedIndexChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             var row = (SegmentedButton)d;
             if (row._syncing) return;
@@ -160,13 +178,15 @@ namespace Material3.Wpf {
         // Position, not an index, so the template can round the outer edges without a converter that would have
         // to be re-evaluated for every sibling whenever the row's length changes.
         private void UpdatePositions() {
-            List<SegmentedItem> all = Containers().ToList();
-            for (int i = 0; i < all.Count; i++) {
+            int count = Items.Count;
+            for (int i = 0; i < count; i++) {
+                SegmentedItem? segment = Container(i);
+                if (segment == null) continue;
                 SegmentPosition position =
-                    all.Count == 1 ? SegmentPosition.Only :
+                    count == 1 ? SegmentPosition.Only :
                     i == 0 ? SegmentPosition.First :
-                    i == all.Count - 1 ? SegmentPosition.Last : SegmentPosition.Middle;
-                all[i].SetValue(SegmentedItem.PositionKey, position);
+                    i == count - 1 ? SegmentPosition.Last : SegmentPosition.Middle;
+                segment.SetValue(SegmentedItem.PositionKey, position);
             }
         }
 

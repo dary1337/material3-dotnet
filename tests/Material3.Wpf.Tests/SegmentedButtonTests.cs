@@ -32,6 +32,33 @@ namespace Material3.Wpf.Tests {
             Assert.Equal(0, row.SelectedIndex);
         });
 
+        // Turning multi-select off has to make the row honest at once, not at the next click.
+        [Fact]
+        public void NarrowingToOneChoiceKeepsTheFirstSelection() => Ui.InWindow(w => {
+            SegmentedButton row = Row(w, "Bold", "Italic", "Underline");
+            row.MultiSelect = true;
+            Segment(row, 0).IsChecked = true;
+            Segment(row, 2).IsChecked = true;
+
+            int raised = 0;
+            row.SelectionChanged += (_, __) => raised++;
+            row.MultiSelect = false;
+
+            Assert.Equal(new[] { 0 }, row.SelectedIndices);
+            Assert.Equal(0, row.SelectedIndex);
+            Assert.Equal(1, raised);
+        });
+
+        [Fact]
+        public void TurningMultiSelectOnLeavesTheSelectionAlone() => Ui.InWindow(w => {
+            SegmentedButton row = Row(w, "Bold", "Italic");
+            row.SelectedIndex = 1;
+
+            row.MultiSelect = true;
+
+            Assert.Equal(new[] { 1 }, row.SelectedIndices);
+        });
+
         [Fact]
         public void SettingTheIndexSelectsExactlyThatSegment() => Ui.InWindow(w => {
             SegmentedButton row = Row(w, "Day", "Week", "Month");
