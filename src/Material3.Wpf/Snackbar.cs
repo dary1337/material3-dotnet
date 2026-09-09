@@ -111,9 +111,11 @@ namespace Material3.Wpf {
             };
             var adorner = new SnackbarAdorner(host, bar, next.Duration);
             bar.Dismissed = adorner.Hide;
+            Action detachOwner = () => { };
             // Guarded: a cancelled adorner's exit can still complete after the next message took over, and
             // an unguarded callback would take that one down with it.
             adorner.Closed = () => {
+                detachOwner();
                 layer.Remove(adorner);
                 if (!ReferenceEquals(_current, adorner)) return;
                 _current = null;
@@ -124,13 +126,15 @@ namespace Material3.Wpf {
             // would stay blocked behind an adorner nobody can see any more.
             if (owner != null) {
                 void OnOwnerClosed(object? s, EventArgs e) {
-                    owner.Closed -= OnOwnerClosed;
+                    detachOwner();
                     adorner.Cancel();
                     if (!ReferenceEquals(_current, adorner)) return;
                     _current = null;
                     Waiting.Clear();
                 }
                 owner.Closed += OnOwnerClosed;
+                // Dropped on the ordinary exit too, or every message a window ever showed stays hooked to it.
+                detachOwner = () => owner.Closed -= OnOwnerClosed;
             }
             layer.Add(adorner);
             adorner.Reveal();
