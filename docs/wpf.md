@@ -49,7 +49,7 @@ Legend: **✓ shipped · – planned**.
 | **Actions** | Buttons — filled · tonal · outlined · text | ✓ | ✓ |
 | | Buttons — warning · error *(filled + tonal)* · shiny (attention) | ✓ | – |
 | | Icon button | ✓ | ✓ |
-| | Icon toggle | ✓ | – |
+| | Icon toggle | ✓ | ✓ *(MaterialIconButton.IsToggle)* |
 | | FAB *(round + extended, three sizes)* | ✓ | ✓ |
 | **Inputs & selection** | Text field | ✓ *(box + placeholder)* | ✓ *(filled/outlined, floating label)* |
 | | Chips | ✓ *(status)* | ✓ *(assist/filter/input/suggestion)* |
