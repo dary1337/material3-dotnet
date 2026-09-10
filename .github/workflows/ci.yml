@@ -11,8 +11,10 @@ permissions:
   contents: write
   id-token: write
 
+# Per ref, not one global group: every push to main still queues behind the release before it, while two
+# pull requests no longer wait on each other.
 concurrency:
-  group: release
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -62,8 +64,9 @@ jobs:
       - name: Test
         run: dotnet test Material3.sln -c Release --no-build
 
+      # Always: packing is what runs the API baseline check, and a broken public surface has to fail on the
+      # pull request rather than on the push that publishes it.
       - name: Pack
-        if: steps.check.outputs.publish == 'true'
         shell: bash
         run: |
           dotnet pack src/Material3.Core/Material3.Core.csproj -c Release --no-build -o artifacts
