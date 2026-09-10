@@ -1171,11 +1171,31 @@
                     <Border x:Name="root" CornerRadius="{StaticResource RadiusMd}" Padding="12,8" BorderThickness="0"
                             Background="{DynamicResource WarningContainer}">
                         <DockPanel>
-                            <Button x:Name="PART_Dismiss" DockPanel.Dock="Right" Style="{StaticResource IconButton}"
-                                    VerticalAlignment="Center" Margin="6,0,0,0">
+                            <Button x:Name="PART_Dismiss" DockPanel.Dock="Right" Cursor="Hand"
+                                    VerticalAlignment="Center" Margin="6,0,0,0"
+                                    Foreground="{DynamicResource OnWarningContainer}">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <!-- The state layer is the banner's own text colour: a neutral surface
+                                             fill inside a coloured container reads as a hole punched in it. -->
+                                        <Grid Width="24" Height="24" Background="Transparent">
+                                            <Border x:Name="layer" CornerRadius="12" Opacity="0"
+                                                    Background="{TemplateBinding Foreground}" />
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Grid>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="layer" Property="Opacity" Value="0.12" />
+                                            </Trigger>
+                                            <Trigger Property="IsEnabled" Value="False">
+                                                <Setter Property="Opacity" Value="0.38" />
+                                                <Setter Property="Cursor" Value="Arrow" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
                                 <m3:M3Icon x:Name="dismissIcon" Kind="Close" Width="16" Height="16"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                                           Foreground="{DynamicResource OnWarningContainer}" />
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Button>
                             <ContentPresenter DockPanel.Dock="Right" VerticalAlignment="Center"
                                               Content="{TemplateBinding Actions}" />
@@ -1194,19 +1214,19 @@
                             <Setter TargetName="root" Property="BorderBrush" Value="{DynamicResource OutlineVariant}" />
                             <Setter TargetName="body" Property="Foreground" Value="{DynamicResource OnSurface}" />
                             <Setter TargetName="icon" Property="Foreground" Value="{DynamicResource Primary}" />
-                            <Setter TargetName="dismissIcon" Property="Foreground" Value="{DynamicResource OnSurfaceMuted}" />
+                            <Setter TargetName="PART_Dismiss" Property="Foreground" Value="{DynamicResource OnSurfaceMuted}" />
                         </Trigger>
                         <Trigger Property="Severity" Value="Accent">
                             <Setter TargetName="root" Property="Background" Value="{DynamicResource SecondaryContainer}" />
                             <Setter TargetName="body" Property="Foreground" Value="{DynamicResource OnSecondaryContainer}" />
                             <Setter TargetName="icon" Property="Foreground" Value="{DynamicResource OnSecondaryContainer}" />
-                            <Setter TargetName="dismissIcon" Property="Foreground" Value="{DynamicResource OnSecondaryContainer}" />
+                            <Setter TargetName="PART_Dismiss" Property="Foreground" Value="{DynamicResource OnSecondaryContainer}" />
                         </Trigger>
                         <Trigger Property="Severity" Value="Error">
                             <Setter TargetName="root" Property="Background" Value="{DynamicResource ErrorContainer}" />
                             <Setter TargetName="body" Property="Foreground" Value="{DynamicResource OnErrorContainer}" />
                             <Setter TargetName="icon" Property="Foreground" Value="{DynamicResource OnErrorContainer}" />
-                            <Setter TargetName="dismissIcon" Property="Foreground" Value="{DynamicResource OnErrorContainer}" />
+                            <Setter TargetName="PART_Dismiss" Property="Foreground" Value="{DynamicResource OnErrorContainer}" />
                         </Trigger>
                         <Trigger Property="CanDismiss" Value="False">
                             <Setter TargetName="PART_Dismiss" Property="Visibility" Value="Collapsed" />
