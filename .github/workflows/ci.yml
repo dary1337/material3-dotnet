@@ -5,21 +5,101 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+  id-token: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   build-test:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
+
+      - name: Resolve version and check tag
+        id: check
+        if: github.event_name != 'pull_request'
+        shell: pwsh
+        run: |
+          $versions = @{}
+          foreach ($csproj in @('src/Material3.Core/Material3.Core.csproj',
+                                'src/Material3.WinForms/Material3.WinForms.csproj',
+                                'src/Material3.Wpf/Material3.Wpf.csproj')) {
+            $v = (([xml](Get-Content $csproj)).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1)
+            if (-not $v) { throw "Version not found in $csproj" }
+            $versions[$csproj] = $v.Trim()
+          }
+          if (($versions.Values | Select-Object -Unique).Count -ne 1) {
+            $versions.GetEnumerator() | ForEach-Object { Write-Host "$($_.Key) = $($_.Value)" }
+            throw 'Package versions diverged - bump all three csprojs together.'
+          }
+          $version = $versions.Values | Select-Object -First 1
+          $tag = "v$version"
+          if (git tag -l $tag) {
+            Write-Host "Tag $tag already exists - nothing to publish."
+            "publish=false" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "New version $version - will publish and tag $tag."
+            "publish=true" >> $env:GITHUB_OUTPUT
+            "version=$version" >> $env:GITHUB_OUTPUT
+            "tag=$tag" >> $env:GITHUB_OUTPUT
+          }
+
       - name: Restore
         run: dotnet restore Material3.sln
       - name: Build (net472 + net8.0-windows)
         run: dotnet build Material3.sln -c Release --no-restore
       - name: Test
         run: dotnet test Material3.sln -c Release --no-build
+
+      - name: Pack
+        if: steps.check.outputs.publish == 'true'
+        shell: bash
+        run: |
+          dotnet pack src/Material3.Core/Material3.Core.csproj -c Release --no-build -o artifacts
+          dotnet pack src/Material3.WinForms/Material3.WinForms.csproj -c Release --no-build -o artifacts
+          dotnet pack src/Material3.Wpf/Material3.Wpf.csproj -c Release --no-build -o artifacts
+
+      - name: NuGet login (OIDC trusted publishing)
+        if: steps.check.outputs.publish == 'true'
+        uses: NuGet/login@v1
+        id: nuget-login
+        with:
+          user: dary1337
+
+      - name: Push to NuGet
+        if: steps.check.outputs.publish == 'true'
+        shell: pwsh
+        env:
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+        run: |
+          Get-ChildItem artifacts/*.nupkg | ForEach-Object {
+            dotnet nuget push $_.FullName --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
+          }
+
+      - name: Tag and create GitHub release
+        if: steps.check.outputs.publish == 'true'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.check.outputs.tag }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag $env:TAG
+          git push origin $env:TAG
+          $assets = @(
+            'samples/Material3.WinForms.Gallery/bin/Release/net472/Material3.WinForms.Gallery.exe',
+            'samples/Material3.Wpf.Gallery/bin/Release/net472/Material3.Wpf.Gallery.exe'
+          ) + (Get-ChildItem artifacts/*.nupkg | ForEach-Object { $_.FullName })
+          gh release create $env:TAG --title $env:TAG --generate-notes @assets
