@@ -592,7 +592,7 @@ namespace Material3.Wpf.Gallery {
             };
             var container = new Style(typeof(ListBoxItem), (Style)FindResource(typeof(ListBoxItem)));
             container.Setters.Add(new Setter(FrameworkElement.MarginProperty, new Thickness(0, 0, 8, 8)));
-            container.Setters.Add(new Setter(Control.BackgroundProperty, (Brush)FindResource("SurfaceContainerHighest")));
+            container.Setters.Add(new Setter(Control.BackgroundProperty, new DynamicResourceExtension("SurfaceContainerHighest")));
             list.ItemContainerStyle = container;
             ScrollViewer.SetHorizontalScrollBarVisibility(list, ScrollBarVisibility.Disabled);
             VirtualizingPanel.SetIsVirtualizing(list, true);
