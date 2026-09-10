@@ -502,11 +502,9 @@ namespace Material3.Wpf.Gallery {
                   + "rows still lines up. A selected row keeps its fill when the pointer crosses it.");
             var rows = new StackPanel { Width = 460, HorizontalAlignment = HorizontalAlignment.Left };
             rows.Children.Add(new M3ListItem { IconKind = "ViewList", Headline = "All items", TrailingText = "128" });
-            rows.Children.Add(new Border { Style = (Style)FindResource("Divider"), Margin = new Thickness(56, 0, 0, 0) });
             rows.Children.Add(new M3ListItem {
                 IconKind = "Star", Headline = "Favourites", SupportingText = "12 items · updated yesterday", IsSelected = true,
             });
-            rows.Children.Add(new Border { Style = (Style)FindResource("Divider"), Margin = new Thickness(56, 0, 0, 0) });
             rows.Children.Add(new M3ListItem {
                 IconKind = "Delete", Headline = "Trash", SupportingText = "Emptied automatically after 30 days",
                 Trailing = new CheckBox { Style = (Style)FindResource("M3Switch"), IsChecked = true },
