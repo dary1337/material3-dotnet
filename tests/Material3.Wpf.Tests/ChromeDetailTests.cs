@@ -2,6 +2,7 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Input;
 using System.Windows.Media;
 using Material3.Wpf;
 using Xunit;
@@ -63,6 +64,21 @@ namespace Material3.Wpf.Tests {
             var dismiss = (FrameworkElement)banner.Template.FindName("PART_Dismiss", banner);
             double centre = dismiss.TranslatePoint(new Point(0, 0), banner).Y + dismiss.ActualHeight / 2;
             Assert.Equal(banner.ActualHeight / 2, centre, 1);
+        });
+
+        // A local cursor outranks a template trigger, so a disabled dismiss would keep offering the hand.
+        [Fact]
+        public void ADisabledBannerDismissTakesTheArrowBack() => Ui.InWindow(w => {
+            var banner = new NoticeBanner { IconKind = "AlertCircle", Text = "Nothing to do", Width = 400 };
+            w.Content = banner;
+            Ui.Settle(w);
+
+            var dismiss = (Button)banner.Template.FindName("PART_Dismiss", banner);
+            Assert.Equal(Cursors.Hand, dismiss.Cursor);
+
+            dismiss.IsEnabled = false;
+            Ui.Settle(w);
+            Assert.Equal(Cursors.Arrow, dismiss.Cursor);
         });
 
         // The travel is on the drawn position: Value lands at once (bindings must not see a ramp) while the

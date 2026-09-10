@@ -1216,7 +1216,7 @@
                     <Border x:Name="root" CornerRadius="{StaticResource RadiusMd}" Padding="12,8" BorderThickness="0"
                             Background="{DynamicResource WarningContainer}">
                         <DockPanel>
-                            <Button x:Name="PART_Dismiss" DockPanel.Dock="Right" Cursor="Hand"
+                            <Button x:Name="PART_Dismiss" DockPanel.Dock="Right"
                                     VerticalAlignment="Center" Margin="6,0,0,0"
                                     Foreground="{DynamicResource OnWarningContainer}">
                                 <Button.Template>
@@ -1231,6 +1231,11 @@
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
                                                 <Setter TargetName="layer" Property="Opacity" Value="0.12" />
+                                            </Trigger>
+                                            <!-- Both cursors come from triggers: a local value would outrank the
+                                                 disabled one and keep the hand over a dead button. -->
+                                            <Trigger Property="IsEnabled" Value="True">
+                                                <Setter Property="Cursor" Value="Hand" />
                                             </Trigger>
                                             <Trigger Property="IsEnabled" Value="False">
                                                 <Setter Property="Opacity" Value="0.38" />
