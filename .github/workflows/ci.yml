@@ -58,7 +58,7 @@ jobs:
       - name: Restore
         run: dotnet restore Material3.sln
       - name: Build (net472 + net8.0-windows)
-        run: dotnet build Material3.sln -c Release --no-restore
+        run: dotnet build Material3.sln -c Release --no-restore -warnaserror
       - name: Test
         run: dotnet test Material3.sln -c Release --no-build
 
