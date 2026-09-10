@@ -17,8 +17,53 @@
     <Style TargetType="ToggleButton"><Setter Property="FocusVisualStyle" Value="{x:Null}" /></Style>
     <Style TargetType="RadioButton"><Setter Property="FocusVisualStyle" Value="{x:Null}" /></Style>
     <Style TargetType="CheckBox"><Setter Property="FocusVisualStyle" Value="{x:Null}" /></Style>
-    <Style TargetType="ListBoxItem"><Setter Property="FocusVisualStyle" Value="{x:Null}" /></Style>
     <Style TargetType="ComboBox"><Setter Property="FocusVisualStyle" Value="{x:Null}" /></Style>
+
+    <!-- The selectable container of any ListBox. Implicit, like the scrollbar and the text box: the native
+         chrome is a themed rectangle from the Windows theme, sized to the cell rather than to what sits in it,
+         and it clashes with every M3 surface it lands on. -->
+    <Style TargetType="ListBoxItem">
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Padding" Value="0" />
+        <!-- Transparent by default, because a row on a page is not a surface of its own. A tile grid gives the
+             container a fill and the hover and selected layers then replace it. -->
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Grid>
+                        <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="{StaticResource RadiusSm}"
+                                Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+                            <ContentPresenter x:Name="c" TextElement.Foreground="{DynamicResource OnSurface}"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                        </Border>
+                        <!-- An overlay, so showing the focus ring costs no layout and the row never shifts. -->
+                        <Border x:Name="focus" CornerRadius="{StaticResource RadiusSm}" BorderThickness="2"
+                                BorderBrush="{DynamicResource Primary}" Visibility="Collapsed" IsHitTestVisible="False" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="b" Property="Background" Value="{DynamicResource SurfaceContainerHigh}" />
+                        </Trigger>
+                        <!-- After hover on purpose: a selected row must not lose its fill when the pointer crosses it. -->
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="b" Property="Background" Value="{DynamicResource SecondaryContainer}" />
+                            <Setter TargetName="c" Property="TextElement.Foreground" Value="{DynamicResource OnSecondaryContainer}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="focus" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.38" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 
     <!-- Expander with an animated chevron icon (not the native arrow), hand cursor on the header. -->
     <Style x:Key="M3Expander" TargetType="Expander">

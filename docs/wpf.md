@@ -60,7 +60,7 @@ Legend: **✓ shipped · – planned**.
 | **Containers** | Card | ✓ | ✓ *(elevated/filled/outlined)* |
 | | Expander | ✓ | – |
 | | Page header (`PageHeader`) | ✓ | – |
-| | List item · Divider | ✓ | ✓ |
+| | List item · Divider · list container | ✓ | ✓ |
 | **Feedback** | Linear progress | ✓ | ✓ |
 | | Skeleton | ✓ | ✓ |
 | | Busy spinner (`Busy`) | ✓ | – |
@@ -105,6 +105,7 @@ nothing is lost.
 | `M3Slider` *(style)* | any `Slider`, `m3:SliderMotion.Animated` | The filled track IS the decrease repeat button, so it is already exactly as wide as the value. A value that did not come from a drag eases into place — easing a drag would read as lag |
 | `m3:M3ListItem` | `Leading` `IconKind` `Headline` `SupportingText` `Trailing` `TrailingText` `IsSelected` | Picks 56 or 72 from whether there is a second line, so a mixed list still lines up |
 | `Divider` / `DividerVertical` *(styles)* | any `Border` | Inset one with a `Margin`; `Separator` is left to menus |
+| `ListBoxItem` *(implicit)* | `Background` `Padding`, any `ListBox` | Transparent until given a fill, so a row on a page stays a row and a tile grid can own its surface. Selection outranks hover, and the focus ring is an overlay that costs no layout |
 | `m3:CircularProgress` | `Value` `Minimum` `Maximum` `IsIndeterminate` `Diameter` `StrokeThickness` `IndicatorBrush` `TrackBrush` | The indeterminate arc breathes 20°→270° as it turns, so the head chases the tail |
 | `m3:Snackbar` | `Snackbar.Show(anchor, message[, actionText, onAction][, duration])`, `DismissCurrent()` | Goes into the window's adorner layer, so it needs no host element; one shows at a time and the rest queue |
 
