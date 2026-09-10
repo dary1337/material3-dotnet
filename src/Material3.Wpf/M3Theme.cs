@@ -37,7 +37,10 @@ namespace Material3.Wpf {
 
         /// <summary>The resource keys this manager owns. Reference them via DynamicResource; anything
         /// not listed here (e.g. app-specific tokens) stays under the app's own control.</summary>
-        public static readonly IReadOnlyList<string> Roles = Array.AsReadOnly(RoleProps.Select(p => p.Name).ToArray());
+        public static readonly IReadOnlyList<string> Roles = Array.AsReadOnly(
+            RoleProps.Select(p => p.Name)
+                .Concat(Enumerable.Range(0, Elevation.MaxLevel + 1).Select(Elevation.SurfaceKey))
+                .ToArray());
 
         /// <summary>Builds the scheme for <paramref name="theme"/>/<paramref name="isDark"/> and publishes
         /// it into <paramref name="target"/> (typically <c>Application.Current.Resources</c>). Safe to call
@@ -55,6 +58,9 @@ namespace Material3.Wpf {
             if (d == null) throw new ArgumentNullException(nameof(d));
             if (s == null) throw new ArgumentNullException(nameof(s));
             foreach (PropertyInfo p in RoleProps) Set(d, p.Name, (Argb)p.GetValue(s)!);
+            // Elevation is a surface as well as a shadow: on a dark scheme the shadow is invisible and
+            // the tint is the whole signal, so the raised surfaces ship as roles too.
+            for (int level = 0; level <= Elevation.MaxLevel; level++) Set(d, Elevation.SurfaceKey(level), Elevation.SurfaceAt(s, level));
         }
 
         // Replace (not mutate) the brush so DynamicResource consumers re-resolve and recolor. Frozen

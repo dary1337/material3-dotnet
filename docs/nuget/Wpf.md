@@ -8,9 +8,14 @@ centered popup tooltip. Built on [`Material3.Core`](https://www.nuget.org/packag
 ![Material 3 color roles, dark theme](https://raw.githubusercontent.com/dary1337/material3-dotnet/main/docs/img/color-roles-dark.webp)
 
 - Dynamic-color theming — one seed → live light/dark, every role as a `DynamicResource` brush
-- Controls: filled / tonal / outlined / text / shiny buttons, text field, chips, menus, tooltip, scrollbar,
-  progress, card, expander
+- Controls: filled / tonal / outlined / text / shiny buttons, icon button and icon toggle, FAB (round and
+  extended), text field, chips, switch, radio, three-state checkbox, segmented button, slider, menus, tooltip,
+  scrollbar, linear and circular progress, card, list item, divider, expander
+- Page furniture: `PageHeader`, `NoticeBanner`, `EmptyState`, `PopupCard`, `Snackbar`
+- Loading: `Skeleton` shimmer blocks and the `Busy` spinner
+- Elevation: shadow effects plus the tinted `SurfaceElevation` roles treatment
 - `M3Modal` app-level modal + scrim, `AnimatedPopup`, centered `Tip` tooltip, `M3Icon`, motion helpers
+- `AutoHideScroll` overlay-scrollbar timing and `DwmWindow` Windows 11 corner rounding
 
 ```
 dotnet add package Material3.Wpf
