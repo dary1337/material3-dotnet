@@ -573,12 +573,9 @@ namespace Material3.Wpf.Gallery {
             panel.SetValue(VirtualizingWrapPanel.ItemWidthProperty, 92.0);
             panel.SetValue(VirtualizingWrapPanel.ItemHeightProperty, 68.0);
 
+            // The gap belongs to the container, not to the tile: a margin inside the item would leave the
+            // selection fill painting the empty cell around it.
             var tile = new FrameworkElementFactory(typeof(Border));
-            tile.SetValue(FrameworkElement.WidthProperty, 84.0);
-            tile.SetValue(FrameworkElement.HeightProperty, 60.0);
-            tile.SetValue(FrameworkElement.MarginProperty, new Thickness(0, 0, 8, 8));
-            tile.SetResourceReference(Border.BackgroundProperty, "SurfaceContainerHighest");
-            tile.SetResourceReference(Border.CornerRadiusProperty, "RadiusSm");
             var text = new FrameworkElementFactory(typeof(TextBlock));
             text.SetBinding(TextBlock.TextProperty, new System.Windows.Data.Binding());
             text.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Center);
@@ -593,6 +590,10 @@ namespace Material3.Wpf.Gallery {
                 ItemTemplate = new DataTemplate { VisualTree = tile },
                 ItemsSource = System.Linq.Enumerable.Range(1, 600),
             };
+            var container = new Style(typeof(ListBoxItem), (Style)FindResource(typeof(ListBoxItem)));
+            container.Setters.Add(new Setter(FrameworkElement.MarginProperty, new Thickness(0, 0, 8, 8)));
+            container.Setters.Add(new Setter(Control.BackgroundProperty, (Brush)FindResource("SurfaceContainerHighest")));
+            list.ItemContainerStyle = container;
             ScrollViewer.SetHorizontalScrollBarVisibility(list, ScrollBarVisibility.Disabled);
             VirtualizingPanel.SetIsVirtualizing(list, true);
             return list;
