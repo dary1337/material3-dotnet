@@ -22,6 +22,8 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/dary1337/material3-dotnet</PackageProjectUrl>
     <RepositoryUrl>https://github.com/dary1337/material3-dotnet</RepositoryUrl>
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <PackageValidationBaselineVersion>0.9.0</PackageValidationBaselineVersion>
     <PackageTags>material3;material-you;material-design;winforms;theme;dark-mode;ui;controls</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
