@@ -14,6 +14,7 @@ namespace Material3.Core {
         /// <summary>Target chroma; individual tones may be less chromatic when the gamut runs out.</summary>
         public double Chroma { get; }
 
+        /// <summary>Creates the palette of every tone at one HCT <paramref name="hue"/> and <paramref name="chroma"/>.</summary>
         public TonalPalette(double hue, double chroma) {
             Hue = hue;
             Chroma = chroma;

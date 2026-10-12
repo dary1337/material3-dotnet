@@ -8,16 +8,21 @@ namespace Material3.Core {
     /// mirrors the subset of <c>System.Drawing.Color</c> the engine used, so the math ported unchanged.
     /// </summary>
     public readonly struct Argb : IEquatable<Argb> {
+        /// <summary>Alpha: 0 is transparent, 255 opaque.</summary>
         public byte A { get; }
+        /// <summary>The red channel.</summary>
         public byte R { get; }
+        /// <summary>The green channel.</summary>
         public byte G { get; }
+        /// <summary>The blue channel.</summary>
         public byte B { get; }
 
-        public Argb(byte a, byte r, byte g, byte b) {
-            A = a;
-            R = r;
-            G = g;
-            B = b;
+        /// <summary>Creates a colour from its four channels.</summary>
+        public Argb(byte alpha, byte red, byte green, byte blue) {
+            A = alpha;
+            R = red;
+            G = green;
+            B = blue;
         }
 
         /// <summary>Opaque color from channels (each clamped to 0–255).</summary>
@@ -35,10 +40,15 @@ namespace Material3.Core {
         public static Argb FromInt(int argb) =>
             new Argb((byte)(argb >> 24), (byte)(argb >> 16), (byte)(argb >> 8), (byte)argb);
 
+        /// <inheritdoc />
         public bool Equals(Argb other) => A == other.A && R == other.R && G == other.G && B == other.B;
+        /// <inheritdoc />
         public override bool Equals(object? obj) => obj is Argb other && Equals(other);
+        /// <inheritdoc />
         public override int GetHashCode() => ToInt();
+        /// <summary>Whether two colours have identical channels.</summary>
         public static bool operator ==(Argb left, Argb right) => left.Equals(right);
+        /// <summary>Whether two colours differ in any channel.</summary>
         public static bool operator !=(Argb left, Argb right) => !left.Equals(right);
 
         /// <summary>"#AARRGGBB" — for debugging and gallery swatches.</summary>
