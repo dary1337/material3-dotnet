@@ -22,16 +22,22 @@ namespace Material3.Core {
     /// Tone mappings to actual color roles live in <see cref="ColorScheme"/>.
     /// </summary>
     public sealed class CorePalette {
+        /// <summary>Tones at the seed hue and the variant's primary chroma, the source of the primary roles.</summary>
         public TonalPalette Primary { get; }
+        /// <summary>Tones at the seed hue and a lower chroma, the source of the secondary roles.</summary>
         public TonalPalette Secondary { get; }
+        /// <summary>Tones at a hue rotated away from the seed, the source of the tertiary roles.</summary>
         public TonalPalette Tertiary { get; }
+        /// <summary>Near-grey tones for surfaces and text.</summary>
         public TonalPalette Neutral { get; }
+        /// <summary>Slightly more chromatic near-greys for outlines and secondary text.</summary>
         public TonalPalette NeutralVariant { get; }
+        /// <summary>The fixed red tones behind the error roles.</summary>
         public TonalPalette Error { get; }
 
-        // Shared semantic palettes; hues fixed regardless of seed so "success is green" and
-        // "warning is amber" stay recognizable in any theme.
+        /// <summary>The fixed green tones behind the success roles.</summary>
         public TonalPalette Success { get; }
+        /// <summary>The fixed amber tones behind the warning roles.</summary>
         public TonalPalette Warning { get; }
 
         private CorePalette(double hue, double chroma, SchemeVariant variant) {
@@ -50,7 +56,7 @@ namespace Material3.Core {
                     Neutral = new TonalPalette(hue, 6);
                     NeutralVariant = new TonalPalette(hue, 10);
                     break;
-                default: // TonalSpot — the reference Material 3 mapping.
+                default:
                     Primary = new TonalPalette(hue, System.Math.Max(48, chroma));
                     Secondary = new TonalPalette(hue, 16);
                     Tertiary = new TonalPalette(hue + 60, 24);

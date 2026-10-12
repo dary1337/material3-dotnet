@@ -7,9 +7,6 @@
     <RootNamespace>Material3.Core</RootNamespace>
     <AssemblyName>Material3.Core</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <!-- CS1591: member-level XML docs still being written; class-level docs exist everywhere.
-         CS1574: a few <see cref> still point at ThemeManager (UI-layer, not in Core). -->
-    <NoWarn>$(NoWarn);CS1591;CS1574</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Label="Package">

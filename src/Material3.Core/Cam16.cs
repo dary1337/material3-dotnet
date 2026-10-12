@@ -25,7 +25,6 @@ namespace Material3.Core {
             double y = xyz[1];
             double z = xyz[2];
 
-            // XYZ → cone/RGB-like responses (CAT16 matrix).
             double rT = 0.401288 * x + 0.650173 * y - 0.051461 * z;
             double gT = -0.250268 * x + 1.204414 * y + 0.045854 * z;
             double bT = -0.002079 * x + 0.048952 * y + 0.953127 * z;
@@ -104,7 +103,6 @@ namespace Material3.Core {
             double gF = gC / vc.RgbD[1];
             double bF = bC / vc.RgbD[2];
 
-            // Inverse CAT16 matrix.
             double x = 1.86206786 * rF - 1.01125463 * gF + 0.14918677 * bF;
             double y = 0.38752654 * rF + 0.62144744 * gF - 0.00897398 * bF;
             double z = -0.01584150 * rF - 0.03412294 * gF + 1.04996444 * bF;
@@ -134,7 +132,6 @@ namespace Material3.Core {
 
         private static ViewingConditions Make() {
             double[] whitePoint = ColorUtils.WhitePointD65;
-            // ~11.72 cd/m²: luminance of L*=50 under the standard 200 lux assumption.
             double adaptingLuminance = 200.0 / Math.PI * ColorUtils.YFromLstar(50.0) / 100.0;
             const double backgroundLstar = 50.0;
             const double surround = 2.0;
