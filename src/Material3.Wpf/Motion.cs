@@ -19,7 +19,9 @@ namespace Material3.Wpf {
         /// </summary>
         public static bool AnimationsEnabled { get; set; } = true;
 
-        internal static bool IsAnimating => AnimationsEnabled && SystemParameters.ClientAreaAnimation;
+        internal static bool IgnoreSystemSetting;
+
+        internal static bool IsAnimating => AnimationsEnabled && (IgnoreSystemSetting || SystemParameters.ClientAreaAnimation);
 
         /// <summary>A row joining a list: its height grows from nothing while it fades in, so the rows below slide down.</summary>
         public static void GrowIn(FrameworkElement element) {

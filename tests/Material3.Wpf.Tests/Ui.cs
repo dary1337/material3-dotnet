@@ -16,6 +16,8 @@ namespace Material3.Wpf.Tests {
         private const int WsExToolWindow = 0x00000080;
         private const uint GenericAll = 0x10000000;
 
+        static Ui() => Motion.IgnoreSystemSetting = true;
+
         [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
         private static extern IntPtr GetWindowLongPtr64(IntPtr hwnd, int index);
 
