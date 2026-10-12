@@ -42,9 +42,9 @@ namespace Material3.WinForms.Gallery {
             if (control.Width <= 0 || control.Anchor.HasFlag(AnchorStyles.Right)) {
                 control.Width = InnerWidth;
             }
-            else if (control.Width > InnerWidth || control is MaterialCard || control is RoundedPanel
-                || control is MaterialProgressBar || control is StepChecklist || control is MaterialSlider
-                || control is DropdownSelect || control is SkeletonCard
+            else if (control.Width > InnerWidth || control is MaterialCard || control is MaterialRoundedPanel
+                || control is MaterialProgressBar || control is MaterialStepChecklist || control is MaterialSlider
+                || control is MaterialDropdownSelect || control is MaterialSkeletonCard
                 || control is MaterialTabs || control is MaterialNavigationBar
                 || control is MaterialListItem || control is MaterialDivider) {
                 control.Width = InnerWidth;
@@ -103,9 +103,9 @@ namespace Material3.WinForms.Gallery {
             if (_y > S(Spacing.Space4)) {
                 _y += S(Spacing.Space3);
             }
-            var label = new SoftLabel {
+            var label = new MaterialLabel {
                 Text = text,
-                Font = MaterialType.TitleMedium,
+                Font = TypeScale.TitleMedium,
                 ForeColor = MaterialColors.OnSurface,
                 AutoSize = true,
                 Location = new Point(Pad, _y),
@@ -115,9 +115,9 @@ namespace Material3.WinForms.Gallery {
         }
 
         public void Caption(string text) {
-            var label = new SoftLabel {
+            var label = new MaterialLabel {
                 Text = text,
-                Font = MaterialType.BodySmall,
+                Font = TypeScale.BodySmall,
                 ForeColor = MaterialColors.OnSurfaceVariant,
                 AutoSize = false,
                 Width = InnerWidth,
@@ -207,7 +207,7 @@ namespace Material3.WinForms.Gallery {
                     Margin = new Padding(0, 0, S(Spacing.Space2), S(Spacing.Space2)),
                 };
                 if (icon != null) {
-                    button.IconGlyph = icon;
+                    button.Glyph = icon;
                 }
                 flow.Controls.Add(button);
             }
@@ -254,8 +254,8 @@ namespace Material3.WinForms.Gallery {
                 string hex = $"#{fill.R:X2}{fill.G:X2}{fill.B:X2}";
                 using (var nameBrush = new SolidBrush(content))
                 using (var hexBrush = new SolidBrush(Color.FromArgb(200, content))) {
-                    g.DrawString(_name, MaterialType.LabelMedium, nameBrush, 10, 8);
-                    g.DrawString(hex, MaterialType.BodySmall, hexBrush, 10, Height - 26);
+                    g.DrawString(_name, TypeScale.LabelMedium, nameBrush, 10, 8);
+                    g.DrawString(hex, TypeScale.BodySmall, hexBrush, 10, Height - 26);
                 }
             }
         }
@@ -297,9 +297,9 @@ namespace Material3.WinForms.Gallery {
 
                 string meta = $"{_name}  ·  {_style.Font.SizeInPoints:0.##}pt  ·  ls {_style.LetterSpacing:0.##}px";
                 using (var metaBrush = new SolidBrush(MaterialColors.OnSurfaceMuted)) {
-                    g.DrawString(meta, MaterialType.LabelSmall, metaBrush, 0, 0);
+                    g.DrawString(meta, TypeScale.LabelSmall, metaBrush, 0, 0);
                 }
-                MaterialType.DrawString(
+                TypeScale.DrawString(
                     g,
                     "The quick brown fox",
                     _style,
@@ -332,7 +332,7 @@ namespace Material3.WinForms.Gallery {
                         g.FillPath(brush, path);
                     }
                     using (var brush = new SolidBrush(MaterialColors.OnSurfaceVariant)) {
-                        g.DrawString($"Level {level}", MaterialType.LabelMedium, brush, rect.X + 8, rect.Y + 24);
+                        g.DrawString($"Level {level}", TypeScale.LabelMedium, brush, rect.X + 8, rect.Y + 24);
                     }
                 }
             }
@@ -368,7 +368,7 @@ namespace Material3.WinForms.Gallery {
                         g.FillPath(brush, path);
                     }
                     using (var brush = new SolidBrush(MaterialColors.OnSurfaceVariant)) {
-                        g.DrawString(shapes[i].name, MaterialType.LabelMedium, brush, rect.X + 4, rect.Bottom + 6);
+                        g.DrawString(shapes[i].name, TypeScale.LabelMedium, brush, rect.X + 4, rect.Bottom + 6);
                     }
                 }
             }

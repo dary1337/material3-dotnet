@@ -1,43 +1,81 @@
 namespace Material3.WinForms.Drawing {
     /// <summary>Keys of the Material Symbols shipped as embedded resources.</summary>
     public static class MaterialIcons {
+        /// <summary>The Material Symbols <c>arrow_drop_down</c> glyph.</summary>
         public const string ArrowDropDown = "arrow_drop_down";
+        /// <summary>The Material Symbols <c>arrow_forward</c> glyph.</summary>
         public const string ArrowForward = "arrow_forward";
+        /// <summary>The Material Symbols <c>check</c> glyph.</summary>
         public const string Check = "check";
+        /// <summary>The Material Symbols <c>check_circle</c> glyph.</summary>
         public const string CheckCircle = "check_circle";
+        /// <summary>The Material Symbols <c>check_circle_filled</c> glyph.</summary>
         public const string CheckCircleFilled = "check_circle_filled";
+        /// <summary>The Material Symbols <c>check_filled</c> glyph.</summary>
         public const string CheckFilled = "check_filled";
+        /// <summary>The Material Symbols <c>expand_more</c> glyph.</summary>
         public const string ChevronDown = "expand_more";
+        /// <summary>The Material Symbols <c>close</c> glyph.</summary>
         public const string Close = "close";
+        /// <summary>The Material Symbols <c>cloud</c> glyph.</summary>
         public const string Cloud = "cloud";
+        /// <summary>The Material Symbols <c>content_copy</c> glyph.</summary>
         public const string Copy = "content_copy";
+        /// <summary>The Material Symbols <c>deployed_code</c> glyph.</summary>
         public const string DeployedCode = "deployed_code";
+        /// <summary>The Material Symbols <c>download</c> glyph.</summary>
         public const string Download = "download";
+        /// <summary>The Material Symbols <c>error</c> glyph.</summary>
         public const string Error = "error";
+        /// <summary>The Material Symbols <c>error_filled</c> glyph.</summary>
         public const string ErrorFilled = "error_filled";
+        /// <summary>The Material Symbols <c>folder</c> glyph.</summary>
         public const string Folder = "folder";
+        /// <summary>The Material Symbols <c>folder_open</c> glyph.</summary>
         public const string FolderOpen = "folder_open";
+        /// <summary>The Material Symbols <c>help</c> glyph.</summary>
         public const string Help = "help";
+        /// <summary>The Material Symbols <c>help_outline</c> glyph.</summary>
         public const string HelpOutline = "help_outline";
+        /// <summary>The Material Symbols <c>info</c> glyph.</summary>
         public const string Info = "info";
+        /// <summary>The Material Symbols <c>info_filled</c> glyph.</summary>
         public const string InfoFilled = "info_filled";
+        /// <summary>The Material Symbols <c>layers</c> glyph.</summary>
         public const string Layers = "layers";
+        /// <summary>The Material Symbols <c>maximize</c> glyph.</summary>
         public const string Maximize = "maximize";
+        /// <summary>The Material Symbols <c>minimize</c> glyph.</summary>
         public const string Minimize = "minimize";
+        /// <summary>The Material Symbols <c>open_in_new</c> glyph.</summary>
         public const string OpenInNew = "open_in_new";
+        /// <summary>The Material Symbols <c>play_arrow</c> glyph.</summary>
         public const string Play = "play_arrow";
+        /// <summary>The Material Symbols <c>play_arrow_filled</c> glyph.</summary>
         public const string PlayFilled = "play_arrow_filled";
+        /// <summary>The Material Symbols <c>restore</c> glyph.</summary>
         public const string Restore = "restore";
+        /// <summary>The Material Symbols <c>radio_button_checked</c> glyph.</summary>
         public const string RadioChecked = "radio_button_checked";
+        /// <summary>The Material Symbols <c>radio_button_unchecked</c> glyph.</summary>
         public const string RadioUnchecked = "radio_button_unchecked";
+        /// <summary>The Material Symbols <c>refresh</c> glyph.</summary>
         public const string Refresh = "refresh";
+        /// <summary>The Material Symbols <c>search</c> glyph.</summary>
         public const string Search = "search";
+        /// <summary>The Material Symbols <c>search_off</c> glyph.</summary>
         public const string SearchOff = "search_off";
+        /// <summary>The Material Symbols <c>settings</c> glyph.</summary>
         public const string Settings = "settings";
+        /// <summary>The Material Symbols <c>tips_and_updates</c> glyph.</summary>
         public const string Tips = "tips_and_updates";
+        /// <summary>The Material Symbols <c>travel_explore</c> glyph.</summary>
         public const string TravelExplore = "travel_explore";
+        /// <summary>The Material Symbols <c>videogame_asset</c> glyph.</summary>
         public const string VideogameAsset = "videogame_asset";
+        /// <summary>The Material Symbols <c>warning</c> glyph.</summary>
         public const string Warning = "warning";
+        /// <summary>The Material Symbols <c>warning_filled</c> glyph.</summary>
         public const string WarningFilled = "warning_filled";
     }
 }

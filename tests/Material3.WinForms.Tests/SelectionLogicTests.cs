@@ -3,8 +3,6 @@ using Material3.WinForms.Controls;
 using Xunit;
 
 namespace Material3.WinForms.Tests {
-    // Instantiating WinForms controls without a message loop is fine for property-level logic;
-    // these tests avoid anything that needs a window handle.
     public class SelectionLogicTests {
         [Fact]
         public void SegmentedButton_SingleSelect_KeepsExactlyOneActive() {
@@ -13,7 +11,7 @@ namespace Material3.WinForms.Tests {
                 segmented.AddSegment("B");
                 segmented.AddSegment("C");
 
-                Assert.Equal(0, segmented.SelectedIndex); // first segment auto-selects
+                Assert.Equal(0, segmented.SelectedIndex);
 
                 segmented.SetSelected(2, true);
                 Assert.True(segmented.IsSelected(2));
@@ -47,7 +45,7 @@ namespace Material3.WinForms.Tests {
                 segmented.SelectionChanged += (s, e) => raised++;
 
                 segmented.SetSelected(1, true);
-                segmented.SetSelected(1, true); // no-op
+                segmented.SetSelected(1, true);
                 Assert.Equal(1, raised);
             }
         }
@@ -56,7 +54,7 @@ namespace Material3.WinForms.Tests {
         public void Checkbox_IndeterminateResolvesToCheckedSemantics() {
             using (var checkbox = new MaterialCheckBox()) {
                 checkbox.CheckState = System.Windows.Forms.CheckState.Indeterminate;
-                Assert.False(checkbox.Checked); // only fully-checked reports true
+                Assert.False(checkbox.Checked);
                 checkbox.Checked = true;
                 Assert.Equal(System.Windows.Forms.CheckState.Checked, checkbox.CheckState);
             }
@@ -68,7 +66,7 @@ namespace Material3.WinForms.Tests {
                 int raised = 0;
                 toggle.CheckedChanged += (s, e) => raised++;
                 toggle.Checked = true;
-                toggle.Checked = true; // no-op
+                toggle.Checked = true;
                 toggle.Checked = false;
                 Assert.Equal(2, raised);
             }
@@ -99,7 +97,7 @@ namespace Material3.WinForms.Tests {
                 int raised = 0;
                 bar.SelectedIndexChanged += (s, e) => raised++;
                 bar.SelectedIndex = 1;
-                bar.SelectedIndex = 1; // no-op
+                bar.SelectedIndex = 1;
                 Assert.Equal(1, raised);
             }
         }

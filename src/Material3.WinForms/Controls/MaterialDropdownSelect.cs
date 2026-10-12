@@ -10,15 +10,15 @@ namespace Material3.WinForms.Controls {
     /// <summary>Inline dropdown select that grows its own height to reveal the option list rather than opening a popup window.</summary>
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
-    public sealed class DropdownSelect : UserControl, IMessageFilter {
-        private readonly RoundedPanel _header;
+    public sealed class MaterialDropdownSelect : UserControl, IMessageFilter {
+        private readonly MaterialRoundedPanel _header;
         private readonly Label _selectedLabel;
         private readonly Label _chevronLabel;
-        private readonly RoundedPanel _listHost;
+        private readonly MaterialRoundedPanel _listHost;
         private readonly FlowLayoutPanel _listFlow;
 
         private readonly List<DropdownItem> _items = new List<DropdownItem>();
-        private readonly List<RoundedButton> _optionButtons = new List<RoundedButton>();
+        private readonly List<MaterialRoundedButton> _optionButtons = new List<MaterialRoundedButton>();
 
         private bool _isOpen;
         private bool _messageFilterActive;
@@ -28,11 +28,12 @@ namespace Material3.WinForms.Controls {
 
         private static readonly int HeaderHeight = ComponentSizes.DropdownHeight;
 
-        public DropdownSelect() {
+        /// <summary>Initializes a new instance of the <see cref="MaterialDropdownSelect"/> class.</summary>
+        public MaterialDropdownSelect() {
             BackColor = MaterialColors.Surface;
             Margin = new Padding(0, 0, 0, 8);
 
-            _header = new RoundedPanel(Shape.Medium) {
+            _header = new MaterialRoundedPanel(Shape.Medium) {
                 BackColor = MaterialColors.SurfaceContainer,
                 Cursor = MaterialCursors.Pointer,
                 Dock = DockStyle.None,
@@ -40,7 +41,7 @@ namespace Material3.WinForms.Controls {
                 Padding = new Padding(12, 8, 12, 8),
             };
 
-            _header.SetOutline(MaterialColors.OutlineVariant);
+            _header.OutlineColor = MaterialColors.OutlineVariant;
 
             var headerLayout = new Panel {
                 Cursor = MaterialCursors.Pointer,
@@ -73,14 +74,14 @@ namespace Material3.WinForms.Controls {
             headerLayout.Layout += OnHeaderLayout;
             _header.Controls.Add(headerLayout);
 
-            _listHost = new RoundedPanel(Shape.Medium) {
+            _listHost = new MaterialRoundedPanel(Shape.Medium) {
                 BackColor = MaterialColors.SurfaceContainerHigh,
                 Dock = DockStyle.None,
                 Padding = new Padding(6, 6, 6, 6),
                 Visible = false,
             };
 
-            _listHost.SetOutline(MaterialColors.OutlineVariant);
+            _listHost.OutlineColor = MaterialColors.OutlineVariant;
 
             _listFlow = new FlowLayoutPanel {
                 AutoSize = true,
@@ -116,25 +117,28 @@ namespace Material3.WinForms.Controls {
         private void ApplyTheme() {
             BackColor = MaterialColors.Surface;
             _header.BackColor = MaterialColors.SurfaceContainer;
-            _header.SetOutline(MaterialColors.OutlineVariant);
+            _header.OutlineColor = MaterialColors.OutlineVariant;
             _selectedLabel.ForeColor = MaterialColors.OnSurface;
             _chevronLabel.ForeColor = MaterialColors.OnSurfaceVariant;
             _listHost.BackColor = MaterialColors.SurfaceContainerHigh;
-            _listHost.SetOutline(MaterialColors.OutlineVariant);
-            foreach (RoundedButton button in _optionButtons) {
+            _listHost.OutlineColor = MaterialColors.OutlineVariant;
+            foreach (MaterialRoundedButton button in _optionButtons) {
                 button.BackColor = MaterialColors.SurfaceContainerHigh;
                 button.ForeColor = MaterialColors.OnSurface;
-                button.ChangeHoverColor(MaterialColors.SurfaceContainerHighest);
+                button.HoverColor = MaterialColors.SurfaceContainerHighest;
             }
             Invalidate(true);
         }
 
+        /// <summary>Raised when a different option is picked.</summary>
         public event EventHandler? SelectedIndexChanged;
 
+        /// <summary>The index of the picked option, or -1.</summary>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int SelectedIndex => _selectedIndex;
 
+        /// <summary>The tag of the picked option, or null.</summary>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public object? SelectedTag =>
@@ -142,8 +146,9 @@ namespace Material3.WinForms.Controls {
                 ? _items[_selectedIndex].Tag
                 : null;
 
+        /// <summary>Removes every option.</summary>
         public void ClearItems() {
-            foreach (RoundedButton button in _optionButtons) {
+            foreach (MaterialRoundedButton button in _optionButtons) {
                 button.Dispose();
             }
 
@@ -156,11 +161,12 @@ namespace Material3.WinForms.Controls {
             UpdateLayoutMetrics();
         }
 
+        /// <summary>Appends an option showing <paramref name="displayText"/> and carrying <paramref name="tag"/>.</summary>
         public void AddItem(string displayText, object tag) {
             var item = new DropdownItem(displayText, tag);
             _items.Add(item);
 
-            var button = new RoundedButton(10, MaterialColors.SurfaceContainerHighest) {
+            var button = new MaterialRoundedButton(10, MaterialColors.SurfaceContainerHighest) {
                 AutoSize = false,
                 BackColor = MaterialColors.SurfaceContainerHigh,
                 Cursor = MaterialCursors.Pointer,
@@ -206,17 +212,20 @@ namespace Material3.WinForms.Controls {
             return false;
         }
 
+        /// <inheritdoc />
         protected override void OnHandleCreated(EventArgs e) {
             base.OnHandleCreated(e);
             UpdateLayoutMetrics();
         }
 
+        /// <inheritdoc />
         protected override void OnDpiChangedAfterParent(EventArgs e) {
             base.OnDpiChangedAfterParent(e);
             UpdateOptionWidths();
             UpdateLayoutMetrics();
         }
 
+        /// <inheritdoc />
         protected override void OnResize(EventArgs e) {
             base.OnResize(e);
             UpdateOptionWidths();
@@ -234,6 +243,7 @@ namespace Material3.WinForms.Controls {
             _listHost.SetBounds(0, headerHeight, w, _listChromeHeight);
         }
 
+        /// <inheritdoc />
         protected override void OnLayout(LayoutEventArgs levent) {
             base.OnLayout(levent);
             LayoutChrome();
@@ -261,8 +271,7 @@ namespace Material3.WinForms.Controls {
                 h
             );
         }
-
-        public bool PreFilterMessage(ref Message m) {
+        bool IMessageFilter.PreFilterMessage(ref Message m) {
             if (!_isOpen || !IsHandleCreated) {
                 return false;
             }
@@ -372,7 +381,7 @@ namespace Material3.WinForms.Controls {
             int innerWidth = Math.Max(0, Width - _listHost.Padding.Horizontal);
             _listFlow.SuspendLayout();
             _listFlow.Width = innerWidth;
-            foreach (RoundedButton button in _optionButtons) {
+            foreach (MaterialRoundedButton button in _optionButtons) {
                 button.Width = innerWidth;
                 button.Height = Dpi.Scale(this, 42);
             }

@@ -7,9 +7,11 @@ namespace Material3.WinForms {
     /// constructor — outer bounds are already scaled by AutoScaleMode, so that would double-scale.
     /// </summary>
     public static class Dpi {
+        /// <summary>Scales a length designed at 96 DPI to the DPI <paramref name="control"/> is shown at.</summary>
         public static int Scale(Control control, int px) =>
             control == null ? px : (int)Math.Round(px * control.DeviceDpi / 96.0);
 
+        /// <summary>Scales a length designed at 96 DPI to the DPI <paramref name="control"/> is shown at.</summary>
         public static float Scale(Control control, float px) =>
             control == null ? px : px * control.DeviceDpi / 96f;
     }

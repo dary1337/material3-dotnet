@@ -65,8 +65,10 @@ namespace Material3.WinForms.Controls {
         /// <summary>Raised by input chips when the trailing ✕ is clicked. The host removes the control.</summary>
         public event EventHandler? Removed;
 
+        /// <summary>Raised when a filter chip is selected or cleared.</summary>
         public event EventHandler? SelectedChanged;
 
+        /// <summary>Initializes a new instance of the <see cref="MaterialChip"/> class.</summary>
         public MaterialChip() {
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
@@ -94,6 +96,7 @@ namespace Material3.WinForms.Controls {
             Invalidate();
         }
 
+        /// <summary>Chip kind (Assist, Filter, Input, Suggestion).</summary>
         [Category("Material Design")]
         [Description("Chip kind (Assist, Filter, Input, Suggestion).")]
         [DefaultValue(MaterialChipKind.Assist)]
@@ -106,14 +109,14 @@ namespace Material3.WinForms.Controls {
         [Category("Material Design")]
         [Description("Material Symbols key shown before the label.")]
         [DefaultValue("")]
-        public string LeadingIcon {
+        public string LeadingGlyph {
             get => _leadingIcon;
             set { _leadingIcon = value ?? string.Empty; AutoSizeToContent(); Invalidate(); }
         }
 
-        /// <summary>Caller-supplied leading icon drawn as-is, taking precedence over <see cref="LeadingIcon"/> (the filter check still wins).</summary>
+        /// <summary>Caller-supplied leading icon drawn as-is, taking precedence over <see cref="LeadingGlyph"/> (the filter check still wins).</summary>
         [Category("Material Design")]
-        [Description("Caller-supplied leading icon drawn as-is, taking precedence over LeadingIcon.")]
+        [Description("Caller-supplied leading icon drawn as-is, taking precedence over LeadingGlyph.")]
         [DefaultValue(null)]
         public Image? LeadingImage {
             get => _leadingImage;
@@ -124,7 +127,7 @@ namespace Material3.WinForms.Controls {
         [Category("Material Design")]
         [Description("Selection state; meaningful for Filter chips.")]
         [DefaultValue(false)]
-        public bool Selected {
+        public bool IsSelected {
             get => _selected;
             set {
                 if (_selected == value) {
@@ -137,12 +140,14 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnTextChanged(EventArgs e) {
             base.OnTextChanged(e);
             AutoSizeToContent();
             Invalidate();
         }
 
+        /// <inheritdoc />
         protected override void OnHandleCreated(EventArgs e) {
             base.OnHandleCreated(e);
             AutoSizeToContent();
@@ -158,7 +163,7 @@ namespace Material3.WinForms.Controls {
             IconPx = Dpi.Scale(this, IconPx),
             IconGap = Dpi.Scale(this, IconGap),
             OutlineWidth = Dpi.Scale(this, 1f),
-            Font = MaterialType.LabelLarge,
+            Font = TypeScale.LabelLarge,
         };
 
         private void AutoSizeToContent() {
@@ -167,8 +172,6 @@ namespace Material3.WinForms.Controls {
             }
             using (Graphics g = CreateGraphics()) {
                 ChipRenderer.Metrics metrics = BuildMetrics();
-                // Measure through ChipRenderer so the auto-size matches exactly how the label is laid
-                // out at paint time; the remove ✕ is control-specific and added on top.
                 int width = ChipRenderer.Measure(g, Text, ShowsLeading, metrics);
                 if (ShowsRemove) {
                     width += Dpi.Scale(this, RemoveBox) + Dpi.Scale(this, IconGap);
@@ -178,7 +181,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
-        // AutoSizeToContent early-returns before a handle exists, so re-measure here on DPI change.
+        /// <inheritdoc />
         protected override void OnDpiChangedAfterParent(EventArgs e) {
             base.OnDpiChangedAfterParent(e);
             AutoSizeToContent();
@@ -193,7 +196,9 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); _hovered = true; Invalidate(); }
+        /// <inheritdoc />
         protected override void OnMouseLeave(EventArgs e) {
             base.OnMouseLeave(e);
             _hovered = false;
@@ -202,6 +207,7 @@ namespace Material3.WinForms.Controls {
             Invalidate();
         }
 
+        /// <inheritdoc />
         protected override void OnMouseMove(MouseEventArgs e) {
             base.OnMouseMove(e);
             if (ShowsRemove) {
@@ -213,6 +219,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnMouseDown(MouseEventArgs e) {
             base.OnMouseDown(e);
             if (e.Button == MouseButtons.Left) {
@@ -221,6 +228,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnMouseUp(MouseEventArgs e) {
             base.OnMouseUp(e);
             if (e.Button != MouseButtons.Left || !_pressed) {
@@ -232,16 +240,16 @@ namespace Material3.WinForms.Controls {
                 return;
             }
             if (ShowsRemove && RemoveRect.Contains(e.Location)) {
-                // Host disposes the chip inside this handler, so don't touch the control afterwards.
                 Removed?.Invoke(this, EventArgs.Empty);
                 return;
             }
             if (_kind == MaterialChipKind.Filter) {
-                Selected = !Selected;
+                IsSelected = !IsSelected;
             }
             Invalidate();
         }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -252,8 +260,6 @@ namespace Material3.WinForms.Controls {
 
             AccentColors ac = _accent.GetValueOrDefault();
             bool accent = _accent.HasValue;
-            // A disabled accent chip drops its fill so it reads as inert (muted text, outlined)
-            // instead of a vivid container sitting under greyed-out text.
             Color container =
                 accent && Enabled ? ac.Container
                 : ShowsCheck ? MaterialColors.SecondaryContainer
@@ -267,8 +273,6 @@ namespace Material3.WinForms.Controls {
                 : accent ? ac.Content
                 : ShowsCheck ? MaterialColors.OnSecondaryContainer : MaterialColors.OnSurface;
 
-            // A non-opaque container (outline chips, faint accents) needs a border to read; an accent
-            // with an explicit outline always draws one, even over an opaque fill.
             Color? outline = null;
             if (container.A < 255 || (accent && Enabled && ac.Outline.HasValue)) {
                 outline = !Enabled ? MaterialColors.OnSurfaceMuted
@@ -280,7 +284,7 @@ namespace Material3.WinForms.Controls {
             if (Enabled && (_hovered || _pressed)) {
                 double layer = _pressed ? StateLayers.Pressed : StateLayers.Hover;
                 Color baseColor = container.A > 0 ? container : ResolveParentColor();
-                stateOverlay = ColorScheme.Overlay(baseColor, label, layer);
+                stateOverlay = ArgbExtensions.Overlay(baseColor, label, layer);
             }
 
             string? leadingGlyph = null;
@@ -309,7 +313,7 @@ namespace Material3.WinForms.Controls {
                     }
                 }
                 int closePx = Dpi.Scale(this, 14);
-                Bitmap close = MaterialIconRenderer.Get(MaterialIcons.Close, closePx, content);
+                Bitmap close = MaterialIconRenderer.Render(MaterialIcons.Close, closePx, content);
                 g.DrawImageUnscaled(close, remove.X + (remove.Width - closePx) / 2, remove.Y + (remove.Height - closePx) / 2);
             }
         }

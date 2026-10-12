@@ -23,8 +23,10 @@ namespace Material3.WinForms.Controls {
         private bool _dragging;
         private bool _hovered;
 
+        /// <summary>Raised when the value changes.</summary>
         public event EventHandler? ValueChanged;
 
+        /// <summary>Initializes a new instance of the <see cref="MaterialSlider"/> class.</summary>
         public MaterialSlider() {
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
@@ -40,11 +42,10 @@ namespace Material3.WinForms.Controls {
             TabStop = true;
             ThemeHook.Attach(this, Invalidate);
 
-            // The handle eases toward the value instead of snapping, so dragging and click-to-position
-            // glide. ValueChanged still fires immediately.
             _handle = new AnimatedValue(this, factor: 0.4f, threshold: 0.5f);
         }
 
+        /// <inheritdoc />
         protected override void Dispose(bool disposing) {
             if (disposing) {
                 _handle.Dispose();
@@ -52,17 +53,19 @@ namespace Material3.WinForms.Controls {
             base.Dispose(disposing);
         }
 
-        // Own the height so the DPI-scaled halo isn't clipped: AutoScale only sizes controls present at the form's scaling pass.
+        /// <inheritdoc />
         protected override void OnHandleCreated(EventArgs e) {
             base.OnHandleCreated(e);
             Height = Dpi.Scale(this, StateLayerRadius * 2);
         }
 
+        /// <inheritdoc />
         protected override void OnDpiChangedAfterParent(EventArgs e) {
             base.OnDpiChangedAfterParent(e);
             Height = Dpi.Scale(this, StateLayerRadius * 2);
         }
 
+        /// <summary>The lower bound of the slider range.</summary>
         [Category("Material Design")]
         [Description("The lower bound of the slider range.")]
         [DefaultValue(0)]
@@ -78,6 +81,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <summary>The upper bound of the slider range.</summary>
         [Category("Material Design")]
         [Description("The upper bound of the slider range.")]
         [DefaultValue(100)]
@@ -93,14 +97,16 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <summary>When true, the handle eases toward the value; when false, it snaps immediately.</summary>
         [Category("Material Design")]
         [Description("When true, the handle eases toward the value; when false, it snaps immediately.")]
         [DefaultValue(true)]
-        public bool Animated {
+        public bool IsAnimated {
             get => _handle.Animated;
             set => _handle.Animated = value;
         }
 
+        /// <summary>The current slider value within the range.</summary>
         [Category("Material Design")]
         [Description("The current slider value within the range.")]
         [DefaultValue(0)]
@@ -128,6 +134,7 @@ namespace Material3.WinForms.Controls {
 
         private int Step => Math.Max(1, (_maximum - _minimum) / 10);
 
+        /// <inheritdoc />
         protected override void OnMouseDown(MouseEventArgs e) {
             base.OnMouseDown(e);
             if (e.Button == MouseButtons.Left) {
@@ -137,6 +144,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnMouseMove(MouseEventArgs e) {
             base.OnMouseMove(e);
             if (_dragging) {
@@ -144,6 +152,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnMouseUp(MouseEventArgs e) {
             base.OnMouseUp(e);
             if (e.Button == MouseButtons.Left && _dragging) {
@@ -152,19 +161,21 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnMouseEnter(EventArgs e) {
             base.OnMouseEnter(e);
             _hovered = true;
             Invalidate();
         }
 
+        /// <inheritdoc />
         protected override void OnMouseLeave(EventArgs e) {
             base.OnMouseLeave(e);
             _hovered = false;
             Invalidate();
         }
 
-        // Arrow/Home/End/PageUp/Down must reach the control instead of moving focus.
+        /// <inheritdoc />
         protected override bool IsInputKey(Keys keyData) {
             switch (keyData) {
                 case Keys.Left:
@@ -181,6 +192,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnKeyDown(KeyEventArgs e) {
             base.OnKeyDown(e);
             switch (e.KeyCode) {
@@ -213,6 +225,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -244,7 +257,6 @@ namespace Material3.WinForms.Controls {
                 }
             }
 
-            // Halo only on direct interaction — no resting/focus glow.
             double overlay = _dragging ? StateLayers.Pressed : _hovered ? StateLayers.Hover : 0.0;
             if (overlay > 0.0) {
                 using (var brush = new SolidBrush(Color.FromArgb((int)(overlay * 255), MaterialColors.Primary))) {

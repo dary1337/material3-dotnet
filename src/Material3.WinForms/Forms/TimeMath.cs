@@ -13,7 +13,6 @@ namespace Material3.WinForms.Forms {
             hour = Math.Max(minHour, Math.Min(maxHour, hour));
             minute = Math.Max(0, Math.Min(59, minute));
 
-            // 12 AM → 0, 12 PM → 12, 1–11 PM → +12. (hour % 12) folds the 12 onto 0.
             int hour24 = use24Hour ? hour : (hour % 12) + (isPm ? 12 : 0);
             return (hour, minute, new TimeSpan(hour24, minute, 0));
         }

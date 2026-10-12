@@ -18,11 +18,13 @@ namespace Material3.WinForms.Controls {
     /// <summary>Rounded Material 3 card. Pick the container style via <see cref="Variant"/>.</summary>
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
-    public class MaterialCard : RoundedPanel {
+    public class MaterialCard : MaterialRoundedPanel {
         private MaterialCardVariant _variant = MaterialCardVariant.Outlined;
 
+        /// <summary>Initializes a new instance of the <see cref="MaterialCard"/> class.</summary>
         public MaterialCard() : this(Shape.Medium) { }
 
+        /// <summary>Creates a card with the given corner radius.</summary>
         public MaterialCard(int cornerRadius)
             : base(cornerRadius) {
             Padding = Spacing.Card;
@@ -30,6 +32,7 @@ namespace Material3.WinForms.Controls {
             ThemeHook.Attach(this, ApplyTheme);
         }
 
+        /// <summary>The M3 card container style: elevated, filled or outlined.</summary>
         [Category("Material Design")]
         [Description("The M3 card container style: elevated, filled or outlined.")]
         [DefaultValue(MaterialCardVariant.Outlined)]
@@ -44,22 +47,20 @@ namespace Material3.WinForms.Controls {
             }
         }
 
-        // Virtual so subclasses with selection/hover surface logic re-resolve their own colors.
+        /// <summary>Repaints the card from the current scheme; called on every theme change.</summary>
         protected virtual void ApplyTheme() {
             switch (_variant) {
                 case MaterialCardVariant.Elevated:
-                    // Tonal surface, no drop-shadow: a shadow's inner margin would shrink the card
-                    // versus flat/outlined variants, which all fill their full bounds.
                     BackColor = Elevation.TintedSurface(MaterialColors.SurfaceContainerLow, 1);
-                    SetOutline(Color.Transparent);
+                    OutlineColor = Color.Transparent;
                     break;
                 case MaterialCardVariant.Filled:
                     BackColor = MaterialColors.SurfaceContainerHighest;
-                    SetOutline(Color.Transparent);
+                    OutlineColor = Color.Transparent;
                     break;
                 default:
                     BackColor = MaterialColors.Surface;
-                    SetOutline(MaterialColors.OutlineVariant);
+                    OutlineColor = MaterialColors.OutlineVariant;
                     break;
             }
             Invalidate();

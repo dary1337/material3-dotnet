@@ -8,10 +8,6 @@
     <RootNamespace>Material3.WinForms</RootNamespace>
     <AssemblyName>Material3.WinForms</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <!-- CS8765/8767: net472 reference assemblies carry no nullability annotations, so every
-         Control/Form override would warn. CS1591: member-level XML docs are still being
-         written; class-level docs exist everywhere — re-enable before 1.0. -->
-    <NoWarn>$(NoWarn);CS8765;CS8767;CS1591</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Label="Package">
@@ -30,26 +26,18 @@
 
   <ItemGroup>
     <None Include="..\..\docs\nuget\WinForms.md" Pack="true" PackagePath="\README.md" />
-    <!-- Internal calendar/grid math is unit tested without exposing it as public API. -->
     <InternalsVisibleTo Include="Material3.WinForms.Tests" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Shared HCT dynamic-colour engine. WinForms surfaces it as System.Drawing.Color via thin adapters. -->
     <ProjectReference Include="..\Material3.Core\Material3.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Material Symbols shipped as embedded SVGs; MaterialIconRenderer locates them by
-         the ".icons.{key}.svg" resource-name suffix. -->
     <EmbeddedResource Include="Resources\icons\*.svg" />
-    <!-- Shared 16x16 toolbox icon; controls point at it via [ToolboxBitmap(typeof(Dpi), "m3toolbox.png")]. -->
     <EmbeddedResource Include="m3toolbox.png" />
   </ItemGroup>
 
-  <!-- Design-time support (ControlDesigner / SmartTags / UITypeEditor) lives in System.Design,
-       which only exists in the in-process .NET Framework designer. net8 designer support would
-       need a separate out-of-process design-time assembly (see the Design/ files, all #if NET472). -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
     <Reference Include="System.Design" />
   </ItemGroup>

@@ -14,8 +14,9 @@ namespace Material3.WinForms.Controls {
     /// </summary>
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
-    public sealed class SkeletonCard : RoundedPanel {
-        public SkeletonCard()
+    public sealed class MaterialSkeletonCard : MaterialRoundedPanel {
+        /// <summary>Initializes a new instance of the <see cref="MaterialSkeletonCard"/> class.</summary>
+        public MaterialSkeletonCard()
             : base(Shape.Medium) {
             MinimumSize = new Size(0, ComponentSizes.ListItemMinHeight);
             Height = ComponentSizes.ListItemMinHeight;
@@ -26,10 +27,11 @@ namespace Material3.WinForms.Controls {
 
         private void ApplyTheme() {
             BackColor = MaterialColors.SurfaceContainer;
-            SetOutline(MaterialColors.OutlineVariant);
+            OutlineColor = MaterialColors.OutlineVariant;
             Invalidate();
         }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             base.OnPaint(e);
             Graphics g = e.Graphics;
@@ -38,7 +40,7 @@ namespace Material3.WinForms.Controls {
             int padX = Dpi.Scale(this, 16);
             int iconSize = Dpi.Scale(this, 36);
             int textLeft = padX + iconSize + Dpi.Scale(this, 12);
-            int rowHeight = Dpi.Scale(this, 40); // header(14) + gap(10) + second line(16)
+            int rowHeight = Dpi.Scale(this, 40);
             int rowTop = (Height - rowHeight) / 2;
             int iconTop = (Height - iconSize) / 2;
             int secondLineTop = rowTop + Dpi.Scale(this, 24);

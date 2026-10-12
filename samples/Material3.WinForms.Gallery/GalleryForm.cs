@@ -6,13 +6,13 @@ using System.Drawing.Imaging;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Material3.Core;
 using Material3.WinForms;
 using Material3.WinForms.Controls;
 using Material3.WinForms.Drawing;
 using Material3.WinForms.Forms;
 using Material3.WinForms.Theming;
 using Material3.WinForms.Tokens;
-using SchemeVariant = Material3.Core.SchemeVariant;
 using Material3.WinForms.Typography;
 
 namespace Material3.WinForms.Gallery {
@@ -26,11 +26,11 @@ namespace Material3.WinForms.Gallery {
         private readonly Panel _nav;
         private readonly MaterialScrollPanel _content;
         private readonly MaterialButton _modeToggle;
-        private readonly DropdownSelect _seedSelect;
-        private readonly DropdownSelect _variantSelect;
-        private readonly SoftLabel _hueLabel;
+        private readonly MaterialDropdownSelect _seedSelect;
+        private readonly MaterialDropdownSelect _variantSelect;
+        private readonly MaterialLabel _hueLabel;
         private readonly MaterialSlider _hueSlider;
-        private readonly List<RoundedButton> _navButtons = new List<RoundedButton>();
+        private readonly List<MaterialRoundedButton> _navButtons = new List<MaterialRoundedButton>();
         private readonly Timer _relayout;
         private readonly Timer _navDebounce;
         private readonly Timer _hueThrottle;
@@ -82,7 +82,7 @@ namespace Material3.WinForms.Gallery {
             _modeToggle = new MaterialButton {
                 Variant = MaterialButtonVariant.Tonal,
                 Text = "Light theme",
-                IconGlyph = MaterialIcons.Tips,
+                Glyph = MaterialIcons.Tips,
                 AutoSize = false,
             };
             _modeToggle.Click += (s, e) => {
@@ -90,7 +90,7 @@ namespace Material3.WinForms.Gallery {
                 _modeToggle.Text = ThemeManager.IsDark ? "Light theme" : "Dark theme";
             };
 
-            _seedSelect = new DropdownSelect();
+            _seedSelect = new MaterialDropdownSelect();
             _seedSelect.AddItem("Platinum (grey)", Color.FromArgb(0x8E, 0x8C, 0x97));
             _seedSelect.AddItem("Google blue", Color.FromArgb(0x42, 0x85, 0xF4));
             _seedSelect.AddItem("Forest green", Color.FromArgb(0x2E, 0x7D, 0x32));
@@ -105,22 +105,22 @@ namespace Material3.WinForms.Gallery {
                 }
             };
 
-            _variantSelect = new DropdownSelect();
+            _variantSelect = new MaterialDropdownSelect();
             _variantSelect.AddItem("Neutral", SchemeVariant.Neutral);
             _variantSelect.AddItem("Tonal spot (M3 default)", SchemeVariant.TonalSpot);
             _variantSelect.AddItem("Vibrant", SchemeVariant.Vibrant);
             _variantSelect.SelectedIndexChanged += (s, e) => ApplySeed();
 
-            _hueLabel = new SoftLabel {
+            _hueLabel = new MaterialLabel {
                 Text = "Seed hue — drag to recolor",
-                Font = MaterialType.LabelMedium,
+                Font = TypeScale.LabelMedium,
                 ForeColor = MaterialColors.OnSurfaceVariant,
                 // Fixed single-line bounds (AutoSize fights the L+R anchor); ellipsize rather than wrap
                 // so it stays tight to the slider and never clips a second line in a narrow rail.
                 AutoSize = false,
                 AutoEllipsis = true,
             };
-            _hueSlider = new MaterialSlider { Minimum = 0, Maximum = 360, Value = (int)BaselineSeed.GetHue(), Animated = false };
+            _hueSlider = new MaterialSlider { Minimum = 0, Maximum = 360, Value = (int)BaselineSeed.GetHue(), IsAnimated = false };
 
             // Apply the recolor ~30×/s, not once per pixel: the full-window repaint is what starved the
             // slider's own paint. Stops itself when no new hue arrived since the last tick.
@@ -158,7 +158,7 @@ namespace Material3.WinForms.Gallery {
             Controls.Add(wrap);
             Controls.Add(_titleBar);
 
-            WindowChrome.Apply(this);
+            DwmWindow.ThemeCaption(this);
 
             BuildNav();
             ApplyThemeToChrome();
@@ -199,7 +199,7 @@ namespace Material3.WinForms.Gallery {
 
         private void RequestPage(string page) {
             _pendingPage = page;
-            foreach (RoundedButton b in _navButtons) {
+            foreach (MaterialRoundedButton b in _navButtons) {
                 StyleNavButton(b, (string)b.Tag! == page);
             }
             _navDebounce.Stop();
@@ -256,7 +256,7 @@ namespace Material3.WinForms.Gallery {
         // Single seed source: a variant change re-applies the active seed instead of snapping to the preset.
         private void ApplySeed() {
             Color seed = _currentSeed ?? (_seedSelect.SelectedTag as Color? ?? BaselineSeed);
-            ThemeManager.Theme = MaterialTheme.FromSeed(seed, CurrentVariant());
+            ThemeManager.Theme = MaterialTheme.FromSeed(seed.ToCore(), CurrentVariant());
         }
 
         // Move the thumb to the preset's hue; the guard stops ValueChanged from re-recoloring from it.
@@ -274,7 +274,7 @@ namespace Material3.WinForms.Gallery {
             _content.BackColor = MaterialColors.Surface;
             // The hue label is in the nav, not the rebuilt content page, so refresh its baked ForeColor here.
             _hueLabel.ForeColor = MaterialColors.OnSurfaceVariant;
-            foreach (RoundedButton b in _navButtons) {
+            foreach (MaterialRoundedButton b in _navButtons) {
                 StyleNavButton(b, (string)b.Tag! == _currentPage);
             }
         }
@@ -295,12 +295,12 @@ namespace Material3.WinForms.Gallery {
                 PageColors, PageTypography, PageElevation, PageButtons, PageInputs, PageSelection,
                 PageCards, PageProgress, PageNavigation, PageOverlays,
             }) {
-                var button = new RoundedButton(Shape.Full) {
+                var button = new MaterialRoundedButton(Shape.Full) {
                     AutoSize = false,
                     Text = "  " + page,
                     Tag = page,
                     TextAlign = ContentAlignment.MiddleLeft,
-                    Font = MaterialType.LabelLarge,
+                    Font = TypeScale.LabelLarge,
                     Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
                 };
                 button.Click += (s, e) => RequestPage((string)((Control)s!).Tag!);
@@ -338,7 +338,7 @@ namespace Material3.WinForms.Gallery {
             _hueSlider.SetBounds(pad, y, width, Sc(32));
             y += Sc(32) + Sc(Spacing.Space4);
 
-            foreach (RoundedButton button in _navButtons) {
+            foreach (MaterialRoundedButton button in _navButtons) {
                 button.SetBounds(pad, y, width, Sc(38));
                 y += Sc(42);
             }
@@ -349,13 +349,13 @@ namespace Material3.WinForms.Gallery {
             LayoutNav();
         }
 
-        private void StyleNavButton(RoundedButton button, bool selected) {
+        private void StyleNavButton(MaterialRoundedButton button, bool selected) {
             Color container = selected ? MaterialColors.SecondaryContainer : MaterialColors.Surface;
             Color onContainer = selected ? MaterialColors.OnSecondaryContainer : MaterialColors.OnSurface;
             button.BackColor = container;
             button.ForeColor = selected ? MaterialColors.OnSecondaryContainer : MaterialColors.OnSurfaceVariant;
             // Hover layers over the item's own container so the selected pill keeps its colour.
-            button.ChangeHoverColor(ColorScheme.Overlay(container, onContainer, StateLayers.Hover));
+            button.HoverColor = ArgbExtensions.Overlay(container, onContainer, StateLayers.Hover);
         }
 
         private void ShowPage(string page) {
@@ -364,7 +364,7 @@ namespace Material3.WinForms.Gallery {
             bool pageChanged = page != _currentPage || _content.ContentPanel.Controls.Count == 0;
             _currentPage = page;
             _builtDark = ThemeManager.IsDark;
-            foreach (RoundedButton b in _navButtons) {
+            foreach (MaterialRoundedButton b in _navButtons) {
                 StyleNavButton(b, (string)b.Tag! == page);
             }
 
@@ -406,7 +406,7 @@ namespace Material3.WinForms.Gallery {
 
             // Live role getters so the swatches recolor with the theme (e.g. while the hue slider drags)
             // without rebuilding the page.
-            static Func<Color> Role(Func<ColorScheme, Color> get) => () => get(ThemeManager.Scheme);
+            static Func<Color> Role(Func<ColorScheme, Argb> get) => () => get(ThemeManager.Scheme).ToGdi();
             b.SwatchGroup("Primary", new[] {
                 ("Primary", Role(s => s.Primary), Role(s => s.OnPrimary)),
                 ("OnPrimary", Role(s => s.OnPrimary), Role(s => s.Primary)),
@@ -450,21 +450,21 @@ namespace Material3.WinForms.Gallery {
             b.Caption("All 15 M3 styles on Segoe UI; sizes are spec dp × 0.75 pt. Medium weights use Segoe UI Semibold.");
 
             (string, TextStyle)[] styles = {
-                ("Display Large", MaterialType.DisplayLargeStyle),
-                ("Display Medium", MaterialType.DisplayMediumStyle),
-                ("Display Small", MaterialType.DisplaySmallStyle),
-                ("Headline Large", MaterialType.HeadlineLargeStyle),
-                ("Headline Medium", MaterialType.HeadlineMediumStyle),
-                ("Headline Small", MaterialType.HeadlineSmallStyle),
-                ("Title Large", MaterialType.TitleLargeStyle),
-                ("Title Medium", MaterialType.TitleMediumStyle),
-                ("Title Small", MaterialType.TitleSmallStyle),
-                ("Body Large", MaterialType.BodyLargeStyle),
-                ("Body Medium", MaterialType.BodyMediumStyle),
-                ("Body Small", MaterialType.BodySmallStyle),
-                ("Label Large", MaterialType.LabelLargeStyle),
-                ("Label Medium", MaterialType.LabelMediumStyle),
-                ("Label Small", MaterialType.LabelSmallStyle),
+                ("Display Large", TypeScale.DisplayLargeStyle),
+                ("Display Medium", TypeScale.DisplayMediumStyle),
+                ("Display Small", TypeScale.DisplaySmallStyle),
+                ("Headline Large", TypeScale.HeadlineLargeStyle),
+                ("Headline Medium", TypeScale.HeadlineMediumStyle),
+                ("Headline Small", TypeScale.HeadlineSmallStyle),
+                ("Title Large", TypeScale.TitleLargeStyle),
+                ("Title Medium", TypeScale.TitleMediumStyle),
+                ("Title Small", TypeScale.TitleSmallStyle),
+                ("Body Large", TypeScale.BodyLargeStyle),
+                ("Body Medium", TypeScale.BodyMediumStyle),
+                ("Body Small", TypeScale.BodySmallStyle),
+                ("Label Large", TypeScale.LabelLargeStyle),
+                ("Label Medium", TypeScale.LabelMediumStyle),
+                ("Label Small", TypeScale.LabelSmallStyle),
             };
             foreach ((string name, TextStyle style) in styles) {
                 b.TypeSample(name, style);
@@ -492,32 +492,32 @@ namespace Material3.WinForms.Gallery {
             b.Header("Icon buttons");
             b.Caption("Standard / Filled / Tonal / Outlined; the second row toggles.");
             b.Flow(flow => {
-                foreach (MaterialIconButtonStyle style in new[] {
-                    MaterialIconButtonStyle.Standard, MaterialIconButtonStyle.Filled,
-                    MaterialIconButtonStyle.Tonal, MaterialIconButtonStyle.Outlined,
+                foreach (MaterialIconButtonVariant style in new[] {
+                    MaterialIconButtonVariant.Standard, MaterialIconButtonVariant.Filled,
+                    MaterialIconButtonVariant.Tonal, MaterialIconButtonVariant.Outlined,
                 }) {
                     flow.Controls.Add(new MaterialIconButton {
-                        ButtonStyle = style,
-                        IconGlyph = MaterialIcons.Settings,
+                        Variant = style,
+                        Glyph = MaterialIcons.Settings,
                         Margin = new Padding(0, 0, Spacing.Space2, 0),
                     });
                 }
                 flow.Controls.Add(new MaterialIconButton {
-                    ButtonStyle = MaterialIconButtonStyle.Tonal,
-                    IconGlyph = MaterialIcons.Copy,
+                    Variant = MaterialIconButtonVariant.Tonal,
+                    Glyph = MaterialIcons.Copy,
                     Margin = new Padding(0, 0, Spacing.Space2, 0),
                 });
             });
             b.Flow(flow => {
-                foreach (MaterialIconButtonStyle style in new[] {
-                    MaterialIconButtonStyle.Standard, MaterialIconButtonStyle.Filled,
-                    MaterialIconButtonStyle.Tonal, MaterialIconButtonStyle.Outlined,
+                foreach (MaterialIconButtonVariant style in new[] {
+                    MaterialIconButtonVariant.Standard, MaterialIconButtonVariant.Filled,
+                    MaterialIconButtonVariant.Tonal, MaterialIconButtonVariant.Outlined,
                 }) {
                     flow.Controls.Add(new MaterialIconButton {
-                        ButtonStyle = style,
-                        IconGlyph = MaterialIcons.CheckFilled,
+                        Variant = style,
+                        Glyph = MaterialIcons.CheckFilled,
                         IsToggle = true,
-                        Checked = style == MaterialIconButtonStyle.Filled,
+                        Checked = style == MaterialIconButtonVariant.Filled,
                         Margin = new Padding(0, 0, Spacing.Space2, 0),
                     });
                 }
@@ -526,10 +526,10 @@ namespace Material3.WinForms.Gallery {
             b.Header("FAB");
             b.Caption("Small / Standard / Large and the extended FAB; elevation drops while pressed.");
             b.Flow(flow => {
-                flow.Controls.Add(new MaterialFab { FabSize = MaterialFabSize.Small, IconGlyph = MaterialIcons.Check });
-                flow.Controls.Add(new MaterialFab { FabSize = MaterialFabSize.Standard, IconGlyph = MaterialIcons.Download });
-                flow.Controls.Add(new MaterialFab { FabSize = MaterialFabSize.Large, IconGlyph = MaterialIcons.Settings });
-                flow.Controls.Add(new MaterialFab { IconGlyph = MaterialIcons.OpenInNew, Text = "Extended FAB" });
+                flow.Controls.Add(new MaterialFab { FabSize = MaterialFabSize.Small, Glyph = MaterialIcons.Check });
+                flow.Controls.Add(new MaterialFab { FabSize = MaterialFabSize.Standard, Glyph = MaterialIcons.Download });
+                flow.Controls.Add(new MaterialFab { FabSize = MaterialFabSize.Large, Glyph = MaterialIcons.Settings });
+                flow.Controls.Add(new MaterialFab { Glyph = MaterialIcons.OpenInNew, Text = "Extended FAB" });
             });
         }
 
@@ -541,7 +541,7 @@ namespace Material3.WinForms.Gallery {
                 Variant = MaterialTextFieldVariant.Filled,
                 LabelText = "Display name",
                 SupportingText = "Visible to other users",
-                LeadingIcon = MaterialIcons.Info,
+                LeadingGlyph = MaterialIcons.Info,
             };
             b.Add(filled);
             b.Gap(Spacing.Space3);
@@ -560,7 +560,7 @@ namespace Material3.WinForms.Gallery {
                 UseSystemPasswordChar = true,
                 IsError = true,
                 ErrorText = "At least 8 characters required",
-                TrailingIcon = MaterialIcons.ErrorFilled,
+                TrailingGlyph = MaterialIcons.ErrorFilled,
             };
             error.Text = "1234";
             b.Add(error);
@@ -603,8 +603,8 @@ namespace Material3.WinForms.Gallery {
             b.Header("Chips");
             b.Caption("Assist · Filter (selectable) · Input (removable) · Suggestion.");
             b.Flow(flow => {
-                flow.Controls.Add(new MaterialChip { Kind = MaterialChipKind.Assist, Text = "Add to calendar", LeadingIcon = MaterialIcons.Info });
-                flow.Controls.Add(new MaterialChip { Kind = MaterialChipKind.Filter, Text = "Favorites", Selected = true });
+                flow.Controls.Add(new MaterialChip { Kind = MaterialChipKind.Assist, Text = "Add to calendar", LeadingGlyph = MaterialIcons.Info });
+                flow.Controls.Add(new MaterialChip { Kind = MaterialChipKind.Filter, Text = "Favorites", IsSelected = true });
                 flow.Controls.Add(new MaterialChip { Kind = MaterialChipKind.Filter, Text = "Recent" });
                 var input = new MaterialChip { Kind = MaterialChipKind.Input, Text = "Team member" };
                 input.Removed += (s, e) => input.Parent?.Controls.Remove(input);
@@ -617,7 +617,7 @@ namespace Material3.WinForms.Gallery {
             MaterialChip Accent(string text, string? icon, Color container, Color content) {
                 var chip = new MaterialChip { Kind = MaterialChipKind.Suggestion, Text = text };
                 if (icon != null) {
-                    chip.LeadingIcon = icon;
+                    chip.LeadingGlyph = icon;
                 }
                 chip.SetAccent(container, content);
                 return chip;
@@ -632,7 +632,7 @@ namespace Material3.WinForms.Gallery {
             b.Flow(flow => {
                 // Outlined brand chip: transparent fill, brand color in text + border.
                 Color brandColor = Color.FromArgb(0x66, 0xC0, 0xF4);
-                var brand = new MaterialChip { Kind = MaterialChipKind.Suggestion, Text = "Cloud", LeadingIcon = MaterialIcons.Cloud };
+                var brand = new MaterialChip { Kind = MaterialChipKind.Suggestion, Text = "Cloud", LeadingGlyph = MaterialIcons.Cloud };
                 brand.SetAccent(Color.Transparent, brandColor, brandColor);
                 flow.Controls.Add(brand);
 
@@ -641,7 +641,7 @@ namespace Material3.WinForms.Gallery {
                 custom.SetAccent(violet, Color.White);
                 flow.Controls.Add(custom);
 
-                var pill = new MaterialChip { Kind = MaterialChipKind.Suggestion, Text = "Beta", Pill = true, LeadingIcon = MaterialIcons.Info };
+                var pill = new MaterialChip { Kind = MaterialChipKind.Suggestion, Text = "Beta", Pill = true, LeadingGlyph = MaterialIcons.Info };
                 pill.SetAccent(MaterialColors.TertiaryContainer, MaterialColors.OnTertiaryContainer);
                 flow.Controls.Add(pill);
             });
@@ -716,7 +716,7 @@ namespace Material3.WinForms.Gallery {
                         break;
                     default:
                         sub.Caption("Secondary tabs live inside content, not on the app bar.");
-                        var secondary = new MaterialTabs { TabStyle = MaterialTabStyle.Secondary };
+                        var secondary = new MaterialTabs { Variant = MaterialTabVariant.Secondary };
                         secondary.AddTab("Comments");
                         secondary.AddTab("Activity");
                         secondary.AddTab("Settings");
@@ -738,9 +738,9 @@ namespace Material3.WinForms.Gallery {
                 (MaterialCardVariant.Outlined, "Outlined — Surface with an OutlineVariant hairline."),
             }) {
                 var card = new MaterialCard { Variant = variant, Height = 84 };
-                card.Controls.Add(new SoftLabel {
+                card.Controls.Add(new MaterialLabel {
                     Text = note,
-                    Font = MaterialType.BodyMedium,
+                    Font = TypeScale.BodyMedium,
                     ForeColor = MaterialColors.OnSurfaceVariant,
                     AutoSize = false,
                     Dock = DockStyle.Fill,
@@ -753,20 +753,20 @@ namespace Material3.WinForms.Gallery {
             var item1 = new MaterialListItem {
                 Headline = "Quarterly report.pdf",
                 SupportingText = "Shared by Alex · 2.4 MB",
-                LeadingIcon = MaterialIcons.Folder,
+                LeadingGlyph = MaterialIcons.Folder,
                 TrailingText = "12:40",
             };
             var divider = new MaterialDivider { Inset = 16 };
             var item2 = new MaterialListItem {
                 Headline = "Build pipeline",
                 SupportingText = "Last run 14 minutes ago",
-                LeadingIcon = MaterialIcons.DeployedCode,
-                TrailingIcon = MaterialIcons.ChevronDown,
-                Selected = true,
+                LeadingGlyph = MaterialIcons.DeployedCode,
+                TrailingGlyph = MaterialIcons.ChevronDown,
+                IsSelected = true,
             };
             var item3 = new MaterialListItem {
                 Headline = "Single-line item",
-                LeadingIcon = MaterialIcons.Info,
+                LeadingGlyph = MaterialIcons.Info,
             };
             b.Add(item1);
             b.Gap(0);
@@ -785,15 +785,15 @@ namespace Material3.WinForms.Gallery {
                 "Minimal install", "Core files only, fastest download",
                 fallbackGlyph: MaterialIcons.Download) { DetailText = "350 MB", Height = 68 };
             second.SetAccentChip("needs update", () => MaterialColors.WarningContainer, () => MaterialColors.OnWarningContainer, glyph: MaterialIcons.Warning);
-            first.SelectedChanged += c => second.SetSelected(false);
-            second.SelectedChanged += c => first.SetSelected(false);
-            first.SetSelected(true);
+            first.SelectedChanged += c => second.IsSelected = false;
+            second.SelectedChanged += c => first.IsSelected = false;
+            first.IsSelected = true;
             b.Add(first);
             b.Gap(Spacing.Space2);
             b.Add(second);
 
             b.Header("Step checklist");
-            var checklist = new StepChecklist();
+            var checklist = new MaterialStepChecklist();
             checklist.SetSteps(new[] { "Download package", "Verify checksum", "Extract files", "Create shortcuts" });
             checklist.ActiveIndex = 2;
             b.Add(checklist);
@@ -821,14 +821,14 @@ namespace Material3.WinForms.Gallery {
             driver.ValueChanged += (s, e) => circular.Value = driver.Value;
             b.Flow(flow => {
                 flow.Controls.Add(circular);
-                flow.Controls.Add(new MaterialCircularProgress { Indeterminate = true });
+                flow.Controls.Add(new MaterialCircularProgress { IsIndeterminate = true });
             });
 
             b.Header("Skeleton loading");
             b.Caption("Shimmer placeholder shown while content loads.");
-            b.Add(new SkeletonCard { Height = b.Scale(ComponentSizes.ListItemMinHeight) });
+            b.Add(new MaterialSkeletonCard { Height = b.Scale(ComponentSizes.ListItemMinHeight) });
             b.Gap(Spacing.Space2);
-            b.Add(new SkeletonCard { Height = b.Scale(ComponentSizes.ListItemMinHeight) });
+            b.Add(new MaterialSkeletonCard { Height = b.Scale(ComponentSizes.ListItemMinHeight) });
 
             b.Gap(Spacing.Space4);
             b.Caption("Or compose MaterialSkeleton blocks for any layout — here a media card:");
@@ -854,7 +854,7 @@ namespace Material3.WinForms.Gallery {
 
         private static void BuildOverlaysPage(PageBuilder b) {
             b.Header("Dropdown select");
-            var dropdown = new DropdownSelect();
+            var dropdown = new MaterialDropdownSelect();
             dropdown.AddItem("First option", 1);
             dropdown.AddItem("Second option", 2);
             dropdown.AddItem("Third option", 3);
@@ -871,7 +871,7 @@ namespace Material3.WinForms.Gallery {
                 };
                 openDialog.Click += (s, e) => {
                     using (var dialog = new MaterialDialog {
-                        IconGlyph = MaterialIcons.InfoFilled,
+                        Glyph = MaterialIcons.InfoFilled,
                         TitleText = "Reset gallery settings?",
                         BodyText = "Seed color, scheme variant and light/dark mode will return to their defaults. "
                             + "This only affects the gallery preview, not your application.",
@@ -887,7 +887,7 @@ namespace Material3.WinForms.Gallery {
                 var openMenu = new MaterialButton {
                     Variant = MaterialButtonVariant.Tonal,
                     Text = "Open menu",
-                    IconGlyph = MaterialIcons.ChevronDown,
+                    Glyph = MaterialIcons.ChevronDown,
                     AutoSize = true,
                     Margin = new Padding(0, 0, Spacing.Space2, Spacing.Space2),
                 };
@@ -926,9 +926,9 @@ namespace Material3.WinForms.Gallery {
             });
 
             b.Header("Pickers");
-            var pickResult = new SoftLabel {
+            var pickResult = new MaterialLabel {
                 Text = "Pick a date or time…",
-                Font = MaterialType.BodyMedium,
+                Font = TypeScale.BodyMedium,
                 ForeColor = MaterialColors.OnSurfaceVariant,
                 AutoSize = true,
             };
@@ -969,7 +969,7 @@ namespace Material3.WinForms.Gallery {
             b.Flow(flow => {
                 flow.Controls.Add(new MaterialBadge { Count = 3, Margin = new Padding(0, 4, Spacing.Space2, 0) });
                 flow.Controls.Add(new MaterialBadge { Count = 128, Margin = new Padding(0, 4, Spacing.Space2, 0) });
-                flow.Controls.Add(new MaterialBadge { DotMode = true, Margin = new Padding(0, 8, Spacing.Space2, 0) });
+                flow.Controls.Add(new MaterialBadge { IsDot = true, Margin = new Padding(0, 8, Spacing.Space2, 0) });
             });
         }
 
@@ -986,7 +986,7 @@ namespace Material3.WinForms.Gallery {
                         g.FillPath(brush, path);
                     }
                     int gpx = (int)(s * 0.56);
-                    Bitmap glyph = MaterialIconRenderer.Get(MaterialIcons.Layers, gpx, Color.White);
+                    Bitmap glyph = MaterialIconRenderer.Render(MaterialIcons.Layers, gpx, Color.White);
                     // Center on the glyph's painted bounds, not the nominal box: Material Symbols
                     // carry uneven internal padding, so geometric placement reads off-center.
                     Rectangle cb = ContentBounds(glyph);

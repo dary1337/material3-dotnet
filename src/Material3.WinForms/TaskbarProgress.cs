@@ -6,11 +6,17 @@ using System.Windows.Forms;
 namespace Material3.WinForms {
     /// <summary>Mirrors long-running progress to the Windows taskbar button via ITaskbarList3 (Win7+), no-op where unavailable.</summary>
     public static class TaskbarProgress {
+        /// <summary>The taskbar button's progress state.</summary>
         public enum State {
+            /// <summary>No progress shown.</summary>
             None = 0,
+            /// <summary>A marquee: work is running with no known fraction.</summary>
             Indeterminate = 0x1,
+            /// <summary>A green bar at the current value.</summary>
             Normal = 0x2,
+            /// <summary>A red bar at the current value.</summary>
             Error = 0x4,
+            /// <summary>A yellow bar at the current value.</summary>
             Paused = 0x8,
         }
 
@@ -22,6 +28,7 @@ namespace Material3.WinForms {
             AppDomain.CurrentDomain.ProcessExit += (_, __) => ReleaseInstance();
         }
 
+        /// <summary>Fills the taskbar button of <paramref name="owner"/> to <paramref name="percent"/>, clamped to 0â€“100.</summary>
         public static void SetValue(IWin32Window owner, int percent) {
             if (!IsOwnerUsable(owner)) return;
             if (percent < 0) percent = 0;
@@ -32,11 +39,11 @@ namespace Material3.WinForms {
                 tb.SetProgressValue(owner.Handle, (ulong)percent, 100UL);
             }
             catch (COMException) {
-                // Taskbar host can disappear (explorer restart); retry on next call.
             }
             catch (ObjectDisposedException) { }
         }
 
+        /// <summary>Switches the taskbar button of <paramref name="owner"/> to <paramref name="state"/>.</summary>
         public static void SetState(IWin32Window owner, State state) {
             if (!IsOwnerUsable(owner)) return;
             ITaskbarList3? tb = TryGetInstance();
@@ -48,12 +55,11 @@ namespace Material3.WinForms {
             catch (ObjectDisposedException) { }
         }
 
+        /// <summary>Removes any progress from the taskbar button of <paramref name="owner"/>.</summary>
         public static void Clear(IWin32Window owner) {
             SetState(owner, State.None);
         }
 
-        // Accessing owner.Handle on a disposed control throws, and on an un-created one forces
-        // premature handle creation; gate on live state up front.
         private static bool IsOwnerUsable(IWin32Window owner) {
             return !(owner is Control control) || (!control.IsDisposed && control.IsHandleCreated);
         }
@@ -73,7 +79,6 @@ namespace Material3.WinForms {
                     return tb;
                 }
                 catch (Exception ex) {
-                    // ITaskbarList3 missing (server core / RDP / non-Windows shell) — no-op for the session.
                     Debug.WriteLine($"Material3.WinForms: ITaskbarList3 init failed, taskbar progress disabled. {ex}");
                     _initFailed = true;
                     return null;
@@ -98,15 +103,12 @@ namespace Material3.WinForms {
         [Guid("ea1afb91-9e28-4b86-90e9-9e9f8a5eefaf")]
         [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
         private interface ITaskbarList3 {
-            // ITaskbarList — methods must appear in vtable order, even if unused.
             void HrInit();
             void AddTab(IntPtr hwnd);
             void DeleteTab(IntPtr hwnd);
             void ActivateTab(IntPtr hwnd);
             void SetActiveAlt(IntPtr hwnd);
-            // ITaskbarList2
             void MarkFullscreenWindow(IntPtr hwnd, [MarshalAs(UnmanagedType.Bool)] bool fullscreen);
-            // ITaskbarList3 — the methods we actually use.
             void SetProgressValue(IntPtr hwnd, ulong completed, ulong total);
             void SetProgressState(IntPtr hwnd, uint state);
         }

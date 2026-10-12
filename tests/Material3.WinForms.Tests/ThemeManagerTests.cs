@@ -1,11 +1,10 @@
 using System;
 using System.Drawing;
+using Material3.Core;
 using Material3.WinForms.Theming;
 using Xunit;
 
 namespace Material3.WinForms.Tests {
-    // ThemeManager is global state; keep these tests in one collection so they never run in
-    // parallel with each other and always restore the default theme afterwards.
     [Collection("ThemeManager")]
     public class ThemeManagerTests : IDisposable {
         public void Dispose() {
@@ -24,7 +23,6 @@ namespace Material3.WinForms.Tests {
                 Assert.False(ThemeManager.Scheme.IsDark);
                 Assert.Equal(1, raised);
 
-                // No-op set must not spam repaints.
                 ThemeManager.IsDark = false;
                 Assert.Equal(1, raised);
             }
@@ -36,18 +34,18 @@ namespace Material3.WinForms.Tests {
         [Fact]
         public void ThemeSwap_ChangesSchemeColors() {
             ThemeManager.Apply(MaterialTheme.Platinum(), isDark: true);
-            Color platinumPrimary = ThemeManager.Scheme.Primary;
+            Argb platinumPrimary = ThemeManager.Scheme.Primary;
 
-            ThemeManager.Theme = MaterialTheme.FromSeed(Color.FromArgb(0x42, 0x85, 0xF4));
-            Assert.NotEqual(platinumPrimary.ToArgb(), ThemeManager.Scheme.Primary.ToArgb());
+            ThemeManager.Theme = MaterialTheme.FromSeed(Argb.FromArgb(0x42, 0x85, 0xF4));
+            Assert.NotEqual(platinumPrimary, ThemeManager.Scheme.Primary);
         }
 
         [Fact]
         public void Theme_PrebuildsBothSchemes() {
-            MaterialTheme theme = MaterialTheme.FromSeed(Color.FromArgb(0x2E, 0x7D, 0x32));
+            MaterialTheme theme = MaterialTheme.FromSeed(Argb.FromArgb(0x2E, 0x7D, 0x32));
             Assert.False(theme.LightScheme.IsDark);
             Assert.True(theme.DarkScheme.IsDark);
-            Assert.NotEqual(theme.LightScheme.Surface.ToArgb(), theme.DarkScheme.Surface.ToArgb());
+            Assert.NotEqual(theme.LightScheme.Surface, theme.DarkScheme.Surface);
         }
     }
 }

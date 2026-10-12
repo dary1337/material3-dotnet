@@ -23,8 +23,6 @@ namespace Material3.WinForms.Tests {
         public void OnColors_HaveReadableContrastWithTheirContainers(SchemeVariant variant) {
             CorePalette palette = CorePalette.FromSeed(Seed, variant);
             foreach (ColorScheme s in new[] { ColorScheme.Light(palette), ColorScheme.Dark(palette) }) {
-                // 40+ L* difference ≈ WCAG-ish 3:1 for large elements — the M3 tone pairs
-                // (40/100, 80/20, 90/10...) all clear this by design.
                 Assert.True(System.Math.Abs(Lstar(s.Primary) - Lstar(s.OnPrimary)) >= 40);
                 Assert.True(System.Math.Abs(Lstar(s.PrimaryContainer) - Lstar(s.OnPrimaryContainer)) >= 40);
                 Assert.True(System.Math.Abs(Lstar(s.Surface) - Lstar(s.OnSurface)) >= 40);

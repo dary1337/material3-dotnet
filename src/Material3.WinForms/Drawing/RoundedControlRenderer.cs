@@ -26,8 +26,7 @@ namespace Material3.WinForms.Drawing {
             return path;
         }
 
-        // mutateWindowRegion false: RoundedPanel owns its Region from OnPaintBackground;
-        // clearing here would undo the HWND clip every frame.
+        /// <summary>Paints an anti-aliased rounded border and, unless told not to, clips the control's window region to the same shape.</summary>
         public static void DrawRoundedBorder(
             Rectangle rectSurface,
             int borderSize,
@@ -63,8 +62,7 @@ namespace Material3.WinForms.Drawing {
             }
         }
 
-        // Outer stroke uses the nearest opaque ancestor BackColor (not the control fill) so the
-        // anti-aliased arc does not fringe against the wrong color.
+        /// <summary>Paints a rounded border inside a button's surface without touching its window region.</summary>
         public static void PaintRoundedButtonBorder(
             Rectangle rectSurface,
             int borderSize,
@@ -111,8 +109,6 @@ namespace Material3.WinForms.Drawing {
         }
 
         private static Color GetSurfaceColor(Control control) {
-            // Opaque self BackColor first so nested rounded surfaces stroke against their own
-            // fill, not a far ancestor.
             if (control.BackColor.A > 0) {
                 return control.BackColor;
             }

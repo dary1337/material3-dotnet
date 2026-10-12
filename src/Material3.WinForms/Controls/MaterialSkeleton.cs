@@ -11,13 +11,14 @@ namespace Material3.WinForms.Controls {
     /// A single shimmering skeleton block — the building piece for a loading placeholder. Size and
     /// round it to a piece of your own content (a thin pill for a text line, a full-radius square for
     /// an avatar, a large rounded rect for an image) and place several to match any layout, instead of
-    /// a fixed shape. <see cref="SkeletonCard"/> is a ready-made list-item preset built from these.
+    /// a fixed shape. <see cref="MaterialSkeletonCard"/> is a ready-made list-item preset built from these.
     /// </summary>
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialSkeleton : Control {
         private int _cornerRadius = Shape.Small;
 
+        /// <summary>Initializes a new instance of the <see cref="MaterialSkeleton"/> class.</summary>
         public MaterialSkeleton() {
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
@@ -26,7 +27,7 @@ namespace Material3.WinForms.Controls {
                     | ControlStyles.ResizeRedraw
                     | ControlStyles.SupportsTransparentBackColor,
                 true);
-            BackColor = Color.Transparent; // rounded corners show whatever's behind the block
+            BackColor = Color.Transparent;
             Size = new Size(120, 16);
             SkeletonShimmer.Attach(this);
             ThemeHook.Attach(this, Invalidate);
@@ -44,6 +45,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
