@@ -9,6 +9,7 @@ namespace Material3.Wpf {
     /// virtualized out of view — a WPF popup otherwise stays put while its anchor moves away. Call
     /// <c>PopupWatch.Watch(popup)</c> from the popup's <c>Opened</c> handler; the hooks unsubscribe on close.</summary>
     public static class PopupWatch {
+        /// <summary>Closes <paramref name="popup"/> once its anchor scrolls or virtualizes out of view, for as long as it is open.</summary>
         public static void Watch(Popup? popup) {
             if (popup?.PlacementTarget is not FrameworkElement target) return;
             if (Window.GetWindow(target) is not Window wnd) return;
@@ -24,7 +25,7 @@ namespace Material3.Wpf {
             onScroll = (_, e) => {
                 if ((e.VerticalChange != 0 || e.HorizontalChange != 0) && !InView(target)) popup.IsOpen = false;
             };
-            onVis = (_, e) => { if (e.NewValue is false) popup.IsOpen = false; };   // hidden/virtualized away
+            onVis = (_, e) => { if (e.NewValue is false) popup.IsOpen = false; };
             onClosed = (_, _) => Cleanup();
 
             wnd.AddHandler(ScrollViewer.ScrollChangedEvent, onScroll, handledEventsToo: true);
@@ -32,8 +33,6 @@ namespace Material3.Wpf {
             popup.Closed += onClosed;
         }
 
-        // Visible within every ScrollViewer ancestor's viewport (any overlap counts). ActualWidth/Height of the
-        // ScrollViewer itself approximates the viewport — ViewportWidth/Height are in ITEMS under item scrolling.
         private static bool InView(FrameworkElement t) {
             if (!t.IsVisible) return false;
             try {
@@ -47,7 +46,7 @@ namespace Material3.Wpf {
                 }
                 return true;
             }
-            catch (InvalidOperationException) { return false; }   // detached mid-walk (recycled container)
+            catch (InvalidOperationException) { return false; }
         }
     }
 }

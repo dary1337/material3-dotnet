@@ -7,8 +7,6 @@ using Material3.Wpf;
 using Xunit;
 
 namespace Material3.Wpf.Tests {
-    // The "never narrower than what opened it" rule is what lets a screen hang a menu off any trigger without
-    // hand-tuning a width, so it is asserted here once. STA, no dispatcher: the card sizes itself on Loaded.
     [Trait("Category", "Ui")]
     public class PopupCardTests {
         private static PopupCard Opened(double openerWidth, double declaredMinWidth) {
@@ -30,7 +28,6 @@ namespace Material3.Wpf.Tests {
         public void ADeclaredMinWidthStillWinsWhenItAsksForMore() =>
             Ui.Sta(() => Assert.Equal(280, Opened(openerWidth: 98, declaredMinWidth: 280).MinWidth));
 
-        // Reopening after the opener shrank must not keep the width the wider one imposed.
         [Fact]
         public void ItDoesNotGrowMonotonically() => Ui.Sta(() => {
             var wide = new Border { Width = 300, Height = 32 };

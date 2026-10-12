@@ -14,7 +14,7 @@ namespace Material3.Wpf {
     /// etc.; calling <see cref="Apply"/> again replaces the brushes, so the whole UI recolors live —
     /// no restart, no per-control wiring.
     /// </summary>
-    public static class M3Theme {
+    public static class ThemeManager {
         private static MaterialTheme _theme = MaterialTheme.Platinum();
         private static bool _isDark = true;
 
@@ -30,8 +30,6 @@ namespace Material3.Wpf {
         /// <summary>The active color scheme — what <see cref="Apply"/> publishes.</summary>
         public static ColorScheme Scheme => _isDark ? _theme.DarkScheme : _theme.LightScheme;
 
-        // Single source of truth for the role set: every Argb-typed property on ColorScheme. Roles and
-        // Publish both derive from this, so adding a role in Core surfaces here with no second edit.
         private static readonly PropertyInfo[] RoleProps =
             typeof(ColorScheme).GetProperties().Where(p => p.PropertyType == typeof(Argb)).ToArray();
 
@@ -53,18 +51,14 @@ namespace Material3.Wpf {
             ThemeChanged?.Invoke(null, EventArgs.Empty);
         }
 
-        /// <summary>Writes the scheme's role brushes into <paramref name="d"/> without touching theme state.</summary>
-        public static void Publish(ResourceDictionary d, ColorScheme s) {
-            if (d == null) throw new ArgumentNullException(nameof(d));
-            if (s == null) throw new ArgumentNullException(nameof(s));
-            foreach (PropertyInfo p in RoleProps) Set(d, p.Name, (Argb)p.GetValue(s)!);
-            // Elevation is a surface as well as a shadow: on a dark scheme the shadow is invisible and
-            // the tint is the whole signal, so the raised surfaces ship as roles too.
-            for (int level = 0; level <= Elevation.MaxLevel; level++) Set(d, Elevation.SurfaceKey(level), Elevation.SurfaceAt(s, level));
+        /// <summary>Writes the scheme's role brushes into <paramref name="target"/> without touching theme state.</summary>
+        public static void Publish(ResourceDictionary target, ColorScheme scheme) {
+            if (target == null) throw new ArgumentNullException(nameof(target));
+            if (scheme == null) throw new ArgumentNullException(nameof(scheme));
+            foreach (PropertyInfo p in RoleProps) Set(target, p.Name, (Argb)p.GetValue(scheme)!);
+            for (int level = 0; level <= Elevation.MaxLevel; level++) Set(target, Elevation.SurfaceKey(level), Elevation.SurfaceAt(scheme, level));
         }
 
-        // Replace (not mutate) the brush so DynamicResource consumers re-resolve and recolor. Frozen
-        // for paint-time performance — the next Apply swaps in a fresh frozen brush.
         private static void Set(ResourceDictionary d, string key, Argb c) {
             var brush = new SolidColorBrush(c.ToMedia());
             brush.Freeze();

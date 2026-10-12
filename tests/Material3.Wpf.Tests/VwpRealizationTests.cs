@@ -9,9 +9,6 @@ using Xunit;
 using Xunit.Abstractions;
 
 namespace Material3.Wpf.Tests {
-    // Ground truth: does VirtualizingWrapPanel actually virtualize inside a real ListBox? Runs on a manual
-    // STA thread (WPF requires STA; xUnit is MTA by default), lays out 1000 items in an 800x400 box, and
-    // counts realized item containers. A WrapPanel would realize all 1000; the VWP must realize ~viewport.
     [Trait("Category", "Ui")]
     public class VwpRealizationTests {
         private readonly ITestOutputHelper _o;
@@ -53,15 +50,13 @@ namespace Material3.Wpf.Tests {
             win.Show();
             win.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Loaded);
             win.UpdateLayout();
-            // Churn the recycle queue first — scroll to the bottom and back so containers get recycled, then
-            // delete realized items. Removal under isRecycling=true is what desyncs the generator.
             lb.ScrollIntoView(items[items.Count - 1]); win.UpdateLayout();
             lb.ScrollIntoView(items[0]); win.UpdateLayout();
-            items.RemoveAt(0); win.UpdateLayout();                 // delete a realized (top) item
-            items.RemoveAt(3); win.UpdateLayout();                 // and another
+            items.RemoveAt(0); win.UpdateLayout();
+            items.RemoveAt(3); win.UpdateLayout();
             lb.ScrollIntoView(items[items.Count - 1]); win.UpdateLayout();
-            items.RemoveAt(items.Count - 1); win.UpdateLayout();   // delete a realized bottom item
-            items.Clear(); win.UpdateLayout();                     // Reset
+            items.RemoveAt(items.Count - 1); win.UpdateLayout();
+            items.Clear(); win.UpdateLayout();
             win.UpdateLayout();
             win.Close();
         }
@@ -82,8 +77,6 @@ namespace Material3.Wpf.Tests {
         private static int RunLayout() {
             var lb = BuildListBox(Enumerable.Range(0, 1000).ToList());
 
-            // A real window is required for the ListBox's ScrollViewer to get a viewport and the generator to
-            // run. Off-screen + ShowActivated=false so it never steals focus or shows.
             var win = new Window {
                 Width = 820, Height = 440, Left = -5000, Top = -5000,
                 WindowStyle = WindowStyle.None, ShowInTaskbar = false, ShowActivated = false, Content = lb,
