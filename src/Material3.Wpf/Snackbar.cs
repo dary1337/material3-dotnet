@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -14,7 +16,7 @@ namespace Material3.Wpf {
     /// </summary>
     /// <remarks>
     /// Shown through <see cref="Show(FrameworkElement,string,TimeSpan?)"/> into the window's adorner layer, so
-    /// it needs no host element and covers nothing in the visual tree. One shows at a time — the rest queue.
+    /// it needs no host element and covers nothing in the visual tree. One shows at a time in each window; the rest queue behind it.
     /// </remarks>
     public class Snackbar : Control {
         private const string PartAction = "PART_Action";
@@ -26,12 +28,15 @@ namespace Material3.Wpf {
         /// <summary>How long a message with an action stays up — longer, because there is something to read and do.</summary>
         public static readonly TimeSpan ActionDuration = TimeSpan.FromSeconds(5);
 
-        // Per UI thread, not per app: a Dispatcher owns its own windows, and one thread's queue must never
-        // hand a message to a window living on another.
-        [ThreadStatic] private static Queue<Pending>? _waiting;
-        [ThreadStatic] private static SnackbarAdorner? _current;
+        private static readonly ConditionalWeakTable<DependencyObject, Lane> Lanes = new ConditionalWeakTable<DependencyObject, Lane>();
+        [ThreadStatic] private static List<SnackbarAdorner>? _showing;
 
-        private static Queue<Pending> Waiting => _waiting ??= new Queue<Pending>();
+        private static List<SnackbarAdorner> Showing => _showing ??= new List<SnackbarAdorner>();
+
+        private sealed class Lane {
+            public readonly Queue<Pending> Waiting = new Queue<Pending>();
+            public SnackbarAdorner? Current;
+        }
 
         private sealed class Pending {
             public FrameworkElement Anchor = null!;
@@ -84,25 +89,33 @@ namespace Material3.Wpf {
                 Duration = duration ?? ActionDuration,
             });
 
-        /// <summary>Takes the visible message down early. Does nothing when none is showing.</summary>
-        public static void DismissCurrent() => _current?.Hide();
+        /// <summary>Takes every visible message on this thread down early. Does nothing when none is showing.</summary>
+        public static void DismissCurrent() {
+            foreach (SnackbarAdorner adorner in Showing.ToArray()) adorner.Hide();
+        }
+
+        /// <summary>Takes the visible message in <paramref name="anchor"/>'s window down early.</summary>
+        public static void DismissCurrent(FrameworkElement anchor) {
+            if (anchor != null && Lanes.TryGetValue(LaneKey(anchor), out Lane? lane)) lane.Current?.Hide();
+        }
+
+        private static DependencyObject LaneKey(FrameworkElement anchor) => (DependencyObject?)Window.GetWindow(anchor) ?? anchor;
 
         private static void Enqueue(Pending pending) {
             if (pending.Anchor == null) throw new ArgumentNullException(nameof(pending));
-            Waiting.Enqueue(pending);
-            if (_current == null) ShowNext();
+            Lane lane = Lanes.GetValue(LaneKey(pending.Anchor), _ => new Lane());
+            lane.Waiting.Enqueue(pending);
+            if (lane.Current == null) ShowNext(lane);
         }
 
-        private static void ShowNext() {
-            if (Waiting.Count == 0) return;
-            Pending next = Waiting.Dequeue();
+        private static void ShowNext(Lane lane) {
+            if (lane.Waiting.Count == 0) return;
+            Pending next = lane.Waiting.Dequeue();
 
             AdornerLayer? layer = ResolveLayer(next.Anchor, out UIElement? host, out Window? owner);
-            // No adorner layer means no window yet (or a detached element) — drop the whole queue rather than
-            // hold it for a later Enqueue to flush all at once.
             if (layer == null || host == null) {
-                Waiting.Clear();
-                _current = null;
+                lane.Waiting.Clear();
+                lane.Current = null;
                 return;
             }
 
@@ -112,36 +125,32 @@ namespace Material3.Wpf {
             var adorner = new SnackbarAdorner(host, bar, next.Duration);
             bar.Dismissed = adorner.Hide;
             Action detachOwner = () => { };
-            // Guarded: a cancelled adorner's exit can still complete after the next message took over, and
-            // an unguarded callback would take that one down with it.
             adorner.Closed = () => {
                 detachOwner();
                 layer.Remove(adorner);
-                if (!ReferenceEquals(_current, adorner)) return;
-                _current = null;
-                ShowNext();
+                Showing.Remove(adorner);
+                if (!ReferenceEquals(lane.Current, adorner)) return;
+                lane.Current = null;
+                ShowNext(lane);
             };
-            _current = adorner;
-            // A window that closes mid-message never completes the exit animation, so without this the queue
-            // would stay blocked behind an adorner nobody can see any more.
+            lane.Current = adorner;
+            Showing.Add(adorner);
             if (owner != null) {
                 void OnOwnerClosed(object? s, EventArgs e) {
                     detachOwner();
                     adorner.Cancel();
-                    if (!ReferenceEquals(_current, adorner)) return;
-                    _current = null;
-                    Waiting.Clear();
+                    Showing.Remove(adorner);
+                    if (!ReferenceEquals(lane.Current, adorner)) return;
+                    lane.Current = null;
+                    lane.Waiting.Clear();
                 }
                 owner.Closed += OnOwnerClosed;
-                // Dropped on the ordinary exit too, or every message a window ever showed stays hooked to it.
                 detachOwner = () => owner.Closed -= OnOwnerClosed;
             }
             layer.Add(adorner);
             adorner.Reveal();
         }
 
-        // The window's content, not the anchor: the bar belongs to the bottom of the window, and an anchor deep
-        // in a scrolled panel would carry it out of view with the scroll.
         private static AdornerLayer? ResolveLayer(FrameworkElement anchor, out UIElement? host, out Window? owner) {
             owner = Window.GetWindow(anchor);
             host = owner?.Content as UIElement ?? anchor;
@@ -169,8 +178,6 @@ namespace Material3.Wpf {
                 _timer.Tick += (_, __) => Hide();
             }
 
-            // Both trees: the visual one paints it, and the logical one is what a DynamicResource walks up to
-            // reach the window's theme brushes — an adorner has no other route to them.
             protected override System.Collections.IEnumerator LogicalChildren {
                 get { yield return _bar; }
             }
@@ -193,13 +200,12 @@ namespace Material3.Wpf {
             }
 
             internal void Reveal() {
-                _bar.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(220)));
+                _bar.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, Motion.Ms(220)));
                 _slide.BeginAnimation(TranslateTransform.YProperty,
-                    new DoubleAnimation(SlidePx, 0, TimeSpan.FromMilliseconds(220)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
+                    new DoubleAnimation(SlidePx, 0, Motion.Ms(220)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
                 _timer.Start();
             }
 
-            // The window is gone: stop the clock rather than let it tick into a Hide on a dead visual.
             internal void Cancel() {
                 _hiding = true;
                 _timer.Stop();
@@ -209,11 +215,11 @@ namespace Material3.Wpf {
                 if (_hiding) return;
                 _hiding = true;
                 _timer.Stop();
-                var fade = new DoubleAnimation(0, TimeSpan.FromMilliseconds(180));
+                var fade = new DoubleAnimation(0, Motion.Ms(180));
                 fade.Completed += (_, __) => Closed?.Invoke();
                 _bar.BeginAnimation(OpacityProperty, fade);
                 _slide.BeginAnimation(TranslateTransform.YProperty,
-                    new DoubleAnimation(SlidePx, TimeSpan.FromMilliseconds(180)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn } });
+                    new DoubleAnimation(SlidePx, Motion.Ms(180)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn } });
             }
         }
     }
