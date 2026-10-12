@@ -11,8 +11,6 @@ permissions:
   contents: write
   id-token: write
 
-# Per ref, not one global group: every push to main still queues behind the release before it, while two
-# pull requests no longer wait on each other.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
@@ -28,34 +26,43 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Resolve version and check tag
-        id: check
-        if: github.event_name != 'pull_request'
+      - name: Release plan
+        id: plan
         shell: pwsh
         run: |
-          $versions = @{}
-          foreach ($csproj in @('src/Material3.Core/Material3.Core.csproj',
-                                'src/Material3.WinForms/Material3.WinForms.csproj',
-                                'src/Material3.Wpf/Material3.Wpf.csproj')) {
-            $v = (([xml](Get-Content $csproj)).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1)
-            if (-not $v) { throw "Version not found in $csproj" }
-            $versions[$csproj] = $v.Trim()
+          $packages = @(
+            @{ Id = 'Material3.Core'; Dir = 'src/Material3.Core'; UsesCore = $false },
+            @{ Id = 'Material3.WinForms'; Dir = 'src/Material3.WinForms'; UsesCore = $true },
+            @{ Id = 'Material3.Wpf'; Dir = 'src/Material3.Wpf'; UsesCore = $true }
+          )
+          function TagVersion([string]$tag) { [version]$tag.Substring($tag.LastIndexOf('v') + 1) }
+          function LastTag([string]$id) {
+            $own = @(git tag -l "$id/v*") | Sort-Object { TagVersion $_ } | Select-Object -Last 1
+            if ($own) { return $own }
+            return @(git tag -l 'v*') | Sort-Object { TagVersion $_ } | Select-Object -Last 1
           }
-          if (($versions.Values | Select-Object -Unique).Count -ne 1) {
-            $versions.GetEnumerator() | ForEach-Object { Write-Host "$($_.Key) = $($_.Value)" }
-            throw 'Package versions diverged - bump all three csprojs together.'
+          $plan = foreach ($p in $packages) {
+            $version = (([xml](Get-Content "$($p.Dir)/$($p.Id).csproj")).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1).Trim()
+            $last = LastTag $p.Id
+            if ($last -and [version]$version -lt (TagVersion $last)) { throw "$($p.Id) $version is older than its last release $last." }
+            git -c core.safecrlf=false diff --quiet $last -- $p.Dir ":(exclude)$($p.Dir)/*.csproj"
+            [pscustomobject]@{
+              Id = $p.Id; Version = $version; Tag = "$($p.Id)/v$version"; LastTag = $last
+              Publish = -not ($last -and (TagVersion $last) -ge [version]$version)
+              Changed = $LASTEXITCODE -ne 0; UsesCore = $p.UsesCore
+            }
           }
-          $version = $versions.Values | Select-Object -First 1
-          $tag = "v$version"
-          if (git tag -l $tag) {
-            Write-Host "Tag $tag already exists - nothing to publish."
-            "publish=false" >> $env:GITHUB_OUTPUT
-          } else {
-            Write-Host "New version $version - will publish and tag $tag."
-            "publish=true" >> $env:GITHUB_OUTPUT
-            "version=$version" >> $env:GITHUB_OUTPUT
-            "tag=$tag" >> $env:GITHUB_OUTPUT
+          foreach ($p in $plan | Where-Object { $_.Changed -and -not $_.Publish }) {
+            Write-Host "::warning::$($p.Id) has changes since $($p.LastTag) that stay unreleased until its <Version> is bumped."
           }
+          $core = $plan | Where-Object Id -eq 'Material3.Core'
+          $blocked = @($plan | Where-Object { $_.UsesCore -and $_.Publish } | ForEach-Object Id)
+          if ($core.Changed -and -not $core.Publish -and $blocked.Count -gt 0) {
+            throw "Material3.Core changed since $($core.LastTag) but stays $($core.Version), so $($blocked -join ', ') cannot be published. Bump Material3.Core."
+          }
+          $plan | Format-Table Id, Version, LastTag, Changed, Publish -AutoSize | Out-String | Write-Host
+          ConvertTo-Json -InputObject @($plan) | Set-Content "$env:RUNNER_TEMP/plan.json"
+          "publish=$(([bool]($plan | Where-Object Publish)).ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
 
       - name: Restore
         run: dotnet restore Material3.sln
@@ -64,8 +71,6 @@ jobs:
       - name: Test
         run: dotnet test Material3.sln -c Release --no-build
 
-      # Always: packing is what runs the API baseline check, and a broken public surface has to fail on the
-      # pull request rather than on the push that publishes it.
       - name: Pack
         shell: bash
         run: |
@@ -74,35 +79,32 @@ jobs:
           dotnet pack src/Material3.Wpf/Material3.Wpf.csproj -c Release --no-build -o artifacts
 
       - name: NuGet login (OIDC trusted publishing)
-        if: steps.check.outputs.publish == 'true'
+        if: github.event_name != 'pull_request' && steps.plan.outputs.publish == 'true'
         uses: NuGet/login@v1
         id: nuget-login
         with:
           user: dary1337
 
-      - name: Push to NuGet
-        if: steps.check.outputs.publish == 'true'
+      - name: Publish, tag and release
+        if: github.event_name != 'pull_request' && steps.plan.outputs.publish == 'true'
         shell: pwsh
         env:
           NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
-        run: |
-          Get-ChildItem artifacts/*.nupkg | ForEach-Object {
-            dotnet nuget push $_.FullName --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
-          }
-
-      - name: Tag and create GitHub release
-        if: steps.check.outputs.publish == 'true'
-        shell: pwsh
-        env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ steps.check.outputs.tag }}
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git tag $env:TAG
-          git push origin $env:TAG
-          $assets = @(
+          $galleries = @(
             'samples/Material3.WinForms.Gallery/bin/Release/net472/Material3.WinForms.Gallery.exe',
             'samples/Material3.Wpf.Gallery/bin/Release/net472/Material3.Wpf.Gallery.exe'
-          ) + (Get-ChildItem artifacts/*.nupkg | ForEach-Object { $_.FullName })
-          gh release create $env:TAG --title $env:TAG --generate-notes @assets
+          )
+          $plan = Get-Content "$env:RUNNER_TEMP/plan.json" -Raw | ConvertFrom-Json
+          foreach ($p in $plan | Where-Object Publish) {
+            $nupkg = "artifacts/$($p.Id).$($p.Version).nupkg"
+            dotnet nuget push $nupkg --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
+            if ($LASTEXITCODE -ne 0) { throw "Push failed for $($p.Id)" }
+            git tag $p.Tag
+            git push origin $p.Tag
+            gh release create $p.Tag --title "$($p.Id) $($p.Version)" --generate-notes --notes-start-tag $p.LastTag @galleries $nupkg
+            if ($LASTEXITCODE -ne 0) { throw "Release failed for $($p.Id)" }
+          }
