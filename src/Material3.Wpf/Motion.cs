@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -10,10 +10,82 @@ namespace Material3.Wpf {
     /// everywhere. Easing comes from the M3* tokens in Motion.xaml (merge it); durations are inline per the M3 scale.
     /// </summary>
     public static class Motion {
-        // Null-safe: no Application (design-time / test host) or a missing token yields a linear (null) easing
-        // rather than throwing — animations still run.
         private static IEasingFunction? Ease(string key) => Application.Current?.TryFindResource(key) as IEasingFunction;
-        private static Duration Ms(int ms) => new Duration(TimeSpan.FromMilliseconds(ms));
+        internal static Duration Ms(int ms) => new Duration(TimeSpan.FromMilliseconds(IsAnimating ? ms : 0));
+
+        /// <summary>
+        /// Turns the library's motion off when false: every transition jumps to its end, and the callbacks that wait on
+        /// one still run. The Windows "Animation effects" setting being off has the same effect.
+        /// </summary>
+        public static bool AnimationsEnabled { get; set; } = true;
+
+        internal static bool IsAnimating => AnimationsEnabled && SystemParameters.ClientAreaAnimation;
+
+        /// <summary>A row joining a list: its height grows from nothing while it fades in, so the rows below slide down.</summary>
+        public static void GrowIn(FrameworkElement element) {
+            if (!IsAnimating) return;
+            var scale = new ScaleTransform(1, 0);
+            element.LayoutTransform = scale;
+            var grow = new DoubleAnimation(0, 1, Ms(220)) { EasingFunction = Ease("M3EmphasizedDecelerate") };
+            grow.Completed += (_, __) => {
+                if (ReferenceEquals(element.LayoutTransform, scale)) element.LayoutTransform = Transform.Identity;
+            };
+            scale.BeginAnimation(ScaleTransform.ScaleYProperty, grow);
+            element.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, 1, Ms(180)) {
+                BeginTime = TimeSpan.FromMilliseconds(40), FillBehavior = FillBehavior.Stop, EasingFunction = Ease("M3StandardDecelerate"),
+            });
+        }
+
+        /// <summary>
+        /// A row leaving a list: it fades while its height closes, then <paramref name="after"/> removes it. The element is
+        /// handed back untransformed afterwards, so a recycled container does not come back collapsed.
+        /// </summary>
+        public static void ShrinkOut(FrameworkElement element, Action after) {
+            if (!IsAnimating) { after(); return; }
+            var scale = new ScaleTransform(1, 1);
+            element.LayoutTransform = scale;
+            var shrink = new DoubleAnimation(1, 0, Ms(160)) { EasingFunction = Ease("M3EmphasizedAccelerate") };
+            shrink.Completed += (_, __) => {
+                after();
+                scale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+                if (ReferenceEquals(element.LayoutTransform, scale)) element.LayoutTransform = Transform.Identity;
+                element.BeginAnimation(UIElement.OpacityProperty, null);
+            };
+            element.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(1, 0, Ms(120)) { EasingFunction = Ease("M3StandardAccelerate") });
+            scale.BeginAnimation(ScaleTransform.ScaleYProperty, shrink);
+        }
+
+        /// <summary>
+        /// Slides an element that has just been laid out somewhere new from where it was, by <paramref name="offset"/> —
+        /// a reordered row moving to its new place instead of jumping there.
+        /// </summary>
+        public static void SlideFrom(UIElement element, Vector offset) {
+            if (!IsAnimating || offset.Length < 0.5) return;
+            var shift = new TranslateTransform(offset.X, offset.Y);
+            element.RenderTransform = shift;
+            var x = new DoubleAnimation(offset.X, 0, Ms(220)) { EasingFunction = Ease("M3EmphasizedDecelerate") };
+            var y = new DoubleAnimation(offset.Y, 0, Ms(220)) { EasingFunction = Ease("M3EmphasizedDecelerate") };
+            y.Completed += (_, __) => {
+                if (ReferenceEquals(element.RenderTransform, shift)) element.RenderTransform = Transform.Identity;
+            };
+            shift.BeginAnimation(TranslateTransform.XProperty, x);
+            shift.BeginAnimation(TranslateTransform.YProperty, y);
+        }
+
+        /// <summary>A small element arriving: it springs up from a smaller scale as it fades in. For a badge or a status mark.</summary>
+        public static void Pop(FrameworkElement element) {
+            if (!IsAnimating) return;
+            element.RenderTransformOrigin = new Point(0.5, 0.5);
+            var scale = new ScaleTransform(0.5, 0.5);
+            element.RenderTransform = scale;
+            var grow = new DoubleAnimation(0.5, 1, Ms(220)) { EasingFunction = new BackEase { Amplitude = 0.45, EasingMode = EasingMode.EaseOut } };
+            grow.Completed += (_, __) => {
+                if (ReferenceEquals(element.RenderTransform, scale)) element.RenderTransform = Transform.Identity;
+            };
+            scale.BeginAnimation(ScaleTransform.ScaleXProperty, grow);
+            scale.BeginAnimation(ScaleTransform.ScaleYProperty, grow.Clone());
+            element.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, 1, Ms(120)) { FillBehavior = FillBehavior.Stop });
+        }
 
         /// <summary>Modal in: scrim and card fade in while the card scales up from 0.96 (M3 container enter).</summary>
         public static void OpenModal(UIElement scrim, FrameworkElement card) {
@@ -24,8 +96,6 @@ namespace Material3.Wpf {
             card.RenderTransform = st;
             card.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, 1, Ms(140)) { EasingFunction = Ease("M3StandardDecelerate") });
             var s = new DoubleAnimation(0.96, 1, Ms(220)) { EasingFunction = Ease("M3EmphasizedDecelerate") };
-            // Release the held clocks on completion so a HoldEnd animation doesn't stay pinned to the card after
-            // it's shown (a stacked close doesn't run through CloseModal, which is the only other place it's cleared).
             s.Completed += (_, __) => ReleaseCard(card, st);
             st.BeginAnimation(ScaleTransform.ScaleXProperty, s);
             st.BeginAnimation(ScaleTransform.ScaleYProperty, s);
@@ -41,8 +111,6 @@ namespace Material3.Wpf {
                 card.RenderTransformOrigin = new Point(0.5, 0.5);
                 st = card.RenderTransform as ScaleTransform ?? new ScaleTransform(1, 1);
                 card.RenderTransform = st;
-                // Same 120ms as the scrim: a longer card exit would be cut off mid-flight, because the caller
-                // removes the card from the tree the moment the scrim's clock completes.
                 var s = new DoubleAnimation(1, 0.96, Ms(120)) { EasingFunction = Ease("M3EmphasizedAccelerate") };
                 st.BeginAnimation(ScaleTransform.ScaleXProperty, s);
                 st.BeginAnimation(ScaleTransform.ScaleYProperty, s);
@@ -52,8 +120,6 @@ namespace Material3.Wpf {
                 scrim.BeginAnimation(UIElement.OpacityProperty, null);
                 scrim.Visibility = Visibility.Collapsed;
                 after?.Invoke();
-                // After the caller's cleanup, never before: a card handed back at opacity/scale 1 while still on
-                // screen would flash at full size for a frame.
                 if (card != null) ReleaseCard(card, st!);
             }
             var a = new DoubleAnimation(1, 0, Ms(120)) { EasingFunction = Ease("M3StandardAccelerate") };
@@ -62,8 +128,6 @@ namespace Material3.Wpf {
             return Finish;
         }
 
-        // Hand opacity and scale back to their local values: a HoldEnd clock would otherwise swallow every later
-        // write, and reopening the same card would find it pinned at 0.96 / transparent.
         private static void ReleaseCard(FrameworkElement card, ScaleTransform st) {
             st.BeginAnimation(ScaleTransform.ScaleXProperty, null);
             st.BeginAnimation(ScaleTransform.ScaleYProperty, null);
@@ -72,8 +136,6 @@ namespace Material3.Wpf {
             card.Opacity = 1;
         }
 
-        // Marks a banner whose collapse animation is in flight, so ExpandBanner can cancel it instead of
-        // silently losing the expand (mid-collapse the banner is still Visible, which used to early-return).
         private static readonly DependencyProperty CollapsingProperty = DependencyProperty.RegisterAttached(
             "Collapsing", typeof(bool), typeof(Motion), new PropertyMetadata(false));
 
@@ -85,13 +147,11 @@ namespace Material3.Wpf {
             banner.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(1, 0, Ms(120)));
             var ha = new DoubleAnimation(h, 0, Ms(200)) { EasingFunction = Ease("M3StandardAccelerate") };
             ha.Completed += (_, __) => {
-                if (!(bool)banner.GetValue(CollapsingProperty)) return;   // cancelled by an ExpandBanner mid-flight
+                if (!(bool)banner.GetValue(CollapsingProperty)) return;
                 banner.SetValue(CollapsingProperty, false);
                 banner.BeginAnimation(FrameworkElement.HeightProperty, null);
                 banner.Visibility = Visibility.Collapsed;
                 banner.Height = double.NaN;
-                // Release before clearing: ClearValue only drops the local value, so a held clock would keep
-                // the banner pinned at opacity 0 and swallow whatever the app writes next.
                 banner.BeginAnimation(UIElement.OpacityProperty, null);
                 banner.ClearValue(UIElement.OpacityProperty);
                 after?.Invoke();
@@ -102,12 +162,12 @@ namespace Material3.Wpf {
         /// <summary>Marks a popup whose placement keeps its content centred on the target, so the open/close scale
         /// may play. <see cref="CenterPopup"/> sets it; set it yourself on a popup with its own centred
         /// <see cref="System.Windows.Controls.Primitives.Popup.CustomPopupPlacementCallback"/>.</summary>
-        // WPF places a popup from its child's RENDERED bounds, so scaling the child nudges an edge-aligned popup
-        // off its anchor; a centred placement re-centres the content on every pass and is immune.
         public static readonly DependencyProperty ScaleOnOpenProperty = DependencyProperty.RegisterAttached(
             "ScaleOnOpen", typeof(bool), typeof(Motion), new PropertyMetadata(false));
-        public static void SetScaleOnOpen(DependencyObject o, bool value) => o.SetValue(ScaleOnOpenProperty, value);
-        public static bool GetScaleOnOpen(DependencyObject o) => (bool)o.GetValue(ScaleOnOpenProperty);
+        /// <summary>Sets the <c>ScaleOnOpen</c> attached property on <paramref name="element"/>.</summary>
+        public static void SetScaleOnOpen(DependencyObject element, bool value) => element.SetValue(ScaleOnOpenProperty, value);
+        /// <summary>Gets the <c>ScaleOnOpen</c> attached property of <paramref name="element"/>.</summary>
+        public static bool GetScaleOnOpen(DependencyObject element) => (bool)element.GetValue(ScaleOnOpenProperty);
 
         /// <summary>Dropdown/menu popups: fade + scale the popup's content up on open. Wire from Popup.Opened.</summary>
         public static void AnimatePopupOpen(System.Windows.Controls.Primitives.Popup? popup) {
@@ -136,12 +196,8 @@ namespace Material3.Wpf {
             }
             var fade = new DoubleAnimation(1, 0, Ms(120)) { EasingFunction = Ease("M3StandardAccelerate") };
             fade.Completed += (_, __) => {
-                after();   // actually closes the popup
-                if (popup.IsOpen) return;   // reopened mid-exit → the enter animation owns the child; don't cut it
-                // Reset the child so the NEXT open's placement measures the full, untransformed size. A held
-                // 0.96 scale otherwise shrinks the popupSize WPF passes to a CustomPopupPlacementCallback, which
-                // shifts an above-anchored popup down onto its trigger. Only when the scale was OURS: without it
-                // the transform belongs to the app, and resetting it would undo whatever the app does with it.
+                after();
+                if (popup.IsOpen) return;
                 if (GetScaleOnOpen(popup)) {
                     st.BeginAnimation(ScaleTransform.ScaleXProperty, null);
                     st.BeginAnimation(ScaleTransform.ScaleYProperty, null);
@@ -153,30 +209,25 @@ namespace Material3.Wpf {
             c.BeginAnimation(UIElement.OpacityProperty, fade);
         }
 
-        // Bumped per FadeIn so a superseded run's Completed can't hand the property back mid-flight.
         private static readonly DependencyProperty FadeRunProperty = DependencyProperty.RegisterAttached(
             "FadeRun", typeof(int), typeof(Motion), new PropertyMetadata(0));
 
         /// <summary>Fade a swapped-in view up from transparent — used on tab/screen changes.</summary>
-        public static void FadeIn(UIElement el) {
-            int run = (int)el.GetValue(FadeRunProperty) + 1;
-            el.SetValue(FadeRunProperty, run);
+        public static void FadeIn(UIElement element) {
+            int run = (int)element.GetValue(FadeRunProperty) + 1;
+            element.SetValue(FadeRunProperty, run);
             var a = new DoubleAnimation(0, 1, Ms(200)) { EasingFunction = Ease("M3StandardDecelerate") };
-            // Hand Opacity back at the end: a HoldEnd clock keeps owning the property, and every later
-            // `el.Opacity = …` from the app would then be silently ignored.
             a.Completed += (_, __) => {
-                if ((int)el.GetValue(FadeRunProperty) != run) return;
-                el.BeginAnimation(UIElement.OpacityProperty, null);
-                el.Opacity = 1;
+                if ((int)element.GetValue(FadeRunProperty) != run) return;
+                element.BeginAnimation(UIElement.OpacityProperty, null);
+                element.Opacity = 1;
             };
-            el.BeginAnimation(UIElement.OpacityProperty, a);
+            element.BeginAnimation(UIElement.OpacityProperty, a);
         }
 
         /// <summary>Reveal a banner by expanding its height (and fading) from 0 — the inverse of CollapseBanner.</summary>
         public static void ExpandBanner(FrameworkElement banner) {
             if ((bool)banner.GetValue(CollapsingProperty)) {
-                // Mid-collapse the banner is still Visible, so the check below would swallow the expand and the
-                // pending collapse would then hide it — cancel the collapse and snap back to natural size instead.
                 banner.SetValue(CollapsingProperty, false);
                 banner.BeginAnimation(FrameworkElement.HeightProperty, null);
                 banner.BeginAnimation(UIElement.OpacityProperty, null);
@@ -196,14 +247,12 @@ namespace Material3.Wpf {
             ha.Completed += (_, __) => {
                 banner.BeginAnimation(FrameworkElement.HeightProperty, null);
                 banner.Height = double.NaN;
-                banner.BeginAnimation(UIElement.OpacityProperty, null);   // see CollapseBanner: ClearValue alone leaves the clock owning Opacity
+                banner.BeginAnimation(UIElement.OpacityProperty, null);
                 banner.ClearValue(UIElement.OpacityProperty);
             };
             banner.BeginAnimation(FrameworkElement.HeightProperty, ha);
         }
 
-        // The swap that currently owns Width, 0 for none: a superseded run's Completed must not hand Width back
-        // mid-flight, and our own pin must not read as an app-set width on the next swap.
         private static readonly DependencyProperty SwapRunProperty = DependencyProperty.RegisterAttached(
             "SwapRun", typeof(int), typeof(Motion), new PropertyMetadata(0));
 
@@ -216,14 +265,12 @@ namespace Material3.Wpf {
             target.Content = newContent;
             if (from <= 0 || target.Visibility != Visibility.Visible || !IsContentSized(target)) { CrossFadeLabel(target); return; }
 
-            // Drop an in-flight swap before measuring, or the pass below reads the width that clock is driving
-            // instead of the natural one for the new content.
             target.BeginAnimation(FrameworkElement.WidthProperty, null);
             target.Width = double.NaN;
             target.UpdateLayout();
             double to = target.ActualWidth;
             if (to <= 0 || Math.Abs(to - from) < 0.5) { target.SetValue(SwapRunProperty, 0); CrossFadeLabel(target); return; }
-            target.Width = from;   // same dispatcher message as the measure, so no frame renders at the new size
+            target.Width = from;
 
             int run = (int)target.GetValue(SwapRunProperty) + 1;
             target.SetValue(SwapRunProperty, run);
@@ -234,18 +281,15 @@ namespace Material3.Wpf {
                 if ((int)target.GetValue(SwapRunProperty) != run) return;
                 target.SetValue(SwapRunProperty, 0);
                 target.BeginAnimation(FrameworkElement.WidthProperty, null);
-                target.Width = double.NaN;   // back to auto — a held clock would pin the control at this size
+                target.Width = double.NaN;
             };
             target.BeginAnimation(FrameworkElement.WidthProperty, wa);
         }
 
-        // Only a content-driven width has a change to animate, and pinning Width on a stretched control makes WPF
-        // centre it in its slot instead — the swap jumps to the middle in one frame and spreads out from there.
         private static bool IsContentSized(FrameworkElement el) =>
             (double.IsNaN(el.Width) || (int)el.GetValue(SwapRunProperty) != 0)
             && el.HorizontalAlignment != HorizontalAlignment.Stretch;
 
-        // Fades the presenter, not the control: fading the control would take its background and border with it.
         private static void CrossFadeLabel(DependencyObject target) {
             if (!(FindPresenter(target) is UIElement presenter)) return;
             var fade = new DoubleAnimation(0, 1, Ms(160)) { EasingFunction = Ease("M3StandardDecelerate") };
