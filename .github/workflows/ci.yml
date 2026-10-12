@@ -45,11 +45,11 @@ jobs:
             $version = (([xml](Get-Content "$($p.Dir)/$($p.Id).csproj")).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1).Trim()
             $last = LastTag $p.Id
             if ($last -and [version]$version -lt (TagVersion $last)) { throw "$($p.Id) $version is older than its last release $last." }
-            git -c core.safecrlf=false diff --quiet $last -- $p.Dir ":(exclude)$($p.Dir)/*.csproj"
+            $changes = @(git -c core.safecrlf=false diff --name-only $last -- $p.Dir ":(exclude)$($p.Dir)/*.csproj")
             [pscustomobject]@{
               Id = $p.Id; Version = $version; Tag = "$($p.Id)/v$version"; LastTag = $last
               Publish = -not ($last -and (TagVersion $last) -ge [version]$version)
-              Changed = $LASTEXITCODE -ne 0; UsesCore = $p.UsesCore
+              Changed = $changes.Count -gt 0; UsesCore = $p.UsesCore
             }
           }
           foreach ($p in $plan | Where-Object { $_.Changed -and -not $_.Publish }) {
