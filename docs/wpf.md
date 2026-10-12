@@ -2,9 +2,9 @@
 
 [← monorepo overview](../README.md) · [NuGet](https://www.nuget.org/packages/Material3.Wpf)
 
-Material 3 (Material You) for **WPF**. A runtime `M3Theme` generates the full M3 color-role scheme from one
+Material 3 (Material You) for **WPF**. A runtime `ThemeManager` generates the full M3 color-role scheme from one
 seed color (HCT) and publishes it as live `DynamicResource` brushes — the whole UI recolors on the fly — plus
-themed M3 controls, an icon-set-agnostic `M3Icon`, motion helpers, an app-level `M3Modal` (scrim + card) and a
+themed M3 controls, an icon-set-agnostic `PathIcon`, motion helpers, an app-level `Modal` (scrim + card) and a
 centered popup tooltip. Built on [`Material3.Core`](https://www.nuget.org/packages/Material3.Core).
 
 ```
@@ -25,38 +25,54 @@ Merge the control dictionary (it self-contains its tokens) and apply a theme onc
 
 ```csharp
 // One seed → every role published as a live DynamicResource brush; call again to recolor or toggle dark.
-M3Theme.Apply(MaterialTheme.FromSeed(Argb.FromArgb(0x67, 0x50, 0xA4)), isDark: true, Application.Current.Resources);
+ThemeManager.Apply(MaterialTheme.FromSeed(Argb.FromArgb(0x67, 0x50, 0xA4)), isDark: true, Application.Current.Resources);
 ```
 
-Wrap the window content in one `<m3:M3ModalLayer>` to enable `M3Modal.Show(card)` (an app-wide scrim that
+Wrap the window content in one `<m3:ModalLayer>` to enable `Modal.Show(card)` (an app-wide scrim that
 blocks everything behind it), use `m3:Tip.Text="…"` for a centered popup tooltip, and `<m3:AnimatedPopup>` in
 place of `<Popup>` for an M3 close animation.
 
+## Naming
+
+| # | What | Rule | Why |
+|---|---|---|---|
+| 1 | Types | No prefix — `m3:Chip`, `Dialog`, `ThemeManager` | The `Material3.Wpf` namespace and the `m3:` XAML prefix already say it |
+| 2 | `ListTile` | Not `ListItem` | `System.Windows.Documents.ListItem` is in every default WPF code-behind's usings |
+| 3 | `PathIcon` | Not `Icon` | Inside a `Window`, `Icon` is the window's own property, so `Icon.Register(…)` would not compile |
+| 4 | Glyph keys | `Glyph`, `LeadingGlyph`, `TrailingGlyph` on every control, the same in the WinForms package | One word for a registered glyph key; `Kind` is left for categories such as `ChipKind` |
+| 5 | Tints | One `Tone` enum for chips, banners and dialogs | The same meaning reads the same everywhere |
+| 6 | Boolean state | `Is…` (`IsSelected`, `IsDot`, `IsEnabled`), the same in the WinForms package | One rule across both packages; WinForms keeps a name its base control already fixed (`Checked`, `ReadOnly`) |
+| 7 | Keyed styles | `M3<Control>` for the M3 look of a stock control (`M3CheckBox`, `M3Switch`, `M3Combo`); the M3 component name otherwise (`FilledButton`, `Card`) | Resource keys share one app-wide namespace, so a restyle must not take a bare control name |
+
 ## Control coverage
 
-The shared engine (dynamic color, type/shape scale, `M3Icon`, motion) is the same on both stacks. The
-**control suite** is where WPF is still catching up to WinForms — this is what ships today vs what's next.
-Legend: **✓ shipped · – planned**.
+The shared engine (dynamic color, type/shape scale, `PathIcon`, motion) is the same on both stacks. The
+**control suite** differs; the table is what each stack ships.
+Legend: **✓ shipped · – not yet**.
 
 | Category | Component | WPF | WinForms |
 |---|---|:---:|:---:|
-| **Foundation** | Dynamic color (`M3Theme` / `ThemeManager`) | ✓ | ✓ |
+| **Foundation** | Dynamic color (`ThemeManager` / `ThemeManager`) | ✓ | ✓ |
 | | Type scale · Shape scale | ✓ | ✓ |
 | | Icon (icon-set-agnostic) | ✓ | ✓ |
 | | Motion helpers | ✓ | ✓ |
 | | Painted elevation (levels 0–5) | ✓ | ✓ |
-| | Window corners (`DwmWindow` / `WindowChrome`) | ✓ | ✓ |
+| | Window corners (`DwmWindow`) | ✓ | ✓ |
 | **Actions** | Buttons — filled · tonal · outlined · text | ✓ | ✓ |
 | | Buttons — warning · error *(filled + tonal)* · shiny (attention) | ✓ | – |
 | | Icon button | ✓ | ✓ |
 | | Icon toggle | ✓ | ✓ *(MaterialIconButton.IsToggle)* |
 | | FAB *(round + extended, three sizes)* | ✓ | ✓ |
-| **Inputs & selection** | Text field | ✓ *(box + placeholder)* | ✓ *(filled/outlined, floating label)* |
-| | Chips | ✓ *(status)* | ✓ *(assist/filter/input/suggestion)* |
+| **Inputs & selection** | Text field *(filled/outlined, floating label, error)* | ✓ | ✓ |
+| | Chips *(assist/filter/input/suggestion)* | ✓ *(+ status)* | ✓ |
+| | Search bar | ✓ | ✓ |
 | | Radio · Switch | ✓ | ✓ |
 | | Checkbox *(three-state)* | ✓ | ✓ |
 | | Segmented button | ✓ | ✓ |
 | | Slider | ✓ | ✓ |
+| | Colour field (`ColorField`) | ✓ | – |
+| | List and record editors (`ValueListEditor` · `DataTableEditor`) | ✓ | – |
+| | Number input filter (`InputFilter`) | ✓ | – |
 | **Containers** | Card | ✓ | ✓ *(elevated/filled/outlined)* |
 | | Expander | ✓ | – |
 | | Page header (`PageHeader`) | ✓ | – |
@@ -67,19 +83,23 @@ Legend: **✓ shipped · – planned**.
 | | Notice banner (`NoticeBanner`) | ✓ | – |
 | | Empty state (`EmptyState`) | ✓ | – |
 | | Circular progress | ✓ | ✓ |
+| | Step checklist (`StepChecklist`) | ✓ | ✓ |
 | | Snackbar | ✓ | ✓ |
-| | Tooltip | ✓ | ✓ |
+| | Tooltip *(plain + rich)* | ✓ | ✓ |
 | **Nav & overlays** | Menu · Context menu | ✓ | ✓ |
 | | Scrollbar *(+ auto-hide)* | ✓ | ✓ |
 | | Popup surface (`PopupCard`) | ✓ | – |
-| | Dropdown select | – | ✓ |
-| | Dialog *(+ date/time pickers)* | – | ✓ |
-| | Modal host + scrim (`M3Modal`) | ✓ | – |
+| | Dropdown select (`M3Combo`) | ✓ | ✓ |
+| | Dialog (`Dialog`) | ✓ | ✓ |
+| | Date / time pickers | – | ✓ |
+| | Modal host + scrim (`Modal`) | ✓ | – |
 | | Popup helpers (`CenterPopup` · `PopupWatch` · `PopupToggle` · `Chevron`) | ✓ | – |
-| | Tabs | – | ✓ |
+| | Tabs *(primary/secondary)* | ✓ | ✓ |
 | | Navigation bar · rail · drawer | – | ✓ |
-| | Badge · Title bar | – | ✓ |
+| | Badge | ✓ | ✓ |
+| | Title bar | – | ✓ |
 | **Layout** | `VirtualizingWrapPanel` | ✓ | – |
+| | System-paced mouse wheel (`WheelScroll`) | ✓ | – |
 
 ## Elevation
 
@@ -89,7 +109,7 @@ says nothing, so the tint is what carries the height.
 | # | Ingredient | Where it comes from |
 |---|---|---|
 | 1 | Shadow | `Elevation1`–`Elevation5` effects in `Tokens.xaml`. Level 0 has no resource: it is the absence of an effect |
-| 2 | Surface | `SurfaceElevation0`–`SurfaceElevation5` brushes, published by `M3Theme.Apply` next to the colour roles |
+| 2 | Surface | `SurfaceElevation0`–`SurfaceElevation5` brushes, published by `ThemeManager.Apply` next to the colour roles |
 
 The shadows are `Color="Black"` rather than the `Shadow` role because an `Effect` takes a `Color`, which no
 `DynamicResource` can re-supply on a theme switch. M3 derives `Shadow` as neutral tone 0 in both schemes, so
@@ -99,32 +119,80 @@ nothing is lost.
 
 | Type | Knobs | Why it behaves that way |
 |---|---|---|
-| `m3:Fab` | `IconKind` `Size` (Small 40 / Standard 56 / Large 96), `Content` | One template: a label extends it into the pill, no label collapses it back to the circle |
+| `m3:Fab` | `Glyph` `Size` (Small 40 / Standard 56 / Large 96), `Content` | One template: a label extends it into the pill, no label collapses it back to the circle |
 | `M3CheckBox` *(style)* | `IsThreeState` | Indeterminate carries a dash, not a half-check — "some of the children" must not read as "all of them" |
 | `m3:SegmentedButton` | items, `MultiSelect` `SelectedIndex` `SelectedIndices` `SetSelected` `SelectionChanged` | Selection lives on the row: checking one unchecks the rest, so no caller keeps a group in sync |
-| `M3Slider` *(style)* | any `Slider`, `m3:SliderMotion.Animated` | The filled track IS the decrease repeat button, so it is already exactly as wide as the value. A value that did not come from a drag eases into place — easing a drag would read as lag |
-| `m3:M3ListItem` | `Leading` `IconKind` `Headline` `SupportingText` `Trailing` `TrailingText` `IsSelected` | Picks 56 or 72 from whether there is a second line, so a mixed list still lines up |
+| `M3Slider` *(style)* | any `Slider`, `m3:SliderMotion.IsAnimated` | The filled track IS the decrease repeat button, so it is already exactly as wide as the value. A value that did not come from a drag eases into place — easing a drag would read as lag |
+| `m3:ListTile` | `Leading` `Glyph` `Headline` `SupportingText` `Trailing` `TrailingText` `IsSelected` | Picks 56 or 72 from whether there is a second line, so a mixed list still lines up |
 | `Divider` / `DividerVertical` *(styles)* | any `Border` | Inset one with a `Margin`; `Separator` is left to menus |
 | `ListBoxItem` *(implicit)* | `Background` `Padding`, any `ListBox` | Transparent until given a fill, so a row on a page stays a row and a tile grid can own its surface. Selection outranks hover, and the focus ring is an overlay that costs no layout |
 | `m3:CircularProgress` | `Value` `Minimum` `Maximum` `IsIndeterminate` `Diameter` `StrokeThickness` `IndicatorBrush` `TrackBrush` | The indeterminate arc breathes 20°→270° as it turns, so the head chases the tail |
-| `m3:Snackbar` | `Snackbar.Show(anchor, message[, actionText, onAction][, duration])`, `DismissCurrent()` | Goes into the window's adorner layer, so it needs no host element; one shows at a time and the rest queue |
+| `m3:Chip` | `Kind` (`Status` `Assist` `Filter` `Input` `Suggestion`) `Text` `Glyph` `IsSelected`, `Click` `Removed`; `Tone` `Size` for status | A status chip is a label, not a button: it takes no focus and raises no click. An input chip never removes itself — only the host knows the token is gone |
+| `m3:Tabs` | `Variant` (`Primary` `Secondary`), ordinary `TabItem`s | The indicator follows the selected tab through every layout pass, so a header that changes width or a resize keeps it in place; only a selection change slides it |
+| `m3:Badge` | `Count` `IsDot` | Zero shows nothing and past 999 it reads `999+`. It does not place itself: put it in the corner of a Grid cell over what it annotates |
+| `m3:Snackbar` | `Snackbar.Show(anchor, message[, actionText, onAction][, duration])`, `DismissCurrent([anchor])` | Goes into the window's adorner layer, so it needs no host element; one shows at a time in each window and the rest of that window queue |
 
-`M3ListItem` is the one prefixed name in the set: `ListItem` is already a WPF document element, and a consumer
-with `System.Windows.Documents` in scope would have to disambiguate every use.
 
-Two of these take a brush property instead of `Foreground` (`CircularProgress`, and `M3ListItem`'s text, which
+Two of these take a brush property instead of `Foreground` (`CircularProgress`, and `ListTile`'s text, which
 is coloured in its template). `Foreground` is an inherited property, so it arrives already set from whatever the
 control was dropped into — a role assigned by a style setter never gets a say.
 
+## Inputs and editors
+
+| Type | Knobs | Why it behaves that way |
+|---|---|---|
+| `m3:TextField` | `Text` `Label` `Variant` (`Filled` `Outlined`) `SupportingText` `ErrorText` `IsError` `LeadingGlyph` `TrailingGlyph` `IsPassword` `IsReadOnly` `MaxLength`, `TrailingGlyphClick` | The label is laid out at rest and floats by a transform, so the editor never reflows. `IsPassword` swaps in a `PasswordBox` whose content still flows through `Text` |
+| `m3:SearchBar` | `Query` `Placeholder`, `QueryChanged` `QuerySubmitted` | Esc clears the query first and lets the key through once it is empty, so an Esc that closes the page still works. Needs `Magnify` and `Close` |
+| `M3Combo` *(style)* | any `ComboBox`, `m3:Placeholder.Text` | The menu is a `PopupCard`, so it is never narrower than the field; the highlight follows the arrow keys, not just the mouse |
+| `M3FocusRing` *(style)* | as any control's `FocusVisualStyle` | WPF draws a focus visual only when focus arrived from the keyboard, so the ring answers Tab and never a click |
+| `m3:InputFilter.Kind` | `Text` `Number` `Integer`, on any `TextBox`; `InputFilter.Accepts(kind, text)` | Judges the text as it would read after the keystroke or paste, so `-` is taken only first and a second `.` is refused. A half-typed `-` or `1.` passes |
+| `m3:ColorField` | `Color` `ShowAlpha` `IsReadOnly` `ReadOnlyCaption`, `ColorChanged` | A caption replaces the hex and locks the field: a colour that follows another one says so instead of offering an edit that would break the link. Without the alpha rail a pasted alpha is ignored |
+| `m3:ValueListEditor` | `Load` `Values` `AddRow` `RemoveRow` `MoveRow` `Kind` `FixedLength` `SlotLabels` `Orientation` `MaxVisibleRows` `Placeholder` `AddText` `EmptyText` `IsValid`, `ValuesChanged` | A list is never a text box holding commas. `FixedLength` turns it into labelled slots that cannot be added, removed or moved. A row on screen leaves `Rows` when its exit ends, not at the call |
+| `m3:DataTableEditor` | `Load(columns, records)` `Records` `AddRow` `RemoveRow` `CanAddRows` `CanRemoveRows` `IsSelectable` `MaxVisibleRows`, `ValuesChanged` | Columns are data, so one control serves every list of one shape. Equal columns line up with the header without a measuring pass |
+
+Both editors scroll and virtualize inside themselves past `MaxVisibleRows`. Their rows need the `ChevronUp`,
+`ChevronDown`, `Close` and `Plus` glyphs registered.
+
 ## Modals
 
-`M3Modal.Show(card, options)` returns a handle; `Close()` plays the exit and then removes the card. The
+`Modal.Show(card, options)` returns a handle; `Close()` plays the exit and then removes the card. The
 `ModalOptions` instance you pass stays live, so an async action can flip `DismissOnEsc` / `DismissOnScrimClick`
 off for the duration of its work and the dialog cannot be dismissed out from under it — that is the whole
 mechanism behind a confirm dialog that closes only once its operation finishes (see the *Async confirm dialog*
-demo in the WPF gallery). Use `OnDismiss` instead when a bound flag, not the modal, owns the open state.
+demo in the WPF gallery). Use `DismissHandler` instead when a bound flag, not the modal, owns the open state.
+
+Each window's `ModalLayer` keeps its own stack: `Show(card)` picks the active window, `Show(owner, card)` the
+window holding `owner`, and Esc or a scrim click closes only that window's top modal.
+
+`Dialog.Show(owner, options)` is the ready-made dialog: it blocks, needs no `ModalLayer`, and returns a
+`DialogChoice` — `Confirm`, `Secondary`, or `Cancel` for a cancel, Esc or a click on the scrim.
+
+| `DialogOptions` | Behaviour |
+|---|---|
+| `Title` `Body` / `Content` | A `Content` with a `MaxWidth` above 420 widens the dialog to it |
+| `Tone` | Picks the glyph and its role: `Information`/OnSurfaceVariant for Neutral, `Information`/Primary for Accent (the default), `CheckCircle`/Success, `AlertOutline`/Warning, `AlertCircle`/Error |
+| `ConfirmText` `CancelText` `SecondaryText` | With a secondary present, cancel steps down to a text button — three actions, three levels of emphasis |
+| `Destructive` | The confirm turns error-tonal. Independent of `Tone`: an error notice still closes with a neutral button |
+| `HoldToConfirm` | The confirm fills while held and commits once full; an early release shakes it. Enter does not reach it |
+| `ConfirmWork` | Runs before the close; the confirm spins and nothing dismisses the dialog meanwhile. Its exception is rethrown by `Show` |
+| `SupportingAction` | A text button at the far end of the row that neither confirms nor cancels |
+| `Links` | `OpenInNew`-marked links under the body that run without closing |
 
 ## Motion
+
+| Where | What moves |
+|---|---|
+| `ValueListEditor`, `DataTableEditor` rows | Added rows grow in, removed ones shrink out, a moved row slides from its old place |
+| `Tabs` | The new tab's content fades in under the sliding indicator |
+| Filter `Chip` | The check grows in on select and out on deselect, so the label shifts instead of jumping |
+| `Badge`, `SearchBar` clear | Pop in when they appear |
+| `TextField` | The supporting/error line fades in when its text changes |
+| `StepChecklist` | A failed step fills red and its cross pops |
+| `M3Combo` items | The selected fill fades in and out |
+
+`Motion.AnimationsEnabled = false` or Windows' *Show animations* off (`SystemParameters.ClientAreaAnimation`) makes
+every state land at once. Template storyboards (hover/press layers, the `M3Combo` fill) can't read the switch and
+keep their short fades; progress spinners keep spinning, since they report status
 
 `Motion.SwapContent(control, newContent)` swaps a `ContentControl`'s content, cross-fading the presenter while
 the control's width eases from the old size to the new one — for a toggle whose caption tracks the state it
@@ -136,7 +204,7 @@ to animate rather than make it jump.
 
 ## Popup helpers
 
-- `m3:CenterPopup.Enable="True"` centers a popup over its trigger and places it below, flipping above when
+- `m3:CenterPopup.IsEnabled="True"` centers a popup over its trigger and places it below, flipping above when
   below would clip; add `m3:CenterPopup.PreferAbove="True"` for a bottom-anchored trigger.
 - `m3:AnimatedPopup` plays the open animation and watches its own anchor — no `Opened` handler to wire per
   view. Set `WatchAnchor="False"` when the anchor is not inside a scrolling region.
@@ -160,14 +228,15 @@ Lookless, so an `x:Name` inside a content slot compiles — a `UserControl` name
 | Type | Slots / knobs | Why it behaves that way |
 |---|---|---|
 | `m3:PageHeader` | `Overline` `Title` `Description`, `OverlineTrailing` `TitleTrailing` `Actions` | Owns the gap below it, so pages never set one |
-| `m3:NoticeBanner` | `Severity` `IconKind` `Text` `Actions` `CanDismiss`, `Dismissed` | Never removes itself: only the host knows if it should return. An action goes in at 32 high and with no vertical margin — the row is one line, and a margin inside a centred slot shifts the button off the centre line |
-| `m3:EmptyState` | `IconKind` `Title` `Text` `Action` | |
+| `m3:NoticeBanner` | `Tone` `Glyph` `Text` `Actions` `CanDismiss`, `Dismissed` | Never removes itself: only the host knows if it should return. An action goes in at 32 high and with no vertical margin — the row is one line, and a margin inside a centred slot shifts the button off the centre line |
+| `m3:EmptyState` | `Glyph` `Title` `Text` `Action` | |
 | `m3:PopupCard` | content = `MenuItemButton` rows | Grows to the opener's width (own `MinWidth` still wins): a menu narrower than its trigger reads as an unrelated panel |
 | `m3:Skeleton` | `Width` `Height` `CornerRadius` | Shimmer runs on the render thread, so it moves while the dispatcher rebuilds; stops itself on hide and on unload |
-| `m3:Busy.IsBusy` | on `M3Icon` — swaps the glyph for the spinner | Inert elsewhere, so a template can trigger off it (`IconToggle` does) |
+| `m3:Busy.IsBusy` | on `PathIcon` — swaps the glyph for the spinner | Inert elsewhere, so a template can trigger off it (`IconToggle` does) |
 | `m3:Busy.SpinWhileVisible` | on an already-spinner glyph | Drops the clock the moment it hides |
+| `m3:StepChecklist` | `Steps` `ActiveIndex` `ErrorIndex`, `Complete()` `CompleteAsync(hold)` | Moving `ActiveIndex` on morphs every passed step into done, so a jump still reads as each finishing. New `Steps` start over; moving on clears an error. Needs `Check` and `Close` |
 
-Both `Busy` modes resolve `"Loading"` through `M3Icon.Register` — unregistered, the spinner renders blank.
+Both `Busy` modes resolve `"Loading"` through `PathIcon.Register` — unregistered, the spinner renders blank.
 
 ## Auto-hiding scrollbar
 
@@ -176,7 +245,7 @@ on first layout, because the bar answers the user rather than announcing itself.
 
 ```xml
 <Style TargetType="ScrollBar" BasedOn="{StaticResource M3ScrollBar}">
-  <Setter Property="m3:AutoHideScroll.Enabled" Value="True" />
+  <Setter Property="m3:AutoHideScroll.IsEnabled" Value="True" />
 </Style>
 ```
 
@@ -186,6 +255,12 @@ Two rules, both silent when broken — the bar just turns into the native Window
 |---|---|---|
 | 1 | `BasedOn` the **keyed** `M3ScrollBar`, never `{x:Type ScrollBar}` | Application resources load deferred, so that key resolves to the style being declared |
 | 2 | Declare it as a **direct child of `Application.Resources`**, not inside a dictionary merged into it | A `Style`'s `BasedOn` resolves while its own dictionary is parsed, and a dictionary merged into `Application.Resources` cannot see its siblings. An element-level dictionary is fine — there the lookup reaches the app through the tree |
+
+## Mouse wheel
+
+`WheelScroll.Register()` once at startup steps every pixel-scrolling `ScrollViewer` by the Windows wheel setting
+at a browser's 33 px line, where WPF's fixed 16 px made the same setting feel half as fast. A viewer that scrolls
+by item is left to WPF, and one with nothing to scroll lets the wheel reach the page around it.
 
 ## Window corners
 
