@@ -7,11 +7,11 @@ using System.Windows.Media;
 namespace Material3.Wpf {
     /// <summary>
     /// A vector icon. Icon-set agnostic: register glyph path data (SVG/XAML mini-language) by key via
-    /// <see cref="Register(string,string)"/>, then reference it with <see cref="Kind"/>. The path is
+    /// <see cref="Register(string,string)"/>, then reference it with <see cref="Glyph"/>. The path is
     /// scaled uniformly to the control's size and painted with <see cref="Foreground"/> (which inherits
     /// like text), so one control serves any icon pack — Material Symbols, MDI, or custom.
     /// </summary>
-    public class M3Icon : FrameworkElement {
+    public class PathIcon : FrameworkElement {
         private static readonly Dictionary<string, string> Paths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private static readonly Dictionary<string, Geometry> Cache = new Dictionary<string, Geometry>(StringComparer.OrdinalIgnoreCase);
 
@@ -26,48 +26,51 @@ namespace Material3.Wpf {
             foreach (KeyValuePair<string, string> kv in glyphs) Register(kv.Key, kv.Value);
         }
 
-        public static readonly DependencyProperty KindProperty = DependencyProperty.Register(
-            nameof(Kind), typeof(string), typeof(M3Icon),
+        /// <summary>Identifies the <see cref="Glyph"/> dependency property.</summary>
+        public static readonly DependencyProperty GlyphProperty = DependencyProperty.Register(
+            nameof(Glyph), typeof(string), typeof(PathIcon),
             new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
 
-        public string? Kind {
-            get => (string?)GetValue(KindProperty);
-            set => SetValue(KindProperty, value);
+        /// <summary>The key of a glyph registered with <see cref="Register(string, string)"/>; an unknown key draws nothing.</summary>
+        public string? Glyph {
+            get => (string?)GetValue(GlyphProperty);
+            set => SetValue(GlyphProperty, value);
         }
 
-        // Share TextElement.Foreground so an icon inherits its parent's text colour unless set explicitly.
+        /// <summary>Identifies the <see cref="Foreground"/> dependency property.</summary>
         public static readonly DependencyProperty ForegroundProperty =
-            TextElement.ForegroundProperty.AddOwner(typeof(M3Icon),
+            TextElement.ForegroundProperty.AddOwner(typeof(PathIcon),
                 new FrameworkPropertyMetadata(SystemColors.ControlTextBrush,
                     FrameworkPropertyMetadataOptions.Inherits | FrameworkPropertyMetadataOptions.AffectsRender));
 
+        /// <summary>The glyph colour. Inherits like text colour unless set.</summary>
         public Brush? Foreground {
             get => (Brush?)GetValue(ForegroundProperty);
             set => SetValue(ForegroundProperty, value);
         }
 
-        // The glyph's design grid (square). Icons are drawn in this coordinate space and scaled to the
-        // control, so the set's built-in padding is preserved — 24 for MDI, 960 for Material Symbols.
+        /// <summary>Identifies the <see cref="ViewBox"/> dependency property.</summary>
         public static readonly DependencyProperty ViewBoxProperty = DependencyProperty.Register(
-            nameof(ViewBox), typeof(double), typeof(M3Icon),
+            nameof(ViewBox), typeof(double), typeof(PathIcon),
             new FrameworkPropertyMetadata(24.0, FrameworkPropertyMetadataOptions.AffectsRender));
 
+        /// <summary>The side of the square grid the glyph is drawn on: 24 for MDI, 960 for Material Symbols.</summary>
         public double ViewBox {
             get => (double)GetValue(ViewBoxProperty);
             set => SetValue(ViewBoxProperty, value);
         }
 
+        /// <inheritdoc />
         protected override Size MeasureOverride(Size availableSize) {
-            // Intrinsic 24×24 (M3 default), clamped to the constraint — so an unsized icon in a non-Stretch
-            // slot stays 24 instead of ballooning to whatever finite space the parent offers.
             const double natural = 24;
             double w = double.IsInfinity(availableSize.Width) ? natural : Math.Min(natural, availableSize.Width);
             double h = double.IsInfinity(availableSize.Height) ? natural : Math.Min(natural, availableSize.Height);
             return new Size(w, h);
         }
 
+        /// <inheritdoc />
         protected override void OnRender(DrawingContext dc) {
-            string? key = Kind;
+            string? key = Glyph;
             if (string.IsNullOrEmpty(key)) return;
             Geometry? geo = Resolve(key!);
             if (geo == null) return;

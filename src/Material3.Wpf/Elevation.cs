@@ -6,7 +6,7 @@ namespace Material3.Wpf {
     /// <summary>
     /// M3 elevation, which is two things at once: a painted shadow and a surface that gets lighter as it rises.
     /// The shadows are the <c>Elevation1</c>–<c>Elevation5</c> effects in Tokens.xaml; the surfaces are the
-    /// <c>SurfaceElevation0</c>–<c>SurfaceElevation5</c> brushes <see cref="M3Theme"/> publishes.
+    /// <c>SurfaceElevation0</c>–<c>SurfaceElevation5</c> brushes <see cref="ThemeManager"/> publishes.
     /// </summary>
     /// <remarks>
     /// The tint carries the level on a dark scheme, where a black shadow over a near-black surface is invisible

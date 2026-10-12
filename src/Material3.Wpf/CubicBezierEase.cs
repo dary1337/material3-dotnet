@@ -9,22 +9,32 @@ namespace Material3.Wpf {
     /// EasingMode=EaseIn: the authored control points already encode the accelerate/decelerate shape.
     /// </summary>
     public sealed class CubicBezierEase : EasingFunctionBase {
+        /// <summary>Identifies the <see cref="X1"/> dependency property.</summary>
         public static readonly DependencyProperty X1Property = DependencyProperty.Register(nameof(X1), typeof(double), typeof(CubicBezierEase), new PropertyMetadata(0.0));
+        /// <summary>Identifies the <see cref="Y1"/> dependency property.</summary>
         public static readonly DependencyProperty Y1Property = DependencyProperty.Register(nameof(Y1), typeof(double), typeof(CubicBezierEase), new PropertyMetadata(0.0));
+        /// <summary>Identifies the <see cref="X2"/> dependency property.</summary>
         public static readonly DependencyProperty X2Property = DependencyProperty.Register(nameof(X2), typeof(double), typeof(CubicBezierEase), new PropertyMetadata(1.0));
+        /// <summary>Identifies the <see cref="Y2"/> dependency property.</summary>
         public static readonly DependencyProperty Y2Property = DependencyProperty.Register(nameof(Y2), typeof(double), typeof(CubicBezierEase), new PropertyMetadata(1.0));
 
+        /// <summary>The x of the first control point.</summary>
         public double X1 { get => (double)GetValue(X1Property); set => SetValue(X1Property, value); }
+        /// <summary>The y of the first control point.</summary>
         public double Y1 { get => (double)GetValue(Y1Property); set => SetValue(Y1Property, value); }
+        /// <summary>The x of the second control point.</summary>
         public double X2 { get => (double)GetValue(X2Property); set => SetValue(X2Property, value); }
+        /// <summary>The y of the second control point.</summary>
         public double Y2 { get => (double)GetValue(Y2Property); set => SetValue(Y2Property, value); }
 
+        /// <inheritdoc />
         protected override double EaseInCore(double t) {
             if (t <= 0) return 0;
             if (t >= 1) return 1;
             return Comp(SolveX(t, X1, X2), Y1, Y2);
         }
 
+        /// <inheritdoc />
         protected override Freezable CreateInstanceCore() => new CubicBezierEase();
 
         private static double Comp(double u, double p1, double p2) {

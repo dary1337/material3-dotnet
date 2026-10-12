@@ -11,18 +11,20 @@ namespace Material3.Wpf {
     /// view plus one row of overscan. Use as an <c>ItemsPanelTemplate</c> and set <see cref="ItemWidth"/> /
     /// <see cref="ItemHeight"/> to the cell size (item + margins).</summary>
     public class VirtualizingWrapPanel : VirtualizingPanel, IScrollInfo {
-        // Set per-usage so columns and extent are right from the FIRST pass; auto-detecting from the first child
-        // mis-sizes the cell and clips items. 0 => fall back to auto-detect.
+        /// <summary>Identifies the <see cref="ItemWidth"/> dependency property.</summary>
         public static readonly DependencyProperty ItemWidthProperty = DependencyProperty.Register(
             nameof(ItemWidth), typeof(double), typeof(VirtualizingWrapPanel),
             new FrameworkPropertyMetadata(0.0, FrameworkPropertyMetadataOptions.AffectsMeasure));
+        /// <summary>Identifies the <see cref="ItemHeight"/> dependency property.</summary>
         public static readonly DependencyProperty ItemHeightProperty = DependencyProperty.Register(
             nameof(ItemHeight), typeof(double), typeof(VirtualizingWrapPanel),
             new FrameworkPropertyMetadata(0.0, FrameworkPropertyMetadataOptions.AffectsMeasure));
+        /// <summary>The width of every cell, item and margins included.</summary>
         public double ItemWidth { get => (double)GetValue(ItemWidthProperty); set => SetValue(ItemWidthProperty, value); }
+        /// <summary>The height of every cell, item and margins included.</summary>
         public double ItemHeight { get => (double)GetValue(ItemHeightProperty); set => SetValue(ItemHeightProperty, value); }
 
-        private Size _itemSize = new Size(172, 162);   // seed; overridden by ItemWidth/ItemHeight or first child
+        private Size _itemSize = new Size(172, 162);
         private Size _extent;
         private Size _viewport;
         private Point _offset;
@@ -31,15 +33,15 @@ namespace Material3.Wpf {
 
         private bool FixedSize => ItemWidth > 0 && ItemHeight > 0;
 
+        /// <summary>Initializes a new instance of the <see cref="VirtualizingWrapPanel"/> class.</summary>
         public VirtualizingWrapPanel() {
-            // The first measure after Collapsed->Visible realizes containers but they don't paint until a SECOND
-            // pass, leaving a blank grid until the user scrolls. Force that pass on becoming visible.
             IsVisibleChanged += (_, e) => {
                 if (e.NewValue is bool v && v)
                     Dispatcher.BeginInvoke(new Action(InvalidateMeasure), System.Windows.Threading.DispatcherPriority.Loaded);
             };
         }
 
+        /// <inheritdoc />
         protected override Size MeasureOverride(Size availableSize) {
             if (FixedSize) _itemSize = new Size(ItemWidth, ItemHeight);
             ItemsControl? owner = ItemsControl.GetItemsOwner(this);
@@ -73,6 +75,7 @@ namespace Material3.Wpf {
                 double.IsInfinity(availableSize.Height) ? _extent.Height : availableSize.Height);
         }
 
+        /// <inheritdoc />
         protected override Size ArrangeOverride(Size finalSize) {
             int cols = Columns;
             var generator = ItemContainerGenerator;
@@ -87,8 +90,7 @@ namespace Material3.Wpf {
             return finalSize;
         }
 
-        // A virtualizing panel MUST drop the realized container when its item leaves the source, or the generator's
-        // map desyncs and the next Remove throws an NRE.
+        /// <inheritdoc />
         protected override void OnItemsChanged(object sender, ItemsChangedEventArgs args) {
             switch (args.Action) {
                 case NotifyCollectionChangedAction.Remove:
@@ -96,7 +98,7 @@ namespace Material3.Wpf {
                     RemoveInternalChildRange(args.Position.Index, args.ItemUICount);
                     break;
                 case NotifyCollectionChangedAction.Move:
-                    RemoveInternalChildRange(args.OldPosition.Index, args.ItemUICount);   // Position is where it landed
+                    RemoveInternalChildRange(args.OldPosition.Index, args.ItemUICount);
                     break;
                 case NotifyCollectionChangedAction.Reset:
                     RemoveInternalChildRange(0, InternalChildren.Count);
@@ -117,9 +119,7 @@ namespace Material3.Wpf {
             }
         }
 
-        /// <summary>The inclusive item-index range to realize for a scroll offset, plus one row of overscan each
-        /// way. Pure (no WPF state) so it can be unit-tested; <c>last &lt; first</c> means "nothing to realize".</summary>
-        public static (int first, int last) VisibleRange(double offsetY, double viewportH, double viewportW,
+        internal static (int first, int last) VisibleRange(double offsetY, double viewportH, double viewportW,
                                                          double itemW, double itemH, int count) {
             if (count <= 0 || itemW <= 0 || itemH <= 0) return (0, -1);
             int cols = Math.Max(1, (int)Math.Floor(viewportW / itemW));
@@ -140,38 +140,63 @@ namespace Material3.Wpf {
             if (_offset.Y > maxY) SetVerticalOffset(maxY);
         }
 
-        // ---- IScrollInfo (vertical) ----
+        /// <inheritdoc />
         public ScrollViewer? ScrollOwner { get; set; }
+        /// <inheritdoc />
         public bool CanVerticallyScroll { get; set; }
+        /// <inheritdoc />
         public bool CanHorizontallyScroll { get; set; }
+        /// <inheritdoc />
         public double ExtentWidth => _extent.Width;
+        /// <inheritdoc />
         public double ExtentHeight => _extent.Height;
+        /// <inheritdoc />
         public double ViewportWidth => _viewport.Width;
+        /// <inheritdoc />
         public double ViewportHeight => _viewport.Height;
+        /// <inheritdoc />
         public double HorizontalOffset => _offset.X;
+        /// <inheritdoc />
         public double VerticalOffset => _offset.Y;
 
         private const double Line = 48;
-        // Wheel scrolls ~one cell row per notch (cells are tall); line/page keys use smaller/full steps.
         private double WheelStep => Math.Max(Line, _itemSize.Height);
+        /// <inheritdoc />
         public void LineUp() => SetVerticalOffset(_offset.Y - Line);
+        /// <inheritdoc />
         public void LineDown() => SetVerticalOffset(_offset.Y + Line);
+        /// <inheritdoc />
         public void WheelUp() => SetVerticalOffset(_offset.Y - WheelStep);
+        /// <inheritdoc />
         public void WheelDown() => SetVerticalOffset(_offset.Y + WheelStep);
+        /// <inheritdoc />
         public void PageUp() => SetVerticalOffset(_offset.Y - _viewport.Height);
+        /// <inheritdoc />
         public void PageDown() => SetVerticalOffset(_offset.Y + _viewport.Height);
+        /// <inheritdoc />
         public void LineLeft() { }
+        /// <inheritdoc />
         public void LineRight() { }
+        /// <inheritdoc />
         public void WheelLeft() { }
+        /// <inheritdoc />
         public void WheelRight() { }
+        /// <inheritdoc />
         public void PageLeft() { }
+        /// <inheritdoc />
         public void PageRight() { }
+        /// <inheritdoc />
         public void MouseWheelUp() => WheelUp();
+        /// <inheritdoc />
         public void MouseWheelDown() => WheelDown();
+        /// <inheritdoc />
         public void MouseWheelLeft() { }
+        /// <inheritdoc />
         public void MouseWheelRight() { }
+        /// <inheritdoc />
         public void SetHorizontalOffset(double offset) { }
 
+        /// <inheritdoc />
         public void SetVerticalOffset(double offset) {
             double maxY = Math.Max(0, _extent.Height - _viewport.Height);
             double y = Math.Max(0, Math.Min(offset, maxY));
@@ -181,6 +206,7 @@ namespace Material3.Wpf {
             InvalidateMeasure();
         }
 
+        /// <inheritdoc />
         public Rect MakeVisible(Visual visual, Rect rectangle) {
             for (int i = 0; i < InternalChildren.Count; i++) {
                 if (!ReferenceEquals(InternalChildren[i], visual)) continue;

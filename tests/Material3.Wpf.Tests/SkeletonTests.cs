@@ -7,8 +7,6 @@ using Material3.Wpf;
 using Xunit;
 
 namespace Material3.Wpf.Tests {
-    // A skeleton's shimmer repeats Forever, so the interesting property is not that it animates but that it stops:
-    // a hidden or discarded sketch that keeps its clock drives the render thread for the rest of the session.
     [Trait("Category", "Ui")]
     public class SkeletonTests {
         [Fact]
@@ -47,8 +45,6 @@ namespace Material3.Wpf.Tests {
             Assert.False(IsShimmering(skeleton), "the sweep outlived the skeleton leaving the tree");
         });
 
-        // PART_Shimmer is the control's template contract: it carries the animated gradient, and Stop drops both
-        // the brush and the clock that drives it.
         private static bool IsShimmering(Skeleton skeleton) {
             if (!(skeleton.Template?.FindName("PART_Shimmer", skeleton) is Border shimmer)) return false;
             return shimmer.Background is LinearGradientBrush brush

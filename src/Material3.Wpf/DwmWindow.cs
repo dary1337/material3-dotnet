@@ -67,8 +67,6 @@ namespace Material3.Wpf {
             catch (EntryPointNotFoundException) { return false; }
         }
 
-        // What a caller asked for, per window. A weak table so the entry dies with the window; DWM cannot be
-        // asked back, since the corner attribute is write-only.
         private static readonly ConditionalWeakTable<Window, object> Applied = new ConditionalWeakTable<Window, object>();
 
         /// <summary>Asks the compositor to round a window. No-op before the handle exists.</summary>
@@ -93,8 +91,6 @@ namespace Material3.Wpf {
             return !(Applied.TryGetValue(window, out object? asked) && (WindowCornerPreference)asked == WindowCornerPreference.DoNotRound);
         }
 
-        // RtlGetVersion, not Environment.OSVersion: the latter is shimmed down to 6.2 unless the HOST app's
-        // manifest declares a Windows 10 supportedOS GUID, and a library cannot control the host's manifest.
         private static bool DetectSupport() {
             try {
                 var info = new OSVERSIONINFOW { OSVersionInfoSize = Marshal.SizeOf(typeof(OSVERSIONINFOW)) };

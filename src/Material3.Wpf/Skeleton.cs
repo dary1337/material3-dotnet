@@ -51,15 +51,12 @@ namespace Material3.Wpf {
             else Stop();
         }
 
-        // Rebuilt on every start rather than held: the highlight is mixed from the OnSurface role, so a theme or
-        // accent switch between two loads would otherwise leave the previous palette's band sweeping.
         private void Start() {
             if (_shimmer == null || _sweep != null) return;
             Color on = (TryFindResource("OnSurface") as SolidColorBrush)?.Color ?? Colors.White;
             Color highlight = Color.FromArgb(28, on.R, on.G, on.B);
             Color clear = Color.FromArgb(0, on.R, on.G, on.B);
 
-            // Seamless sweep: a repeating band scrolled by exactly one period, so the loop point is invisible.
             var brush = new LinearGradientBrush {
                 StartPoint = new Point(0, 0), EndPoint = new Point(1, 0),
                 SpreadMethod = GradientSpreadMethod.Repeat,
@@ -77,8 +74,6 @@ namespace Material3.Wpf {
                 new DoubleAnimation(0, 1, new Duration(TimeSpan.FromMilliseconds(1400))) { RepeatBehavior = RepeatBehavior.Forever });
         }
 
-        // Releasing the brush is not enough on its own — a Forever clock keeps driving the render thread until it
-        // is detached from the property it animates.
         private void Stop() {
             if (_sweep != null) {
                 _sweep.BeginAnimation(TranslateTransform.XProperty, null);

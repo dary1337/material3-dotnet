@@ -20,21 +20,18 @@ namespace Material3.Wpf {
         private const string PartActive = "PART_Active";
         private const string PartThumb = "PART_Thumb";
         private const double ThumbSize = 20;
-        private static readonly Duration Travel = new Duration(TimeSpan.FromMilliseconds(120));
 
         /// <summary>Identifies the Animated attached property.</summary>
-        public static readonly DependencyProperty AnimatedProperty =
-            DependencyProperty.RegisterAttached("Animated", typeof(bool), typeof(SliderMotion),
+        public static readonly DependencyProperty IsAnimatedProperty =
+            DependencyProperty.RegisterAttached("IsAnimated", typeof(bool), typeof(SliderMotion),
                 new PropertyMetadata(false, OnAnimatedChanged));
 
         /// <summary>Turns the eased travel on. The chrome is placed either way — off means it jumps.</summary>
-        public static void SetAnimated(DependencyObject o, bool value) => o.SetValue(AnimatedProperty, value);
+        public static void SetIsAnimated(DependencyObject element, bool value) => element.SetValue(IsAnimatedProperty, value);
 
         /// <summary>Reads whether the eased travel is on.</summary>
-        public static bool GetAnimated(DependencyObject o) => (bool)o.GetValue(AnimatedProperty);
+        public static bool GetIsAnimated(DependencyObject element) => (bool)element.GetValue(IsAnimatedProperty);
 
-        // The drawn position, 0..1. Animatable, and the only input the layout is rebuilt from — so a jump and a
-        // travel are the same code path, one with a clock and one without.
         private static readonly DependencyProperty DrawnProperty =
             DependencyProperty.RegisterAttached("Drawn", typeof(double), typeof(SliderMotion),
                 new PropertyMetadata(0.0, (d, e) => Place((Slider)d)));
@@ -48,8 +45,6 @@ namespace Material3.Wpf {
             slider.PreviewMouseMove -= OnDrag;
             slider.PreviewMouseLeftButtonUp -= OnRelease;
             slider.Unloaded -= OnUnloaded;
-            // Attached either way: the template has no Track, so these handlers are the only thing that places
-            // the thumb. Turning the property off chooses an instant jump, not a frozen slider.
             slider.ValueChanged += OnValueChanged;
             slider.SizeChanged += OnSizeChanged;
             slider.Loaded += OnLoaded;
@@ -57,7 +52,6 @@ namespace Material3.Wpf {
             slider.PreviewMouseMove += OnDrag;
             slider.PreviewMouseLeftButtonUp += OnRelease;
             slider.Unloaded += OnUnloaded;
-            // Switched on after the slider was already up: Loaded has been and gone, so place it now.
             if (slider.IsLoaded) Snap(slider);
         }
 
@@ -70,18 +64,16 @@ namespace Material3.Wpf {
 
         private static void OnValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
             var slider = (Slider)sender;
-            if (!GetAnimated(slider)) {
+            if (!GetIsAnimated(slider)) {
                 Snap(slider);
                 return;
             }
-            slider.BeginAnimation(DrawnProperty, new DoubleAnimation(Fraction(slider), Travel) {
+            slider.BeginAnimation(DrawnProperty, new DoubleAnimation(Fraction(slider), Motion.Ms(120)) {
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
                 FillBehavior = FillBehavior.HoldEnd,
             }, HandoffBehavior.SnapshotAndReplace);
         }
 
-        // The first paint is a placement, not a travel: a slider that eases in from zero on load reads as the
-        // value having just changed.
         private static void Snap(Slider slider) {
             slider.BeginAnimation(DrawnProperty, null);
             slider.SetValue(DrawnProperty, Fraction(slider));
@@ -112,15 +104,11 @@ namespace Material3.Wpf {
 
         private static void SetFromPointer(Slider slider, Point p) => slider.Value = ValueAt(slider, p.X);
 
-        // Measured against the thumb's centre travel, not the full width: the ends have to be reachable, and a
-        // pointer at x=0 means the minimum however wide the thumb is.
         internal static double ValueAt(Slider slider, double x) {
             double travel = Math.Max(1, slider.ActualWidth - ThumbSize);
             double fraction = Clamp((x - ThumbSize / 2) / travel);
             double raw = slider.Minimum + fraction * (slider.Maximum - slider.Minimum);
             if (!slider.IsSnapToTickEnabled || slider.TickFrequency <= 0) return raw;
-            // The ends are snap candidates of their own, as they are for WPF's own SnapToTick: a frequency that
-            // does not divide the range would otherwise leave the maximum unreachable.
             double snapped = slider.Minimum + Math.Round((raw - slider.Minimum) / slider.TickFrequency) * slider.TickFrequency;
             snapped = snapped < slider.Minimum ? slider.Minimum : snapped > slider.Maximum ? slider.Maximum : snapped;
             return Math.Abs(raw - slider.Maximum) < Math.Abs(raw - snapped) ? slider.Maximum
@@ -137,8 +125,6 @@ namespace Material3.Wpf {
             double travel = Math.Max(0, area.ActualWidth - ThumbSize);
             double centre = ThumbSize / 2 + Clamp((double)slider.GetValue(DrawnProperty)) * travel;
             active.Width = centre;
-            // Measured, not declared: a template that sizes its thumb by content leaves Width NaN, and NaN on a
-            // Canvas offset takes the thumb off screen entirely.
             double thumbW = Sized(thumb.Width, thumb.ActualWidth);
             double thumbH = Sized(thumb.Height, thumb.ActualHeight);
             Canvas.SetLeft(thumb, centre - thumbW / 2);

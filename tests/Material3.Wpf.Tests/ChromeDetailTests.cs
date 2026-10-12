@@ -8,12 +8,8 @@ using Material3.Wpf;
 using Xunit;
 
 namespace Material3.Wpf.Tests {
-    // The details that only show up on screen: a mark that depends on an animation having finished, text that
-    // inherits the framework's black, a dismiss target that sits off the row's centre line.
     [Trait("Category", "Ui")]
     public class ChromeDetailTests {
-        // No Spin: the state has to be right the instant it changes. Tying it to a storyboard's end means a
-        // preempted or dropped clock leaves a checked box looking empty.
         [Fact]
         public void TheCheckMarkIsShownByStateAndNotByAnAnimation() => Ui.InWindow(w => {
             CheckBox box = Checkbox(w);
@@ -22,8 +18,6 @@ namespace Material3.Wpf.Tests {
             Ui.Settle(w);
             Assert.Equal(Visibility.Visible, Part(box, "markGroup").Visibility);
             Assert.Equal(Visibility.Visible, Part(box, "check").Visibility);
-            // The entrance runs from zero, so the resting value is what matters: it must be 1 the moment the
-            // clock lets go, not only if it was allowed to finish.
             Ui.Spin(w, 300);
             Assert.Equal(1, ((ScaleTransform)Part(box, "markGroup").RenderTransform).ScaleX);
 
@@ -54,7 +48,7 @@ namespace Material3.Wpf.Tests {
         [Fact]
         public void TheDismissSitsOnTheBannersCentreLine() => Ui.InWindow(w => {
             var banner = new NoticeBanner {
-                Severity = NoticeSeverity.Error, IconKind = "AlertCircle", Width = 560,
+                Tone = Tone.Error, Glyph = "AlertCircle", Width = 560,
                 Text = "The last run failed. Open the log to see which step stopped it.",
                 Actions = new Button { Content = "Show log", Style = (Style)w.FindResource("ErrorTonalButton"), MinHeight = 32 },
             };
@@ -66,10 +60,9 @@ namespace Material3.Wpf.Tests {
             Assert.Equal(banner.ActualHeight / 2, centre, 1);
         });
 
-        // A local cursor outranks a template trigger, so a disabled dismiss would keep offering the hand.
         [Fact]
         public void ADisabledBannerDismissTakesTheArrowBack() => Ui.InWindow(w => {
-            var banner = new NoticeBanner { IconKind = "AlertCircle", Text = "Nothing to do", Width = 400 };
+            var banner = new NoticeBanner { Glyph = "AlertCircle", Text = "Nothing to do", Width = 400 };
             w.Content = banner;
             Ui.Settle(w);
 
@@ -81,8 +74,6 @@ namespace Material3.Wpf.Tests {
             Assert.Equal(Cursors.Arrow, dismiss.Cursor);
         });
 
-        // The travel is on the drawn position: Value lands at once (bindings must not see a ramp) while the
-        // active track catches up over the next few frames.
         [Fact]
         public void TheDrawnPositionTravelsWhileTheValueLandsAtOnce() => Ui.InWindow(w => {
             Slider slider = Shown(w, value: 10);
@@ -108,8 +99,6 @@ namespace Material3.Wpf.Tests {
             Assert.Equal(slider.Maximum, SliderMotion.ValueAt(slider, slider.ActualWidth));
         });
 
-        // A frequency that does not divide the range puts the last step past the end, and Value would then
-        // be coerced back to a position the pointer never asked for.
         [Theory]
         [InlineData(7.0)]
         [InlineData(30.0)]
@@ -132,13 +121,11 @@ namespace Material3.Wpf.Tests {
             Assert.Equal(Expected(slider, 25), centre, 1);
         });
 
-        // Off means it jumps, not that it stops being drawn: the template has no Track, so these handlers are
-        // the only thing that places the thumb at all.
         [Fact]
         public void TurningTheTravelOffMakesItJumpInTheSameFrame() => Ui.InWindow(w => {
             Slider slider = Shown(w, value: 10);
 
-            SliderMotion.SetAnimated(slider, false);
+            SliderMotion.SetIsAnimated(slider, false);
             slider.Value = 20;
             Ui.Settle(w);
 
@@ -158,7 +145,6 @@ namespace Material3.Wpf.Tests {
 
         private static Border Active(Slider slider) => (Border)slider.Template.FindName("PART_Active", slider);
 
-        // The thumb centre for a value: half a thumb in, then the fraction of what is left.
         private static double Expected(Slider slider, double value) =>
             10 + (value - slider.Minimum) / (slider.Maximum - slider.Minimum) * (slider.ActualWidth - 20);
 

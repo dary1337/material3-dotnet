@@ -5,8 +5,6 @@ using Material3.Wpf;
 using Xunit;
 
 namespace Material3.Wpf.Tests {
-    // The shadow effects are static resources and cannot go wrong; the tinted surfaces are generated per scheme
-    // and are the half that carries the level on a dark theme, so that is the half worth pinning.
     public class ElevationTests {
         [Fact]
         public void LevelZeroIsThePlainSurface() {
@@ -34,11 +32,11 @@ namespace Material3.Wpf.Tests {
         [Fact]
         public void ApplyPublishesEveryLevelAsABrush() {
             var d = new ResourceDictionary();
-            M3Theme.Publish(d, MaterialTheme.Platinum().DarkScheme);
+            ThemeManager.Publish(d, MaterialTheme.Platinum().DarkScheme);
             for (int level = 0; level <= Elevation.MaxLevel; level++) {
                 Assert.IsType<SolidColorBrush>(d[Elevation.SurfaceKey(level)]);
             }
-            Assert.Contains(Elevation.SurfaceKey(3), M3Theme.Roles);
+            Assert.Contains(Elevation.SurfaceKey(3), ThemeManager.Roles);
         }
 
         private static int Sum(Argb c) => c.R + c.G + c.B;

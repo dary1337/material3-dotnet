@@ -5,8 +5,6 @@ using Material3.Wpf;
 using Xunit;
 
 namespace Material3.Wpf.Tests {
-    // Two things can go wrong here and neither shows up in a screenshot: the arc can stop matching the value, and
-    // the indeterminate clock — Forever, on the render thread — can outlive the control that started it.
     [Trait("Category", "Ui")]
     public class CircularProgressTests {
         [Fact]
@@ -23,8 +21,6 @@ namespace Material3.Wpf.Tests {
             Assert.InRange(bounds.Height, 43, 45);
         });
 
-        // A quarter is the reading that catches a wrong start angle: it must run from 12 to 3 o'clock, so the arc
-        // occupies exactly the top-right quadrant rather than some other quarter of the same size.
         [Fact]
         public void AQuarterRunsFromTheTopClockwise() => Ui.InWindow(w => {
             CircularProgress ring = Shown(w, value: 25);
@@ -45,8 +41,6 @@ namespace Material3.Wpf.Tests {
             Assert.InRange(half.Height, 43, 45);
         });
 
-        // The arc gets its own brush rather than Foreground, which would inherit the surrounding text colour and
-        // silently paint the ring black wherever it is dropped.
         [Fact]
         public void TheArcIsPaintedWithThePrimaryRole() => Ui.InWindow(w => {
             CircularProgress ring = Shown(w, value: 50);
@@ -69,8 +63,6 @@ namespace Material3.Wpf.Tests {
             Assert.True(IsSpinning(ring), "showing it again did not restart the turn");
         });
 
-        // Going back to determinate has to clear the animation as well as stop it: an animated value outranks the
-        // local one, so the arc would keep breathing at whatever sweep the clock left behind.
         [Fact]
         public void GoingDeterminateHandsTheArcBackToTheValue() => Ui.InWindow(w => {
             var ring = new CircularProgress { IsIndeterminate = true };
@@ -108,7 +100,6 @@ namespace Material3.Wpf.Tests {
         private static Path Indicator(CircularProgress ring) =>
             (Path)ring.Template.FindName("PART_Indicator", ring);
 
-        // The control assigns its own transform to the spin host, so the host is what the test has to ask.
         private static bool IsSpinning(CircularProgress ring) =>
             ring.Template?.FindName("PART_Spin", ring) is UIElement spin
             && spin.RenderTransform is RotateTransform rotate && rotate.HasAnimatedProperties;

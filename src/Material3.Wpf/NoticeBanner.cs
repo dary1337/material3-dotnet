@@ -5,19 +5,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 
 namespace Material3.Wpf {
-    /// <summary>Which container pair a <see cref="NoticeBanner"/> paints itself with.</summary>
-    public enum NoticeSeverity {
-        /// <summary>Page surface behind an outline — an informational line that must not shout.</summary>
-        Neutral,
-        /// <summary>The secondary container pair.</summary>
-        Accent,
-        /// <summary>The warning container pair.</summary>
-        Warning,
-        /// <summary>The error container pair.</summary>
-        Error,
-    }
-
-    /// <summary>
+        /// <summary>
     /// A full-width notice row: a glyph, a wrapping body, the caller's actions and a dismiss button.
     /// </summary>
     /// <remarks>
@@ -50,19 +38,19 @@ namespace Material3.Wpf {
             Dismissed?.Invoke(this, EventArgs.Empty);
         }
 
-        /// <summary>Identifies the <see cref="Severity"/> property.</summary>
-        public static readonly DependencyProperty SeverityProperty = DependencyProperty.Register(
-            nameof(Severity), typeof(NoticeSeverity), typeof(NoticeBanner), new PropertyMetadata(NoticeSeverity.Warning));
+        /// <summary>Identifies the <see cref="Tone"/> property.</summary>
+        public static readonly DependencyProperty ToneProperty = DependencyProperty.Register(
+            nameof(Tone), typeof(Tone), typeof(NoticeBanner), new PropertyMetadata(Tone.Warning));
 
         /// <summary>The container pair the banner paints itself with.</summary>
-        public NoticeSeverity Severity { get => (NoticeSeverity)GetValue(SeverityProperty); set => SetValue(SeverityProperty, value); }
+        public Tone Tone { get => (Tone)GetValue(ToneProperty); set => SetValue(ToneProperty, value); }
 
-        /// <summary>Identifies the <see cref="IconKind"/> property.</summary>
-        public static readonly DependencyProperty IconKindProperty = DependencyProperty.Register(
-            nameof(IconKind), typeof(string), typeof(NoticeBanner), new PropertyMetadata("Information"));
+        /// <summary>Identifies the <see cref="Glyph"/> property.</summary>
+        public static readonly DependencyProperty GlyphProperty = DependencyProperty.Register(
+            nameof(Glyph), typeof(string), typeof(NoticeBanner), new PropertyMetadata("Information"));
 
-        /// <summary>The leading glyph, resolved through the icon set registered with <see cref="M3Icon"/>.</summary>
-        public string IconKind { get => (string)GetValue(IconKindProperty); set => SetValue(IconKindProperty, value); }
+        /// <summary>The leading glyph, resolved through the icon set registered with <see cref="PathIcon"/>.</summary>
+        public string Glyph { get => (string)GetValue(GlyphProperty); set => SetValue(GlyphProperty, value); }
 
         /// <summary>Identifies the <see cref="Text"/> property.</summary>
         public static readonly DependencyProperty TextProperty = DependencyProperty.Register(
@@ -89,8 +77,6 @@ namespace Material3.Wpf {
         private ButtonBase? _dismiss;
 
         /// <inheritdoc />
-        // Detach first: OnApplyTemplate runs again on every re-template, and a second subscription would raise
-        // Dismissed twice per click.
         public override void OnApplyTemplate() {
             base.OnApplyTemplate();
             if (_dismiss != null) _dismiss.Click -= OnDismissClick;
