@@ -1,8 +1,8 @@
 # Material3.Wpf
 
-**Material 3 (Material You)** for **WPF**. A runtime `M3Theme` generates the full M3 color-role scheme from one
+**Material 3 (Material You)** for **WPF**. A runtime `ThemeManager` generates the full M3 color-role scheme from one
 seed color (HCT) and publishes it as live `DynamicResource` brushes, so the whole UI recolors on the fly — plus
-themed M3 controls, an icon-set-agnostic `M3Icon`, motion helpers, an app-level `M3Modal` (scrim + card) and a
+themed M3 controls, an icon-set-agnostic `PathIcon`, motion helpers, an app-level `Modal` (scrim + card) and a
 centered popup tooltip. Built on [`Material3.Core`](https://www.nuget.org/packages/Material3.Core).
 
 ![Material 3 color roles, dark theme](https://raw.githubusercontent.com/dary1337/material3-dotnet/main/docs/img/color-roles-dark.webp)
@@ -11,11 +11,16 @@ centered popup tooltip. Built on [`Material3.Core`](https://www.nuget.org/packag
 - Controls: filled / tonal / outlined / text / shiny buttons, icon button and icon toggle, FAB (round and
   extended), text field, chips, switch, radio, three-state checkbox, segmented button, slider, menus, tooltip,
   scrollbar, linear and circular progress, card, list item, divider, expander
+- Inputs: `TextField` (filled / outlined, floating label), `SearchBar`, the `M3Combo` select, `ColorField` colour picker, `ValueListEditor` and `DataTableEditor` for lists and records, the
+  `InputFilter` number filter for any `TextBox`
+- Navigation and status: `Tabs` (primary / secondary), `Badge`, assist / filter / input / suggestion `Chip`s, rich `Tip`
 - Page furniture: `PageHeader`, `NoticeBanner`, `EmptyState`, `PopupCard`, `Snackbar`
-- Loading: `Skeleton` shimmer blocks and the `Busy` spinner
+- Loading: `Skeleton` shimmer blocks, the `Busy` spinner and the `StepChecklist` progress list
+- `Dialog` blocking dialog — tone glyph, three-level actions, hold-to-confirm, a confirm that owns its work
 - Elevation: shadow effects plus the tinted `SurfaceElevation` roles treatment
-- `M3Modal` app-level modal + scrim, `AnimatedPopup`, centered `Tip` tooltip, `M3Icon`, motion helpers
-- `AutoHideScroll` overlay-scrollbar timing and `DwmWindow` Windows 11 corner rounding
+- `Modal` app-level modal + scrim, `AnimatedPopup`, centered `Tip` tooltip, `PathIcon`, motion helpers
+- `AutoHideScroll` overlay-scrollbar timing, `WheelScroll` system-paced mouse wheel and `DwmWindow` Windows 11
+  corner rounding
 
 ```
 dotnet add package Material3.Wpf
@@ -29,7 +34,7 @@ dotnet add package Material3.Wpf
 </Application>
 ```
 
-The control suite is growing toward WinForms parity.
+Not in WPF yet: navigation bar / rail / drawer, date and time pickers, title bar.
 
 **Full guide:** https://github.com/dary1337/material3-dotnet/blob/main/docs/wpf.md
 &nbsp;·&nbsp; **Repo & demo galleries:** https://github.com/dary1337/material3-dotnet

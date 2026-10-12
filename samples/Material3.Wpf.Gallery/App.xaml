@@ -10,7 +10,7 @@
             </ResourceDictionary.MergedDictionaries>
 
             <Style TargetType="ScrollBar" BasedOn="{StaticResource M3ScrollBar}">
-                <Setter Property="m3:AutoHideScroll.Enabled" Value="True" />
+                <Setter Property="m3:AutoHideScroll.IsEnabled" Value="True" />
             </Style>
         </ResourceDictionary>
     </Application.Resources>
