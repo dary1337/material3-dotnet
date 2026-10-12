@@ -9,9 +9,6 @@ using Material3.Wpf;
 using Xunit;
 
 namespace Material3.Wpf.Tests {
-    // Ground truth for the "the animation played, then the property stayed stuck" class of bug: a WPF animation
-    // left on HoldEnd keeps owning the property, so every later write from the app is silently dropped. These run
-    // on a manual STA thread with a real (off-screen) window, because clocks only tick against a render surface.
     [Trait("Category", "Ui")]
     public class MotionTests {
         [Fact]
@@ -20,7 +17,6 @@ namespace Material3.Wpf.Tests {
             w.Content = el;
             Ui.Settle(w);
             Motion.FadeIn(el);
-            // The end state IS "a write takes": while the clock holds the property every assignment is dropped.
             Ui.SpinUntil(w, () => Math.Abs(el.Opacity - 0.3) < 0.001, "FadeIn never handed Opacity back",
                 each: () => el.Opacity = 0.3);
             Assert.Equal(0.3, el.Opacity, 3);
@@ -47,17 +43,17 @@ namespace Material3.Wpf.Tests {
 
         [Fact]
         public void ClosedModal_ReleasesTheCard_SoItCanBeReused() => Ui.InWindow(w => {
-            var layer = new M3ModalLayer { Content = new Grid() };
+            var layer = new ModalLayer { Content = new Grid() };
             w.Content = layer;
             Ui.Settle(w);
 
             var card = new Border { Width = 200, Height = 120 };
-            IModalHandle handle = M3Modal.Show(card);
+            IModalHandle handle = Modal.Show(card);
             Ui.SpinUntil(w, () => VisualTreeHelper.GetParent(card) != null, "the modal never put the card in the tree");
 
             handle.Close();
             Ui.SpinUntil(w, () => VisualTreeHelper.GetParent(card) == null, "the exit never took the card out of the tree");
-            Assert.False(M3Modal.HasModal);
+            Assert.False(Modal.HasModal);
             Assert.Equal(1.0, card.Opacity, 3);
             Assert.Equal(1.0, ((ScaleTransform)card.RenderTransform).ScaleX, 3);
         });
@@ -87,27 +83,26 @@ namespace Material3.Wpf.Tests {
 
         [Fact]
         public void SwapContent_OnAStretchedControl_LeavesWidthAlone() => Ui.InWindow(w => {
-            var button = NewButton("Show banner");   // Stretch by default: the panel, not the label, sizes it
+            var button = NewButton("Show banner");
             var sibling = new Border { Width = 400, Height = 10, Visibility = Visibility.Collapsed };
             var host = new StackPanel { HorizontalAlignment = HorizontalAlignment.Left, Children = { sibling, button } };
             w.Content = host;
             Ui.Settle(w);
 
-            // One pinned frame is all it takes to centre a stretched control, and polling can step over it.
             int widthWrites = 0;
             var width = DependencyPropertyDescriptor.FromProperty(FrameworkElement.WidthProperty, typeof(Button));
             EventHandler onWidth = (_, __) => widthWrites++;
             width.AddValueChanged(button, onWidth);
             try {
                 Motion.SwapContent(button, LongLabel);
-                sibling.Visibility = Visibility.Visible;   // the slot widens under it, as a banner opening does
+                sibling.Visibility = Visibility.Visible;
                 Ui.Spin(w, 500, each: () => Assert.True(double.IsNaN(button.Width), "a parent-dictated width was pinned"));
             }
             finally { width.RemoveValueChanged(button, onWidth); }
 
             Assert.Equal(0, widthWrites);
             Assert.Equal(LongLabel, button.Content);
-            Assert.Equal(400.0, button.ActualWidth, 1);   // still filling the slot, not pinned and centred in it
+            Assert.Equal(400.0, button.ActualWidth, 1);
         });
 
         [Fact]
@@ -120,7 +115,7 @@ namespace Material3.Wpf.Tests {
             double natural = button.ActualWidth;
 
             Motion.SwapContent(button, LongLabel);
-            Ui.Pump(w);   // until layout runs, ActualWidth still reports the measured target, not the pinned start
+            Ui.Pump(w);
             Ui.SpinUntil(w, () => button.ActualWidth > natural + 10, "the width animation never started");
             Motion.SwapContent(button, "Show banner");
 
@@ -137,7 +132,7 @@ namespace Material3.Wpf.Tests {
         public void CenterPopup_OptsIntoTheOpenScale() => Ui.InWindow(_ => {
             var popup = new Popup();
             Assert.False(Motion.GetScaleOnOpen(popup));
-            CenterPopup.SetEnable(popup, true);
+            CenterPopup.SetIsEnabled(popup, true);
             Assert.True(Motion.GetScaleOnOpen(popup));
         });
 
