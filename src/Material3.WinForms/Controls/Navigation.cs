@@ -13,15 +13,17 @@ using Material3.WinForms.Typography;
 namespace Material3.WinForms.Controls {
     /// <summary>One destination in a navigation bar / rail / drawer.</summary>
     public sealed class NavigationItem {
-        public NavigationItem(string label, string icon) {
+        /// <summary>Creates a destination with a label and a Material Symbols glyph.</summary>
+        public NavigationItem(string label, string glyph) {
             Label = label ?? string.Empty;
-            Icon = icon ?? string.Empty;
+            Glyph = glyph ?? string.Empty;
         }
 
+        /// <summary>The text under or beside the glyph.</summary>
         public string Label { get; }
 
         /// <summary>Material Symbols key.</summary>
-        public string Icon { get; }
+        public string Glyph { get; }
 
         /// <summary>Badge count rendered over the icon; 0 hides the badge, negatives show a dot.</summary>
         public int BadgeCount { get; set; }
@@ -34,6 +36,7 @@ namespace Material3.WinForms.Controls {
         private protected int HotIndex = -1;
         private int _selectedIndex = -1;
 
+        /// <summary>Raised when a different destination is selected.</summary>
         public event EventHandler? SelectedIndexChanged;
 
         private protected MaterialNavigationBase() {
@@ -47,18 +50,19 @@ namespace Material3.WinForms.Controls {
             ThemeHook.Attach(this, () => { ApplyTheme(); Invalidate(); });
         }
 
+        /// <inheritdoc />
         protected override void OnHandleCreated(EventArgs e) {
             base.OnHandleCreated(e);
             ApplyTheme();
             ApplyIntrinsicSize();
         }
 
+        /// <inheritdoc />
         protected override void OnDpiChangedAfterParent(EventArgs e) {
             base.OnDpiChangedAfterParent(e);
             ApplyIntrinsicSize();
         }
 
-        // AutoScale misses runtime-added controls, so each container scales its own 96-DPI-authored bound here.
         private protected virtual void ApplyIntrinsicSize() {
         }
 
@@ -66,6 +70,7 @@ namespace Material3.WinForms.Controls {
             BackColor = MaterialColors.Surface;
         }
 
+        /// <summary>Index of the active destination; -1 when there are no items.</summary>
         [Category("Material Design")]
         [Description("Index of the active destination; -1 when there are no items.")]
         [DefaultValue(-1)]
@@ -81,14 +86,16 @@ namespace Material3.WinForms.Controls {
             }
         }
 
-        public void AddItem(string label, string icon) {
-            Items.Add(new NavigationItem(label, icon));
+        /// <summary>Appends a destination.</summary>
+        public void AddItem(string label, string glyph) {
+            Items.Add(new NavigationItem(label, glyph));
             if (_selectedIndex < 0) {
                 _selectedIndex = 0;
             }
             Invalidate();
         }
 
+        /// <summary>Appends a destination.</summary>
         public void AddItem(NavigationItem item) {
             Items.Add(item);
             if (_selectedIndex < 0) {
@@ -97,12 +104,14 @@ namespace Material3.WinForms.Controls {
             Invalidate();
         }
 
+        /// <summary>Removes every destination.</summary>
         public void ClearItems() {
             Items.Clear();
             _selectedIndex = -1;
             Invalidate();
         }
 
+        /// <summary>The destinations, in order.</summary>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public IReadOnlyList<NavigationItem> Destinations => Items;
@@ -118,6 +127,7 @@ namespace Material3.WinForms.Controls {
             return -1;
         }
 
+        /// <inheritdoc />
         protected override void OnMouseMove(MouseEventArgs e) {
             base.OnMouseMove(e);
             int hit = HitTest(e.Location);
@@ -127,6 +137,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnMouseLeave(EventArgs e) {
             base.OnMouseLeave(e);
             if (HotIndex != -1) {
@@ -135,6 +146,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnMouseUp(MouseEventArgs e) {
             base.OnMouseUp(e);
             if (e.Button == MouseButtons.Left) {
@@ -156,7 +168,7 @@ namespace Material3.WinForms.Controls {
                 return;
             }
             string text = count > 999 ? "999+" : count.ToString();
-            SizeF size = g.MeasureString(text, MaterialType.LabelSmall, int.MaxValue, StringFormat.GenericTypographic);
+            SizeF size = g.MeasureString(text, TypeScale.LabelSmall, int.MaxValue, StringFormat.GenericTypographic);
             int w = Math.Max(Dpi.Scale(owner, 16), (int)Math.Ceiling(size.Width) + Dpi.Scale(owner, 8));
             var rect = new Rectangle(iconRect.Right - w / 2 - Dpi.Scale(owner, 2), iconRect.Y - Dpi.Scale(owner, 7), w, Dpi.Scale(owner, 16));
             using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(rect, Shape.Full))
@@ -168,7 +180,7 @@ namespace Material3.WinForms.Controls {
                 Alignment = StringAlignment.Center,
                 LineAlignment = StringAlignment.Center,
             }) {
-                g.DrawString(text, MaterialType.LabelSmall, brush, rect, fmt);
+                g.DrawString(text, TypeScale.LabelSmall, brush, rect, fmt);
             }
         }
     }
@@ -182,6 +194,7 @@ namespace Material3.WinForms.Controls {
         private const int PillWidth = 56;
         private const int PillHeight = 30;
 
+        /// <summary>Initializes a new instance of the <see cref="MaterialNavigationBar"/> class.</summary>
         public MaterialNavigationBar() {
             Height = BarHeight;
             Dock = DockStyle.Bottom;
@@ -199,12 +212,12 @@ namespace Material3.WinForms.Controls {
             if (Items.Count == 0) {
                 return Rectangle.Empty;
             }
-            // Fractional edges distribute the remainder so the last item reaches full width (no dead strip).
             int left = index * Width / Items.Count;
             int right = (index + 1) * Width / Items.Count;
             return new Rectangle(left, 0, right - left, Height);
         }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -235,16 +248,16 @@ namespace Material3.WinForms.Controls {
                     }
                 }
 
-                Color iconColor = active ? MaterialColors.OnSecondaryContainer : MaterialColors.OnSurfaceVariant;
+                Color glyphColor = active ? MaterialColors.OnSecondaryContainer : MaterialColors.OnSurfaceVariant;
                 var iconRect = new Rectangle(iconCx - iconPx / 2, pill.Y + (pillHeight - iconPx) / 2, iconPx, iconPx);
-                Bitmap icon = MaterialIconRenderer.Get(item.Icon, iconPx, iconColor);
+                Bitmap icon = MaterialIconRenderer.Render(item.Glyph, iconPx, glyphColor);
                 g.DrawImageUnscaled(icon, iconRect.X, iconRect.Y);
                 PaintBadge(this, g, iconRect, item.BadgeCount);
 
                 Color labelColor = active ? MaterialColors.OnSurface : MaterialColors.OnSurfaceVariant;
                 using (var brush = new SolidBrush(labelColor))
                 using (var fmt = new StringFormat(StringFormat.GenericTypographic) { Alignment = StringAlignment.Center }) {
-                    g.DrawString(item.Label, MaterialType.LabelMedium, brush,
+                    g.DrawString(item.Label, TypeScale.LabelMedium, brush,
                         new RectangleF(rect.X, pill.Bottom + Dpi.Scale(this, 4), rect.Width, Dpi.Scale(this, 16)), fmt);
                 }
             }
@@ -262,6 +275,7 @@ namespace Material3.WinForms.Controls {
         private const int PillWidth = 52;
         private const int PillHeight = 30;
 
+        /// <summary>Initializes a new instance of the <see cref="MaterialNavigationRail"/> class.</summary>
         public MaterialNavigationRail() {
             Width = RailWidth;
             Dock = DockStyle.Left;
@@ -276,6 +290,7 @@ namespace Material3.WinForms.Controls {
             return new Rectangle(0, Dpi.Scale(this, TopPad) + index * itemHeight, Width, itemHeight);
         }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -306,16 +321,16 @@ namespace Material3.WinForms.Controls {
                     }
                 }
 
-                Color iconColor = active ? MaterialColors.OnSecondaryContainer : MaterialColors.OnSurfaceVariant;
+                Color glyphColor = active ? MaterialColors.OnSecondaryContainer : MaterialColors.OnSurfaceVariant;
                 var iconRect = new Rectangle(iconCx - iconPx / 2, pill.Y + (pillHeight - iconPx) / 2, iconPx, iconPx);
-                Bitmap icon = MaterialIconRenderer.Get(item.Icon, iconPx, iconColor);
+                Bitmap icon = MaterialIconRenderer.Render(item.Glyph, iconPx, glyphColor);
                 g.DrawImageUnscaled(icon, iconRect.X, iconRect.Y);
                 PaintBadge(this, g, iconRect, item.BadgeCount);
 
                 Color labelColor = active ? MaterialColors.OnSurface : MaterialColors.OnSurfaceVariant;
                 using (var brush = new SolidBrush(labelColor))
                 using (var fmt = new StringFormat(StringFormat.GenericTypographic) { Alignment = StringAlignment.Center }) {
-                    g.DrawString(item.Label, MaterialType.LabelMedium, brush,
+                    g.DrawString(item.Label, TypeScale.LabelMedium, brush,
                         new RectangleF(rect.X, pill.Bottom + Dpi.Scale(this, 4), rect.Width, Dpi.Scale(this, 16)), fmt);
                 }
             }
@@ -334,6 +349,7 @@ namespace Material3.WinForms.Controls {
 
         private string _headline = string.Empty;
 
+        /// <summary>Initializes a new instance of the <see cref="MaterialNavigationDrawer"/> class.</summary>
         public MaterialNavigationDrawer() {
             Width = DrawerWidth;
             Dock = DockStyle.Left;
@@ -365,6 +381,7 @@ namespace Material3.WinForms.Controls {
             return new Rectangle(edgePad, ListTop + index * (itemHeight + Dpi.Scale(this, 4)), Width - edgePad * 2, itemHeight);
         }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -373,7 +390,7 @@ namespace Material3.WinForms.Controls {
 
             if (!string.IsNullOrEmpty(_headline)) {
                 using (var brush = new SolidBrush(MaterialColors.OnSurfaceVariant)) {
-                    g.DrawString(_headline, MaterialType.TitleSmall, brush, Dpi.Scale(this, EdgePad + 8), Dpi.Scale(this, EdgePad + 6));
+                    g.DrawString(_headline, TypeScale.TitleSmall, brush, Dpi.Scale(this, EdgePad + 8), Dpi.Scale(this, EdgePad + 6));
                 }
             }
 
@@ -400,14 +417,14 @@ namespace Material3.WinForms.Controls {
                 int iconPx = Dpi.Scale(this, IconPx);
                 int iconGap = Dpi.Scale(this, IconGap);
                 var iconRect = new Rectangle(rect.X + Dpi.Scale(this, 16), rect.Y + (rect.Height - iconPx) / 2, iconPx, iconPx);
-                Bitmap icon = MaterialIconRenderer.Get(item.Icon, iconPx, content);
+                Bitmap icon = MaterialIconRenderer.Render(item.Glyph, iconPx, content);
                 g.DrawImageUnscaled(icon, iconRect.X, iconRect.Y);
                 PaintBadge(this, g, iconRect, item.BadgeCount);
 
                 Color label = active ? MaterialColors.OnSecondaryContainer : MaterialColors.OnSurface;
                 using (var brush = new SolidBrush(label))
                 using (var fmt = new StringFormat(StringFormat.GenericTypographic) { LineAlignment = StringAlignment.Center }) {
-                    g.DrawString(item.Label, MaterialType.LabelLarge, brush,
+                    g.DrawString(item.Label, TypeScale.LabelLarge, brush,
                         new RectangleF(iconRect.Right + iconGap, rect.Y, rect.Right - iconRect.Right - iconGap - Dpi.Scale(this, 12), rect.Height), fmt);
                 }
             }

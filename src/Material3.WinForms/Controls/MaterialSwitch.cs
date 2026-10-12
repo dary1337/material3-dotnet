@@ -21,16 +21,17 @@ namespace Material3.WinForms.Controls {
         private const int ThumbPressed = 28;
         private const int LabelGap = 12;
         private const int HaloRadius = 20;
-        // Tall enough to fit the 40dp (2×HaloRadius) hover state layer centered on the track.
         private const int ControlHeight = HaloRadius * 2;
 
         private bool _checked;
         private bool _hovered;
         private bool _pressed;
-        private readonly AnimatedValue _thumb; // 0 = off, 1 = on
+        private readonly AnimatedValue _thumb;
 
+        /// <summary>Raised when the switch is flipped.</summary>
         public event EventHandler? CheckedChanged;
 
+        /// <summary>Initializes a new instance of the <see cref="MaterialSwitch"/> class.</summary>
         public MaterialSwitch() {
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
@@ -47,6 +48,7 @@ namespace Material3.WinForms.Controls {
             ThemeHook.Attach(this, Invalidate);
         }
 
+        /// <summary>Toggle state of the switch.</summary>
         [Category("Material Design")]
         [Description("Toggle state of the switch.")]
         [DefaultValue(false)]
@@ -67,7 +69,7 @@ namespace Material3.WinForms.Controls {
         private int _prefDpi = -1;
         private Size _prefSize;
 
-        // Cached: layout calls this several times per pass and each measure opens a device context.
+        /// <inheritdoc />
         public override Size GetPreferredSize(Size proposedSize) {
             string text = Text ?? string.Empty;
             if (_prefDpi == DeviceDpi && _prefText == text) {
@@ -77,7 +79,7 @@ namespace Material3.WinForms.Controls {
             if (text.Length > 0) {
                 using (Graphics g = CreateGraphics()) {
                     width += Dpi.Scale(this, LabelGap) + (int)Math.Ceiling(
-                        g.MeasureString(text, MaterialType.BodyMedium, int.MaxValue, StringFormat.GenericTypographic).Width);
+                        g.MeasureString(text, TypeScale.BodyMedium, int.MaxValue, StringFormat.GenericTypographic).Width);
                 }
             }
             _prefText = text;
@@ -86,8 +88,11 @@ namespace Material3.WinForms.Controls {
             return _prefSize;
         }
 
+        /// <inheritdoc />
         protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); _hovered = true; Invalidate(); }
+        /// <inheritdoc />
         protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); _hovered = false; _pressed = false; Invalidate(); }
+        /// <inheritdoc />
         protected override void OnMouseDown(MouseEventArgs e) {
             base.OnMouseDown(e);
             if (e.Button == MouseButtons.Left) {
@@ -97,6 +102,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnMouseUp(MouseEventArgs e) {
             base.OnMouseUp(e);
             if (e.Button == MouseButtons.Left && _pressed) {
@@ -108,6 +114,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnKeyDown(KeyEventArgs e) {
             base.OnKeyDown(e);
             if (e.KeyCode == Keys.Space) {
@@ -116,11 +123,13 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnTextChanged(EventArgs e) {
             base.OnTextChanged(e);
             Invalidate();
         }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -139,7 +148,7 @@ namespace Material3.WinForms.Controls {
             Color trackOutline;
             Color thumbColor;
             if (!Enabled) {
-                trackFill = ColorScheme.Overlay(ResolveParentColor(), MaterialColors.OnSurface, StateLayers.DisabledContainer);
+                trackFill = ArgbExtensions.Overlay(ResolveParentColor(), MaterialColors.OnSurface, StateLayers.DisabledContainer);
                 trackOutline = trackFill;
                 thumbColor = MaterialColors.OnSurfaceMuted;
             }
@@ -166,7 +175,6 @@ namespace Material3.WinForms.Controls {
             float cx = cxOff + (cxOn - cxOff) * t;
             float cy = trackY + trackHeight / 2f;
 
-            // Hover/press state layer per M3; no persistent focus halo (it reads as a stuck glow).
             if (Enabled && (_hovered || _pressed)) {
                 int haloRadius = Dpi.Scale(this, HaloRadius);
                 double overlay = _pressed ? StateLayers.Pressed : StateLayers.Hover;
@@ -185,7 +193,7 @@ namespace Material3.WinForms.Controls {
                 using (var brush = new SolidBrush(textColor))
                 using (var fmt = new StringFormat(StringFormat.GenericTypographic) { LineAlignment = StringAlignment.Center }) {
                     int labelGap = Dpi.Scale(this, LabelGap);
-                    g.DrawString(Text, MaterialType.BodyMedium, brush,
+                    g.DrawString(Text, TypeScale.BodyMedium, brush,
                         new RectangleF(trackWidth + labelGap, 0, Width - trackWidth - labelGap, Height), fmt);
                 }
             }
@@ -201,9 +209,10 @@ namespace Material3.WinForms.Controls {
         }
 
         private static Color Blend(Color from, Color to, float t) {
-            return ColorScheme.Overlay(from, to, t);
+            return ArgbExtensions.Overlay(from, to, t);
         }
 
+        /// <inheritdoc />
         protected override void Dispose(bool disposing) {
             if (disposing) {
                 _thumb.Dispose();

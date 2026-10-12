@@ -136,7 +136,6 @@ namespace Material3.WinForms.Controls {
                     CreateParams cp = base.CreateParams;
                     const int WS_EX_TOOLWINDOW = 0x80;
                     const int WS_EX_NOACTIVATE = 0x08000000;
-                    // WS_EX_TRANSPARENT passes mouse events through, so the tip never traps the cursor and triggers the source's MouseLeave loop.
                     const int WS_EX_TRANSPARENT = 0x20;
                     cp.ExStyle |= WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_TRANSPARENT;
                     return cp;
@@ -147,15 +146,14 @@ namespace Material3.WinForms.Controls {
                 int padX = Dpi.Scale(this, PadX);
                 int padY = Dpi.Scale(this, PadY);
                 using (var bitmap = new Bitmap(1, 1)) {
-                    // Measure at device DPI so wrap width and text extents match the monitor-DPI paint.
                     bitmap.SetResolution(DeviceDpi, DeviceDpi);
                     using (Graphics g = Graphics.FromImage(bitmap)) {
                         var layout = new SizeF(Dpi.Scale(this, MaxTipWidth) - padX * 2, float.MaxValue);
-                        SizeF bodySize = g.MeasureString(_body, MaterialType.BodySmall, layout);
+                        SizeF bodySize = g.MeasureString(_body, TypeScale.BodySmall, layout);
                         float width = bodySize.Width;
                         float height = bodySize.Height;
                         if (!string.IsNullOrEmpty(_title)) {
-                            SizeF titleSize = g.MeasureString(_title, MaterialType.TitleSmall, layout);
+                            SizeF titleSize = g.MeasureString(_title, TypeScale.TitleSmall, layout);
                             width = Math.Max(width, titleSize.Width);
                             height += titleSize.Height + Dpi.Scale(this, 2);
                         }
@@ -171,7 +169,6 @@ namespace Material3.WinForms.Controls {
                 }
                 Location = new Point(Math.Max(screen.Left, x), Math.Max(screen.Top, y));
 
-                // Region clip rounds on every Windows version; DWM corner preference doesn't apply to these frameless tool windows.
                 using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(
                     new Rectangle(0, 0, Width, Height), Dpi.Scale(this, Shape.ExtraSmall))) {
                     Region?.Dispose();
@@ -191,13 +188,13 @@ namespace Material3.WinForms.Controls {
                 var layout = new RectangleF(padX, y, Width - padX * 2, Height - padY * 2);
                 if (!string.IsNullOrEmpty(_title)) {
                     using (var brush = new SolidBrush(MaterialColors.InverseOnSurface)) {
-                        g.DrawString(_title, MaterialType.TitleSmall, brush, layout);
+                        g.DrawString(_title, TypeScale.TitleSmall, brush, layout);
                     }
-                    y += g.MeasureString(_title, MaterialType.TitleSmall,
+                    y += g.MeasureString(_title, TypeScale.TitleSmall,
                         new SizeF(layout.Width, float.MaxValue)).Height + Dpi.Scale(this, 2);
                 }
                 using (var brush = new SolidBrush(MaterialColors.InverseOnSurface)) {
-                    g.DrawString(_body, MaterialType.BodySmall, brush,
+                    g.DrawString(_body, TypeScale.BodySmall, brush,
                         new RectangleF(padX, y, Width - padX * 2, Height - y));
                 }
             }

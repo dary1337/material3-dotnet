@@ -15,7 +15,6 @@ namespace Material3.WinForms.Tokens {
         /// <summary>Surface-tint opacity per level (0–5), per the M3 spec.</summary>
         public static readonly double[] TintOpacity = { 0.0, 0.05, 0.08, 0.11, 0.12, 0.14 };
 
-        // Shadow geometry per level: vertical offset and blur radius in px.
         private static readonly int[] ShadowOffsetY = { 0, 1, 2, 4, 6, 8 };
         private static readonly int[] ShadowBlur = { 0, 3, 6, 8, 10, 12 };
 
@@ -28,7 +27,7 @@ namespace Material3.WinForms.Tokens {
             if (level == 0) {
                 return surface;
             }
-            return ColorScheme.Overlay(surface, ThemeManager.Scheme.SurfaceTint, TintOpacity[level]);
+            return ArgbExtensions.Overlay(surface, ThemeManager.Scheme.SurfaceTint.ToGdi(), TintOpacity[level]);
         }
 
         /// <summary>Margin a control must reserve around its surface so the painted shadow fits.</summary>
@@ -42,7 +41,7 @@ namespace Material3.WinForms.Tokens {
         /// will be drawn into). The caller must have reserved <see cref="ShadowMargin"/> px around
         /// that rect, otherwise the shadow clips at the control bounds.
         /// </summary>
-        public static void PaintShadow(Graphics g, Rectangle surfaceRect, int cornerRadius, int level) {
+        public static void PaintShadow(Graphics graphics, Rectangle surfaceRect, int cornerRadius, int level) {
             level = Clamp(level);
             if (level == 0 || surfaceRect.Width <= 0 || surfaceRect.Height <= 0) {
                 return;
@@ -50,13 +49,11 @@ namespace Material3.WinForms.Tokens {
 
             int blur = ShadowBlur[level];
             int offsetY = ShadowOffsetY[level];
-            Color shadow = ThemeManager.Scheme.Shadow;
+            Color shadow = ThemeManager.Scheme.Shadow.ToGdi();
 
-            SmoothingMode prevSmoothing = g.SmoothingMode;
-            g.SmoothingMode = SmoothingMode.AntiAlias;
+            SmoothingMode prevSmoothing = graphics.SmoothingMode;
+            graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
-            // Concentric 1px strokes with quadratic alpha falloff approximate a Gaussian blur
-            // closely enough at these radii, with no bitmap allocation per paint.
             for (int i = blur; i >= 1; i--) {
                 double falloff = 1.0 - (double)i / (blur + 1);
                 int alpha = (int)(ShadowAlpha[level] * falloff * falloff);
@@ -71,11 +68,11 @@ namespace Material3.WinForms.Tokens {
                 );
                 using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(ring, cornerRadius + i))
                 using (var pen = new Pen(Color.FromArgb(alpha, shadow), 1.6f)) {
-                    g.DrawPath(pen, path);
+                    graphics.DrawPath(pen, path);
                 }
             }
 
-            g.SmoothingMode = prevSmoothing;
+            graphics.SmoothingMode = prevSmoothing;
         }
 
         private static int Clamp(int level) {

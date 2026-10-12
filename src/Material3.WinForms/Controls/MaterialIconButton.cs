@@ -9,10 +9,14 @@ using Material3.WinForms.Tokens;
 
 namespace Material3.WinForms.Controls {
     /// <summary>The four M3 icon-button styles.</summary>
-    public enum MaterialIconButtonStyle {
+    public enum MaterialIconButtonVariant {
+        /// <summary>A glyph with no container.</summary>
         Standard,
+        /// <summary>A glyph on the primary fill.</summary>
         Filled,
+        /// <summary>A glyph on the secondary container fill.</summary>
         Tonal,
+        /// <summary>A glyph inside an outline.</summary>
         Outlined,
     }
 
@@ -23,7 +27,7 @@ namespace Material3.WinForms.Controls {
         private const int DefaultDiameter = 40;
         private const int GlyphSize = 24;
 
-        private MaterialIconButtonStyle _style = MaterialIconButtonStyle.Standard;
+        private MaterialIconButtonVariant _style = MaterialIconButtonVariant.Standard;
         private string _iconGlyph = string.Empty;
         private Image? _iconImage;
         private bool _isToggle;
@@ -31,8 +35,10 @@ namespace Material3.WinForms.Controls {
         private bool _hovered;
         private bool _pressed;
 
+        /// <summary>Raised when a toggle button is switched.</summary>
         public event EventHandler? CheckedChanged;
 
+        /// <summary>Initializes a new instance of the <see cref="MaterialIconButton"/> class.</summary>
         public MaterialIconButton() {
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
@@ -48,10 +54,11 @@ namespace Material3.WinForms.Controls {
             ThemeHook.Attach(this, Invalidate);
         }
 
+        /// <summary>Visual style of the icon button (Standard, Filled, Tonal, Outlined).</summary>
         [Category("Material Design")]
         [Description("Visual style of the icon button (Standard, Filled, Tonal, Outlined).")]
-        [DefaultValue(MaterialIconButtonStyle.Standard)]
-        public MaterialIconButtonStyle ButtonStyle {
+        [DefaultValue(MaterialIconButtonVariant.Standard)]
+        public MaterialIconButtonVariant Variant {
             get => _style;
             set { _style = value; Invalidate(); }
         }
@@ -60,14 +67,14 @@ namespace Material3.WinForms.Controls {
         [Category("Material Design")]
         [Description("Material Symbols key for the glyph.")]
         [DefaultValue("")]
-        public string IconGlyph {
+        public string Glyph {
             get => _iconGlyph;
             set { _iconGlyph = value ?? string.Empty; Invalidate(); }
         }
 
-        /// <summary>Caller-supplied icon drawn as-is, taking precedence over <see cref="IconGlyph"/>.</summary>
+        /// <summary>Caller-supplied icon drawn as-is, taking precedence over <see cref="Glyph"/>.</summary>
         [Category("Material Design")]
-        [Description("Caller-supplied icon drawn as-is, taking precedence over IconGlyph.")]
+        [Description("Caller-supplied icon drawn as-is, taking precedence over Glyph.")]
         [DefaultValue(null)]
         public Image? IconImage {
             get => _iconImage;
@@ -83,6 +90,7 @@ namespace Material3.WinForms.Controls {
             set { _isToggle = value; Invalidate(); }
         }
 
+        /// <summary>Toggle state of the button when IsToggle is enabled.</summary>
         [Category("Material Design")]
         [Description("Toggle state of the button when IsToggle is enabled.")]
         [DefaultValue(false)]
@@ -101,17 +109,17 @@ namespace Material3.WinForms.Controls {
         private (Color container, Color content, bool outlined) ResolveColors() {
             bool selected = _isToggle && _checked;
             switch (_style) {
-                case MaterialIconButtonStyle.Filled:
+                case MaterialIconButtonVariant.Filled:
                     if (_isToggle && !selected) {
                         return (MaterialColors.SurfaceContainerHighest, MaterialColors.Primary, false);
                     }
                     return (MaterialColors.Primary, MaterialColors.OnPrimary, false);
-                case MaterialIconButtonStyle.Tonal:
+                case MaterialIconButtonVariant.Tonal:
                     if (_isToggle && !selected) {
                         return (MaterialColors.SurfaceContainerHighest, MaterialColors.OnSurfaceVariant, false);
                     }
                     return (MaterialColors.SecondaryContainer, MaterialColors.OnSecondaryContainer, false);
-                case MaterialIconButtonStyle.Outlined:
+                case MaterialIconButtonVariant.Outlined:
                     if (selected) {
                         return (MaterialColors.InverseSurface, MaterialColors.InverseOnSurface, false);
                     }
@@ -121,8 +129,11 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); _hovered = true; Invalidate(); }
+        /// <inheritdoc />
         protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); _hovered = false; _pressed = false; Invalidate(); }
+        /// <inheritdoc />
         protected override void OnMouseDown(MouseEventArgs e) {
             base.OnMouseDown(e);
             if (e.Button == MouseButtons.Left) {
@@ -132,6 +143,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnMouseUp(MouseEventArgs e) {
             base.OnMouseUp(e);
             if (e.Button == MouseButtons.Left && _pressed) {
@@ -143,6 +155,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnKeyDown(KeyEventArgs e) {
             base.OnKeyDown(e);
             if (e.KeyCode == Keys.Space) {
@@ -154,16 +167,19 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnEnabledChanged(EventArgs e) {
             base.OnEnabledChanged(e);
             Invalidate();
         }
 
+        /// <inheritdoc />
         protected override void OnHandleCreated(EventArgs e) {
             base.OnHandleCreated(e);
             ApplyIntrinsicSize();
         }
 
+        /// <inheritdoc />
         protected override void OnDpiChangedAfterParent(EventArgs e) {
             base.OnDpiChangedAfterParent(e);
             ApplyIntrinsicSize();
@@ -173,6 +189,7 @@ namespace Material3.WinForms.Controls {
             Size = new Size(Dpi.Scale(this, DefaultDiameter), Dpi.Scale(this, DefaultDiameter));
         }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -183,7 +200,7 @@ namespace Material3.WinForms.Controls {
             (Color container, Color content, bool outlined) = ResolveColors();
             if (!Enabled) {
                 container = container.A > 0
-                    ? ColorScheme.Overlay(ResolveParentColor(), MaterialColors.OnSurface, StateLayers.DisabledContainer)
+                    ? ArgbExtensions.Overlay(ResolveParentColor(), MaterialColors.OnSurface, StateLayers.DisabledContainer)
                     : Color.Transparent;
                 content = MaterialColors.OnSurfaceMuted;
             }
@@ -216,7 +233,7 @@ namespace Material3.WinForms.Controls {
                 g.DrawImage(_iconImage, new Rectangle((Width - glyphSize) / 2, (Height - glyphSize) / 2, glyphSize, glyphSize));
             }
             else if (!string.IsNullOrEmpty(_iconGlyph)) {
-                Bitmap icon = MaterialIconRenderer.Get(_iconGlyph, glyphSize, content);
+                Bitmap icon = MaterialIconRenderer.Render(_iconGlyph, glyphSize, content);
                 g.DrawImageUnscaled(icon, (Width - icon.Width) / 2, (Height - icon.Height) / 2);
             }
         }

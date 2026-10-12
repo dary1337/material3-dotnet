@@ -16,7 +16,7 @@ namespace Material3.WinForms.Controls {
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Panel ContentPanel { get; }
 
-        // Public so dialog/host layouts can reserve the same gutter when pre-measuring content.
+        /// <summary>The width reserved for the overlay scrollbar, in 96-DPI pixels.</summary>
         public const int TrackWidth = 12;
 
         private const int ThumbInset = 2;
@@ -36,18 +36,17 @@ namespace Material3.WinForms.Controls {
         private int _dragStartMouseY;
         private int _dragStartOffset;
 
-        // Releasing the gutter when content fits avoids a permanent empty strip on the right.
         private bool _trackReserved;
         private bool _inRelayout;
         private int _contentUpdateDepth;
 
-        // 0 = hidden, 1 = fully visible; driven by _fadeTimer toward _targetOpacity.
         private float _thumbOpacity;
         private float _targetOpacity;
         private DateTime _lastActivityUtc = DateTime.MinValue;
         private readonly Timer _fadeTimer;
         private readonly WheelMessageFilter _wheelFilter;
 
+        /// <summary>Initializes a new instance of the <see cref="MaterialScrollPanel"/> class.</summary>
         public MaterialScrollPanel() {
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
@@ -57,10 +56,8 @@ namespace Material3.WinForms.Controls {
                 true
             );
             BackColor = MaterialColors.Surface;
-            // AutoScroll renders a native non-client scrollbar; we own scroll math and paint our own thumb instead.
             AutoScroll = false;
 
-            // Manual sizing: AutoSize doesn't compose with Dock=Top children (child wants parent width, parent wants child size).
             ContentPanel = new Panel {
                 BackColor = Color.Transparent,
                 Location = Point.Empty,
@@ -76,7 +73,6 @@ namespace Material3.WinForms.Controls {
 
             _wheelFilter = new WheelMessageFilter(this);
 
-            // Only BackColor needs re-resolving; the thumb color is read at paint time.
             ThemeHook.Attach(this, () => {
                 if (BackColor.A > 0) {
                     BackColor = MaterialColors.Surface;
@@ -85,18 +81,19 @@ namespace Material3.WinForms.Controls {
             });
         }
 
+        /// <inheritdoc />
         protected override void OnHandleCreated(EventArgs e) {
             base.OnHandleCreated(e);
-            // WinForms routes the wheel to the focused control; the filter forwards events when the pointer is over us, so we scroll without focus.
             Application.AddMessageFilter(_wheelFilter);
         }
 
+        /// <inheritdoc />
         protected override void OnHandleDestroyed(EventArgs e) {
-            // Pair with OnHandleCreated so handle-recreation cycles don't accumulate duplicate filter registrations.
             Application.RemoveMessageFilter(_wheelFilter);
             base.OnHandleDestroyed(e);
         }
 
+        /// <inheritdoc />
         protected override void OnResize(EventArgs e) {
             base.OnResize(e);
             Relayout();
@@ -137,17 +134,14 @@ namespace Material3.WinForms.Controls {
         /// exception mid-build can't leave layout permanently suspended.</summary>
         public void BeginContentUpdate() {
             if (_contentUpdateDepth == 0 && ContentPanel.IsHandleCreated) {
-                // Freeze painting for the whole bulk update: a host that clears and re-adds children
-                // (e.g. a resize-driven page rebuild) would otherwise flash every intermediate frame.
-                // Paired with the WM_SETREDRAW(true) + Invalidate in EndContentUpdate for one repaint.
                 SendMessage(ContentPanel.Handle, WM_SETREDRAW, IntPtr.Zero, IntPtr.Zero);
             }
             _contentUpdateDepth++;
             ContentPanel.SuspendLayout();
         }
 
+        /// <summary>Ends a <see cref="BeginContentUpdate"/> batch; the outermost one lays the content out and repaints it once.</summary>
         public void EndContentUpdate() {
-            // Resume while still suspended so child SizeChanged from the layout pass doesn't relayout per child.
             ContentPanel.ResumeLayout(performLayout: true);
             if (_contentUpdateDepth > 0) {
                 _contentUpdateDepth--;
@@ -155,7 +149,6 @@ namespace Material3.WinForms.Controls {
             if (_contentUpdateDepth == 0) {
                 Relayout();
                 if (ContentPanel.IsHandleCreated) {
-                    // Thaw and repaint once, now that every child is in its final place.
                     SendMessage(ContentPanel.Handle, WM_SETREDRAW, (IntPtr)1, IntPtr.Zero);
                     ContentPanel.Invalidate(true);
                 }
@@ -177,7 +170,6 @@ namespace Material3.WinForms.Controls {
             Invalidate();
         }
 
-        // Two passes converge with no oscillation (one direction flip max per call); re-entry is guarded because resizing children fires SizeChanged.
         private void Relayout() {
             if (_inRelayout) {
                 return;
@@ -241,8 +233,6 @@ namespace Material3.WinForms.Controls {
         }
 
         internal void HandleWheel(int delta) {
-            // Reset accumulator on direction change so a reverse scroll doesn't have to "undo"
-            // residual notches from the previous direction.
             if (Math.Sign(delta) != Math.Sign(_wheelAccumulator)) {
                 _wheelAccumulator = 0;
             }
@@ -287,13 +277,13 @@ namespace Material3.WinForms.Controls {
             if (_thumbOpacity != prev) {
                 Invalidate(GetTrackRect());
             }
-            // Stop only when fully settled and nothing is interacting — otherwise the next tick is needed to react to activity.
             if (_thumbOpacity == _targetOpacity && _targetOpacity == 0f
                 && !_thumbDragging && !_thumbHovered && !_trackHovered) {
                 _fadeTimer.Stop();
             }
         }
 
+        /// <inheritdoc />
         protected override void OnMouseMove(MouseEventArgs e) {
             base.OnMouseMove(e);
             if (_thumbDragging) {
@@ -304,7 +294,6 @@ namespace Material3.WinForms.Controls {
                 }
                 int trackHeight = ClientSize.Height - Dpi.Scale(this, ThumbInset) * 2;
                 int thumbLen = ComputeThumbLength(viewport, content);
-                // Δoffset = Δmouse × contentRange / trackRange (the inverse of the thumb-position formula).
                 int travel = trackHeight - thumbLen;
                 if (travel <= 0) {
                     return;
@@ -336,6 +325,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnMouseLeave(EventArgs e) {
             base.OnMouseLeave(e);
             if (!_thumbDragging) {
@@ -349,6 +339,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnMouseDown(MouseEventArgs e) {
             base.OnMouseDown(e);
             if (e.Button != MouseButtons.Left || !HasOverflow) {
@@ -365,12 +356,12 @@ namespace Material3.WinForms.Controls {
             }
             Rectangle track = GetTrackRect();
             if (track.Contains(e.Location)) {
-                // Page-step toward the click direction (above thumb = page up; below = page down).
                 int direction = e.Y < thumb.Top ? -1 : 1;
                 ScrollByPixels(direction * Math.Max(1, ClientSize.Height - WheelStepPixels));
             }
         }
 
+        /// <inheritdoc />
         protected override void OnMouseUp(MouseEventArgs e) {
             base.OnMouseUp(e);
             if (_thumbDragging) {
@@ -409,12 +400,12 @@ namespace Material3.WinForms.Controls {
             int maxOffset = content - viewport;
             int thumbTop = thumbInset + (maxOffset <= 0 ? 0 : (int)Math.Round((double)_scrollOffset / maxOffset * travel));
 
-            // This rect is also the hit area, so the visible idle/hover width doubles as the grab target.
             int visibleWidth = Dpi.Scale(this, _thumbHovered || _thumbDragging ? ThumbHoverWidth : ThumbIdleWidth);
             int visibleLeft = ClientSize.Width - thumbInset - visibleWidth;
             return new Rectangle(visibleLeft, thumbTop, visibleWidth, thumbLen);
         }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             base.OnPaint(e);
             if (!HasOverflow || _thumbOpacity <= 0.01f) {
@@ -425,7 +416,6 @@ namespace Material3.WinForms.Controls {
                 return;
             }
 
-            // Idle ≈ 40 %, hover ≈ 80 %; opacity envelopes the auto-hide fade on top.
             int activeAlpha = _thumbHovered || _thumbDragging ? 204 : 102;
             int alpha = (int)Math.Round(activeAlpha * Math.Min(1f, Math.Max(0f, _thumbOpacity)));
             if (alpha <= 0) {
@@ -443,6 +433,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void Dispose(bool disposing) {
             if (disposing) {
                 Application.RemoveMessageFilter(_wheelFilter);
@@ -452,7 +443,6 @@ namespace Material3.WinForms.Controls {
             base.Dispose(disposing);
         }
 
-        // WM_MOUSEWHEEL goes to the focused control; this filter hit-tests our screen rect and forwards it so we scroll regardless of focus.
         private sealed class WheelMessageFilter : IMessageFilter {
             private const int WM_MOUSEWHEEL = 0x020A;
             private readonly MaterialScrollPanel _owner;
@@ -465,15 +455,10 @@ namespace Material3.WinForms.Controls {
                 if (m.Msg != WM_MOUSEWHEEL || !_owner.IsHandleCreated || !_owner.Visible) {
                     return false;
                 }
-                // Skip when our top-level form isn't active — otherwise we'd steal wheel input
-                // from whichever app is foreground if the cursor happens to overlap our rect.
                 Form? top = _owner.FindForm();
                 if (top == null || Form.ActiveForm != top) {
                     return false;
                 }
-                // ToInt64 (not ToInt32) — on 64-bit Windows the high half of WParam/LParam can
-                // exceed Int32 range (large screen coords on a right-monitor setup), and
-                // ToInt32 is checked and throws OverflowException for any such message.
                 long lParam = m.LParam.ToInt64();
                 Point screenPoint = new Point(
                     (short)(lParam & 0xFFFF),
@@ -483,10 +468,9 @@ namespace Material3.WinForms.Controls {
                 if (!screenBounds.Contains(screenPoint)) {
                     return false;
                 }
-                // High word of wParam carries the wheel delta (signed short).
                 int delta = (short)((m.WParam.ToInt64() >> 16) & 0xFFFF);
                 _owner.HandleWheel(delta);
-                return true; // Eat the message so the focused control doesn't also scroll.
+                return true;
             }
         }
     }

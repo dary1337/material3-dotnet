@@ -9,20 +9,28 @@ namespace Material3.WinForms.Controls {
     /// <summary>Minimal rounded flat button driven by BackColor/hover colors, lighter than the full <see cref="MaterialButton"/> pill.</summary>
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
-    public class RoundedButton : Button {
+    public class MaterialRoundedButton : Button {
         private readonly int _cornerRadius;
         private readonly Color _borderColor;
 
-        public void ChangeHoverColor(Color onHover) {
-            FlatAppearance.MouseDownBackColor = onHover;
-            FlatAppearance.MouseOverBackColor = onHover;
+        /// <summary>The fill shown under the pointer and while pressed.</summary>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public Color HoverColor {
+            get => FlatAppearance.MouseOverBackColor;
+            set {
+                FlatAppearance.MouseDownBackColor = value;
+                FlatAppearance.MouseOverBackColor = value;
+            }
         }
 
-        public RoundedButton() : this(6) { }
+        /// <summary>Initializes a new instance of the <see cref="MaterialRoundedButton"/> class.</summary>
+        public MaterialRoundedButton() : this(6) { }
 
-        public RoundedButton(
+        /// <summary>Creates a button with the given corner radius, hover fill and border colour.</summary>
+        public MaterialRoundedButton(
             int cornerRadius,
-            Color onHover = default,
+            Color hoverColor = default,
             Color borderColor = default
         ) {
             _cornerRadius = cornerRadius;
@@ -34,39 +42,34 @@ namespace Material3.WinForms.Controls {
             MaterialCursors.Apply(this, MaterialCursors.Pointer);
             ImageAlign = ContentAlignment.MiddleLeft;
             TextImageRelation = TextImageRelation.ImageBeforeText;
-            // GDI TextRenderer (not GDI+) so the label is ClearType grid-fitted and crisp, matching
-            // the app's SetCompatibleTextRenderingDefault(false) and the owner-drawn controls.
             UseCompatibleTextRendering = false;
-            // No '&' accelerators in these labels — suppress the underline that Alt would otherwise show.
             UseMnemonic = false;
             _borderColor = borderColor;
 
-            if (onHover.A == 0) {
-                onHover = MaterialColors.SurfaceContainerHighest;
-            }
-
-            ChangeHoverColor(onHover);
+            HoverColor = hoverColor.A == 0 ? MaterialColors.SurfaceContainerHighest : hoverColor;
         }
 
         private System.Drawing.Size _regionSize = System.Drawing.Size.Empty;
 
+        /// <inheritdoc />
         protected override void OnBackColorChanged(EventArgs e) {
             base.OnBackColorChanged(e);
             FlatAppearance.BorderColor = BackColor;
         }
 
+        /// <inheritdoc />
         protected override void OnHandleCreated(EventArgs e) {
             base.OnHandleCreated(e);
             _regionSize = System.Drawing.Size.Empty;
             UpdateRegion();
         }
 
+        /// <inheritdoc />
         protected override void OnResize(EventArgs e) {
             base.OnResize(e);
             UpdateRegion();
         }
 
-        // Region only changes with size; updating on resize (not paint) avoids churning the HWND region during theme cross-fades.
         private void UpdateRegion() {
             if (Size == _regionSize || Width <= 0 || Height <= 0) {
                 return;
@@ -78,6 +81,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             base.OnPaint(e);
             RoundedControlRenderer.PaintRoundedButtonBorder(

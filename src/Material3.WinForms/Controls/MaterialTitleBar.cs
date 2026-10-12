@@ -14,6 +14,7 @@ namespace Material3.WinForms.Controls {
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialTitleBar : Control {
+        /// <summary>The bar height, in 96-DPI pixels.</summary>
         public const int BarHeight = ComponentSizes.TitleBarHeight;
 
         private const int ButtonWidth = 44;
@@ -34,6 +35,7 @@ namespace Material3.WinForms.Controls {
         private bool _showClose = true;
         private Form? _hookedForm;
 
+        /// <summary>Caption text shown next to the app icon.</summary>
         [Category("Material Design")]
         [Description("Caption text shown next to the app icon.")]
         [DefaultValue("")]
@@ -45,7 +47,7 @@ namespace Material3.WinForms.Controls {
         /// <summary>App icon shown at the left of the title bar; the control owns and disposes it.</summary>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public Bitmap? AppIcon {
+        public Bitmap? IconImage {
             get => _appIcon;
             set {
                 if (ReferenceEquals(_appIcon, value)) {
@@ -99,6 +101,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <summary>Initializes a new instance of the <see cref="MaterialTitleBar"/> class.</summary>
         public MaterialTitleBar() {
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
@@ -109,7 +112,6 @@ namespace Material3.WinForms.Controls {
             );
             ApplyThemeColors();
 
-            // Construction order matters: buttons must exist before the Dock/Height assignments below, because docking fires OnResize.
             _minimize = BuildCaptionButton(MaterialIcons.Minimize);
             _minimize.Click += OnMinimizeClick;
 
@@ -142,17 +144,16 @@ namespace Material3.WinForms.Controls {
             ForeColor = MaterialColors.OnSurface;
         }
 
-        // Caption-button accents are set absolutely (not theme-bound), so they must be re-applied on every theme switch.
         private void ApplyCaptionAccents() {
             _minimize.SetAccent(MaterialColors.OnSurfaceVariant, MaterialColors.OnSurface);
             _maximize.SetAccent(MaterialColors.OnSurfaceVariant, MaterialColors.OnSurface);
             _close.SetAccent(MaterialColors.OnSurfaceVariant, MaterialColors.OnSurface);
         }
 
-        private static MaterialButton BuildCaptionButton(string iconGlyph) {
+        private static MaterialButton BuildCaptionButton(string glyph) {
             return new MaterialButton {
                 AutoSize = false,
-                IconGlyph = iconGlyph,
+                Glyph = glyph,
                 Variant = MaterialButtonVariant.Text,
                 Width = ButtonWidth,
                 Height = CaptionButtonHeight,
@@ -178,8 +179,6 @@ namespace Material3.WinForms.Controls {
             }
         }
 
-        // Keep the glyph in sync with the window state regardless of how it changed (button, caption
-        // double-click, Aero Snap, taskbar): the form raises SizeChanged on every state transition.
         private void HookForm() {
             Form? form = FindForm();
             if (ReferenceEquals(form, _hookedForm)) {
@@ -200,7 +199,7 @@ namespace Material3.WinForms.Controls {
 
         private void UpdateMaximizeGlyph() {
             bool maximized = _hookedForm != null && _hookedForm.WindowState == FormWindowState.Maximized;
-            _maximize.IconGlyph = maximized ? MaterialIcons.Restore : MaterialIcons.Maximize;
+            _maximize.Glyph = maximized ? MaterialIcons.Restore : MaterialIcons.Maximize;
         }
 
         private void OnCloseClick(object? sender, EventArgs e) {
@@ -215,19 +214,20 @@ namespace Material3.WinForms.Controls {
             _close.SetAccent(MaterialColors.OnSurfaceVariant, MaterialColors.OnSurface);
         }
 
+        /// <inheritdoc />
         protected override void OnHandleCreated(EventArgs e) {
             base.OnHandleCreated(e);
             ApplyIntrinsicHeight();
             HookForm();
         }
 
-        // Re-point the SizeChanged hook off the old form onto the new one if the bar is reparented
-        // without a handle recreation; HookForm is a no-op when the form is unchanged.
+        /// <inheritdoc />
         protected override void OnParentChanged(EventArgs e) {
             base.OnParentChanged(e);
             HookForm();
         }
 
+        /// <inheritdoc />
         protected override void OnDpiChangedAfterParent(EventArgs e) {
             base.OnDpiChangedAfterParent(e);
             ApplyIntrinsicHeight();
@@ -237,6 +237,7 @@ namespace Material3.WinForms.Controls {
             Height = Dpi.Scale(this, BarHeight);
         }
 
+        /// <inheritdoc />
         protected override void OnResize(EventArgs e) {
             base.OnResize(e);
             int buttonWidth = Dpi.Scale(this, ButtonWidth);
@@ -261,6 +262,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             base.OnPaint(e);
             Graphics g = e.Graphics;
@@ -269,7 +271,6 @@ namespace Material3.WinForms.Controls {
             int iconSize = Dpi.Scale(this, IconSize);
             int x = Dpi.Scale(this, LeftPadding);
             if (_appIcon != null) {
-                // +1px optical nudge down: top-heavy glyphs read as floating high against the slightly-low title text under geometric centering.
                 int iconY = (Height - iconSize) / 2 + Dpi.Scale(this, 1);
                 g.InterpolationMode = InterpolationMode.HighQualityBicubic;
                 g.PixelOffsetMode = PixelOffsetMode.HighQuality;
@@ -283,11 +284,10 @@ namespace Material3.WinForms.Controls {
                     + Math.Max(0, buttons - 1) * Dpi.Scale(this, ButtonGap)
                     + Dpi.Scale(this, EdgePadding) + Dpi.Scale(this, 4);
                 var textRect = new Rectangle(x, 0, Math.Max(0, Width - x - rightReserved), Height);
-                // TextRenderer (GDI) for accurate VerticalCenter; Graphics.DrawString includes font leading and drifts a few px off-center.
                 TextRenderer.DrawText(
                     g,
                     _titleText,
-                    MaterialType.LabelLarge,
+                    TypeScale.LabelLarge,
                     textRect,
                     MaterialColors.OnSurface,
                     TextFormatFlags.Left
@@ -299,7 +299,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
-        // Cascade hit-tests to the form via HTTRANSPARENT so the form's WM_NCHITTEST decides drag/resize and DefWindowProc runs the native loop.
+        /// <inheritdoc />
         protected override void WndProc(ref Message m) {
             const int WM_NCHITTEST = 0x0084;
             if (m.Msg == WM_NCHITTEST) {
@@ -309,6 +309,7 @@ namespace Material3.WinForms.Controls {
             base.WndProc(ref m);
         }
 
+        /// <inheritdoc />
         protected override void Dispose(bool disposing) {
             if (disposing) {
                 if (_hookedForm != null) {

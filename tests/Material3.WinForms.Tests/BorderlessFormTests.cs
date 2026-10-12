@@ -37,10 +37,8 @@ namespace Material3.WinForms.Tests {
             var bar = new MaterialTitleBar();
             form.Controls.Add(bar);
 
-            // Inside the title bar height but clear of the resize edge → drag (HTCAPTION).
             int insideCaption = bar.Height - 1;
             Assert.Equal(BorderlessForm.HTCAPTION, form.ResolveHit(100, insideCaption));
-            // Below the title bar → normal client.
             Assert.Equal(BorderlessForm.HTCLIENT, form.ResolveHit(100, bar.Height + 10));
         }
 
@@ -48,7 +46,6 @@ namespace Material3.WinForms.Tests {
         public void ResolveHit_EdgeWinsOverCaption() {
             using BorderlessForm form = MakeForm();
             form.Controls.Add(new MaterialTitleBar());
-            // Top-left corner is inside the caption band but resolves as a resize corner.
             Assert.Equal(BorderlessForm.HTTOPLEFT, form.ResolveHit(0, 0));
         }
     }

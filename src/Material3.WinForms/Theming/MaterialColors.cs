@@ -1,4 +1,5 @@
 using System.Drawing;
+using Material3.Core;
 
 namespace Material3.WinForms.Theming {
     /// <summary>
@@ -8,61 +9,99 @@ namespace Material3.WinForms.Theming {
     public static class MaterialColors {
         private static ColorScheme S => ThemeManager.Scheme;
 
-        public static Color Primary => S.Primary;
-        public static Color OnPrimary => S.OnPrimary;
-        public static Color PrimaryContainer => S.PrimaryContainer;
-        public static Color OnPrimaryContainer => S.OnPrimaryContainer;
-        public static Color InversePrimary => S.InversePrimary;
+        /// <summary>The accent for the most prominent fills, active states and key actions.</summary>
+        public static Color Primary => S.Primary.ToGdi();
+        /// <summary>Text and icons on <c>Primary</c>.</summary>
+        public static Color OnPrimary => S.OnPrimary.ToGdi();
+        /// <summary>A tinted fill for elements that need less emphasis than <c>Primary</c>.</summary>
+        public static Color PrimaryContainer => S.PrimaryContainer.ToGdi();
+        /// <summary>Text and icons on <c>PrimaryContainer</c>.</summary>
+        public static Color OnPrimaryContainer => S.OnPrimaryContainer.ToGdi();
+        /// <summary>The primary accent on <c>InverseSurface</c>, such as a snackbar action.</summary>
+        public static Color InversePrimary => S.InversePrimary.ToGdi();
 
-        public static Color Secondary => S.Secondary;
-        public static Color OnSecondary => S.OnSecondary;
-        public static Color SecondaryContainer => S.SecondaryContainer;
-        public static Color OnSecondaryContainer => S.OnSecondaryContainer;
+        /// <summary>A quieter accent for less prominent components.</summary>
+        public static Color Secondary => S.Secondary.ToGdi();
+        /// <summary>Text and icons on <c>Secondary</c>.</summary>
+        public static Color OnSecondary => S.OnSecondary.ToGdi();
+        /// <summary>The fill of selected and tonal components, such as a selected segment or a tonal button.</summary>
+        public static Color SecondaryContainer => S.SecondaryContainer.ToGdi();
+        /// <summary>Text and icons on <c>SecondaryContainer</c>.</summary>
+        public static Color OnSecondaryContainer => S.OnSecondaryContainer.ToGdi();
 
-        public static Color Tertiary => S.Tertiary;
-        public static Color OnTertiary => S.OnTertiary;
-        public static Color TertiaryContainer => S.TertiaryContainer;
-        public static Color OnTertiaryContainer => S.OnTertiaryContainer;
+        /// <summary>A contrasting accent that balances primary and secondary or draws attention to an element.</summary>
+        public static Color Tertiary => S.Tertiary.ToGdi();
+        /// <summary>Text and icons on <c>Tertiary</c>.</summary>
+        public static Color OnTertiary => S.OnTertiary.ToGdi();
+        /// <summary>A tinted fill in the tertiary accent.</summary>
+        public static Color TertiaryContainer => S.TertiaryContainer.ToGdi();
+        /// <summary>Text and icons on <c>TertiaryContainer</c>.</summary>
+        public static Color OnTertiaryContainer => S.OnTertiaryContainer.ToGdi();
 
-        public static Color Error => S.Error;
-        public static Color OnError => S.OnError;
-        public static Color ErrorContainer => S.ErrorContainer;
-        public static Color OnErrorContainer => S.OnErrorContainer;
+        /// <summary>Error states: invalid input, a destructive action, a failed step.</summary>
+        public static Color Error => S.Error.ToGdi();
+        /// <summary>Text and icons on <c>Error</c>.</summary>
+        public static Color OnError => S.OnError.ToGdi();
+        /// <summary>A tinted fill for error messages and destructive tonal actions.</summary>
+        public static Color ErrorContainer => S.ErrorContainer.ToGdi();
+        /// <summary>Text and icons on <c>ErrorContainer</c>.</summary>
+        public static Color OnErrorContainer => S.OnErrorContainer.ToGdi();
 
-        public static Color Success => S.Success;
-        public static Color OnSuccess => S.OnSuccess;
-        public static Color SuccessContainer => S.SuccessContainer;
-        public static Color OnSuccessContainer => S.OnSuccessContainer;
+        /// <summary>Success states. A library extension: the M3 scheme defines no success role.</summary>
+        public static Color Success => S.Success.ToGdi();
+        /// <summary>Text and icons on <c>Success</c>.</summary>
+        public static Color OnSuccess => S.OnSuccess.ToGdi();
+        /// <summary>A tinted fill for success messages.</summary>
+        public static Color SuccessContainer => S.SuccessContainer.ToGdi();
+        /// <summary>Text and icons on <c>SuccessContainer</c>.</summary>
+        public static Color OnSuccessContainer => S.OnSuccessContainer.ToGdi();
 
-        public static Color Warning => S.Warning;
-        public static Color OnWarning => S.OnWarning;
-        public static Color WarningContainer => S.WarningContainer;
-        public static Color OnWarningContainer => S.OnWarningContainer;
+        /// <summary>Warning states. A library extension: the M3 scheme defines no warning role.</summary>
+        public static Color Warning => S.Warning.ToGdi();
+        /// <summary>Text and icons on <c>Warning</c>.</summary>
+        public static Color OnWarning => S.OnWarning.ToGdi();
+        /// <summary>A tinted fill for warning messages.</summary>
+        public static Color WarningContainer => S.WarningContainer.ToGdi();
+        /// <summary>Text and icons on <c>WarningContainer</c>.</summary>
+        public static Color OnWarningContainer => S.OnWarningContainer.ToGdi();
 
-        public static Color Surface => S.Surface;
-        public static Color SurfaceDim => S.SurfaceDim;
-        public static Color SurfaceBright => S.SurfaceBright;
-        public static Color SurfaceContainerLowest => S.SurfaceContainerLowest;
-        public static Color SurfaceContainerLow => S.SurfaceContainerLow;
-        public static Color SurfaceContainer => S.SurfaceContainer;
-        public static Color SurfaceContainerHigh => S.SurfaceContainerHigh;
-        public static Color SurfaceContainerHighest => S.SurfaceContainerHighest;
-        public static Color InverseSurface => S.InverseSurface;
-        public static Color InverseOnSurface => S.InverseOnSurface;
+        /// <summary>The page background.</summary>
+        public static Color Surface => S.Surface.ToGdi();
+        /// <summary>The darkest surface tone, in the light scheme and the dark one alike.</summary>
+        public static Color SurfaceDim => S.SurfaceDim.ToGdi();
+        /// <summary>The brightest surface tone, in the light scheme and the dark one alike.</summary>
+        public static Color SurfaceBright => S.SurfaceBright.ToGdi();
+        /// <summary>The lowest-emphasis container fill.</summary>
+        public static Color SurfaceContainerLowest => S.SurfaceContainerLowest.ToGdi();
+        /// <summary>A low-emphasis container fill, such as an elevated card.</summary>
+        public static Color SurfaceContainerLow => S.SurfaceContainerLow.ToGdi();
+        /// <summary>The default container fill, such as a navigation rail or a filled card.</summary>
+        public static Color SurfaceContainer => S.SurfaceContainer.ToGdi();
+        /// <summary>A high-emphasis container fill, such as a menu or a dialog.</summary>
+        public static Color SurfaceContainerHigh => S.SurfaceContainerHigh.ToGdi();
+        /// <summary>The highest-emphasis container fill, such as a text field.</summary>
+        public static Color SurfaceContainerHighest => S.SurfaceContainerHighest.ToGdi();
+        /// <summary>A surface that contrasts with <c>Surface</c>, for a snackbar or a plain tooltip.</summary>
+        public static Color InverseSurface => S.InverseSurface.ToGdi();
+        /// <summary>Text and icons on <c>InverseSurface</c>.</summary>
+        public static Color InverseOnSurface => S.InverseOnSurface.ToGdi();
 
-        public static Color OnSurface => S.OnSurface;
-        public static Color OnSurfaceVariant => S.OnSurfaceVariant;
-        public static Color OnSurfaceMuted => S.OnSurfaceMuted;
-        public static Color Outline => S.Outline;
-        public static Color OutlineVariant => S.OutlineVariant;
+        /// <summary>Primary text and icons on any surface.</summary>
+        public static Color OnSurface => S.OnSurface.ToGdi();
+        /// <summary>Secondary text and icons on any surface.</summary>
+        public static Color OnSurfaceVariant => S.OnSurfaceVariant.ToGdi();
+        /// <summary>Tertiary text, dimmer than <c>OnSurfaceVariant</c>. A library extension.</summary>
+        public static Color OnSurfaceMuted => S.OnSurfaceMuted.ToGdi();
+        /// <summary>Boundaries that carry meaning, such as a text field outline.</summary>
+        public static Color Outline => S.Outline.ToGdi();
+        /// <summary>Decorative boundaries, such as dividers and card outlines.</summary>
+        public static Color OutlineVariant => S.OutlineVariant.ToGdi();
 
-        public static Color SurfaceTint => S.SurfaceTint;
-        public static Color Scrim => S.Scrim;
-        public static Color Shadow => S.Shadow;
-
-        /// <summary>Composites a translucent state-layer color over a solid base (M3 hover/press overlays).</summary>
-        public static Color Overlay(Color baseColor, Color layer, double opacity) {
-            return ColorScheme.Overlay(baseColor, layer, opacity);
-        }
+        /// <summary>The colour elevation tints a surface with; <c>Primary</c> in M3.</summary>
+        public static Color SurfaceTint => S.SurfaceTint.ToGdi();
+        /// <summary>The dimming layer behind a modal.</summary>
+        public static Color Scrim => S.Scrim.ToGdi();
+        /// <summary>The colour of elevation shadows.</summary>
+        public static Color Shadow => S.Shadow.ToGdi();
     }
 }

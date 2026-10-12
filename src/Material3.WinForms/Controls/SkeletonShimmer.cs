@@ -9,7 +9,7 @@ namespace Material3.WinForms.Controls {
     /// <summary>
     /// Shared shimmer engine for skeleton placeholders: one process-wide timer drives a single global
     /// phase so every skeleton on screen sweeps in sync and idle screens cost nothing. Used by both
-    /// <see cref="MaterialSkeleton"/> and <see cref="SkeletonCard"/>.
+    /// <see cref="MaterialSkeleton"/> and <see cref="MaterialSkeletonCard"/>.
     /// </summary>
     internal static class SkeletonShimmer {
         private static readonly Timer Timer = new Timer { Interval = 33 };
@@ -60,13 +60,13 @@ namespace Material3.WinForms.Controls {
         }
 
         /// <summary>Fills a rounded block with the skeleton base and the moving highlight band.</summary>
-        public static void DrawBlock(Graphics g, Control owner, Rectangle rect, int radius) {
+        public static void DrawBlock(Graphics graphics, Control owner, Rectangle rect, int radius) {
             if (rect.Width <= 0 || rect.Height <= 0) {
                 return;
             }
             using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(rect, radius)) {
                 using (var baseBrush = new SolidBrush(MaterialColors.SurfaceContainerHigh)) {
-                    g.FillPath(baseBrush, path);
+                    graphics.FillPath(baseBrush, path);
                 }
 
                 float center = rect.Left + rect.Width * _phase;
@@ -76,8 +76,8 @@ namespace Material3.WinForms.Controls {
                     return;
                 }
 
-                using (Region prevClip = g.Clip) {
-                    g.SetClip(path);
+                using (Region prevClip = graphics.Clip) {
+                    graphics.SetClip(path);
                     using (var gradient = new LinearGradientBrush(
                         bandRect,
                         Color.Transparent,
@@ -91,9 +91,9 @@ namespace Material3.WinForms.Controls {
                             },
                             Positions = new[] { 0f, 0.5f, 1f },
                         };
-                        g.FillRectangle(gradient, bandRect);
+                        graphics.FillRectangle(gradient, bandRect);
                     }
-                    g.Clip = prevClip;
+                    graphics.Clip = prevClip;
                 }
             }
         }

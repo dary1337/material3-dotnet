@@ -11,7 +11,7 @@ namespace Material3.WinForms.Controls {
     /// <summary>Vertical checklist of process stages: steps before <see cref="ActiveIndex"/> are completed, the active step spins, later steps are pending; active→done is animated.</summary>
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
-    public sealed class StepChecklist : Control {
+    public sealed class MaterialStepChecklist : Control {
         private string[] _steps = Array.Empty<string>();
         private int _activeIndex;
         private int _errorIndex = -1;
@@ -22,9 +22,10 @@ namespace Material3.WinForms.Controls {
 
         private const int RowHeight = 26;
         private const int Indicator = 18;
-        private const float MorphStep = 16f / 150f; // ~150ms total per step morph
+        private const float MorphStep = 16f / 150f;
 
-        public StepChecklist() {
+        /// <summary>Initializes a new instance of the <see cref="MaterialStepChecklist"/> class.</summary>
+        public MaterialStepChecklist() {
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
                     | ControlStyles.UserPaint
@@ -41,6 +42,7 @@ namespace Material3.WinForms.Controls {
             ThemeHook.Attach(this, Invalidate);
         }
 
+        /// <summary>Replaces the steps and starts over with none done.</summary>
         public void SetSteps(string[] steps) {
             _steps = steps ?? Array.Empty<string>();
             _errorIndex = -1;
@@ -52,12 +54,13 @@ namespace Material3.WinForms.Controls {
             Invalidate();
         }
 
-        // Own the height: AutoScale skips runtime-added checklists, which would then clip their lower rows at high DPI.
+        /// <inheritdoc />
         protected override void OnHandleCreated(EventArgs e) {
             base.OnHandleCreated(e);
             ApplyIntrinsicHeight();
         }
 
+        /// <inheritdoc />
         protected override void OnDpiChangedAfterParent(EventArgs e) {
             base.OnDpiChangedAfterParent(e);
             ApplyIntrinsicHeight();
@@ -67,9 +70,9 @@ namespace Material3.WinForms.Controls {
             Height = Dpi.Scale(this, (_steps?.Length ?? 0) * RowHeight);
         }
 
+        /// <summary>Marks the step at <paramref name="index"/> as failed; earlier steps show done.</summary>
         public void SetError(int index) {
             _errorIndex = index;
-            // Snap in-flight morphs to completed, else stopping the morph timer below freezes prior steps mid-arc.
             for (int i = 0; i < Math.Min(index, _completionAnims.Length); i++) {
                 _completionAnims[i] = 1f;
             }
@@ -78,13 +81,13 @@ namespace Material3.WinForms.Controls {
             Invalidate();
         }
 
+        /// <summary>Index of the in-progress step; earlier steps render as completed.</summary>
         [Category("Material Design")]
         [Description("Index of the in-progress step; earlier steps render as completed.")]
         [DefaultValue(0)]
         public int ActiveIndex {
             get => _activeIndex;
             set {
-                // Clamp to [-1, count]: count means "all complete" (Complete() sets it); out-of-range would paint every row done with no active step.
                 int clamped = Math.Max(-1, Math.Min(value, _steps.Length));
                 int prev = _activeIndex;
                 _activeIndex = clamped;
@@ -103,6 +106,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <summary>Marks every step done.</summary>
         public void Complete() {
             int prev = _activeIndex;
             _activeIndex = _steps.Length;
@@ -141,6 +145,7 @@ namespace Material3.WinForms.Controls {
             Invalidate();
         }
 
+        /// <inheritdoc />
         protected override void Dispose(bool disposing) {
             if (disposing) {
                 _spinner.Stop();
@@ -151,6 +156,7 @@ namespace Material3.WinForms.Controls {
             base.Dispose(disposing);
         }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -196,7 +202,7 @@ namespace Material3.WinForms.Controls {
                         : i <= _activeIndex ? MaterialColors.OnSurface : MaterialColors.OnSurfaceMuted;
                     var textRect = new RectangleF(indicator + textGap, y, Width - indicator - textGap, rowHeight);
                     using (var brush = new SolidBrush(textColor)) {
-                        g.DrawString(_steps[i], MaterialType.BodyMedium, brush, textRect, fmt);
+                        g.DrawString(_steps[i], TypeScale.BodyMedium, brush, textRect, fmt);
                     }
                 }
             }
@@ -209,19 +215,14 @@ namespace Material3.WinForms.Controls {
             DrawCheckGlyph(g, rect, MaterialColors.OnSuccess, 1f);
         }
 
-        // Three overlapping phases driven by a single 0→1 progress (~300ms total):
-        //   [0.0, 0.55] arc completes the remaining sweep — feels like the spinner "lands"
-        //   [0.0, 1.0]  arc color shifts Primary → Success
-        //   [0.55, 1.0] interior fills with Success (alpha 0 → 1)
-        //   [0.55, 1.0] check glyph scale-pops from 0 to 1 with mild overshoot
         private void DrawDoneMorph(Graphics g, Rectangle rect, float progress) {
             float arcPhase = Math.Min(1f, progress / 0.55f);
             float fillPhase = Math.Max(0f, (progress - 0.55f) / 0.45f);
             float checkPhase = fillPhase;
 
             float startAngle = _spinnerAngle;
-            float sweep = 100f + (260f * arcPhase); // 100° baseline + extends to a full ring
-            Color arcColor = ColorScheme.Overlay(MaterialColors.Primary, MaterialColors.Success, progress);
+            float sweep = 100f + (260f * arcPhase);
+            Color arcColor = ArgbExtensions.Overlay(MaterialColors.Primary, MaterialColors.Success, progress);
 
             using (var arc = new Pen(arcColor, Dpi.Scale(this, 2.4f))) {
                 g.DrawArc(arc, rect, startAngle, Math.Min(360f, sweep));
@@ -236,7 +237,7 @@ namespace Material3.WinForms.Controls {
 
             if (checkPhase > 0f) {
                 float t = checkPhase;
-                float scale = 1f - (float)Math.Pow(1f - t, 3f); // easeOutCubic
+                float scale = 1f - (float)Math.Pow(1f - t, 3f);
                 int alpha = (int)(255f * Math.Min(1f, checkPhase * 1.5f));
                 DrawCheckGlyph(g, rect, Color.FromArgb(alpha, MaterialColors.OnSuccess), scale);
             }
@@ -249,7 +250,6 @@ namespace Material3.WinForms.Controls {
             DrawCrossGlyph(g, rect, MaterialColors.OnError);
         }
 
-        // Hand-drawn glyphs center true in the circle; SVG Material Symbols have asymmetric bboxes that look off when centered.
         private static void DrawCheckGlyph(Graphics g, Rectangle rect, Color color, float scale) {
             float cx = rect.X + rect.Width / 2f;
             float cy = rect.Y + rect.Height / 2f;

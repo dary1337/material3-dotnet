@@ -14,9 +14,12 @@ namespace Material3.WinForms.Design {
     /// Design-time dropdown that lists the known <see cref="MaterialIcons"/> keys so an icon-glyph
     /// property can be picked instead of typed. .NET Framework designer only (in-process).
     /// </summary>
-    public sealed class IconGlyphEditor : UITypeEditor {
+    public sealed class GlyphEditor : UITypeEditor {
+        /// <inheritdoc />
         public override UITypeEditorEditStyle GetEditStyle(ITypeDescriptorContext context)
             => UITypeEditorEditStyle.DropDown;
+
+        /// <inheritdoc />
 
         public override object EditValue(ITypeDescriptorContext context, IServiceProvider provider, object value) {
             if (provider.GetService(typeof(IWindowsFormsEditorService)) is not IWindowsFormsEditorService svc) {

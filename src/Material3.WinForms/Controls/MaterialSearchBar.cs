@@ -25,9 +25,12 @@ namespace Material3.WinForms.Controls {
         private bool _hovered;
         private bool _clearHovered;
 
+        /// <summary>Raised on every edit of the query.</summary>
         public event EventHandler? QueryChanged;
+        /// <summary>Raised when the user presses Enter.</summary>
         public event EventHandler? QuerySubmitted;
 
+        /// <summary>Initializes a new instance of the <see cref="MaterialSearchBar"/> class.</summary>
         public MaterialSearchBar() {
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
@@ -41,7 +44,7 @@ namespace Material3.WinForms.Controls {
 
             _editor = new TextBox {
                 BorderStyle = BorderStyle.None,
-                Font = MaterialType.BodyLarge,
+                Font = TypeScale.BodyLarge,
             };
             _editor.TextChanged += (s, e) => {
                 QueryChanged?.Invoke(this, EventArgs.Empty);
@@ -62,24 +65,23 @@ namespace Material3.WinForms.Controls {
             Click += (s, e) => _editor.Focus();
             ThemeHook.Attach(this, ApplyTheme);
             ApplyTheme();
-            // Position the editor now — OnSizeChanged won't fire again if the bar keeps its width.
             LayoutEditor();
         }
 
-        // Own the height: AutoScale only sizes controls present at the form's scaling pass, missing runtime-added bars.
+        /// <inheritdoc />
         protected override void OnHandleCreated(EventArgs e) {
             base.OnHandleCreated(e);
             Height = Dpi.Scale(this, BarHeight);
             LayoutEditor();
         }
 
+        /// <inheritdoc />
         protected override void OnDpiChangedAfterParent(EventArgs e) {
             base.OnDpiChangedAfterParent(e);
             Height = Dpi.Scale(this, BarHeight);
             LayoutEditor();
         }
 
-        // The editor window covers the text area, so a painted watermark would be hidden; the native cue banner draws inside the editor.
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
         private static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, string lParam);
 
@@ -124,6 +126,7 @@ namespace Material3.WinForms.Controls {
             Invalidate();
         }
 
+        /// <inheritdoc />
         protected override void OnParentChanged(EventArgs e) {
             base.OnParentChanged(e);
             ApplyTheme();
@@ -138,13 +141,13 @@ namespace Material3.WinForms.Controls {
 
         private bool ShowsClear => _editor.TextLength > 0;
 
+        /// <inheritdoc />
         protected override void OnSizeChanged(EventArgs e) {
             base.OnSizeChanged(e);
             LayoutEditor();
         }
 
         private void LayoutEditor() {
-            // OnSizeChanged can fire from the base ctor before _editor is constructed.
             if (_editor == null) {
                 return;
             }
@@ -153,7 +156,9 @@ namespace Material3.WinForms.Controls {
             _editor.SetBounds(left, (Height - _editor.Height) / 2, Math.Max(20, right - left), _editor.Height);
         }
 
+        /// <inheritdoc />
         protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); _hovered = true; Invalidate(); }
+        /// <inheritdoc />
         protected override void OnMouseLeave(EventArgs e) {
             base.OnMouseLeave(e);
             _hovered = false;
@@ -161,6 +166,7 @@ namespace Material3.WinForms.Controls {
             Invalidate();
         }
 
+        /// <inheritdoc />
         protected override void OnMouseMove(MouseEventArgs e) {
             base.OnMouseMove(e);
             bool over = ShowsClear && ClearRect.Contains(e.Location);
@@ -171,6 +177,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnMouseDown(MouseEventArgs e) {
             base.OnMouseDown(e);
             if (ShowsClear && ClearRect.Contains(e.Location)) {
@@ -180,6 +187,7 @@ namespace Material3.WinForms.Controls {
             _editor.Focus();
         }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -188,7 +196,7 @@ namespace Material3.WinForms.Controls {
 
             Color container = MaterialColors.SurfaceContainerHigh;
             if (Enabled && _hovered && !_editor.Focused) {
-                container = ColorScheme.Overlay(container, MaterialColors.OnSurface, StateLayers.Hover);
+                container = ArgbExtensions.Overlay(container, MaterialColors.OnSurface, StateLayers.Hover);
             }
             var rect = new Rectangle(0, 0, Width - 1, Height - 1);
             using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(rect, Shape.Full))
@@ -200,7 +208,7 @@ namespace Material3.WinForms.Controls {
             }
 
             int iconPx = Dpi.Scale(this, IconPx);
-            Bitmap search = MaterialIconRenderer.Get(MaterialIcons.Search, iconPx, MaterialColors.OnSurfaceVariant);
+            Bitmap search = MaterialIconRenderer.Render(MaterialIcons.Search, iconPx, MaterialColors.OnSurfaceVariant);
             g.DrawImageUnscaled(search, Dpi.Scale(this, PadX), (Height - iconPx) / 2);
 
             if (ShowsClear) {
@@ -213,7 +221,7 @@ namespace Material3.WinForms.Controls {
                     }
                 }
                 int closePx = Dpi.Scale(this, 16);
-                Bitmap close = MaterialIconRenderer.Get(MaterialIcons.Close, closePx, MaterialColors.OnSurfaceVariant);
+                Bitmap close = MaterialIconRenderer.Render(MaterialIcons.Close, closePx, MaterialColors.OnSurfaceVariant);
                 int closeOffset = (clear.Width - closePx) / 2;
                 g.DrawImageUnscaled(close, clear.X + closeOffset, clear.Y + closeOffset);
             }

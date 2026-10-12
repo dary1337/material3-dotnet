@@ -12,7 +12,7 @@ using Material3.WinForms.Typography;
 
 namespace Material3.WinForms.Controls {
     /// <summary>The two M3 tab styles.</summary>
-    public enum MaterialTabStyle {
+    public enum MaterialTabVariant {
         /// <summary>Active indicator is a short rounded pill under the label.</summary>
         Primary,
         /// <summary>Active indicator underlines the full tab width.</summary>
@@ -30,16 +30,18 @@ namespace Material3.WinForms.Controls {
 
         private readonly List<(string text, string icon)> _tabs = new List<(string, string)>();
         private readonly Timer _slide;
-        private MaterialTabStyle _style = MaterialTabStyle.Primary;
+        private MaterialTabVariant _style = MaterialTabVariant.Primary;
         private int _selectedIndex = -1;
         private int _hotIndex = -1;
-        private float _indicatorPos;   // animated center-x of the indicator
-        private float _indicatorWidth; // animated indicator width
+        private float _indicatorPos;
+        private float _indicatorWidth;
         private float _targetPos;
         private float _targetWidth;
 
+        /// <summary>Raised when a different tab is selected.</summary>
         public event EventHandler? SelectedIndexChanged;
 
+        /// <summary>Initializes a new instance of the <see cref="MaterialTabs"/> class.</summary>
         public MaterialTabs() {
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
@@ -56,14 +58,16 @@ namespace Material3.WinForms.Controls {
             ThemeHook.Attach(this, Invalidate);
         }
 
+        /// <summary>Active-indicator style: Primary (short pill) or Secondary (full-width underline).</summary>
         [Category("Material Design")]
         [Description("Active-indicator style: Primary (short pill) or Secondary (full-width underline).")]
-        [DefaultValue(MaterialTabStyle.Primary)]
-        public MaterialTabStyle TabStyle {
+        [DefaultValue(MaterialTabVariant.Primary)]
+        public MaterialTabVariant Variant {
             get => _style;
             set { _style = value; SnapIndicator(); Invalidate(); }
         }
 
+        /// <summary>Index of the active tab; -1 when no tabs exist.</summary>
         [Category("Material Design")]
         [Description("Index of the active tab; -1 when no tabs exist.")]
         [DefaultValue(-1)]
@@ -83,12 +87,14 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <summary>How many tabs the bar has.</summary>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int TabCount => _tabs.Count;
 
-        public void AddTab(string text, string? icon = null) {
-            _tabs.Add((text ?? string.Empty, icon ?? string.Empty));
+        /// <summary>Appends a tab with an optional glyph.</summary>
+        public void AddTab(string text, string? glyph = null) {
+            _tabs.Add((text ?? string.Empty, glyph ?? string.Empty));
             if (_selectedIndex < 0) {
                 _selectedIndex = 0;
                 SnapIndicator();
@@ -96,6 +102,7 @@ namespace Material3.WinForms.Controls {
             Invalidate();
         }
 
+        /// <summary>Removes every tab.</summary>
         public void ClearTabs() {
             _tabs.Clear();
             _selectedIndex = -1;
@@ -129,12 +136,11 @@ namespace Material3.WinForms.Controls {
             }
             Rectangle rect = TabRect(_selectedIndex);
             _targetPos = rect.X + rect.Width / 2f;
-            _targetWidth = _style == MaterialTabStyle.Primary
+            _targetWidth = _style == MaterialTabVariant.Primary
                 ? Math.Min(rect.Width - Dpi.Scale(this, TabPadX) * 2 + Dpi.Scale(this, 8), Dpi.Scale(this, 56))
                 : rect.Width;
         }
 
-        // Off-screen bitmap, not CreateGraphics(): geometry must work before the handle exists (e.g. SelectedIndex set right after construction).
         private static readonly Bitmap MeasureBitmap = new Bitmap(1, 1);
 
         private static Graphics CreateMeasureGraphics() {
@@ -158,7 +164,7 @@ namespace Material3.WinForms.Controls {
         private int MeasureTab(Graphics g, int index) {
             (string text, string icon) = _tabs[index];
             float w = Dpi.Scale(this, TabPadX) * 2
-                + g.MeasureString(text, MaterialType.LabelLarge, int.MaxValue, StringFormat.GenericTypographic).Width;
+                + g.MeasureString(text, TypeScale.LabelLarge, int.MaxValue, StringFormat.GenericTypographic).Width;
             if (!string.IsNullOrEmpty(icon)) {
                 w += Dpi.Scale(this, IconPx) + Dpi.Scale(this, IconGap);
             }
@@ -179,6 +185,7 @@ namespace Material3.WinForms.Controls {
             return -1;
         }
 
+        /// <inheritdoc />
         protected override void OnMouseMove(MouseEventArgs e) {
             base.OnMouseMove(e);
             int hit = HitTest(e.Location);
@@ -188,6 +195,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnMouseLeave(EventArgs e) {
             base.OnMouseLeave(e);
             if (_hotIndex != -1) {
@@ -196,6 +204,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnMouseUp(MouseEventArgs e) {
             base.OnMouseUp(e);
             if (e.Button == MouseButtons.Left) {
@@ -206,11 +215,13 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnHandleCreated(EventArgs e) {
             base.OnHandleCreated(e);
             ApplyIntrinsicHeight();
         }
 
+        /// <inheritdoc />
         protected override void OnDpiChangedAfterParent(EventArgs e) {
             base.OnDpiChangedAfterParent(e);
             ApplyIntrinsicHeight();
@@ -220,6 +231,7 @@ namespace Material3.WinForms.Controls {
             Height = Dpi.Scale(this, BarHeight);
         }
 
+        /// <inheritdoc />
         protected override void OnSizeChanged(EventArgs e) {
             base.OnSizeChanged(e);
             if (IsHandleCreated) {
@@ -227,6 +239,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -256,19 +269,19 @@ namespace Material3.WinForms.Controls {
                 Color content = !Enabled
                     ? MaterialColors.OnSurfaceMuted
                     : active
-                        ? (_style == MaterialTabStyle.Primary ? MaterialColors.Primary : MaterialColors.OnSurface)
+                        ? (_style == MaterialTabVariant.Primary ? MaterialColors.Primary : MaterialColors.OnSurface)
                         : MaterialColors.OnSurfaceVariant;
 
                 float cx = rect.X + Dpi.Scale(this, TabPadX);
                 if (!string.IsNullOrEmpty(icon)) {
                     int iconPx = Dpi.Scale(this, IconPx);
-                    Bitmap bmp = MaterialIconRenderer.Get(icon, iconPx, content);
+                    Bitmap bmp = MaterialIconRenderer.Render(icon, iconPx, content);
                     g.DrawImageUnscaled(bmp, (int)cx, (Height - iconPx) / 2);
                     cx += iconPx + Dpi.Scale(this, IconGap);
                 }
                 using (var brush = new SolidBrush(content))
                 using (var fmt = new StringFormat(StringFormat.GenericTypographic) { LineAlignment = StringAlignment.Center }) {
-                    g.DrawString(text, MaterialType.LabelLarge, brush,
+                    g.DrawString(text, TypeScale.LabelLarge, brush,
                         new RectangleF(cx, 0, rect.Right - cx, Height), fmt);
                 }
 
@@ -277,7 +290,7 @@ namespace Material3.WinForms.Controls {
 
             if (_selectedIndex >= 0 && _indicatorWidth > 0) {
                 Color indicator = Enabled ? MaterialColors.Primary : MaterialColors.OnSurfaceMuted;
-                if (_style == MaterialTabStyle.Primary) {
+                if (_style == MaterialTabVariant.Primary) {
                     int thickness = Dpi.Scale(this, 3);
                     var pill = new Rectangle(
                         (int)(_indicatorPos - _indicatorWidth / 2f), Height - thickness,
@@ -297,6 +310,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void Dispose(bool disposing) {
             if (disposing) {
                 _slide.Stop();

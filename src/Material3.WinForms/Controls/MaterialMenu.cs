@@ -18,20 +18,23 @@ namespace Material3.WinForms.Controls {
         /// <summary>Raised with the item index after the popup closes from a click.</summary>
         public event Action<int>? ItemClicked;
 
-        public void AddItem(string text, string? icon = null, Action? onClick = null, string? shortcut = null, bool enabled = true) {
+        /// <summary>Appends a row with an optional glyph, action, shortcut hint and enabled state.</summary>
+        public void AddItem(string text, string? glyph = null, Action? onClick = null, string? shortcut = null, bool enabled = true) {
             _entries.Add(new Entry {
                 Text = text ?? string.Empty,
-                Icon = icon ?? string.Empty,
+                Glyph = glyph ?? string.Empty,
                 OnClick = onClick,
                 Shortcut = shortcut ?? string.Empty,
                 Enabled = enabled,
             });
         }
 
+        /// <summary>Appends a divider.</summary>
         public void AddSeparator() {
             _entries.Add(new Entry { IsSeparator = true });
         }
 
+        /// <summary>Removes every row.</summary>
         public void ClearItems() {
             _entries.Clear();
         }
@@ -67,13 +70,14 @@ namespace Material3.WinForms.Controls {
             ItemClicked?.Invoke(index);
         }
 
+        /// <inheritdoc />
         public void Dispose() {
             Close();
         }
 
         internal sealed class Entry {
             public string Text = string.Empty;
-            public string Icon = string.Empty;
+            public string Glyph = string.Empty;
             public string Shortcut = string.Empty;
             public Action? OnClick;
             public bool Enabled = true;
@@ -106,13 +110,12 @@ namespace Material3.WinForms.Controls {
                 SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer, true);
             }
 
-            // Without this the popup would activate and visibly deactivate the owner's titlebar.
             protected override bool ShowWithoutActivation => true;
 
             protected override CreateParams CreateParams {
                 get {
                     CreateParams cp = base.CreateParams;
-                    cp.ClassStyle |= 0x00020000; // CS_DROPSHADOW
+                    cp.ClassStyle |= 0x00020000;
                     const int WS_EX_TOOLWINDOW = 0x80;
                     const int WS_EX_NOACTIVATE = 0x08000000;
                     cp.ExStyle |= WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE;
@@ -123,7 +126,6 @@ namespace Material3.WinForms.Controls {
             public void ShowAt(Point screenLocation) {
                 MeasureAndSize();
 
-                // Flip above the anchor when there's no room below.
                 Rectangle screen = Screen.FromPoint(screenLocation).WorkingArea;
                 int x = Math.Max(screen.Left, Math.Min(screenLocation.X, screen.Right - Width));
                 int y = screenLocation.Y + Height > screen.Bottom
@@ -131,7 +133,6 @@ namespace Material3.WinForms.Controls {
                     : screenLocation.Y;
                 Location = new Point(x, y);
 
-                // Region clip rounds on every Windows version; DWM corner preference is a no-op on frameless tool windows.
                 using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(
                     new Rectangle(0, 0, Width, Height), Dpi.Scale(this, Shape.ExtraSmall))) {
                     Region?.Dispose();
@@ -151,10 +152,9 @@ namespace Material3.WinForms.Controls {
             }
 
             private void MeasureAndSize() {
-                int height = Dpi.Scale(this, 8); // 4px vertical padding top+bottom
+                int height = Dpi.Scale(this, 8);
                 int width = Dpi.Scale(this, MinWidth);
                 using (var bitmap = new Bitmap(1, 1)) {
-                    // Measure at device DPI so widths match OnPaint; a default 96-DPI bitmap under-reserves and clips labels.
                     bitmap.SetResolution(DeviceDpi, DeviceDpi);
                     using (Graphics g = Graphics.FromImage(bitmap)) {
                     foreach (Entry entry in _entries) {
@@ -164,12 +164,12 @@ namespace Material3.WinForms.Controls {
                         }
                         height += Dpi.Scale(this, ItemHeight);
                         float w = Dpi.Scale(this, PadX) * 2
-                            + g.MeasureString(entry.Text, MaterialType.BodyMedium, int.MaxValue, StringFormat.GenericTypographic).Width;
-                        if (!string.IsNullOrEmpty(entry.Icon)) {
+                            + g.MeasureString(entry.Text, TypeScale.BodyMedium, int.MaxValue, StringFormat.GenericTypographic).Width;
+                        if (!string.IsNullOrEmpty(entry.Glyph)) {
                             w += Dpi.Scale(this, IconPx) + Dpi.Scale(this, IconGap);
                         }
                         if (!string.IsNullOrEmpty(entry.Shortcut)) {
-                            w += Dpi.Scale(this, 24) + g.MeasureString(entry.Shortcut, MaterialType.BodySmall, int.MaxValue, StringFormat.GenericTypographic).Width;
+                            w += Dpi.Scale(this, 24) + g.MeasureString(entry.Shortcut, TypeScale.BodySmall, int.MaxValue, StringFormat.GenericTypographic).Width;
                         }
                         width = Math.Max(width, (int)Math.Ceiling(w));
                     }
@@ -261,7 +261,7 @@ namespace Material3.WinForms.Controls {
 
                     Color content = entry.Enabled ? MaterialColors.OnSurface : MaterialColors.OnSurfaceMuted;
                     if (i == _hotIndex && entry.Enabled) {
-                        using (var brush = new SolidBrush(ColorScheme.Overlay(
+                        using (var brush = new SolidBrush(ArgbExtensions.Overlay(
                             MaterialColors.SurfaceContainer, MaterialColors.OnSurface, StateLayers.Hover))) {
                             g.FillRectangle(brush, rect);
                         }
@@ -270,8 +270,8 @@ namespace Material3.WinForms.Controls {
                     int padX = Dpi.Scale(this, PadX);
                     int iconPx = Dpi.Scale(this, IconPx);
                     float x = padX;
-                    if (!string.IsNullOrEmpty(entry.Icon)) {
-                        Bitmap icon = MaterialIconRenderer.Get(entry.Icon, iconPx,
+                    if (!string.IsNullOrEmpty(entry.Glyph)) {
+                        Bitmap icon = MaterialIconRenderer.Render(entry.Glyph, iconPx,
                             entry.Enabled ? MaterialColors.OnSurfaceVariant : MaterialColors.OnSurfaceMuted);
                         g.DrawImageUnscaled(icon, (int)x, rect.Y + (rect.Height - iconPx) / 2);
                         x += iconPx + Dpi.Scale(this, IconGap);
@@ -279,7 +279,7 @@ namespace Material3.WinForms.Controls {
 
                     using (var brush = new SolidBrush(content))
                     using (var fmt = new StringFormat(StringFormat.GenericTypographic) { LineAlignment = StringAlignment.Center }) {
-                        g.DrawString(entry.Text, MaterialType.BodyMedium, brush,
+                        g.DrawString(entry.Text, TypeScale.BodyMedium, brush,
                             new RectangleF(x, rect.Y, Width - x - padX, rect.Height), fmt);
                     }
 
@@ -289,7 +289,7 @@ namespace Material3.WinForms.Controls {
                             LineAlignment = StringAlignment.Center,
                             Alignment = StringAlignment.Far,
                         }) {
-                            g.DrawString(entry.Shortcut, MaterialType.BodySmall, brush,
+                            g.DrawString(entry.Shortcut, TypeScale.BodySmall, brush,
                                 new RectangleF(0, rect.Y, Width - padX, rect.Height), fmt);
                         }
                     }
