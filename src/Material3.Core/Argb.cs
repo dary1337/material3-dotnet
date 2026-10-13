@@ -18,11 +18,11 @@ namespace Material3.Core {
         public byte B { get; }
 
         /// <summary>Creates a colour from its four channels.</summary>
-        public Argb(byte alpha, byte red, byte green, byte blue) {
-            A = alpha;
-            R = red;
-            G = green;
-            B = blue;
+        public Argb(byte a, byte r, byte g, byte b) {
+            A = a;
+            R = r;
+            G = g;
+            B = b;
         }
 
         /// <summary>Opaque color from channels (each clamped to 0–255).</summary>
