@@ -39,7 +39,6 @@ namespace Material3.WinForms.Drawing {
                 CustomSvg[key] = svgMarkup;
                 GlyphCache.Remove(key);
                 foreach (string stale in Cache.Keys.Where(k => k.StartsWith(key + "|", StringComparison.Ordinal)).ToList()) {
-                    Cache[stale].Dispose();
                     Cache.Remove(stale);
                 }
             }
