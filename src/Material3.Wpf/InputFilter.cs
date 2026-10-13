@@ -24,8 +24,8 @@ namespace Material3.Wpf {
     /// passes: the field is mid-edit, and only the caller knows whether it may stay that way.
     /// </remarks>
     public static class InputFilter {
-        private static readonly Regex PartialNumber = new Regex(@"^-?\d*\.?\d*$");
-        private static readonly Regex PartialInteger = new Regex(@"^-?\d*$");
+        private static readonly Regex PartialNumber = new Regex(@"^-?[0-9]*\.?[0-9]*$");
+        private static readonly Regex PartialInteger = new Regex(@"^-?[0-9]*$");
 
         /// <summary>Identifies the <c>Kind</c> attached property.</summary>
         public static readonly DependencyProperty KindProperty = DependencyProperty.RegisterAttached(

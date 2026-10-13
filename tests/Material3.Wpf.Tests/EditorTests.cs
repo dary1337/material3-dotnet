@@ -18,6 +18,7 @@ namespace Material3.Wpf.Tests {
         [InlineData(InputKind.Number, "1,5", false)]
         [InlineData(InputKind.Integer, "-42", true)]
         [InlineData(InputKind.Integer, "4.2", false)]
+        [InlineData(InputKind.Number, "١٢", false)]
         [InlineData(InputKind.Text, "anything at all", true)]
         public void ItJudgesTheTextAsItWouldRead(InputKind kind, string text, bool accepted) =>
             Assert.Equal(accepted, InputFilter.Accepts(kind, text));
@@ -56,6 +57,16 @@ namespace Material3.Wpf.Tests {
             editor.Load(new[] { "1", "2", "3", "4" });
             Assert.Equal(new[] { "1", "2", "3" }, editor.Values);
             Assert.False(editor.IsGrowable);
+        });
+
+        [Fact]
+        public void AnIntegerListRefusesAFraction() => Ui.Sta(() => {
+            var editor = new ValueListEditor { Kind = InputKind.Integer };
+            editor.Load(new[] { "3", "" });
+            Assert.True(editor.IsValid);
+
+            editor.Load(new[] { "3", "2.5" });
+            Assert.False(editor.IsValid);
         });
 
         [Fact]

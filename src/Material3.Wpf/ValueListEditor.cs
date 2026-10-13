@@ -185,7 +185,9 @@ namespace Material3.Wpf {
         /// it is a zero in a slot or a line to drop.
         /// </summary>
         public bool IsValid => Rows.All(row => row.Text.Trim().Length == 0 || Kind == InputKind.Text
-            || double.TryParse(row.Text.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out _));
+            || (Kind == InputKind.Integer
+                ? long.TryParse(row.Text.Trim(), NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out _)
+                : double.TryParse(row.Text.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out _)));
 
         /// <summary>Replaces the entries, padding or trimming them to <see cref="FixedLength"/> when it is set.</summary>
         public void Load(IEnumerable<string>? values) {
