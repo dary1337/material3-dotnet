@@ -105,6 +105,8 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw "Push failed for $($p.Id)" }
             git tag $p.Tag
             git push origin $p.Tag
-            gh release create $p.Tag --title "$($p.Id) $($p.Version)" --generate-notes --notes-start-tag $p.LastTag @galleries $nupkg
+            if ($LASTEXITCODE -ne 0) { throw "Tag push failed for $($p.Id)" }
+            $notesFrom = if ($p.LastTag) { @('--notes-start-tag', $p.LastTag) } else { @() }
+            gh release create $p.Tag --verify-tag --title "$($p.Id) $($p.Version)" --generate-notes @notesFrom @galleries $nupkg
             if ($LASTEXITCODE -ne 0) { throw "Release failed for $($p.Id)" }
           }
