@@ -72,7 +72,7 @@ namespace Material3.Wpf {
         }
 
         /// <summary>Marks every step done.</summary>
-        public void Complete() => ActiveIndex = _rows.Count;
+        public void Complete() => ActiveIndex = Steps?.Count ?? 0;
 
         /// <summary>
         /// Marks every step done, then waits <paramref name="hold"/> so the finished list is seen before whatever

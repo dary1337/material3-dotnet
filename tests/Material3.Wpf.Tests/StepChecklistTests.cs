@@ -71,6 +71,13 @@ namespace Material3.Wpf.Tests {
         });
 
         [Fact]
+        public void CompletingBeforeTheTemplateStillFinishesEveryStep() => Ui.Sta(() => {
+            var list = new StepChecklist { Steps = new[] { "Download", "Unpack" } };
+            list.Complete();
+            Assert.Equal(2, list.ActiveIndex);
+        });
+
+        [Fact]
         public void CompletingWaitsBeforeHandingBack() => Ui.InWindow(w => {
             StepChecklist list = Shown(w, "Download");
             var task = list.CompleteAsync(TimeSpan.FromMilliseconds(150));
