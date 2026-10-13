@@ -35,6 +35,7 @@ namespace Material3.WinForms.Controls {
         /// <summary>The corner radius, in 96-DPI pixels.</summary>
         [Category("Material Design")]
         [Description("The corner radius, in 96-DPI pixels.")]
+        [DefaultValue(5)]
         public int CornerRadius {
             get => _cornerRadius;
             set {

@@ -37,7 +37,7 @@ namespace Material3.WinForms.Design {
                 new DesignerActionHeaderItem("Material 3"),
                 new DesignerActionPropertyItem(nameof(Variant), "Variant", "Material 3",
                     "Elevated, Filled, Tonal, Outlined or Text."),
-                new DesignerActionPropertyItem(nameof(Glyph), "Icon glyph", "Material 3",
+                new DesignerActionPropertyItem(nameof(Glyph), "Glyph", "Material 3",
                     "Leading Material Symbols glyph."),
             };
         }
