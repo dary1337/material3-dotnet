@@ -7,7 +7,7 @@ namespace Material3.Wpf {
     /// <summary>Rotates a dropdown's trailing chevron 180° while its menu is open, so the glyph always points at
     /// the side the menu is on. Attach to the glyph and bind the source of truth — the popup's
     /// <c>IsOpen</c> (<c>{Binding IsOpen, ElementName=…}</c>) or the view-model flag behind it:
-    /// <c>&lt;m3:PathIcon Kind="ChevronDown" m3:Chevron.IsOpen="{Binding SortMenuOpen}" /&gt;</c>.</summary>
+    /// <c>&lt;m3:PathIcon Glyph="ChevronDown" m3:Chevron.IsOpen="{Binding SortMenuOpen}" /&gt;</c>.</summary>
     public static class Chevron {
 
         /// <summary>Identifies the <c>IsOpen</c> attached property.</summary>

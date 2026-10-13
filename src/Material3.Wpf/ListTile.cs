@@ -8,7 +8,7 @@ namespace Material3.Wpf {
     /// <see cref="SupportingText"/> is set, so a list of mixed rows still lines up.
     /// </summary>
     /// <remarks>
-    /// Prefixed, unlike the rest of the set: <c>ListItem</c> is already a WPF document element, and a consumer
+    /// Not <c>ListItem</c>: that is already a WPF document element, and a consumer
     /// that has <c>System.Windows.Documents</c> in scope would have to disambiguate every use.
     /// </remarks>
     public class ListTile : Control {
