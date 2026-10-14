@@ -173,8 +173,6 @@ namespace Material3.Core {
             return ColorUtils.ColorFromLinrgb(linrgb);
         }
 
-        // Newton iteration on CAM16 lightness J for the exact in-gamut color. Returns null when no
-        // in-gamut color exists for the requested chroma (caller then maximizes chroma via bisection).
         private static Argb? FindResultByJ(double hueRadians, double chroma, double y) {
             double j = Math.Sqrt(y) * 11.0;
             ViewingConditions vc = ViewingConditions.Default;
@@ -217,14 +215,11 @@ namespace Material3.Core {
                     return ColorUtils.ColorFromLinrgb(linrgb);
                 }
 
-                // Newton step using 2*fn(j)/j as the derivative approximation.
                 j = j - (fnj - y) * j / (2.0 * fnj);
             }
             return null;
         }
 
-        // Finds the color of the requested hue on the RGB-cube boundary at the given Y, then refines
-        // it against the precomputed critical planes — the maximum achievable chroma for that hue/tone.
         private static double[] BisectToLimit(double y, double targetHue) {
             double[][] segment = BisectToSegment(y, targetHue);
             double[] left = segment[0];
@@ -267,7 +262,6 @@ namespace Material3.Core {
             return Midpoint(left, right);
         }
 
-        // Finds which of the (up to) two boundary segments at this Y contains the target hue.
         private static double[][] BisectToSegment(double y, double targetHue) {
             double[] left = { -1.0, -1.0, -1.0 };
             double[] right = left;
@@ -305,8 +299,6 @@ namespace Material3.Core {
             return new[] { left, right };
         }
 
-        // The nth candidate vertex where the Y-plane crosses an edge of the RGB cube;
-        // [-1,-1,-1] when that vertex lies outside the cube.
         private static double[] NthVertex(double y, int n) {
             double kR = YFromLinrgb[0];
             double kG = YFromLinrgb[1];
@@ -332,7 +324,6 @@ namespace Material3.Core {
             return IsBounded(bb) ? new[] { rr, gg, bb } : new[] { -1.0, -1.0, -1.0 };
         }
 
-        // CAM16 hue (radians) of a linear-RGB point — used to compare against the target hue.
         private static double HueOf(double[] linrgb) {
             double[] scaledDiscount = MatrixMultiply(linrgb, ScaledDiscountFromLinrgb);
             double rA = ChromaticAdaptation(scaledDiscount[0]);
