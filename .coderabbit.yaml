@@ -2,7 +2,7 @@ language: en-US
 early_access: false
 enable_free_tier: true
 
-tone_instructions: "Ruthless principal reviewing a public, dependency-free WinForms library (net472+net8). Terse, no nits. Prioritize public API/semver, GDI+ disposal, DPI correctness, theming, Win32 safety, tests. Never suggest descriptive comments."
+tone_instructions: "Ruthless principal reviewing a public pre-1.0 Material 3 library: Core (netstandard2.0), WinForms and WPF (net472+net8). Terse, no nits. Prioritize correctness, leaks, DPI, theming, threading, tests. Never ask for code comments."
 
 reviews:
   profile: assertive
@@ -15,11 +15,10 @@ reviews:
   changed_files_summary: true
   abort_on_close: true
 
-  # Public API, but member-level XML docs are intentionally partial (CS1591 suppressed) and we document only
-  # non-obvious public surface. A coverage bar would force the exact noise comments our guidance forbids.
+  # CS1591 fails the build, so the compiler already enforces doc coverage.
   pre_merge_checks:
     docstrings:
-      mode: off
+      mode: "off"
 
   auto_review:
     enabled: true
@@ -40,115 +39,152 @@ reviews:
     - "!**/*.designer.cs"
     - "!**/*.resx"
     - "!**/Resources/icons/**"
+    - "!**/CompatibilitySuppressions.xml"
 
   path_instructions:
+    - path: "src/**"
+      instructions: >
+        Pre-1.0 (0.x) semver: a breaking public API change ships in a MINOR bump and is intended. Never ask for
+        [Obsolete] forwarders, compatibility shims, restored old names or restored parameter names, and never ask
+        for release notes in a PR — they are written at release time. A PATCH bump must carry no break at all: flag
+        that. Every break must be listed in that package's CompatibilitySuppressions.xml; the pack step's API
+        validation already fails CI otherwise, so do not re-check the file. Code comments are WHY-only and rare;
+        XML docs are mandatory on every public member (CS1591 is a build error) — never request descriptive
+        comments, and never request docs that restate the member name.
+
+    - path: "src/Material3.Core/**/*.cs"
+      instructions: >
+        UI-agnostic netstandard2.0 engine: no System.Drawing, System.Windows or WinForms reference, colour is the
+        neutral Argb struct. Colour science is a port of material-color-utilities (CAM16/HCT/sRGB/tonal palettes):
+        any change to a constant, matrix coefficient, sign, clamp or hue wrap must preserve numeric fidelity with
+        the reference and come with a test. Guard NaN propagation, division by zero, gamut clamping, ARGB byte
+        order and hue mod 360. Numeric parsing and formatting use InvariantCulture.
+
     - path: "src/Material3.WinForms/**/*.cs"
       instructions: >
-        Public, dependency-free library; multi-target net472 + net8.0-windows; nullable enabled. Enforce:
-        NO new external NuGet dependency (dependency-free is a selling point — flag any PackageReference);
-        no API or language construct unavailable on net472 (the lower TFM is the floor); any change to a PUBLIC
-        signature (rename/remove/retype/param change) is a breaking change — flag it, require it be additive or
-        call out the major-version bump. Dispose every IDisposable created locally (Pen/Brush/GraphicsPath/Font/
-        StringFormat/Region/Bitmap/Graphics) in the same scope, prefer using-declarations. StringComparison.Ordinal
-        for keys/identifiers; InvariantCulture for numeric/SVG parsing; CurrentCulture only for user-facing text.
-        No hardcoded color hex — read from MaterialColors/ThemeManager; no magic geometry numbers — use the Tokens
-        (Shape/Spacing/ComponentSizes/StateLayers/Motion/Elevation). Comments: non-obvious WHY only; never request
-        added/restating comments or name-echo XML docs.
+        Dependency-free, net472 + net8.0-windows, nullable enabled. Flag any new PackageReference and any API or
+        language construct unavailable on net472. Dispose every IDisposable created locally (Pen/Brush/
+        GraphicsPath/Font/StringFormat/Region/Bitmap/Graphics) in the same scope — EXCEPT bitmaps returned by
+        MaterialIconRenderer.Render, which are shared cache entries nobody disposes. StringComparison.Ordinal for
+        keys and identifiers, InvariantCulture for numeric/SVG parsing, CurrentCulture only for user-facing text.
+        No hardcoded colour hex — read MaterialColors/ThemeManager; no magic geometry — use the Tokens
+        (Shape/Spacing/ComponentSizes/StateLayers/Motion/Elevation).
 
     - path: "src/Material3.WinForms/Controls/**/*.cs"
       instructions: >
-        Owner-drawn controls. GDI+ hygiene is mandatory: Pen/Brush/GraphicsPath/Font/StringFormat/Region/Bitmap
-        created in OnPaint (or paint helpers) are disposed in the same scope; Bitmaps returned by
-        MaterialIconRenderer.Get are SHARED cache entries — callers must NOT dispose them. SetStyle in the ctor must
-        match the paint strategy (UserPaint + SupportsTransparentBackColor ⇒ OnPaint paints the full ClientRectangle
-        including background). DPI: scale FIXED sub-element sizes via Dpi.Scale(this, …); do NOT scale values derived
-        from Width/Height/ClientRectangle (already physical) nor sizes assigned in the ctor (AutoScale owns bounds for
-        designer-placed controls) — EXCEPT a control with an intrinsic fixed height/size MUST self-size from DeviceDpi
-        in OnHandleCreated + OnDpiChangedAfterParent, because runtime-added controls never get AutoScale; paint geometry
-        and hit-testing must use the SAME scaled math (a click must hit what is drawn); Dpi.Scale is identity at 96 DPI,
-        so no change is allowed to alter 100%-DPI rendering. Theme: subscribe via ThemeHook.Attach in the ctor and read
-        colors live from MaterialColors at paint. Designer: a public parameterless ctor is required; runtime/computed/
-        child-backed public properties get [Browsable(false)] + [DesignerSerializationVisibility(Hidden)]; settable
-        design-time properties get [DefaultValue]; guard timers/handle work behind DesignMode so the designer can't
-        crash. Dispose timers and detach event subscriptions whose target outlives the control; never touch the control
-        (Invalidate, layout) after a handler that disposes/removes it.
+        Owner-drawn controls. Pen/Brush/GraphicsPath/Font/StringFormat/Region/Bitmap created in OnPaint or a paint
+        helper are disposed in the same scope; bitmaps from MaterialIconRenderer.Render are shared and must NOT be
+        disposed. SetStyle in the ctor must match the paint strategy (UserPaint + SupportsTransparentBackColor ⇒
+        OnPaint paints the full ClientRectangle). DPI: scale FIXED sub-element sizes via Dpi.Scale(this, …); never
+        scale values derived from Width/Height/ClientRectangle nor sizes assigned in the ctor — EXCEPT a control
+        with an intrinsic fixed height, which self-sizes from DeviceDpi in OnHandleCreated + OnDpiChangedAfterParent
+        because runtime-added controls never get AutoScale. Paint geometry and hit-testing use the same scaled math.
+        Dpi.Scale is identity at 96 DPI, so nothing may change 100% rendering. Theme: subscribe via ThemeHook.Attach
+        and read colours live from MaterialColors at paint. Designer: public parameterless ctor; runtime/computed
+        properties get [Browsable(false)] + [DesignerSerializationVisibility(Hidden)]; settable ones get
+        [DefaultValue] matching the parameterless ctor; timers and handle work stay behind DesignMode. Dispose timers
+        and detach handlers whose target outlives the control.
 
     - path: "src/Material3.WinForms/Theming/**/*.cs"
       instructions: >
-        Color science (CAM16/HCT/sRGB/tonal-palette port of material-color-utilities). Any change to a constant,
-        matrix coefficient, sign, clamp, or hue-wrap must preserve numeric fidelity vs the reference and be covered
-        by a test — flag changes that touch the math without a corresponding test. Guard NaN propagation, division by
-        zero, gamut clamping, ARGB byte order, and hue mod-360. ThemeManager holds mutable static state: flag
-        non-atomic reads of theme+mode, and any ThemeChanged subscribe without a matching unsubscribe.
+        Thin adapters over Material3.Core (ArgbExtensions.ToGdi/ToCore) plus the WinForms ThemeManager; the colour
+        math itself lives in Core. ThemeManager holds mutable static state: flag non-atomic reads of theme + mode
+        and any ThemeChanged subscription without a matching unsubscribe.
 
     - path: "src/Material3.WinForms/Drawing/**/*.cs"
       instructions: >
-        MaterialIconRenderer/SvgGlyph. Cache invariants: returned Bitmaps are shared (no caller dispose); the cache key
-        includes EVERY parameter that affects the render (key, size, color); lock(Gate) wraps every cache mutation;
-        Register must invalidate the affected cached parse/bitmaps. SvgGlyph parses with InvariantCulture, and a missing
-        or malformed path must degrade (log + null/blank) rather than throw to the paint path. RasterizeGlyph must guard
-        a zero-area viewBox.
+        MaterialIconRenderer/SvgGlyph. Returned bitmaps are shared: callers never dispose them, and Register drops
+        the key's stale bitmaps from the cache WITHOUT disposing them, because a control may still be showing one —
+        do not ask for that Dispose. The cache key includes every render input (key, size, colour) and every cache
+        mutation happens under lock(Gate). SvgGlyph parses with InvariantCulture; a missing or malformed path
+        degrades to blank rather than throwing into a paint. Guard a zero-area viewBox.
 
     - path: "src/Material3.WinForms/Forms/**/*.cs"
       instructions: >
-        BorderlessForm Win32: WM_NCHITTEST/WM_NCCALCSIZE handling and HTTRANSPARENT cascade must stay intact; caption
-        geometry must scale with DPI. MaterialDialog must set DialogResult deterministically (a Close without a result
-        is suspect). CalendarMath/TimeMath: boundary correctness (leap years, AM/PM, hour 0/12, month/year edges,
-        year-1) — logic changes require test coverage. MaterialMessageBox stays generic (no app-specific text/links).
+        BorderlessForm Win32: WM_NCHITTEST/WM_NCCALCSIZE handling and the HTTRANSPARENT cascade stay intact;
+        caption geometry scales with DPI. MaterialDialog sets DialogResult deterministically. CalendarMath/TimeMath:
+        leap years, AM/PM, hour 0/12, month/year edges — logic changes need tests. MaterialMessageBox stays generic.
 
     - path: "src/Material3.WinForms/MaterialCursors.cs"
       instructions: >
-        LoadCursor(NULL, IDC_*) returns SHARED OS cursor handles. Cursors must be static (never disposed). Cursor(IntPtr)
-        does not own the handle, so do not add DestroyCursor. Do not re-add legacy Cursors.* aliases — the point is the
-        user's current scheme via LoadCursor.
+        LoadCursor(NULL, IDC_*) returns SHARED OS cursor handles: cursors stay static, are never disposed, and get no
+        DestroyCursor. Do not re-add Cursors.* aliases — the point is the user's current scheme.
+
+    - path: "src/Material3.Wpf/**/*.cs"
+      instructions: >
+        Lookless WPF controls, net472 + net8.0-windows. Flag: a direct assignment to a dependency property a
+        consumer may have bound or styled (use SetCurrentValue, or SetResourceReference for theme brushes);
+        FindResource/TryFindResource for a theme colour (ThemeManager REPLACES role brushes on a switch, so use
+        SetResourceReference/DynamicResource); a storyboard, clock or RepeatBehavior.Forever animation that is not
+        stopped on Unloaded or when its state ends; a Brush/Geometry/Transform created in code and never mutated
+        afterwards but not frozen; an animation that bypasses Motion's durations, so Motion.AnimationsEnabled and
+        the system animation setting no longer turn it off; a static field holding WPF objects that is not
+        [ThreadStatic] (every UI thread needs its own); a template part used without a null check.
+
+    - path: "src/Material3.Wpf/**/*.xaml"
+      instructions: >
+        Colours come from theme roles via DynamicResource, never literals or StaticResource of a role brush. Every
+        interactive template has an IsEnabled=False trigger (M3 disabled: 0.38 content opacity, no state layer) and
+        a keyboard focus visual (M3FocusRing). Template parts keep their PART_ names in sync with [TemplatePart]
+        attributes. Storyboards that loop are stopped by an exit action.
 
     - path: "tests/**/*.cs"
       instructions: >
-        Changes to geometry, color math, parsing, or calendar/time logic must add or extend a test. Reject weakened
-        assertions or tests narrowed just to pass. Prefer data-driven (Theory) coverage over one-off cases.
+        Changes to geometry, colour math, parsing, input filtering or calendar/time logic must add or extend a test.
+        Reject weakened assertions and tests narrowed just to pass. Whether cases are a Theory or separate Facts is
+        the author's call — never a finding. WPF UI tests must not depend on machine settings (DPI, the system
+        animation setting) or on test order.
 
     - path: "samples/Material3.WinForms.Gallery/**/*.cs"
       instructions: >
-        Demo / smoke-test app, not shipped — lower rigor than the library, but still flag real bugs, GDI+/event leaks,
-        and DPI layout regressions. The gallery must exercise every control in both light and dark; flag a new public
-        control that has no gallery page. App-specific layout helpers (PageBuilder/GalleryForm) may scale via Dpi.Scale.
+        Demo / smoke-test app, not shipped — lower rigor than the library, but still flag real bugs, GDI+/event
+        leaks and DPI layout regressions. The gallery exercises every control in light and dark; flag a new public
+        control with no gallery page. Gallery layout helpers may scale via Dpi.Scale.
 
-    - path: "samples/Material3.Wpf.Gallery/**/*.cs"
+    - path: "samples/Material3.Wpf.Gallery/**"
       instructions: >
-        Demo / smoke-test app, not shipped — lower rigor than the library, but still flag real WPF bugs. Watch for:
-        DispatcherTimer / storyboard / animation not stopped on teardown; event or binding leaks; a local
-        Window/App resource whose x:Key shadows a library style so FindResource resolves the wrong template;
-        DependencyObject / IDisposable left undisposed. The gallery must exercise the M3Modal, AnimatedPopup and
-        navigation surfaces in both light and dark; flag a new public WPF control that has no gallery page.
+        Demo / smoke-test app, not shipped — lower rigor than the library, but still flag real WPF bugs: timers,
+        storyboards or animations not stopped on teardown; event or binding leaks; a local resource whose x:Key
+        shadows a library style. The gallery exercises Modal, Dialog, AnimatedPopup and navigation in light and
+        dark; flag a new public WPF control with no gallery page. Comments are allowed here as examples.
 
     - path: "**/*.csproj"
       instructions: >
-        Demand: no new external dependency (dependency-free is intentional — the only allowed deps are the framework
-        references); PackageReference versions pinned (no floating "*"); both target frameworks preserved
-        (net472;net8.0-windows); <Version> bumps live with the change that warrants them and follow semver; package
-        metadata (PackageId, license, RepositoryUrl, PackageReadmeFile, tags) stays intact; the embedded-icon glob and
-        InternalsVisibleTo stay explicit.
+        No new external dependency (framework references only); PackageReference versions pinned. Target
+        frameworks: Material3.Core is netstandard2.0, the UI packages are net472;net8.0-windows — preserve them.
+        Each package versions independently. A release split across several PRs into a release/* branch bumps
+        versions in its last PR, so a missing or version-only bump in a release/* PR is not a finding.
+        PackageValidationBaselineVersion is the package's own last published version. Package metadata
+        (PackageId, license, RepositoryUrl, PackageReadmeFile) stays intact.
 
     - path: ".github/workflows/**/*.yml"
       instructions: >
-        Demand: actions pinned by SHA or major version, never @latest; secrets referenced via secrets.* only; no
-        pull_request_target with checkout of PR head; permissions scoped to the minimum; the build runs both TFMs,
-        the tests, and a format/analyzer gate; NuGet push is gated on a tag and guards against republishing an
-        existing version.
+        One workflow builds with -warnaserror, tests and packs on every push and PR, then publishes on a push to
+        main: a package publishes when its <Version> is above its last tag <PackageId>/vX.Y.Z (the old shared vX.Y.Z
+        counts before the first one), and CI creates that tag itself. Check that a failed push, tag push or release
+        stops the run, that an existing version is never republished, and that a UI package cannot publish while
+        Core has unreleased code. Actions pinned by major version or SHA, never @latest; secrets only via
+        secrets.* or OIDC; no pull_request_target with a PR-head checkout; permissions minimal. A pwsh step ends
+        with the last native command's exit code — a non-zero one left over fails the step.
+
+    - path: "**/*.md"
+      instructions: >
+        Public docs: flag API names that no longer exist in the code and examples that would not compile. No
+        internal consumer names, local paths or measurements from private runs.
 
   labeling_instructions:
     - label: "breaking-change"
       instructions: "Apply when a public type/member signature is renamed, removed, retyped, or has its parameters changed."
     - label: "new-dependency"
-      instructions: "Apply when a PackageReference is added to the library project or its transitive surface grows."
+      instructions: "Apply when a PackageReference is added to a library project or its transitive surface grows."
     - label: "dpi"
       instructions: "Apply when Dpi.Scale, OnHandleCreated/OnDpiChangedAfterParent sizing, or owner-drawn geometry changes."
     - label: "gdi-leak"
       instructions: "Apply when OnPaint or paint helpers create Pen/Brush/GraphicsPath/Font/Region/Bitmap without disposal."
     - label: "theming"
-      instructions: "Apply when ColorScheme/MaterialColors/ThemeManager or the CAM16/HCT pipeline changes."
+      instructions: "Apply when Core's colour pipeline, ColorScheme, MaterialColors or either ThemeManager changes."
     - label: "needs-tests"
-      instructions: "Apply when geometry/color/parsing/calendar logic changes without matching test coverage."
+      instructions: "Apply when geometry/colour/parsing/calendar logic changes without matching test coverage."
 
 chat:
   auto_reply: true
@@ -168,7 +204,6 @@ code_generation:
     path_instructions:
       - path: "src/**/*.cs"
         instructions: >
-          XML doc comments only on PUBLIC API (public type/method/property) whose behavior is non-obvious — this is a
-          public library, so a concise one-line summary that aids IntelliSense is welcome, but never echo the symbol
-          name, never narrate the implementation, and never document private members or overrides the base already
-          documents. Document the why (constraints, invariants, units, gotchas), not the what.
+          Every public type and member carries an XML doc (CS1591 is a build error): one concise summary that aids
+          IntelliSense. Never echo the symbol name, never narrate the implementation, never document private members
+          or overrides the base already documents. Document the why (constraints, invariants, units, gotchas).
