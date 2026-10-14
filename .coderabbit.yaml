@@ -118,8 +118,9 @@ reviews:
         SetResourceReference/DynamicResource); a storyboard, clock or RepeatBehavior.Forever animation that is not
         stopped on Unloaded or when its state ends; a Brush/Geometry/Transform created in code and never mutated
         afterwards but not frozen; an animation that bypasses Motion's durations, so Motion.AnimationsEnabled and
-        the system animation setting no longer turn it off; a static field holding WPF objects that is not
-        [ThreadStatic] (every UI thread needs its own); a template part used without a null check.
+        the system animation setting no longer turn it off; a static field holding a mutable, thread-affine WPF
+        object that is not [ThreadStatic] (frozen Freezables may be shared statics); a template part used without
+        a null check.
 
     - path: "src/Material3.Wpf/**/*.xaml"
       instructions: >
