@@ -13,10 +13,15 @@ using Material3.WinForms.Typography;
 namespace Material3.WinForms.Controls {
     /// <summary>The five M3 button styles.</summary>
     public enum MaterialButtonVariant {
+        /// <summary>A tinted surface lifted by a shadow.</summary>
         Elevated,
+        /// <summary>The primary fill, for the most important action.</summary>
         Filled,
+        /// <summary>The secondary container fill, between filled and outlined in emphasis.</summary>
         Tonal,
+        /// <summary>An outline with no fill.</summary>
         Outlined,
+        /// <summary>A label with no container, for the lowest emphasis.</summary>
         Text,
     }
 
@@ -38,9 +43,9 @@ namespace Material3.WinForms.Controls {
         private bool _pressed;
         private int _cornerRadius = Shape.Full;
 
-        // Reused off-screen buffer; a fresh Bitmap per OnPaint is a resize bottleneck (GC + GDI+ surface cost).
         private Bitmap? _buffer;
 
+        /// <summary>Initializes a new instance of the <see cref="MaterialButton"/> class.</summary>
         public MaterialButton() {
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
@@ -54,7 +59,7 @@ namespace Material3.WinForms.Controls {
             FlatAppearance.MouseOverBackColor = Color.Transparent;
             FlatAppearance.MouseDownBackColor = Color.Transparent;
             MaterialCursors.Apply(this, MaterialCursors.Pointer);
-            Font = MaterialType.LabelLarge;
+            Font = TypeScale.LabelLarge;
             AutoSize = false;
             Height = ComponentSizes.ButtonHeight;
             BackColor = Color.Transparent;
@@ -62,6 +67,7 @@ namespace Material3.WinForms.Controls {
             ThemeHook.Attach(this, () => { ApplyVariantColors(); Invalidate(); });
         }
 
+        /// <summary>The M3 button style: Elevated, Filled, Tonal, Outlined or Text.</summary>
         [Category("Material Design")]
         [Description("The M3 button style: Elevated, Filled, Tonal, Outlined or Text.")]
         [DefaultValue(MaterialButtonVariant.Filled)]
@@ -90,14 +96,15 @@ namespace Material3.WinForms.Controls {
             Invalidate();
         }
 
+        /// <summary>Material Symbols key for the leading glyph (e.g. &quot;check&quot;). See MaterialIcons.</summary>
         [Category("Material Design")]
         [Description("Material Symbols key for the leading glyph (e.g. \"check\"). See MaterialIcons.")]
         [DefaultValue("")]
 #if NET472
-        [System.ComponentModel.Editor(typeof(Material3.WinForms.Design.IconGlyphEditor),
+        [System.ComponentModel.Editor(typeof(Material3.WinForms.Design.GlyphEditor),
             typeof(System.Drawing.Design.UITypeEditor))]
 #endif
-        public string IconGlyph {
+        public string Glyph {
             get => _iconGlyph;
             set {
                 _iconGlyph = value ?? string.Empty;
@@ -105,15 +112,16 @@ namespace Material3.WinForms.Controls {
             }
         }
 
-        /// <summary>A caller-supplied leading icon, drawn as-is and taking precedence over <see cref="IconGlyph"/>.</summary>
+        /// <summary>A caller-supplied leading icon, drawn as-is and taking precedence over <see cref="Glyph"/>.</summary>
         [Category("Material Design")]
-        [Description("A caller-supplied leading icon, drawn as-is and taking precedence over IconGlyph.")]
+        [Description("A caller-supplied leading icon, drawn as-is and taking precedence over Glyph.")]
         [DefaultValue(null)]
         public Image? IconImage {
             get => _iconImage;
             set { _iconImage = value; Invalidate(); }
         }
 
+        /// <summary>Corner radius in px; defaults to a full pill.</summary>
         [Category("Material Design")]
         [Description("Corner radius in px; defaults to a full pill.")]
         [DefaultValue(Shape.Full)]
@@ -158,12 +166,18 @@ namespace Material3.WinForms.Controls {
             ForeColor = ContentColor;
         }
 
+        /// <inheritdoc />
         protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); _hovered = true; Invalidate(); }
+        /// <inheritdoc />
         protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); _hovered = false; _pressed = false; Invalidate(); }
+        /// <inheritdoc />
         protected override void OnMouseDown(MouseEventArgs e) { base.OnMouseDown(e); _pressed = true; Invalidate(); }
+        /// <inheritdoc />
         protected override void OnMouseUp(MouseEventArgs e) { base.OnMouseUp(e); _pressed = false; Invalidate(); }
+        /// <inheritdoc />
         protected override void OnEnabledChanged(EventArgs e) { base.OnEnabledChanged(e); Invalidate(); }
 
+        /// <inheritdoc />
         protected override void OnSizeChanged(EventArgs e) {
             base.OnSizeChanged(e);
             _buffer?.Dispose();
@@ -172,14 +186,13 @@ namespace Material3.WinForms.Controls {
                 : null;
         }
 
-        // Zero so all variants fill full bounds and share identical pill sizes; Elevated uses a tonal
-        // surface instead of a drop-shadow, which would need an inner margin that shrinks the pill.
         private const int SurfaceInset = 0;
 
         private int EffectiveRadius(Rectangle rect) {
             return Math.Max(0, Math.Min(Dpi.Scale(this, _cornerRadius), Math.Min(rect.Width, rect.Height) / 2));
         }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             if (_buffer == null) {
                 return;
@@ -206,7 +219,7 @@ namespace Material3.WinForms.Controls {
                 if (!Enabled) {
                     fill = _variant == MaterialButtonVariant.Text || _variant == MaterialButtonVariant.Outlined
                         ? Color.Transparent
-                        : ColorScheme.Overlay(parent, MaterialColors.OnSurface, StateLayers.DisabledContainer);
+                        : ArgbExtensions.Overlay(parent, MaterialColors.OnSurface, StateLayers.DisabledContainer);
                 }
 
                 using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(rect, radius)) {
@@ -219,15 +232,13 @@ namespace Material3.WinForms.Controls {
                     double layerOpacity = _pressed ? StateLayers.Pressed : _hovered ? StateLayers.Hover : 0;
                     if (Enabled && layerOpacity > 0) {
                         Color layerBase = fill.A > 0 ? fill : parent;
-                        Color layer = ColorScheme.Overlay(layerBase, ContentColor, layerOpacity);
+                        Color layer = ArgbExtensions.Overlay(layerBase, ContentColor, layerOpacity);
                         using (var brush = new SolidBrush(layer)) {
                             g.FillPath(brush, path);
                         }
                     }
 
                     if (_variant == MaterialButtonVariant.Outlined) {
-                        // +0.5 transform + 1px inset so the centered 1px pen sits fully inside the buffer,
-                        // otherwise the top/left edges are clipped by half a pixel.
                         GraphicsState saved = g.Save();
                         g.TranslateTransform(0.5f, 0.5f);
                         Rectangle outlineRect = new Rectangle(
@@ -251,6 +262,7 @@ namespace Material3.WinForms.Controls {
             e.Graphics.DrawImageUnscaled(_buffer, 0, 0);
         }
 
+        /// <inheritdoc />
         protected override void Dispose(bool disposing) {
             if (disposing) {
                 _buffer?.Dispose();
@@ -282,7 +294,7 @@ namespace Material3.WinForms.Controls {
                     g.DrawImage(_iconImage, new Rectangle(iconX, iconY, iconPx, iconPx));
                 }
                 else {
-                    Bitmap icon = MaterialIconRenderer.Get(_iconGlyph, iconPx, content);
+                    Bitmap icon = MaterialIconRenderer.Render(_iconGlyph, iconPx, content);
                     g.DrawImage(icon, iconX, iconY);
                 }
                 startX += iconPx + (string.IsNullOrEmpty(text) ? 0 : iconGap);
@@ -303,7 +315,7 @@ namespace Material3.WinForms.Controls {
         private Size _prefSize;
         private bool _prefValid;
 
-        // Cached: layout calls GetPreferredSize several times per pass, each opening a device context.
+        /// <inheritdoc />
         public override Size GetPreferredSize(Size proposedSize) {
             string text = Text ?? string.Empty;
             bool hasIcon = _iconImage != null || !string.IsNullOrEmpty(_iconGlyph);
@@ -312,7 +324,6 @@ namespace Material3.WinForms.Controls {
                 return _prefSize;
             }
 
-            // Text buttons have no fill, so a tighter padding keeps inline link buttons compact.
             int horizontalPadding = Dpi.Scale(this, _variant == MaterialButtonVariant.Text ? 16 : 34);
             int iconPx = Dpi.Scale(this, 18);
             int iconGap = Dpi.Scale(this, 8);

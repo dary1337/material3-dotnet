@@ -28,7 +28,7 @@ namespace Material3.WinForms.Drawing {
         }
 
         /// <summary>
-        /// Registers a consumer SVG under <paramref name="key"/> so <see cref="Get"/> renders it like a
+        /// Registers a consumer SVG under <paramref name="key"/> so <see cref="Render"/> renders it like a
         /// bundled icon. Markup must use the grammar <see cref="SvgGlyph"/> supports (no arcs/gradients).
         /// </summary>
         public static void Register(string key, string svgMarkup) {
@@ -39,13 +39,13 @@ namespace Material3.WinForms.Drawing {
                 CustomSvg[key] = svgMarkup;
                 GlyphCache.Remove(key);
                 foreach (string stale in Cache.Keys.Where(k => k.StartsWith(key + "|", StringComparison.Ordinal)).ToList()) {
-                    Cache[stale].Dispose();
                     Cache.Remove(stale);
                 }
             }
         }
 
-        public static Bitmap Get(string key, int size, Color color) {
+        /// <summary>The glyph <paramref name="key"/> rendered at <paramref name="size"/> in <paramref name="color"/>, cached per combination.</summary>
+        public static Bitmap Render(string key, int size, Color color) {
             if (size < 1) {
                 size = 1;
             }
@@ -55,20 +55,18 @@ namespace Material3.WinForms.Drawing {
                     return cached;
                 }
 
-                Bitmap result = Render(key, size, color);
+                Bitmap result = RenderUncached(key, size, color);
                 Cache[cacheKey] = result;
                 return result;
             }
         }
 
-        private static Bitmap Render(string key, int size, Color color) {
+        private static Bitmap RenderUncached(string key, int size, Color color) {
             Glyph? glyph = LoadGlyph(key);
             if (glyph == null) {
                 return new Bitmap(size, size, PixelFormat.Format32bppArgb);
             }
 
-            // Rasterize at 4× (capped at 96) so thin features keep crisp edges after downsampling,
-            // then downscale with bicubic into the requested icon size.
             int renderSize = Math.Min(size * 4, 96);
             if (renderSize < size) {
                 renderSize = size;

@@ -9,16 +9,18 @@ namespace Material3.WinForms.Controls {
     /// <summary>Panel clipped to a rounded rectangle (HWND region) with an optional 1-px outline; base surface for cards and list items.</summary>
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
-    public class RoundedPanel : Panel {
+    public class MaterialRoundedPanel : Panel {
         private int _cornerRadius;
         private Color _outlineColor = Color.Transparent;
         private Size _lastRegionSize = Size.Empty;
         private int _lastRegionRadius = -1;
         private bool _regionDirty = true;
 
-        public RoundedPanel() : this(5) { }
+        /// <summary>Initializes a new instance of the <see cref="MaterialRoundedPanel"/> class.</summary>
+        public MaterialRoundedPanel() : this(5) { }
 
-        public RoundedPanel(int cornerRadius) {
+        /// <summary>Creates a panel with the given corner radius.</summary>
+        public MaterialRoundedPanel(int cornerRadius) {
             _cornerRadius = cornerRadius;
             DoubleBuffered = true;
             SetStyle(ControlStyles.ResizeRedraw, true);
@@ -30,21 +32,31 @@ namespace Material3.WinForms.Controls {
             );
         }
 
-        public void SetCornerRadius(int cornerRadius) {
-            _cornerRadius = cornerRadius;
-            _regionDirty = true;
-            Invalidate();
+        /// <summary>The corner radius, in 96-DPI pixels.</summary>
+        [Category("Material Design")]
+        [Description("The corner radius, in 96-DPI pixels.")]
+        [DefaultValue(5)]
+        public int CornerRadius {
+            get => _cornerRadius;
+            set {
+                _cornerRadius = value;
+                _regionDirty = true;
+                Invalidate();
+            }
         }
 
-        /// <summary>Current corner radius — for subclasses that paint their own surface.</summary>
-        protected int CornerRadius => _cornerRadius;
-
-        public void SetOutline(Color outlineColor) {
-            _outlineColor = outlineColor;
-            Invalidate();
+        /// <summary>The 1px outline colour; <see cref="System.Drawing.Color.Transparent"/> hides it.</summary>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public Color OutlineColor {
+            get => _outlineColor;
+            set {
+                _outlineColor = value;
+                Invalidate();
+            }
         }
 
-        // UserPaint skips the default background, so fill here and sync Region to the path first, else corner pixels show the parent.
+        /// <inheritdoc />
         protected override void OnPaintBackground(PaintEventArgs pevent) {
             if (BackColor.A <= 0) {
                 ClearRegionIfNeeded();
@@ -63,6 +75,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             base.OnPaint(e);
             if (_outlineColor.A > 0) {
@@ -79,6 +92,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnSizeChanged(EventArgs e) {
             base.OnSizeChanged(e);
             _regionDirty = true;

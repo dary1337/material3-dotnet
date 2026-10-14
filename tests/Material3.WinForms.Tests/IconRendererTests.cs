@@ -7,8 +7,6 @@ using Xunit;
 
 namespace Material3.WinForms.Tests {
     public class IconRendererTests {
-        // Every bundled icon key, discovered from the embedded ".icons.{key}.svg" resources, so
-        // the test covers the whole set without a hand-maintained list.
         public static TheoryData<string> IconKeys {
             get {
                 var data = new TheoryData<string>();
@@ -28,12 +26,10 @@ namespace Material3.WinForms.Tests {
         [Theory]
         [MemberData(nameof(IconKeys))]
         public void EveryBundledIcon_RendersNonEmptyTintedBitmap(string key) {
-            Bitmap bmp = MaterialIconRenderer.Get(key, 24, Color.FromArgb(255, 200, 40, 40));
+            Bitmap bmp = MaterialIconRenderer.Render(key, 24, Color.FromArgb(255, 200, 40, 40));
             Assert.Equal(24, bmp.Width);
             Assert.Equal(24, bmp.Height);
 
-            // The mini parser must actually fill geometry: at least some pixels are opaque and
-            // carry the tint color (not a blank transparent square).
             int litTinted = 0;
             for (int y = 0; y < bmp.Height; y++) {
                 for (int x = 0; x < bmp.Width; x++) {
@@ -48,25 +44,23 @@ namespace Material3.WinForms.Tests {
 
         [Fact]
         public void Get_SameArguments_ReturnsCachedInstance() {
-            Bitmap a = MaterialIconRenderer.Get(MaterialIcons.Check, 20, Color.White);
-            Bitmap b = MaterialIconRenderer.Get(MaterialIcons.Check, 20, Color.White);
+            Bitmap a = MaterialIconRenderer.Render(MaterialIcons.Check, 20, Color.White);
+            Bitmap b = MaterialIconRenderer.Render(MaterialIcons.Check, 20, Color.White);
             Assert.Same(a, b);
         }
 
         [Fact]
         public void Get_UnknownKey_ReturnsBlankBitmapWithoutThrowing() {
-            Bitmap bmp = MaterialIconRenderer.Get("this_icon_does_not_exist", 16, Color.White);
+            Bitmap bmp = MaterialIconRenderer.Render("this_icon_does_not_exist", 16, Color.White);
             Assert.Equal(16, bmp.Width);
         }
 
         [Fact]
         public void RegisteredCubicSvg_RendersNonEmpty() {
-            // Cubic Béziers (C) + a consumer-registered SVG — the path real-world icons (e.g. brand
-            // logos) take. Proves SvgGlyph parses cubics and Register feeds the render pipeline.
             const string svg =
                 "<svg viewBox=\"0 0 24 24\"><path d=\"M2 12 C 2 2 22 2 22 12 C 22 22 2 22 2 12 Z\"/></svg>";
             MaterialIconRenderer.Register("test_cubic_blob", svg);
-            Bitmap bmp = MaterialIconRenderer.Get("test_cubic_blob", 32, Color.FromArgb(255, 200, 40, 40));
+            Bitmap bmp = MaterialIconRenderer.Render("test_cubic_blob", 32, Color.FromArgb(255, 200, 40, 40));
 
             int litTinted = 0;
             for (int y = 0; y < bmp.Height; y++) {
@@ -82,11 +76,7 @@ namespace Material3.WinForms.Tests {
 
         [Fact]
         public void HollowIcon_HasTransparentHole() {
-            // radio_button_checked is an outer ring + inner dot with a transparent gap between
-            // them — proves nonzero (Winding) fill is honored, not even-odd.
-            Bitmap bmp = MaterialIconRenderer.Get(MaterialIcons.RadioChecked, 48, Color.White);
-            // A pixel in the gap (between center dot and outer ring) must be transparent.
-            // Center is opaque (dot), far edge transparent (outside), and the ring band opaque.
+            Bitmap bmp = MaterialIconRenderer.Render(MaterialIcons.RadioChecked, 48, Color.White);
             bool anyTransparentInside = Enumerable.Range(10, 28)
                 .Any(x => bmp.GetPixel(x, 24).A < 20);
             Assert.True(anyTransparentInside, "expected a transparent gap inside the ring");

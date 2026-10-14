@@ -10,6 +10,8 @@ namespace Material3.WinForms.Design {
     public sealed class MaterialThemeManagerDesigner : ComponentDesigner {
         private DesignerActionListCollection? _actionLists;
 
+        /// <inheritdoc />
+
         public override DesignerActionListCollection ActionLists =>
             _actionLists ??= new DesignerActionListCollection { new ThemeActionList(Component) };
 
@@ -35,6 +37,7 @@ namespace Material3.WinForms.Design {
             }
 
             public void ToggleMode() => Set(_mgr, nameof(MaterialThemeManager.IsDark), !_mgr.IsDark);
+
 
             public override DesignerActionItemCollection GetSortedActionItems() => new() {
                 new DesignerActionHeaderItem("Material 3"),

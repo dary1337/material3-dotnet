@@ -9,13 +9,13 @@ using Material3.WinForms.Tokens;
 namespace Material3.WinForms {
     /// <summary>Material 3 open/close motion for modal dialogs: top-down slide combined with opacity fade.</summary>
     public static class FormAnimation {
+        /// <summary>How long the open animation runs, in milliseconds.</summary>
         public const int OpenDurationMs = Motion.Short4;
+        /// <summary>How long the close animation runs, in milliseconds.</summary>
         public const int CloseDurationMs = 140;
         private const int FrameDelayMs = 8;
         private const int SlideOffsetPx = 10;
 
-        // Bumping the epoch makes any in-flight loop bail, so a concurrent open and close can't
-        // fight over Location/Opacity.
         private static readonly ConditionalWeakTable<Form, StrongBox<int>> Epochs =
             new ConditionalWeakTable<Form, StrongBox<int>>();
 
@@ -27,6 +27,7 @@ namespace Material3.WinForms {
         private static bool IsCurrent(Form form, int epoch) =>
             Epochs.TryGetValue(form, out StrongBox<int>? box) && box.Value == epoch;
 
+        /// <summary>Fades <paramref name="form"/> in while it slides down into place. A newer animation on the same form cancels this one.</summary>
         public static async Task OpenAsync(Form form) {
             if (form == null || form.IsDisposed) {
                 return;
@@ -60,6 +61,7 @@ namespace Material3.WinForms {
             }
         }
 
+        /// <summary>Fades <paramref name="form"/> out while it slides down. Close the form once the task completes.</summary>
         public static async Task CloseAsync(Form form) {
             if (form == null || form.IsDisposed) {
                 return;

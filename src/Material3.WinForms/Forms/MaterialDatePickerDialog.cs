@@ -33,8 +33,10 @@ namespace Material3.WinForms.Forms {
         private bool _prevHot;
         private bool _nextHot;
 
+        /// <summary>Initializes a new instance of the <see cref="MaterialDatePickerDialog"/> class.</summary>
         public MaterialDatePickerDialog() : this(DateTime.Today) { }
 
+        /// <summary>Creates the picker showing the month of <paramref name="initial"/>, with that date selected.</summary>
         public MaterialDatePickerDialog(DateTime initial) {
             _culture = CultureInfo.CurrentCulture;
             _firstDayOfWeek = _culture.DateTimeFormat.FirstDayOfWeek;
@@ -60,10 +62,11 @@ namespace Material3.WinForms.Forms {
         /// <summary>The picked date (valid when the dialog result is OK).</summary>
         public DateTime Value => _value;
 
+        /// <inheritdoc />
         protected override CreateParams CreateParams {
             get {
                 CreateParams cp = base.CreateParams;
-                cp.ClassStyle |= 0x00020000; // CS_DROPSHADOW
+                cp.ClassStyle |= 0x00020000;
                 return cp;
             }
         }
@@ -92,6 +95,7 @@ namespace Material3.WinForms.Forms {
             CancelButton = cancel;
         }
 
+        /// <inheritdoc />
         protected override void OnLoad(EventArgs e) {
             using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(
                 new Rectangle(0, 0, Width, Height), Shape.ExtraLarge)) {
@@ -102,6 +106,7 @@ namespace Material3.WinForms.Forms {
             _ = FormAnimation.OpenAsync(this);
         }
 
+        /// <inheritdoc />
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData) {
             if (keyData == Keys.Escape) {
                 DialogResult = DialogResult.Cancel;
@@ -110,8 +115,6 @@ namespace Material3.WinForms.Forms {
             }
             return base.ProcessCmdKey(ref msg, keyData);
         }
-
-        // ---- geometry ----
 
         private Rectangle PrevRect => new Rectangle(Pad, HeaderHeight + (NavHeight - 32) / 2, 32, 32);
         private Rectangle NextRect => new Rectangle(Width - Pad - 32, HeaderHeight + (NavHeight - 32) / 2, 32, 32);
@@ -131,8 +134,7 @@ namespace Material3.WinForms.Forms {
             return new Point((client.X - grid.X) / CellSize, (client.Y - grid.Y) / CellSize);
         }
 
-        // ---- interaction ----
-
+        /// <inheritdoc />
         protected override void OnMouseMove(MouseEventArgs e) {
             base.OnMouseMove(e);
             Point cell = CellAt(e.Location);
@@ -146,6 +148,7 @@ namespace Material3.WinForms.Forms {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnMouseLeave(EventArgs e) {
             base.OnMouseLeave(e);
             _hotCell = new Point(-1, -1);
@@ -153,6 +156,7 @@ namespace Material3.WinForms.Forms {
             Invalidate();
         }
 
+        /// <inheritdoc />
         protected override void OnMouseUp(MouseEventArgs e) {
             base.OnMouseUp(e);
             if (e.Button != MouseButtons.Left) {
@@ -178,8 +182,7 @@ namespace Material3.WinForms.Forms {
             }
         }
 
-        // ---- painting ----
-
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -200,11 +203,11 @@ namespace Material3.WinForms.Forms {
 
         private void PaintHeader(Graphics g) {
             using (var brush = new SolidBrush(MaterialColors.OnSurfaceVariant)) {
-                g.DrawString("Select date", MaterialType.LabelMedium, brush, Pad + 8, 20);
+                g.DrawString("Select date", TypeScale.LabelMedium, brush, Pad + 8, 20);
             }
             string formatted = _value.ToString("ddd, MMM d", _culture);
             using (var brush = new SolidBrush(MaterialColors.OnSurface)) {
-                g.DrawString(formatted, MaterialType.HeadlineMedium, brush, Pad + 6, 42);
+                g.DrawString(formatted, TypeScale.HeadlineMedium, brush, Pad + 6, 42);
             }
             using (var pen = new Pen(MaterialColors.OutlineVariant, 1f)) {
                 g.DrawLine(pen, 0, HeaderHeight - 1, Width, HeaderHeight - 1);
@@ -218,7 +221,7 @@ namespace Material3.WinForms.Forms {
                 Alignment = StringAlignment.Center,
                 LineAlignment = StringAlignment.Center,
             }) {
-                g.DrawString(month, MaterialType.TitleSmall, brush,
+                g.DrawString(month, TypeScale.TitleSmall, brush,
                     new RectangleF(0, HeaderHeight, Width, NavHeight), fmt);
             }
 
@@ -233,7 +236,6 @@ namespace Material3.WinForms.Forms {
                     g.FillEllipse(brush, rect);
                 }
             }
-            // Hand-drawn chevron: rotating the SVG glyphs would blur them.
             float cx = rect.X + rect.Width / 2f;
             float cy = rect.Y + rect.Height / 2f;
             float s = 5f;
@@ -258,7 +260,7 @@ namespace Material3.WinForms.Forms {
                 LineAlignment = StringAlignment.Center,
             }) {
                 for (int c = 0; c < CalendarMath.Columns; c++) {
-                    g.DrawString(headers[c], MaterialType.BodySmall, brush,
+                    g.DrawString(headers[c], TypeScale.BodySmall, brush,
                         new RectangleF(grid.X + c * CellSize, HeaderHeight + NavHeight, CellSize, WeekdayRowHeight), fmt);
                 }
             }
@@ -310,7 +312,7 @@ namespace Material3.WinForms.Forms {
                         }
 
                         using (var brush = new SolidBrush(text)) {
-                            g.DrawString(day.ToString(_culture), MaterialType.BodyMedium, brush, cell, fmt);
+                            g.DrawString(day.ToString(_culture), TypeScale.BodyMedium, brush, cell, fmt);
                         }
                     }
                 }

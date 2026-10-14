@@ -12,8 +12,11 @@ using Material3.WinForms.Typography;
 namespace Material3.WinForms.Controls {
     /// <summary>M3 FAB sizes.</summary>
     public enum MaterialFabSize {
+        /// <summary>40px.</summary>
         Small,
+        /// <summary>56px.</summary>
         Standard,
+        /// <summary>96px.</summary>
         Large,
     }
 
@@ -29,6 +32,7 @@ namespace Material3.WinForms.Controls {
         private bool _hovered;
         private bool _pressed;
 
+        /// <summary>Initializes a new instance of the <see cref="MaterialFab"/> class.</summary>
         public MaterialFab() {
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
@@ -43,6 +47,7 @@ namespace Material3.WinForms.Controls {
             ThemeHook.Attach(this, Invalidate);
         }
 
+        /// <summary>Size of the FAB (Small, Standard, Large).</summary>
         [Category("Material Design")]
         [Description("Size of the FAB (Small, Standard, Large).")]
         [DefaultValue(MaterialFabSize.Standard)]
@@ -55,14 +60,14 @@ namespace Material3.WinForms.Controls {
         [Category("Material Design")]
         [Description("Material Symbols key for the glyph.")]
         [DefaultValue(MaterialIcons.Check)]
-        public string IconGlyph {
+        public string Glyph {
             get => _iconGlyph;
             set { _iconGlyph = value ?? string.Empty; Invalidate(); }
         }
 
-        /// <summary>Caller-supplied icon drawn as-is, taking precedence over <see cref="IconGlyph"/>.</summary>
+        /// <summary>Caller-supplied icon drawn as-is, taking precedence over <see cref="Glyph"/>.</summary>
         [Category("Material Design")]
-        [Description("Caller-supplied icon drawn as-is, taking precedence over IconGlyph.")]
+        [Description("Caller-supplied icon drawn as-is, taking precedence over Glyph.")]
         [DefaultValue(null)]
         public Image? IconImage {
             get => _iconImage;
@@ -77,11 +82,12 @@ namespace Material3.WinForms.Controls {
                 g.DrawImage(_iconImage, new Rectangle(x, y, iconPx, iconPx));
             }
             else {
-                Bitmap icon = MaterialIconRenderer.Get(_iconGlyph, iconPx, content);
+                Bitmap icon = MaterialIconRenderer.Render(_iconGlyph, iconPx, content);
                 g.DrawImageUnscaled(icon, x, y);
             }
         }
 
+        /// <inheritdoc />
         protected override void OnTextChanged(EventArgs e) {
             base.OnTextChanged(e);
             ApplySize();
@@ -106,7 +112,7 @@ namespace Material3.WinForms.Controls {
                 int width = surfacePx;
                 if (IsHandleCreated) {
                     using (Graphics g = CreateGraphics()) {
-                        float text = g.MeasureString(Text, MaterialType.LabelLarge,
+                        float text = g.MeasureString(Text, TypeScale.LabelLarge,
                             int.MaxValue, StringFormat.GenericTypographic).Width;
                         width = Dpi.Scale(this, 16) + Dpi.Scale(this, icon) + Dpi.Scale(this, 12)
                             + (int)Math.Ceiling(text) + Dpi.Scale(this, 20);
@@ -119,21 +125,28 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnHandleCreated(EventArgs e) {
             base.OnHandleCreated(e);
             ApplySize();
         }
 
+        /// <inheritdoc />
         protected override void OnDpiChangedAfterParent(EventArgs e) {
             base.OnDpiChangedAfterParent(e);
             ApplySize();
         }
 
+        /// <inheritdoc />
         protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); _hovered = true; Invalidate(); }
+        /// <inheritdoc />
         protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); _hovered = false; _pressed = false; Invalidate(); }
+        /// <inheritdoc />
         protected override void OnMouseDown(MouseEventArgs e) { base.OnMouseDown(e); _pressed = true; Invalidate(); }
+        /// <inheritdoc />
         protected override void OnMouseUp(MouseEventArgs e) { base.OnMouseUp(e); _pressed = false; Invalidate(); }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -150,11 +163,10 @@ namespace Material3.WinForms.Controls {
 
             Color container = Enabled
                 ? Elevation.TintedSurface(MaterialColors.PrimaryContainer, ElevationLevel)
-                : ColorScheme.Overlay(ResolveParentColor(), MaterialColors.OnSurface, StateLayers.DisabledContainer);
+                : ArgbExtensions.Overlay(ResolveParentColor(), MaterialColors.OnSurface, StateLayers.DisabledContainer);
             Color content = Enabled ? MaterialColors.OnPrimaryContainer : MaterialColors.OnSurfaceMuted;
 
             if (Enabled) {
-                // FAB lowers to level 1 while pressed, per the spec's interaction elevation.
                 Elevation.PaintShadow(g, surface, radius, _pressed ? 1 : ElevationLevel);
             }
 
@@ -164,7 +176,7 @@ namespace Material3.WinForms.Controls {
                 }
                 if (Enabled && (_hovered || _pressed)) {
                     double overlay = _pressed ? StateLayers.Pressed : StateLayers.Hover;
-                    using (var brush = new SolidBrush(ColorScheme.Overlay(container, content, overlay))) {
+                    using (var brush = new SolidBrush(ArgbExtensions.Overlay(container, content, overlay))) {
                         g.FillPath(brush, path);
                     }
                 }
@@ -178,7 +190,7 @@ namespace Material3.WinForms.Controls {
                 }
                 using (var brush = new SolidBrush(content))
                 using (var fmt = new StringFormat(StringFormat.GenericTypographic) { LineAlignment = StringAlignment.Center }) {
-                    g.DrawString(Text, MaterialType.LabelLarge, brush,
+                    g.DrawString(Text, TypeScale.LabelLarge, brush,
                         new RectangleF(x, surface.Y, surface.Right - x, surface.Height), fmt);
                 }
             }

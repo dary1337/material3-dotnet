@@ -13,7 +13,9 @@ namespace Material3.WinForms.Forms {
     /// HTTRANSPARENT in form-owned zones so the native resize/drag loop still runs.
     /// </summary>
     public class BorderlessForm : Form {
+        /// <summary>Whether the edges resize the form.</summary>
         public bool EnableEdgeResize { get; protected set; } = true;
+        /// <summary>Whether the form can be dragged by any point that is not an interactive control.</summary>
         protected bool EnableDragAnywhere { get; set; }
 
         /// <summary>
@@ -24,7 +26,6 @@ namespace Material3.WinForms.Forms {
         /// </summary>
         protected bool UseCompositedPainting { get; set; }
 
-        // ---- Win32 constants ----
         private const int WS_POPUP = unchecked((int)0x80000000);
         private const int WS_THICKFRAME = 0x00040000;
         private const int WS_CAPTION = 0x00C00000;
@@ -45,19 +46,20 @@ namespace Material3.WinForms.Forms {
         private const int DWMWA_NCRENDERING_POLICY = 2;
         private const int DWMNCRP_ENABLED = 2;
 
+        /// <summary>The width of the resize zone along each edge, in 96-DPI pixels.</summary>
         public const int ResizeBorderThickness = 4;
 
-        public const int HTTRANSPARENT = -1;
-        public const int HTCLIENT = 1;
-        public const int HTCAPTION = 2;
-        public const int HTLEFT = 10;
-        public const int HTRIGHT = 11;
-        public const int HTTOP = 12;
-        public const int HTTOPLEFT = 13;
-        public const int HTTOPRIGHT = 14;
-        public const int HTBOTTOM = 15;
-        public const int HTBOTTOMLEFT = 16;
-        public const int HTBOTTOMRIGHT = 17;
+        internal const int HTTRANSPARENT = -1;
+        internal const int HTCLIENT = 1;
+        internal const int HTCAPTION = 2;
+        internal const int HTLEFT = 10;
+        internal const int HTRIGHT = 11;
+        internal const int HTTOP = 12;
+        internal const int HTTOPLEFT = 13;
+        internal const int HTTOPRIGHT = 14;
+        internal const int HTBOTTOM = 15;
+        internal const int HTBOTTOMLEFT = 16;
+        internal const int HTBOTTOMRIGHT = 17;
 
         [StructLayout(LayoutKind.Sequential)]
         private struct MARGINS {
@@ -113,33 +115,22 @@ namespace Material3.WinForms.Forms {
         private bool _aeroEnabled;
         private int _cachedCaptionHeight = -1;
 
-        // Restoring from minimized/maximized re-inflates the window rect by a WS_THICKFRAME border:
-        // WinForms sizes from ClientSize + frame, but WM_NCCALCSIZE strips that frame back into the
-        // client, so each restore cycle grows the window by a frame. We remember the last genuine
-        // Normal size and reassert it once the restore settles (see WM_SIZE).
         private Size _normalSize;
         private bool _haveNormalSize;
         private FormWindowState _prevWindowState = FormWindowState.Normal;
-        private bool _wasMinimized;  // a minimize→restore is in flight: pin its frame-inflation away
-        private bool _restoring;     // guard the maximize→restore correction burst from capture
+        private bool _wasMinimized;
+        private bool _restoring;
 
-        // The most a minimize→restore can inflate the window: one WS_THICKFRAME (a few dozen px even
-        // at high DPI). A larger delta is a real size change (restore to maximized) — never clamped.
         private const int MaxFrameInflation = 96;
 
-        // Static so per-form disposal never touches it; the library-wide default typeface.
         private static readonly Font DefaultUiFont = new Font("Segoe UI", 9f);
 
+        /// <summary>Initializes a new instance of the <see cref="BorderlessForm"/> class.</summary>
         public BorderlessForm() {
             FormBorderStyle = FormBorderStyle.None;
-            // Repaint the whole client on resize and buffer it, so the owner-drawn titlebar and edges
-            // don't tear or leave unpainted strips while the window grows — the clean alternative to
-            // WS_EX_COMPOSITED (which fixes resize at the cost of unpainted regions after restore).
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint
                 | ControlStyles.ResizeRedraw, true);
             Font = DefaultUiFont;
-            // Sets the WNDCLASS background brush to Surface so the titlebar doesn't flash black
-            // during the native open animation before our paint catches up.
             BackColor = MaterialColors.Surface;
             ControlAdded += OnControlsChanged;
             ControlRemoved += OnControlsChanged;
@@ -153,6 +144,7 @@ namespace Material3.WinForms.Forms {
             _cachedCaptionHeight = -1;
         }
 
+        /// <inheritdoc />
         protected override CreateParams CreateParams {
             get {
                 int enabled = 0;
@@ -160,15 +152,8 @@ namespace Material3.WinForms.Forms {
                 _aeroEnabled = enabled == 1;
 
                 CreateParams cp = base.CreateParams;
-                // KEEP WS_CAPTION though invisible (NC area stripped by WM_NCCALCSIZE): omitting it
-                // breaks DWM-managed resize/drag.
                 cp.Style |= WS_POPUP | WS_THICKFRAME | WS_CAPTION;
-                // WS_SYSMENU | WS_MINIMIZEBOX: without these the shell won't minimize the active
-                // window when its taskbar button is clicked (FormBorderStyle.None drops them). The
-                // system menu stays invisible since WM_NCCALCSIZE strips the non-client area.
                 cp.Style |= WS_SYSMENU | WS_MINIMIZEBOX;
-                // Without WS_EX_APPWINDOW, WS_POPUP suppresses the taskbar button — a programmatic
-                // minimize would then hide the window with no way to restore it.
                 cp.ExStyle |= WS_EX_APPWINDOW;
                 if (UseCompositedPainting) {
                     cp.ExStyle |= WS_EX_COMPOSITED;
@@ -180,20 +165,19 @@ namespace Material3.WinForms.Forms {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnHandleCreated(EventArgs e) {
             base.OnHandleCreated(e);
-            // {1,1,1,1} symmetric frame extension so the managed DWM shadow attaches on all sides;
-            // with WS_POPUP the 1-px frame zone composites as our content, so no edge artifact.
             if (_aeroEnabled) {
                 int ncPolicy = DWMNCRP_ENABLED;
                 DwmSetWindowAttribute(Handle, DWMWA_NCRENDERING_POLICY, ref ncPolicy, sizeof(int));
                 var margins = new MARGINS { leftWidth = 1, rightWidth = 1, topHeight = 1, bottomHeight = 1 };
                 DwmExtendFrameIntoClientArea(Handle, ref margins);
-                // Win11 rounded corners (silently ignored on Win10 — attribute unknown).
-                WindowChrome.RoundCorners(Handle, WindowCornerPreference.Round);
+                DwmWindow.TrySetCornerPreference(Handle, WindowCornerPreference.Round);
             }
         }
 
+        /// <inheritdoc />
         protected override void OnLoad(EventArgs e) {
             base.OnLoad(e);
             if (EnableDragAnywhere) {
@@ -201,12 +185,9 @@ namespace Material3.WinForms.Forms {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnShown(EventArgs e) {
             base.OnShown(e);
-            // Seed the Normal-size baseline for forms shown minimized/maximized, which never raise a
-            // Normal WM_SIZE first: without it the first restore runs with no baseline and the
-            // growth fix can't engage, so the window grows a frame per minimize cycle. RestoreBounds
-            // is the normal-state rect even while maximized.
             if (!_haveNormalSize) {
                 Size baseline = WindowState == FormWindowState.Normal ? Size : RestoreBounds.Size;
                 if (baseline.Width > 0 && baseline.Height > 0) {
@@ -216,18 +197,10 @@ namespace Material3.WinForms.Forms {
             }
         }
 
+        /// <inheritdoc />
         protected override void WndProc(ref Message m) {
             switch (m.Msg) {
                 case WM_WINDOWPOSCHANGING:
-                    // A minimize→restore doesn't really change size, but WinForms re-inflates the
-                    // window by a WS_THICKFRAME border (it sizes from ClientSize + frame, which
-                    // WM_NCCALCSIZE strips back into the client) — so each cycle grows by a frame.
-                    // The inflated frame can arrive after WinForms has already flipped the state back
-                    // to Normal (esp. via the taskbar/SC_RESTORE path), so we gate on _wasMinimized —
-                    // set on minimize, cleared only after the restore burst — not on the live state.
-                    // Pin just that frame-sized inflation to the remembered Normal size, leaving the
-                    // restore a true size no-op so resize-reactive consumers don't reflow or lose
-                    // scroll. A larger delta (restore to maximized) is a real change and untouched.
                     if (_wasMinimized && _haveNormalSize) {
                         var wp = Marshal.PtrToStructure<WINDOWPOS>(m.LParam);
                         int dw = wp.cx - _normalSize.Width;
@@ -250,9 +223,6 @@ namespace Material3.WinForms.Forms {
                         _prevWindowState = FormWindowState.Minimized;
                     } else if (sizeType == SIZE_RESTORED && WindowState == FormWindowState.Normal) {
                         if (_prevWindowState == FormWindowState.Maximized && _haveNormalSize) {
-                            // Maximize→restore also lands inflated, but its width genuinely changed, so
-                            // content must re-wrap. Correct the inflation once the burst settles via a
-                            // real resize (which triggers that reflow).
                             _restoring = true;
                             BeginInvoke((Action)(() => {
                                 if (IsDisposed) {
@@ -264,13 +234,9 @@ namespace Material3.WinForms.Forms {
                                 _restoring = false;
                             }));
                         } else if (!_restoring && !_wasMinimized) {
-                            // Every genuine Normal-state size (startup, user resize, programmatic) is
-                            // the new baseline; restore bursts are excluded by the guards.
                             _normalSize = Size;
                             _haveNormalSize = true;
                         }
-                        // Drop the minimize latch only after the synchronous restore burst — the
-                        // inflated frame can still arrive a couple of messages later.
                         if (_wasMinimized) {
                             BeginInvoke((Action)(() => {
                                 if (!IsDisposed) {
@@ -288,8 +254,6 @@ namespace Material3.WinForms.Forms {
                 case WM_NCCALCSIZE:
                     if (m.WParam != IntPtr.Zero) {
                         if (WindowState == FormWindowState.Maximized) {
-                            // Clamp to monitor work area so the phantom WS_THICKFRAME border
-                            // doesn't push the window past the screen edge when maximized.
                             var p = Marshal.PtrToStructure<NCCALCSIZE_PARAMS>(m.LParam);
                             IntPtr hmon = MonitorFromWindow(Handle, MONITOR_DEFAULTTONULL);
                             if (hmon != IntPtr.Zero) {
@@ -320,13 +284,7 @@ namespace Material3.WinForms.Forms {
             base.WndProc(ref m);
         }
 
-        /// <summary>
-        /// Decides the HT code for a point in the form's client coordinates:
-        /// — Edge zone → HT*{LEFT/RIGHT/TOP/BOTTOM/corners} (when EnableEdgeResize)
-        /// — Top zone within caption height → HTCAPTION (drag)
-        /// — Else → HTCLIENT
-        /// </summary>
-        public int ResolveHit(int x, int y) {
+        internal int ResolveHit(int x, int y) {
             if (EnableEdgeResize && WindowState == FormWindowState.Normal) {
                 int w = ClientSize.Width;
                 int h = ClientSize.Height;
@@ -373,6 +331,7 @@ namespace Material3.WinForms.Forms {
         /// opaque child that covers the form's edge or caption area (typically the content wrap).
         /// </summary>
         public sealed class HitTestForwardingPanel : Panel {
+            /// <inheritdoc />
             protected override void WndProc(ref Message m) {
                 if (m.Msg == WM_NCHITTEST && FindForm() is BorderlessForm bf) {
                     long lParam = m.LParam.ToInt64();

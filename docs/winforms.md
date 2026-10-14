@@ -39,17 +39,18 @@ dotnet add package Material3.WinForms
 |---|---|
 | Actions | `MaterialButton` (5 variants), `MaterialIconButton` (4 styles + toggle), `MaterialFab` (small / standard / large / extended), `MaterialSegmentedButton` |
 | Text inputs | `MaterialTextField` (filled + outlined, floating label, error state, icons), `MaterialSearchBar` |
-| Selection | `MaterialSwitch`, `MaterialCheckBox` (incl. indeterminate), `MaterialRadioButton`, `MaterialChip` (assist / filter / input / suggestion), `MaterialSlider`, `MaterialOptionCard`, `DropdownSelect` |
+| Selection | `MaterialSwitch`, `MaterialCheckBox` (incl. indeterminate), `MaterialRadioButton`, `MaterialChip` (assist / filter / input / suggestion), `MaterialSlider`, `MaterialOptionCard`, `MaterialDropdownSelect` |
 | Navigation | `MaterialTabs` (primary / secondary), `MaterialNavigationBar`, `MaterialNavigationRail`, `MaterialNavigationDrawer` |
-| Communication | `MaterialProgressBar` (linear), `MaterialCircularProgress` (determinate + indeterminate), `MaterialSnackbar`, `MaterialBadge`, `MaterialTooltip` (plain + rich), `MaterialSkeleton` (compose any shimmer placeholder) + `SkeletonCard` preset, `StepChecklist` |
-| Containment | `MaterialCard` (elevated / filled / outlined), `MaterialListItem`, `MaterialDivider`, `RoundedPanel`, `MaterialScrollPanel` (overlay scrollbar), `MaterialMenu` |
+| Communication | `MaterialProgressBar` (linear), `MaterialCircularProgress` (determinate + indeterminate), `MaterialSnackbar`, `MaterialBadge`, `MaterialTooltip` (plain + rich), `MaterialSkeleton` (compose any shimmer placeholder) + `MaterialSkeletonCard` preset, `MaterialStepChecklist` |
+| Containment | `MaterialCard` (elevated / filled / outlined), `MaterialListItem`, `MaterialDivider`, `MaterialRoundedPanel`, `MaterialScrollPanel` (overlay scrollbar), `MaterialMenu` |
 | Dialogs | `MaterialDialog`, `MaterialMessageBox` (themed info / error / confirm), `MaterialDatePickerDialog` (calendar grid), `MaterialTimePickerDialog` (time input) |
-| Window | `BorderlessForm` (native resize/snap without chrome), `MaterialTitleBar` (minimize / maximize / close, each hideable), `WindowChrome` (DWM caption theming, `WindowCornerPreference` rounding), `FormDragAnywhere`, `TaskbarProgress`, `FormAnimation` |
-| Text | `SoftLabel` (consistent GDI+ rendering) |
+| Window | `BorderlessForm` (native resize/snap without chrome), `MaterialTitleBar` (minimize / maximize / close, each hideable), `DwmWindow` (caption theming, `WindowCornerPreference` rounding), `FormDragAnywhere`, `TaskbarProgress`, `FormAnimation` |
+| Text | `MaterialLabel` (consistent GDI+ rendering) |
 
 ## Quickstart
 
 ```csharp
+using Material3.Core;
 using Material3.WinForms.Theming;
 
 [STAThread]
@@ -57,7 +58,7 @@ static void Main() {
     Application.EnableVisualStyles();
 
     // One line of theming: every Material control follows this scheme.
-    ThemeManager.Apply(MaterialTheme.FromSeed(Color.FromArgb(0x67, 0x50, 0xA4)), isDark: true);
+    ThemeManager.Apply(MaterialTheme.FromSeed(Argb.FromArgb(0x67, 0x50, 0xA4)), isDark: true);
 
     Application.Run(new MainForm());
 }
@@ -72,14 +73,14 @@ above) and previews it on the design surface.
 ThemeManager.IsDark = !ThemeManager.IsDark;
 
 // Or swap the whole palette.
-ThemeManager.Theme = MaterialTheme.FromSeed(Color.SeaGreen, SchemeVariant.Vibrant);
+ThemeManager.Theme = MaterialTheme.FromSeed(Color.SeaGreen.ToCore(), SchemeVariant.Vibrant);
 ```
 
 ```csharp
 var save = new MaterialButton {
     Text = "Save",
     Variant = MaterialButtonVariant.Filled,
-    IconGlyph = MaterialIcons.Check,
+    Glyph = MaterialIcons.Check,
 };
 ```
 
@@ -88,7 +89,7 @@ Custom drawing uses the same tokens the stock controls do:
 ```csharp
 using Material3.WinForms.Theming;   // MaterialColors — current scheme roles
 using Material3.WinForms.Tokens;    // Shape, Spacing, StateLayers, Motion, Elevation
-using Material3.WinForms.Typography; // MaterialType — the 15-style type scale
+using Material3.WinForms.Typography; // TypeScale — the 15-style type scale
 ```
 
 ## Designer support
@@ -102,7 +103,7 @@ The controls are built for the Visual Studio designer, not just code:
   the grid; it applies the theme at run time (no manual `ThemeManager.Apply`) and repaints the
   preview so design-time matches the running app.
 - **SmartTags & editors** *(.NET Framework designer)* — quick `Variant` / glyph actions on
-  `MaterialButton` and `MaterialTextField`, plus a Material Symbols picker for `IconGlyph`.
+  `MaterialButton` and `MaterialTextField`, plus a Material Symbols picker for `Glyph`.
 
 On .NET 8 the toolbox, property grid and live preview work the same; the SmartTag/editor extras are
 .NET Framework-only for now (the out-of-process .NET designer would need a separate design-time

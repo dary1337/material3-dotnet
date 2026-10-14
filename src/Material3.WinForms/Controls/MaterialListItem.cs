@@ -31,6 +31,7 @@ namespace Material3.WinForms.Controls {
         private bool _hovered;
         private bool _pressed;
 
+        /// <summary>Initializes a new instance of the <see cref="MaterialListItem"/> class.</summary>
         public MaterialListItem() {
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
@@ -43,11 +44,13 @@ namespace Material3.WinForms.Controls {
             ThemeHook.Attach(this, Invalidate);
         }
 
+        /// <inheritdoc />
         protected override void OnHandleCreated(EventArgs e) {
             base.OnHandleCreated(e);
             ApplyIntrinsicHeight();
         }
 
+        /// <inheritdoc />
         protected override void OnDpiChangedAfterParent(EventArgs e) {
             base.OnDpiChangedAfterParent(e);
             ApplyIntrinsicHeight();
@@ -57,6 +60,7 @@ namespace Material3.WinForms.Controls {
             Height = Dpi.Scale(this, string.IsNullOrEmpty(_supportingText) ? OneLineHeight : TwoLineHeight);
         }
 
+        /// <summary>Primary line of the list item.</summary>
         [Category("Material Design")]
         [Description("Primary line of the list item.")]
         [DefaultValue("")]
@@ -82,7 +86,7 @@ namespace Material3.WinForms.Controls {
         [Category("Material Design")]
         [Description("Material Symbols key for the leading slot (ignored when LeadingImage is set).")]
         [DefaultValue("")]
-        public string LeadingIcon {
+        public string LeadingGlyph {
             get => _leadingIcon;
             set { _leadingIcon = value ?? string.Empty; Invalidate(); }
         }
@@ -100,7 +104,7 @@ namespace Material3.WinForms.Controls {
         [Category("Material Design")]
         [Description("Material Symbols key for the trailing slot.")]
         [DefaultValue("")]
-        public string TrailingIcon {
+        public string TrailingGlyph {
             get => _trailingIcon;
             set { _trailingIcon = value ?? string.Empty; Invalidate(); }
         }
@@ -114,19 +118,25 @@ namespace Material3.WinForms.Controls {
             set { _trailingText = value ?? string.Empty; Invalidate(); }
         }
 
+        /// <summary>Highlights the row with the selection container color.</summary>
         [Category("Material Design")]
         [Description("Highlights the row with the selection container color.")]
         [DefaultValue(false)]
-        public bool Selected {
+        public bool IsSelected {
             get => _selected;
             set { _selected = value; Invalidate(); }
         }
 
+        /// <inheritdoc />
         protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); _hovered = true; Invalidate(); }
+        /// <inheritdoc />
         protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); _hovered = false; _pressed = false; Invalidate(); }
+        /// <inheritdoc />
         protected override void OnMouseDown(MouseEventArgs e) { base.OnMouseDown(e); _pressed = true; Invalidate(); }
+        /// <inheritdoc />
         protected override void OnMouseUp(MouseEventArgs e) { base.OnMouseUp(e); _pressed = false; Invalidate(); }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -137,11 +147,10 @@ namespace Material3.WinForms.Controls {
             Color parent = ResolveParentColor();
             g.Clear(parent);
 
-            // Unselected rows stay bare so stacked items don't read as one solid block.
             Color surface = _selected ? MaterialColors.SecondaryContainer : parent;
             if (Enabled && (_hovered || _pressed)) {
                 double overlay = _pressed ? StateLayers.Pressed : StateLayers.Hover;
-                surface = ColorScheme.Overlay(surface, MaterialColors.OnSurface, overlay);
+                surface = ArgbExtensions.Overlay(surface, MaterialColors.OnSurface, overlay);
             }
             if (surface.ToArgb() != parent.ToArgb()) {
                 var bounds = new Rectangle(0, 0, Math.Max(0, Width - 1), Math.Max(0, Height - 1));
@@ -174,7 +183,7 @@ namespace Material3.WinForms.Controls {
                     }
                 }
                 else {
-                    Bitmap icon = MaterialIconRenderer.Get(_leadingIcon, leadingPx, supportColor);
+                    Bitmap icon = MaterialIconRenderer.Render(_leadingIcon, leadingPx, supportColor);
                     g.DrawImageUnscaled(icon, slot.X, slot.Y);
                 }
                 x += leadingPx + gap;
@@ -183,19 +192,19 @@ namespace Material3.WinForms.Controls {
             int right = Width - padX;
             if (!string.IsNullOrEmpty(_trailingIcon)) {
                 int trailingPx = Dpi.Scale(this, TrailingPx);
-                Bitmap icon = MaterialIconRenderer.Get(_trailingIcon, trailingPx, supportColor);
+                Bitmap icon = MaterialIconRenderer.Render(_trailingIcon, trailingPx, supportColor);
                 g.DrawImageUnscaled(icon, right - trailingPx, (Height - trailingPx) / 2);
                 right -= trailingPx + gap;
             }
             else if (!string.IsNullOrEmpty(_trailingText)) {
                 int textMargin = Dpi.Scale(this, 4);
-                SizeF size = g.MeasureString(_trailingText, MaterialType.LabelSmall, int.MaxValue, StringFormat.GenericTypographic);
+                SizeF size = g.MeasureString(_trailingText, TypeScale.LabelSmall, int.MaxValue, StringFormat.GenericTypographic);
                 using (var brush = new SolidBrush(supportColor))
                 using (var fmt = new StringFormat(StringFormat.GenericTypographic) {
                     LineAlignment = StringAlignment.Center,
                     Alignment = StringAlignment.Far,
                 }) {
-                    g.DrawString(_trailingText, MaterialType.LabelSmall, brush,
+                    g.DrawString(_trailingText, TypeScale.LabelSmall, brush,
                         new RectangleF(right - size.Width - textMargin, 0, size.Width + textMargin, Height), fmt);
                 }
                 right -= (int)Math.Ceiling(size.Width) + gap;
@@ -209,17 +218,17 @@ namespace Material3.WinForms.Controls {
             }) {
                 if (twoLine) {
                     using (var brush = new SolidBrush(headlineColor)) {
-                        g.DrawString(_headline, MaterialType.BodyLarge, brush,
+                        g.DrawString(_headline, TypeScale.BodyLarge, brush,
                             new RectangleF(x, Dpi.Scale(this, 12), right - x, Dpi.Scale(this, 24)), fmt);
                     }
                     using (var brush = new SolidBrush(supportColor)) {
-                        g.DrawString(_supportingText, MaterialType.BodyMedium, brush,
+                        g.DrawString(_supportingText, TypeScale.BodyMedium, brush,
                             new RectangleF(x, Dpi.Scale(this, 38), right - x, Dpi.Scale(this, 22)), fmt);
                     }
                 }
                 else {
                     using (var brush = new SolidBrush(headlineColor)) {
-                        g.DrawString(_headline, MaterialType.BodyLarge, brush,
+                        g.DrawString(_headline, TypeScale.BodyLarge, brush,
                             new RectangleF(x, 0, right - x, Height), fmt);
                     }
                 }

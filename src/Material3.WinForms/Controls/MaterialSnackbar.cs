@@ -10,8 +10,6 @@ using Material3.WinForms.Typography;
 
 namespace Material3.WinForms.Controls {
     /// <summary>Material 3 snackbar: a transient inverse-surface banner with an optional action; one per form, a new message replaces the current.</summary>
-    // Shown programmatically via Show(); it has no public parameterless ctor, so hide it from the
-    // toolbox — otherwise the designer offers it and throws MissingMethodException when dropped.
     [System.ComponentModel.ToolboxItem(false)]
     public sealed class MaterialSnackbar : Control {
         private const int BarHeight = 48;
@@ -63,7 +61,6 @@ namespace Material3.WinForms.Controls {
             if (host == null || host.IsDisposed) {
                 return;
             }
-            // One snackbar per form: a newer message dismisses the visible one immediately.
             foreach (Control c in host.Controls) {
                 if (c is MaterialSnackbar existing) {
                     host.Controls.Remove(existing);
@@ -91,14 +88,13 @@ namespace Material3.WinForms.Controls {
         private void SizeToContent(Form host) {
             int padX = Dpi.Scale(this, PadX);
             using (var bitmap = new Bitmap(1, 1)) {
-                // Measure at device DPI so text widths match the monitor-DPI paint; a 96-DPI bitmap under-reserves and ellipsizes at high DPI.
                 bitmap.SetResolution(DeviceDpi, DeviceDpi);
                 using (Graphics g = Graphics.FromImage(bitmap)) {
                 float width = padX
-                    + g.MeasureString(_message, MaterialType.BodyMedium, int.MaxValue, StringFormat.GenericTypographic).Width
+                    + g.MeasureString(_message, TypeScale.BodyMedium, int.MaxValue, StringFormat.GenericTypographic).Width
                     + padX;
                 if (!string.IsNullOrEmpty(_actionText)) {
-                    width += g.MeasureString(_actionText, MaterialType.LabelLarge, int.MaxValue, StringFormat.GenericTypographic).Width
+                    width += g.MeasureString(_actionText, TypeScale.LabelLarge, int.MaxValue, StringFormat.GenericTypographic).Width
                         + padX * 2;
                 }
                 int available = host.ClientSize.Width - Dpi.Scale(this, 48);
@@ -148,6 +144,7 @@ namespace Material3.WinForms.Controls {
             _leaving = true;
         }
 
+        /// <inheritdoc />
         protected override void OnMouseMove(MouseEventArgs e) {
             base.OnMouseMove(e);
             bool over = !_actionRect.IsEmpty && _actionRect.Contains(e.Location);
@@ -157,6 +154,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnMouseUp(MouseEventArgs e) {
             base.OnMouseUp(e);
             if (e.Button != MouseButtons.Left) {
@@ -168,17 +166,17 @@ namespace Material3.WinForms.Controls {
             Dismiss();
         }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
 
-            // WinForms child windows have no per-window opacity, so the fade is faked by blending toward the parent background.
             Color parent = Parent?.BackColor ?? MaterialColors.Surface;
             float alpha = (float)Motion.Standard.Evaluate(_enterProgress);
-            Color container = ColorScheme.Overlay(parent, MaterialColors.InverseSurface, alpha);
-            Color text = ColorScheme.Overlay(container, MaterialColors.InverseOnSurface, alpha);
-            Color action = ColorScheme.Overlay(container, MaterialColors.InversePrimary, alpha);
+            Color container = ArgbExtensions.Overlay(parent, MaterialColors.InverseSurface, alpha);
+            Color text = ArgbExtensions.Overlay(container, MaterialColors.InverseOnSurface, alpha);
+            Color action = ArgbExtensions.Overlay(container, MaterialColors.InversePrimary, alpha);
 
             int padX = Dpi.Scale(this, PadX);
             g.Clear(parent);
@@ -190,13 +188,13 @@ namespace Material3.WinForms.Controls {
 
             float rightEdge = Width - padX;
             if (!string.IsNullOrEmpty(_actionText)) {
-                SizeF size = g.MeasureString(_actionText, MaterialType.LabelLarge, int.MaxValue, StringFormat.GenericTypographic);
+                SizeF size = g.MeasureString(_actionText, TypeScale.LabelLarge, int.MaxValue, StringFormat.GenericTypographic);
                 int w = (int)Math.Ceiling(size.Width) + Dpi.Scale(this, 16);
                 int actionH = Dpi.Scale(this, 32);
                 _actionRect = new Rectangle((int)(rightEdge - w), (Height - actionH) / 2, w, actionH);
                 if (_actionHovered) {
                     using (GraphicsPath hover = RoundedControlRenderer.GetFigurePath(_actionRect, Dpi.Scale(this, Shape.Full)))
-                    using (var brush = new SolidBrush(ColorScheme.Overlay(container, action, StateLayers.Hover))) {
+                    using (var brush = new SolidBrush(ArgbExtensions.Overlay(container, action, StateLayers.Hover))) {
                         g.FillPath(brush, hover);
                     }
                 }
@@ -205,7 +203,7 @@ namespace Material3.WinForms.Controls {
                     LineAlignment = StringAlignment.Center,
                     Alignment = StringAlignment.Center,
                 }) {
-                    g.DrawString(_actionText, MaterialType.LabelLarge, brush, _actionRect, fmt);
+                    g.DrawString(_actionText, TypeScale.LabelLarge, brush, _actionRect, fmt);
                 }
                 rightEdge = _actionRect.Left - Dpi.Scale(this, 8);
             }
@@ -219,16 +217,16 @@ namespace Material3.WinForms.Controls {
                 Trimming = StringTrimming.EllipsisCharacter,
                 FormatFlags = StringFormatFlags.NoWrap,
             }) {
-                g.DrawString(_message, MaterialType.BodyMedium, brush,
+                g.DrawString(_message, TypeScale.BodyMedium, brush,
                     new RectangleF(padX, 0, rightEdge - padX, Height), fmt);
             }
         }
 
+        /// <inheritdoc />
         protected override void Dispose(bool disposing) {
             if (disposing) {
                 _animator.Stop();
                 _animator.Dispose();
-                // A replacing snackbar disposes the previous one without the leave animation, so unsubscribe here or it keeps painting on host Resize.
                 if (_host != null) {
                     _host.Resize -= OnHostResize;
                     _host = null;

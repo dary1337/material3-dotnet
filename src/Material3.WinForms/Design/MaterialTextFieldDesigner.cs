@@ -9,6 +9,8 @@ namespace Material3.WinForms.Design {
     public sealed class MaterialTextFieldDesigner : ControlDesigner {
         private DesignerActionListCollection? _actionLists;
 
+        /// <inheritdoc />
+
         public override DesignerActionListCollection ActionLists =>
             _actionLists ??= new DesignerActionListCollection { new MaterialTextFieldActionList(Component) };
 
@@ -22,6 +24,7 @@ namespace Material3.WinForms.Design {
                 get => _field.Variant;
                 set => Set(_field, nameof(MaterialTextField.Variant), value);
             }
+
 
             public override DesignerActionItemCollection GetSortedActionItems() => new() {
                 new DesignerActionHeaderItem("Material 3"),

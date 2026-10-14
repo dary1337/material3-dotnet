@@ -23,6 +23,7 @@ namespace Material3.WinForms.Controls {
         private float _sweepPhase;
         private readonly Timer _timer;
 
+        /// <summary>Initializes a new instance of the <see cref="MaterialCircularProgress"/> class.</summary>
         public MaterialCircularProgress() {
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
@@ -42,7 +43,7 @@ namespace Material3.WinForms.Controls {
         [Category("Material Design")]
         [Description("Spinning mode for unknown durations; ignores Value.")]
         [DefaultValue(false)]
-        public bool Indeterminate {
+        public bool IsIndeterminate {
             get => _indeterminate;
             set {
                 if (_indeterminate == value) {
@@ -54,6 +55,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <summary>Determinate progress in [0,100]; ignored while Indeterminate.</summary>
         [Category("Material Design")]
         [Description("Determinate progress in [0,100]; ignored while Indeterminate.")]
         [DefaultValue(0)]
@@ -66,7 +68,6 @@ namespace Material3.WinForms.Controls {
                 }
                 _value = normalized;
                 if (DesignMode || !Motion.AnimationsEnabled) {
-                    // No animation: render the value immediately instead of easing from a 0% arc.
                     _displayValue = _value;
                     Invalidate();
                 }
@@ -75,7 +76,6 @@ namespace Material3.WinForms.Controls {
         }
 
         private void SyncTimer() {
-            // No animation: determinate snapped in the Value setter; the spinner stays a static arc.
             if (DesignMode || !Motion.AnimationsEnabled) {
                 return;
             }
@@ -85,12 +85,14 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnHandleCreated(EventArgs e) {
             base.OnHandleCreated(e);
             ApplyIntrinsicSize();
             SyncTimer();
         }
 
+        /// <inheritdoc />
         protected override void OnDpiChangedAfterParent(EventArgs e) {
             base.OnDpiChangedAfterParent(e);
             ApplyIntrinsicSize();
@@ -100,13 +102,13 @@ namespace Material3.WinForms.Controls {
             Size = new Size(Dpi.Scale(this, DefaultDiameter), Dpi.Scale(this, DefaultDiameter));
         }
 
+        /// <inheritdoc />
         protected override void OnHandleDestroyed(EventArgs e) {
             _timer.Stop();
             base.OnHandleDestroyed(e);
         }
 
         private void OnTick(object? sender, EventArgs e) {
-            // SyncTimer's guard only blocks starting; this is the matching stop when the flag flips off.
             if (!Motion.AnimationsEnabled) {
                 _displayValue = _value;
                 _timer.Stop();
@@ -133,6 +135,7 @@ namespace Material3.WinForms.Controls {
             Invalidate();
         }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -151,7 +154,6 @@ namespace Material3.WinForms.Controls {
             Color active = Enabled ? MaterialColors.Primary : MaterialColors.OnSurfaceMuted;
 
             if (_indeterminate) {
-                // Sweep breathes 20°→270°→20° while the start angle rotates, so the head chases the tail.
                 float breathe = (float)Math.Sin(_sweepPhase * Math.PI);
                 float sweep = 20f + 250f * breathe;
                 float start = _rotation + _sweepPhase * 360f;
@@ -177,6 +179,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void Dispose(bool disposing) {
             if (disposing) {
                 _timer.Stop();

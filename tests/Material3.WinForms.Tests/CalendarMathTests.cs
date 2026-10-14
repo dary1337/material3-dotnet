@@ -6,10 +6,8 @@ using Xunit;
 namespace Material3.WinForms.Tests {
     public class CalendarMathTests {
         [Theory]
-        // June 2026 starts on Monday.
         [InlineData(2026, 6, DayOfWeek.Monday, 0)]
         [InlineData(2026, 6, DayOfWeek.Sunday, 1)]
-        // February 2026 starts on Sunday.
         [InlineData(2026, 2, DayOfWeek.Sunday, 0)]
         [InlineData(2026, 2, DayOfWeek.Monday, 6)]
         public void FirstDayOffset_MatchesKnownCalendars(int year, int month, DayOfWeek firstDay, int expected) {
@@ -18,8 +16,6 @@ namespace Material3.WinForms.Tests {
 
         [Fact]
         public void DayAtCell_ReturnsZeroOutsideTheMonth() {
-            // June 2026, week starts Monday: cell (0,0) is June 1; row 4 holds June 23–29;
-            // 30 days means row 4 col 2 = June 30 and row 4 col 3 is empty.
             Assert.Equal(1, CalendarMath.DayAtCell(2026, 6, 0, 0, DayOfWeek.Monday));
             Assert.Equal(30, CalendarMath.DayAtCell(2026, 6, 4, 1, DayOfWeek.Monday));
             Assert.Equal(0, CalendarMath.DayAtCell(2026, 6, 4, 2, DayOfWeek.Monday));
@@ -37,10 +33,10 @@ namespace Material3.WinForms.Tests {
         }
 
         [Theory]
-        [InlineData(2026, 1, 31, 1, 2026, 2, 28)]  // Jan 31 + 1mo clamps to Feb 28
-        [InlineData(2024, 1, 31, 1, 2024, 2, 29)]  // leap year keeps Feb 29
-        [InlineData(2026, 3, 31, -1, 2026, 2, 28)] // backwards clamps too
-        [InlineData(2026, 12, 15, 1, 2027, 1, 15)] // year rollover
+        [InlineData(2026, 1, 31, 1, 2026, 2, 28)]
+        [InlineData(2024, 1, 31, 1, 2024, 2, 29)]
+        [InlineData(2026, 3, 31, -1, 2026, 2, 28)]
+        [InlineData(2026, 12, 15, 1, 2027, 1, 15)]
         [InlineData(2026, 1, 15, -1, 2025, 12, 15)]
         public void AddMonthsClamped_ClampsDayAndRollsYears(
             int year, int month, int day, int delta, int expYear, int expMonth, int expDay) {
@@ -53,7 +49,7 @@ namespace Material3.WinForms.Tests {
             string[] headers = CalendarMath.WeekdayHeaders(DayOfWeek.Monday, CultureInfo.InvariantCulture);
             Assert.Equal(7, headers.Length);
             Assert.Equal("M", headers[0]);
-            Assert.Equal("S", headers[6]); // Sunday closes the Monday-first week
+            Assert.Equal("S", headers[6]);
         }
     }
 }

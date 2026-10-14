@@ -3,7 +3,7 @@ using System.ComponentModel.Design;
 using System.Drawing;
 using System.Windows.Forms;
 using Material3.WinForms.Theming;
-using SchemeVariant = Material3.Core.SchemeVariant;
+using Material3.Core;
 
 namespace Material3.WinForms {
     /// <summary>
@@ -20,13 +20,10 @@ namespace Material3.WinForms {
     [Designer(typeof(Material3.WinForms.Design.MaterialThemeManagerDesigner))]
 #endif
     public class MaterialThemeManager : Component, ISupportInitialize {
-        // M3 baseline primary (#6750A4) — the same seed the gallery starts from.
         private Color _seed = Color.FromArgb(0x67, 0x50, 0xA4);
         private SchemeVariant _variant = SchemeVariant.TonalSpot;
         private bool _isDark = true;
         private bool _initializing;
-        // Rebuilt only when seed/variant change; toggling IsDark just re-selects a scheme of the same
-        // theme, so it must not trigger a fresh (and not cheap) HCT palette generation.
         private MaterialTheme? _theme;
 
         /// <summary>Seed color the whole M3 palette is generated from (HCT tonal palettes).</summary>
@@ -39,7 +36,7 @@ namespace Material3.WinForms {
                     return;
                 }
                 _seed = value;
-                _theme = null; // seed drives the HCT palette — force a rebuild
+                _theme = null;
                 Apply();
             }
         }
@@ -55,7 +52,7 @@ namespace Material3.WinForms {
                     return;
                 }
                 _variant = value;
-                _theme = null; // variant drives the HCT palette — force a rebuild
+                _theme = null;
                 Apply();
             }
         }
@@ -74,8 +71,6 @@ namespace Material3.WinForms {
 
         void ISupportInitialize.BeginInit() => _initializing = true;
 
-        // Apply once after the designer/InitializeComponent has set every property — this also covers
-        // the all-defaults case (no property is serialized, yet the baseline theme still takes effect).
         void ISupportInitialize.EndInit() {
             _initializing = false;
             Apply();
@@ -83,15 +78,13 @@ namespace Material3.WinForms {
 
         private void Apply() {
             if (_initializing) {
-                return; // batched: EndInit applies the final state once
+                return;
             }
-            _theme ??= MaterialTheme.FromSeed(_seed, _variant);
+            _theme ??= MaterialTheme.FromSeed(_seed.ToCore(), _variant);
             ThemeManager.Apply(_theme, _isDark);
             RepaintDesignSurface();
         }
 
-        // At design time controls don't subscribe to ThemeChanged (see ThemeHook), so nudge the root
-        // form to repaint with the new scheme; at run time this is a no-op.
         private void RepaintDesignSurface() {
             if (!DesignMode || Site == null) {
                 return;
