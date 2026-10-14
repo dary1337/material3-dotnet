@@ -17,8 +17,6 @@ namespace Material3.Wpf {
         }
 
         /// <summary>Identifies the <see cref="Overline"/> property.</summary>
-        // Coerced, not just defaulted: the empty-string template trigger would not match a null a binding hands
-        // in, and the line would hold its height while showing nothing.
         public static readonly DependencyProperty OverlineProperty = DependencyProperty.Register(
             nameof(Overline), typeof(string), typeof(PageHeader),
             new FrameworkPropertyMetadata(string.Empty, null, CoerceText));

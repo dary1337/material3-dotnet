@@ -11,8 +11,8 @@ namespace Material3.Wpf {
         private bool _closed;
         private int _closedTick;
 
+        /// <summary>Whether to let an open or close through: an open that lands right after a close is the same click that closed the popup.</summary>
         public bool Allow(bool opening, bool currentlyOpen) {
-            // Unsigned diff so the ~49-day TickCount wrap reads as "long ago", not as a fresh close.
             if (opening && !currentlyOpen && _closed && (uint)(Environment.TickCount - _closedTick) < 250) return false;
             if (!opening && currentlyOpen) { _closed = true; _closedTick = Environment.TickCount; }
             return true;
@@ -24,6 +24,7 @@ namespace Material3.Wpf {
     public static class PopupToggle {
         private static readonly ConditionalWeakTable<Popup, ToggleGuard> Guards = new ConditionalWeakTable<Popup, ToggleGuard>();
 
+        /// <summary>Opens <paramref name="popup"/>, unless the click that would open it just closed it.</summary>
         public static void Open(Popup popup) {
             if (popup == null || popup.IsOpen) return;
             ToggleGuard g = Guards.GetValue(popup, Hook);
@@ -32,7 +33,7 @@ namespace Material3.Wpf {
 
         private static ToggleGuard Hook(Popup popup) {
             var g = new ToggleGuard();
-            popup.Closed += (_, __) => g.Allow(false, true);   // stamp the close time
+            popup.Closed += (_, __) => g.Allow(false, true);
             return g;
         }
     }

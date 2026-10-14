@@ -24,9 +24,6 @@ namespace Material3.Wpf {
 
         private double? _declaredMinWidth;
 
-        // A menu narrower than the control that opened it reads as a second, unrelated surface floating over the
-        // page. The rule lives here so no call site has to hand-tune a width: never narrower than its opener, and
-        // never narrower than whatever the call site declared.
         private void MatchOpenerWidth() {
             if (!(Parent is Popup popup) || !(popup.PlacementTarget is FrameworkElement opener)) return;
             _declaredMinWidth = _declaredMinWidth ?? MinWidth;

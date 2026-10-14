@@ -8,31 +8,31 @@ namespace Material3.Wpf {
     /// <see cref="SupportingText"/> is set, so a list of mixed rows still lines up.
     /// </summary>
     /// <remarks>
-    /// Prefixed, unlike the rest of the set: <c>ListItem</c> is already a WPF document element, and a consumer
+    /// Not <c>ListItem</c>: that is already a WPF document element, and a consumer
     /// that has <c>System.Windows.Documents</c> in scope would have to disambiguate every use.
     /// </remarks>
-    public class M3ListItem : Control {
-        static M3ListItem() {
-            DefaultStyleKeyProperty.OverrideMetadata(typeof(M3ListItem), new FrameworkPropertyMetadata(typeof(M3ListItem)));
+    public class ListTile : Control {
+        static ListTile() {
+            DefaultStyleKeyProperty.OverrideMetadata(typeof(ListTile), new FrameworkPropertyMetadata(typeof(ListTile)));
         }
 
         /// <summary>Identifies the <see cref="Leading"/> property.</summary>
         public static readonly DependencyProperty LeadingProperty = DependencyProperty.Register(
-            nameof(Leading), typeof(object), typeof(M3ListItem), new PropertyMetadata(null));
+            nameof(Leading), typeof(object), typeof(ListTile), new PropertyMetadata(null));
 
         /// <summary>Anything that stands in front of the text — an avatar, a checkbox, an icon of your own.</summary>
         public object? Leading { get => GetValue(LeadingProperty); set => SetValue(LeadingProperty, value); }
 
-        /// <summary>Identifies the <see cref="IconKind"/> property.</summary>
-        public static readonly DependencyProperty IconKindProperty = DependencyProperty.Register(
-            nameof(IconKind), typeof(string), typeof(M3ListItem), new PropertyMetadata(null));
+        /// <summary>Identifies the <see cref="Glyph"/> property.</summary>
+        public static readonly DependencyProperty GlyphProperty = DependencyProperty.Register(
+            nameof(Glyph), typeof(string), typeof(ListTile), new PropertyMetadata(null));
 
         /// <summary>A leading glyph, the shorthand for the common case. <see cref="Leading"/> wins when both are set.</summary>
-        public string? IconKind { get => (string?)GetValue(IconKindProperty); set => SetValue(IconKindProperty, value); }
+        public string? Glyph { get => (string?)GetValue(GlyphProperty); set => SetValue(GlyphProperty, value); }
 
         /// <summary>Identifies the <see cref="Headline"/> property.</summary>
         public static readonly DependencyProperty HeadlineProperty = DependencyProperty.Register(
-            nameof(Headline), typeof(string), typeof(M3ListItem),
+            nameof(Headline), typeof(string), typeof(ListTile),
             new FrameworkPropertyMetadata(string.Empty, null, CoerceText));
 
         /// <summary>The row's primary text.</summary>
@@ -40,7 +40,7 @@ namespace Material3.Wpf {
 
         /// <summary>Identifies the <see cref="SupportingText"/> property.</summary>
         public static readonly DependencyProperty SupportingTextProperty = DependencyProperty.Register(
-            nameof(SupportingText), typeof(string), typeof(M3ListItem),
+            nameof(SupportingText), typeof(string), typeof(ListTile),
             new FrameworkPropertyMetadata(string.Empty, null, CoerceText));
 
         /// <summary>The second line. Setting it is what makes the row two-line.</summary>
@@ -48,7 +48,7 @@ namespace Material3.Wpf {
 
         /// <summary>Identifies the <see cref="TrailingText"/> property.</summary>
         public static readonly DependencyProperty TrailingTextProperty = DependencyProperty.Register(
-            nameof(TrailingText), typeof(string), typeof(M3ListItem),
+            nameof(TrailingText), typeof(string), typeof(ListTile),
             new FrameworkPropertyMetadata(string.Empty, null, CoerceText));
 
         /// <summary>Muted text at the end of the row — a timestamp, a count.</summary>
@@ -56,14 +56,14 @@ namespace Material3.Wpf {
 
         /// <summary>Identifies the <see cref="Trailing"/> property.</summary>
         public static readonly DependencyProperty TrailingProperty = DependencyProperty.Register(
-            nameof(Trailing), typeof(object), typeof(M3ListItem), new PropertyMetadata(null));
+            nameof(Trailing), typeof(object), typeof(ListTile), new PropertyMetadata(null));
 
         /// <summary>Anything at the end of the row — a switch, an icon button. Wins over <see cref="TrailingText"/>.</summary>
         public object? Trailing { get => GetValue(TrailingProperty); set => SetValue(TrailingProperty, value); }
 
         /// <summary>Identifies the <see cref="IsSelected"/> property.</summary>
         public static readonly DependencyProperty IsSelectedProperty = DependencyProperty.Register(
-            nameof(IsSelected), typeof(bool), typeof(M3ListItem), new PropertyMetadata(false));
+            nameof(IsSelected), typeof(bool), typeof(ListTile), new PropertyMetadata(false));
 
         /// <summary>Whether the row is the selected one — a SecondaryContainer fill that outranks hover.</summary>
         public bool IsSelected { get => (bool)GetValue(IsSelectedProperty); set => SetValue(IsSelectedProperty, value); }

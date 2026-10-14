@@ -6,8 +6,6 @@ using Material3.Wpf;
 using Xunit;
 
 namespace Material3.Wpf.Tests {
-    // A snackbar shows itself, times itself out and takes itself down, so every assertion here is about a
-    // lifetime rather than a look: one at a time, gone when it says, and the action closing it early.
     [Trait("Category", "Ui")]
     public class SnackbarTests {
         private static readonly TimeSpan Blink = TimeSpan.FromMilliseconds(120);
@@ -32,7 +30,6 @@ namespace Material3.Wpf.Tests {
             Ui.SpinUntil(w, () => Showing(w) == 0, "the snackbar never timed itself out");
         });
 
-        // Two at once would stack on top of each other at the same bottom-centre spot.
         [Fact]
         public void TheSecondOneWaitsForTheFirst() => Ui.InWindow(w => {
             Grid host = Host(w);

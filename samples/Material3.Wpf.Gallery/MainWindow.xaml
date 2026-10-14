@@ -69,123 +69,6 @@
             </Setter>
         </Style>
 
-        <!-- ===== M3 dropdown (seed / variant) ===== -->
-        <Style x:Key="M3ComboItem" TargetType="ComboBoxItem">
-            <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ComboBoxItem">
-                        <Border x:Name="b" Background="Transparent" CornerRadius="7" Padding="11,8" Margin="0,1">
-                            <Grid>
-                                <!-- Fade a state layer rather than swapping Background: a brush swap cannot ease.
-                                     Driven by trigger actions, not the VisualStateManager, because ComboBoxItem
-                                     makes no promise about publishing CommonStates. -->
-                                <Border x:Name="st" Background="{DynamicResource SurfaceContainerHighest}" Opacity="0" CornerRadius="7" Margin="-11,-8" />
-                                <ContentPresenter VerticalAlignment="Center" />
-                            </Grid>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Trigger.EnterActions>
-                                    <BeginStoryboard>
-                                        <Storyboard><DoubleAnimation Storyboard.TargetName="st" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.13" EasingFunction="{StaticResource M3StandardDecelerate}" /></Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.EnterActions>
-                                <Trigger.ExitActions>
-                                    <BeginStoryboard>
-                                        <Storyboard><DoubleAnimation Storyboard.TargetName="st" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.13" EasingFunction="{StaticResource M3StandardAccelerate}" /></Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.ExitActions>
-                            </Trigger>
-                            <Trigger Property="IsSelected" Value="True"><Setter TargetName="b" Property="Background" Value="{DynamicResource SecondaryContainer}" /></Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-        <Style x:Key="M3Combo" TargetType="ComboBox">
-            <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
-            <Setter Property="Height" Value="40" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="ItemContainerStyle" Value="{StaticResource M3ComboItem}" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ComboBox">
-                        <Grid>
-                            <ToggleButton Focusable="False" ClickMode="Press"
-                                          IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
-                                <ToggleButton.Template>
-                                    <ControlTemplate TargetType="ToggleButton">
-                                        <Border x:Name="box" Background="{DynamicResource SurfaceContainerHighest}" CornerRadius="8"
-                                                BorderBrush="{DynamicResource OutlineVariant}" BorderThickness="1">
-                                            <Grid>
-                                                <Border x:Name="st" Background="{DynamicResource OnSurface}" Opacity="0" CornerRadius="8" />
-                                                <DockPanel Margin="14,0,8,0">
-                                                    <m3:M3Icon DockPanel.Dock="Right" Kind="ChevronDown" Width="20" Height="20"
-                                                               VerticalAlignment="Center" Foreground="{DynamicResource OnSurfaceVariant}"
-                                                               m3:Chevron.IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource AncestorType=ComboBox}}" />
-                                                    <ContentPresenter Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
-                                                                      VerticalAlignment="Center" TextElement.Foreground="{DynamicResource OnSurface}" />
-                                                </DockPanel>
-                                            </Grid>
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="st" Property="Opacity" Value="0.05" /></Trigger>
-                                            <Trigger Property="IsChecked" Value="True"><Setter TargetName="box" Property="BorderBrush" Value="{DynamicResource Primary}" /></Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </ToggleButton.Template>
-                            </ToggleButton>
-                            <!-- AnimatedPopup, not Popup: the library then plays BOTH the M3 enter and exit (a bare
-                                 popup can only ever fade in, since it is gone before an exit could run). WatchAnchor
-                                 is off because this trigger sits in the fixed sidebar, not in a scrolling region. -->
-                            <m3:AnimatedPopup x:Name="Pop" IsOpen="{TemplateBinding IsDropDownOpen}" WatchAnchor="False"
-                                              m3:CenterPopup.Enable="True" AllowsTransparency="True" Focusable="False"
-                                              PlacementTarget="{Binding RelativeSource={RelativeSource TemplatedParent}}">
-                                <Border Background="{DynamicResource SurfaceContainerHigh}" BorderBrush="{DynamicResource OutlineVariant}"
-                                        BorderThickness="1" CornerRadius="8" Padding="5"
-                                        MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
-                                    <ItemsPresenter />
-                                </Border>
-                            </m3:AnimatedPopup>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- ===== M3 slider (thin track, Primary fill, round thumb) ===== -->
-        <Style TargetType="Slider">
-            <Setter Property="Height" Value="22" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Slider">
-                        <Grid VerticalAlignment="Center">
-                            <Border Height="4" CornerRadius="2" Background="{DynamicResource SurfaceContainerHighest}" />
-                            <Track x:Name="PART_Track">
-                                <Track.DecreaseRepeatButton>
-                                    <RepeatButton Command="Slider.DecreaseLarge" Focusable="False">
-                                        <RepeatButton.Template><ControlTemplate TargetType="RepeatButton"><Border Height="4" CornerRadius="2" Background="{DynamicResource Primary}" /></ControlTemplate></RepeatButton.Template>
-                                    </RepeatButton>
-                                </Track.DecreaseRepeatButton>
-                                <Track.IncreaseRepeatButton>
-                                    <RepeatButton Command="Slider.IncreaseLarge" Focusable="False">
-                                        <RepeatButton.Template><ControlTemplate TargetType="RepeatButton"><Border Background="Transparent" /></ControlTemplate></RepeatButton.Template>
-                                    </RepeatButton>
-                                </Track.IncreaseRepeatButton>
-                                <Track.Thumb>
-                                    <Thumb Width="18" Height="18" Cursor="Hand">
-                                        <Thumb.Template><ControlTemplate TargetType="Thumb"><Ellipse Width="18" Height="18" Fill="{DynamicResource Primary}" /></ControlTemplate></Thumb.Template>
-                                    </Thumb>
-                                </Track.Thumb>
-                            </Track>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
         <!-- ===== nav pill (left-aligned, like the WinForms gallery rail) ===== -->
         <Style x:Key="NavPill" TargetType="RadioButton">
             <Setter Property="Cursor" Value="Hand" />
@@ -241,7 +124,7 @@
              App.xaml merge; a local copy would shadow them and the gallery would stop demoing the real thing. -->
     </Window.Resources>
 
-    <m3:M3ModalLayer>
+    <m3:ModalLayer>
     <Grid x:Name="RootHost">
         <Grid.RowDefinitions>
             <RowDefinition Height="40" />
@@ -252,7 +135,7 @@
         <Grid Grid.Row="0" Background="{DynamicResource Surface}">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
                 <Border Width="22" Height="22" CornerRadius="6" Background="{DynamicResource Primary}">
-                    <m3:M3Icon Kind="Layers" Width="14" Height="14" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    <m3:PathIcon Glyph="Layers" Width="14" Height="14" HorizontalAlignment="Center" VerticalAlignment="Center"
                                Foreground="{DynamicResource OnPrimary}" />
                 </Border>
                 <TextBlock Text="Material 3 Gallery — WPF" Foreground="{DynamicResource OnSurface}" FontSize="14" FontWeight="SemiBold"
@@ -297,7 +180,7 @@
                     <ComboBox x:Name="SeedCombo" Style="{StaticResource M3Combo}" Margin="0,0,0,8" SelectionChanged="Seed_Changed" />
                     <ComboBox x:Name="VariantCombo" Style="{StaticResource M3Combo}" Margin="0,0,0,12" SelectionChanged="Variant_Changed" />
                     <TextBlock Text="Seed hue — drag to recolor" Style="{StaticResource Caption}" Margin="2,0,0,6" />
-                    <Slider x:Name="HueSlider" Minimum="0" Maximum="360" Value="258" ValueChanged="Hue_Changed" Margin="0,0,0,18" />
+                    <Slider x:Name="HueSlider" Style="{StaticResource M3Slider}" Minimum="0" Maximum="360" Value="258" ValueChanged="Hue_Changed" Margin="0,0,0,18" />
                     <StackPanel x:Name="NavHost" />
                 </StackPanel>
             </Border>
@@ -307,5 +190,5 @@
             </ScrollViewer>
         </Grid>
     </Grid>
-    </m3:M3ModalLayer>
+    </m3:ModalLayer>
 </Window>

@@ -84,8 +84,6 @@ namespace Material3.Wpf {
             if (item != null) item.IsChecked = selected;
         }
 
-        // Re-entrancy guard: clearing the siblings and syncing SelectedIndex both raise the events this handler
-        // listens to, so without it one click would recurse through the whole row.
         private bool _syncing;
 
         /// <inheritdoc />
@@ -115,8 +113,6 @@ namespace Material3.Wpf {
             UpdatePositions();
         }
 
-        // Narrowing to one choice has to make the row honest immediately: leaving several on would contradict
-        // the rule every later click enforces. Widening never invalidates anything.
         private static void OnMultiSelectChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             var row = (SegmentedButton)d;
             if ((bool)e.NewValue) return;
@@ -166,8 +162,6 @@ namespace Material3.Wpf {
             SelectionChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        // SelectedIndex is routinely set in the same initializer as ItemsSource, before a single container exists
-        // — so the index is re-applied as the row fills, and only while nothing is selected yet.
         private void ApplyPendingSelection() {
             if (SelectedIndex < 0 || SelectedIndices.Count > 0) return;
             _syncing = true;
@@ -175,8 +169,6 @@ namespace Material3.Wpf {
             finally { _syncing = false; }
         }
 
-        // Position, not an index, so the template can round the outer edges without a converter that would have
-        // to be re-evaluated for every sibling whenever the row's length changes.
         private void UpdatePositions() {
             int count = Items.Count;
             for (int i = 0; i < count; i++) {
@@ -190,8 +182,6 @@ namespace Material3.Wpf {
             }
         }
 
-        // By item index, never by a running count: a container that is not realized yet must leave a gap
-        // rather than shift every segment after it onto the wrong ordinal.
         private SegmentedItem? Container(int index) =>
             index < 0 || index >= Items.Count ? null : ItemContainerGenerator.ContainerFromIndex(index) as SegmentedItem;
 

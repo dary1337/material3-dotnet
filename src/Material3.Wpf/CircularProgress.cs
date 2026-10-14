@@ -90,8 +90,6 @@ namespace Material3.Wpf {
         /// <summary>The unfilled ring behind the indicator. Hidden while indeterminate.</summary>
         public Brush? TrackBrush { get => (Brush?)GetValue(TrackBrushProperty); set => SetValue(TrackBrushProperty, value); }
 
-        // Animatable, and the only input the geometry is rebuilt from: the indeterminate storyboard drives it
-        // directly, so determinate and indeterminate share one drawing path.
         internal static readonly DependencyProperty SweepProperty = DependencyProperty.Register(
             "Sweep", typeof(double), typeof(CircularProgress), new FrameworkPropertyMetadata(0.0, OnGeometryChanged));
 
@@ -105,8 +103,6 @@ namespace Material3.Wpf {
             StopSpin();
             _track = GetTemplateChild(PartTrack) as Path;
             _indicator = GetTemplateChild(PartIndicator) as Path;
-            // The control's own transform, not one the template declares: a template-declared freezable can come
-            // back frozen, and BeginAnimation on a frozen transform throws.
             _rotate = null;
             if (GetTemplateChild(PartSpin) is UIElement spin) {
                 _rotate = new RotateTransform();
@@ -129,8 +125,6 @@ namespace Material3.Wpf {
         private static void OnGeometryChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
             ((CircularProgress)d).Redraw();
 
-        // The determinate sweep is a plain local value; the indeterminate one is an animation on the same
-        // property, so leaving determinate has to clear the animation before the value can be written again.
         private void ApplySweepSource() {
             if (IsIndeterminate) return;
             BeginAnimation(SweepProperty, null);
@@ -157,15 +151,12 @@ namespace Material3.Wpf {
             BeginAnimation(SweepProperty, breathe);
         }
 
-        // Both clocks are Forever: detaching them is what stops the render thread, releasing the transform is not.
         private void StopSpin() {
             _rotate?.BeginAnimation(RotateTransform.AngleProperty, null);
             if (!IsIndeterminate) return;
             BeginAnimation(SweepProperty, null);
         }
 
-        // The track is drawn from the same centre and radius rather than templated as an Ellipse: a stroke is
-        // painted centred on its geometry, so anything sized independently drifts off the arc by half a stroke.
         private void Redraw() {
             double thickness = Math.Max(0.1, StrokeThickness);
             double radius = Math.Max(0.1, (Diameter - thickness) / 2);
@@ -176,7 +167,6 @@ namespace Material3.Wpf {
                 _track.Data = ring;
             }
             if (_indicator == null) return;
-            // 359.99, not 360: an ArcSegment whose end point equals its start draws nothing at all.
             double sweep = Math.Max(0, Math.Min(359.99, (double)GetValue(SweepProperty)));
             _indicator.Data = Arc(centre, radius, sweep);
         }

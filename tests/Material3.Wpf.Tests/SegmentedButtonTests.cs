@@ -4,8 +4,6 @@ using Material3.Wpf;
 using Xunit;
 
 namespace Material3.Wpf.Tests {
-    // Selection lives on the row, not on the segments: the point of the control is that a caller never has to
-    // keep a group in sync by hand, so that is what these lock down.
     [Trait("Category", "Ui")]
     public class SegmentedButtonTests {
         [Fact]
@@ -28,11 +26,9 @@ namespace Material3.Wpf.Tests {
             Segment(row, 2).IsChecked = true;
 
             Assert.Equal(new[] { 0, 2 }, row.SelectedIndices);
-            // SelectedIndex is the lowest of them, so a single-value binding still reads something sensible.
             Assert.Equal(0, row.SelectedIndex);
         });
 
-        // Turning multi-select off has to make the row honest at once, not at the next click.
         [Fact]
         public void NarrowingToOneChoiceKeepsTheFirstSelection() => Ui.InWindow(w => {
             SegmentedButton row = Row(w, "Bold", "Italic", "Underline");
@@ -70,8 +66,6 @@ namespace Material3.Wpf.Tests {
             Assert.False(row.IsSelected(2));
         });
 
-        // The common way to write one: both properties in the same initializer, so the index lands before a
-        // single container exists.
         [Fact]
         public void AnIndexSetBeforeTheItemsStillTakes() => Ui.InWindow(w => {
             var row = new SegmentedButton { SelectedIndex = 2, ItemsSource = new List<string> { "Day", "Week", "Month" } };
@@ -93,7 +87,6 @@ namespace Material3.Wpf.Tests {
             Assert.Equal(-1, row.SelectedIndex);
         });
 
-        // One click must not walk the row: clearing the siblings raises the same events this control listens to.
         [Fact]
         public void OneClickRaisesSelectionChangedOnce() => Ui.InWindow(w => {
             SegmentedButton row = Row(w, "Day", "Week", "Month");
@@ -121,7 +114,6 @@ namespace Material3.Wpf.Tests {
             Assert.Equal(SegmentPosition.Only, Segment(row, 0).Position);
         });
 
-        // A checked segment becomes a container, so its label has to move to the matching "on" role.
         [Fact]
         public void ACheckedSegmentTakesTheContainerPair() => Ui.InWindow(w => {
             SegmentedButton row = Row(w, "Day", "Week");

@@ -51,11 +51,11 @@ namespace Material3.Wpf.Gallery {
                 rb.Checked += (s, e) => { ShowPage((string)((RadioButton)s).Tag); Scroller.ScrollToTop(); Motion.FadeIn(PageHost); };
                 NavHost.Children.Add(rb);
             }
-            M3Theme.ThemeChanged += (_, __) => RefreshHex();
+            ThemeManager.ThemeChanged += (_, __) => RefreshHex();
             ShowPage(_page);
         }
 
-        private void Apply() => M3Theme.Apply(MaterialTheme.FromSeed(_seed, _variant), _isDark, Application.Current.Resources);
+        private void Apply() => ThemeManager.Apply(MaterialTheme.FromSeed(_seed, _variant), _isDark, Application.Current.Resources);
 
         // ---- sidebar controls ----
         private void Mode_Click(object sender, RoutedEventArgs e) {
@@ -233,10 +233,10 @@ namespace Material3.Wpf.Gallery {
             MinWidth = 96, Margin = new Thickness(0, 0, 10, 10),
         };
 
-        // M3Icon + label as button content; the icon inherits the button's foreground (so it follows the state).
+        // PathIcon + label as button content; the icon inherits the button's foreground (so it follows the state).
         private object IconLabel(string kind, string text) {
             var sp = new StackPanel { Orientation = Orientation.Horizontal };
-            sp.Children.Add(new M3Icon { Kind = kind, Width = 16, Height = 16, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) });
+            sp.Children.Add(new PathIcon { Glyph = kind, Width = 16, Height = 16, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) });
             sp.Children.Add(new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center });
             return sp;
         }
@@ -281,27 +281,27 @@ namespace Material3.Wpf.Gallery {
             var icons = new WrapPanel();
             foreach (string kind in new[] { "Pencil", "Delete", "Refresh", "Information" }) {
                 var b = new Button { Style = (Style)FindResource("IconButton"), Margin = new Thickness(0, 0, 6, 0) };
-                b.Content = new M3Icon { Kind = kind, Width = 18, Height = 18 };
+                b.Content = new PathIcon { Glyph = kind, Width = 18, Height = 18 };
                 Tip.SetText(b, kind);
                 icons.Children.Add(b);
             }
             PageHost.Children.Add(icons);
 
             Header("Icon toggle");
-            Caption("Same hit target as a toggle. With IconToggle.CheckedKind the glyph swaps on check; without "
+            Caption("Same hit target as a toggle. With IconToggle.CheckedGlyph the glyph swaps on check; without "
                   + "it the idle glyph is tinted Primary instead. Busy.IsBusy swaps either for a spinner.");
             var toggles = new WrapPanel();
             var swapping = new ToggleButton { Style = (Style)FindResource("IconToggle"), Margin = new Thickness(0, 0, 6, 0) };
-            IconToggle.SetKind(swapping, "ViewGridOutline");
-            IconToggle.SetCheckedKind(swapping, "ViewList");
+            IconToggle.SetGlyph(swapping, "ViewGridOutline");
+            IconToggle.SetCheckedGlyph(swapping, "ViewList");
             Tip.SetText(swapping, "Swaps the glyph — grid / list");
 
             var tinting = new ToggleButton { Style = (Style)FindResource("IconToggle"), Margin = new Thickness(0, 0, 6, 0) };
-            IconToggle.SetKind(tinting, "FilterOutline");
+            IconToggle.SetGlyph(tinting, "FilterOutline");
             Tip.SetText(tinting, "Tints Primary while checked");
 
             var busy = new ToggleButton { Style = (Style)FindResource("IconToggle"), Margin = new Thickness(0, 0, 6, 0) };
-            IconToggle.SetKind(busy, "Refresh");
+            IconToggle.SetGlyph(busy, "Refresh");
             Tip.SetText(busy, "Click to spin for two seconds");
             busy.Checked += async (s, e) => {
                 Busy.SetIsBusy(busy, true);
@@ -325,14 +325,14 @@ namespace Material3.Wpf.Gallery {
                 (FabSize.Large, "Refresh", "Large — 96"),
             }) {
                 var fab = new Fab {
-                    Size = size, IconKind = kind, Margin = new Thickness(0, 4, 20, 20),
+                    Size = size, Glyph = kind, Margin = new Thickness(0, 4, 20, 20),
                     VerticalAlignment = VerticalAlignment.Bottom,
                 };
                 Tip.SetText(fab, tip);
                 fabs.Children.Add(fab);
             }
             fabs.Children.Add(new Fab {
-                IconKind = "Pencil", Content = "New project",
+                Glyph = "Pencil", Content = "New project",
                 Margin = new Thickness(0, 4, 20, 20), VerticalAlignment = VerticalAlignment.Bottom,
             });
             PageHost.Children.Add(fabs);
@@ -341,24 +341,122 @@ namespace Material3.Wpf.Gallery {
         private void BuildInputs() {
             PageTitle("Text inputs");
             Header("Text field");
-            Caption("Themed TextBox with a placeholder hint (m3:Ph.Text); Primary border on focus.");
+            Caption("Themed TextBox with a placeholder hint (m3:Placeholder.Text); Primary border on focus.");
             var tb = new TextBox { Width = 300, HorizontalAlignment = HorizontalAlignment.Left };
-            Ph.SetText(tb, "Search…");
+            Placeholder.SetText(tb, "Search…");
             PageHost.Children.Add(tb);
             Header("Floating-label fields");
-            Wip("Filled / outlined text fields with a floating label and leading icon");
+            Caption("TextField: the label rests in the empty field and floats above the text once the field has focus or "
+                  + "content. Filled draws an indicator line along the bottom; outlined opens its top edge around the "
+                  + "floated label. The supporting line turns into the error while IsError is on.");
+            var fields = new WrapPanel { Width = 600, HorizontalAlignment = HorizontalAlignment.Left };
+            foreach (TextField field in new[] {
+                new TextField { Label = "Email", LeadingGlyph = "Email", SupportingText = "We never share it" },
+                new TextField { Label = "Email", Variant = TextFieldVariant.Outlined, LeadingGlyph = "Email" },
+                new TextField { Label = "Port", Text = "70000", IsError = true, ErrorText = "Must be under 65536" },
+                new TextField { Label = "Password", Variant = TextFieldVariant.Outlined, IsPassword = true },
+            }) {
+                field.Width = 280;
+                field.Margin = new Thickness(0, 0, 16, 12);
+                fields.Children.Add(field);
+            }
+            var clearable = new TextField { Label = "Search term", TrailingGlyph = "Close", Width = 280, Margin = new Thickness(0, 0, 16, 12) };
+            clearable.TrailingGlyphClick += (_, __) => clearable.Text = string.Empty;
+            fields.Children.Add(clearable);
+            PageHost.Children.Add(fields);
+
+            Header("Search bar");
+            Caption("A pill-shaped field; the clear button appears once there is something to clear. Enter submits, and "
+                  + "Esc clears before it lets the key through.");
+            var submitted = new TextBlock { Style = (Style)FindResource("BodySmall"), Margin = new Thickness(2, 8, 0, 0) };
+            var search = new SearchBar { Placeholder = "Search mail", Width = 420, HorizontalAlignment = HorizontalAlignment.Left };
+            search.QuerySubmitted += (_, __) => submitted.Text = "Searched for: " + search.Query;
+            PageHost.Children.Add(search);
+            PageHost.Children.Add(submitted);
+
+            Header("Number filter");
+            Caption("m3:InputFilter.Kind refuses a keystroke or a paste that would leave the box holding something "
+                  + "that cannot become a number. It judges the text as it would read after the edit, so a minus "
+                  + "sign is taken only at the start and a second separator is refused.");
+            var number = new TextBox { Width = 300, HorizontalAlignment = HorizontalAlignment.Left };
+            Placeholder.SetText(number, "Price");
+            InputFilter.SetKind(number, InputKind.Number);
+            PageHost.Children.Add(number);
+
+            Header("Colour field");
+            Caption("The swatch opens a saturation/value plane with hue and alpha rails; the hex beside it takes an "
+                  + "exact value on Enter. A colour that follows another one shows where it comes from instead, "
+                  + "and refuses the edit that would break the link.");
+            var colours = new StackPanel { HorizontalAlignment = HorizontalAlignment.Left, Width = 300 };
+            colours.Children.Add(new ColorField { Color = Color.FromArgb(0xFF, 0x67, 0x50, 0xA4), Margin = new Thickness(0, 0, 0, 10) });
+            colours.Children.Add(new ColorField { Color = Color.FromRgb(0x33, 0x66, 0xCC), ShowAlpha = false, Margin = new Thickness(0, 0, 0, 10) });
+            colours.Children.Add(new ColorField { Color = Color.FromRgb(0x67, 0x50, 0xA4), ReadOnlyCaption = "→ follows Accent" });
+            PageHost.Children.Add(colours);
+
+            Header("Value list");
+            Caption("A list is never a text box holding commas: one missing comma changes every entry after it. "
+                  + "Each entry is its own field, with move and remove beside it.");
+            var list = new ValueListEditor { Width = 360, HorizontalAlignment = HorizontalAlignment.Left, Placeholder = "Tag", AddText = "Add tag", MaxVisibleRows = 5 };
+            list.Load(new[] { "Design", "Research", "Engineering" });
+            PageHost.Children.Add(list);
+
+            Header("Fixed slots");
+            Caption("With FixedLength the list becomes that many labelled slots that cannot be added or moved — a "
+                  + "handful of numbers that reads as one value on one line.");
+            var slots = new ValueListEditor {
+                Width = 360, HorizontalAlignment = HorizontalAlignment.Left, FixedLength = 3, Orientation = Orientation.Horizontal,
+                SlotLabels = new[] { "Width", "Height", "Depth" }, Kind = InputKind.Integer,
+            };
+            slots.Load(new[] { "1920", "1080", "32" });
+            PageHost.Children.Add(slots);
+
+            Header("Record table");
+            Caption("Records of one shape, with the columns given as data. A read-only column shows its value as text, "
+                  + "and IsSelectable turns the rows into a pick list that leaves the unpicked ones out.");
+            var table = new DataTableEditor {
+                Width = 460, HorizontalAlignment = HorizontalAlignment.Left, CanAddRows = true, CanRemoveRows = true,
+                IsSelectable = true, AddText = "Add item",
+            };
+            table.Load(
+                new[] {
+                    new DataTableColumn { Key = "item", Header = "Item", IsReadOnly = true },
+                    new DataTableColumn { Key = "qty", Header = "Qty", Kind = InputKind.Integer },
+                    new DataTableColumn { Key = "price", Header = "Price", Kind = InputKind.Number },
+                },
+                new[] {
+                    new Dictionary<string, string> { ["item"] = "Notebook", ["qty"] = "4", ["price"] = "2.5" },
+                    new Dictionary<string, string> { ["item"] = "Desk lamp", ["qty"] = "2", ["price"] = "18" },
+                    new Dictionary<string, string> { ["item"] = "Stapler", ["qty"] = "3", ["price"] = "7.9" },
+                });
+            PageHost.Children.Add(table);
         }
 
         private void BuildSelection() {
             PageTitle("Selection");
             Header("Chips");
-            Caption("Status chips tinted by severity (Chip control).");
+            Caption("Status chips tinted by Tone (Chip control).");
             var chips = new WrapPanel();
-            foreach (var (text, sev, icon) in new[] {
-                ("Neutral", ChipSeverity.Neutral, "Information"), ("Installed", ChipSeverity.Primary, "Check"),
-                ("Update", ChipSeverity.Warning, "AlertCircle"), ("Error", ChipSeverity.Error, "AlertCircle"),
-            }) chips.Children.Add(new Chip { Text = text, Severity = sev, IconKind = icon, Margin = new Thickness(0, 0, 8, 0) });
+            foreach (var (text, tone, icon) in new[] {
+                ("Neutral", Tone.Neutral, "Information"), ("Installed", Tone.Accent, "Check"),
+                ("Update", Tone.Warning, "AlertCircle"), ("Error", Tone.Error, "AlertCircle"), ("Done", Tone.Success, "CheckCircle"),
+            }) chips.Children.Add(new Chip { Text = text, Tone = tone, Glyph = icon, Margin = new Thickness(0, 0, 8, 0) });
             PageHost.Children.Add(chips);
+
+            Header("Interactive chips");
+            Caption("The four M3 kinds share one 32px shape. Assist acts on nearby content, filter toggles and leads with "
+                  + "a check while on, input carries a remove button, suggestion offers a reply.");
+            var kinds = new WrapPanel { Width = 600, HorizontalAlignment = HorizontalAlignment.Left };
+            kinds.Children.Add(new Chip { Text = "Add to calendar", Kind = ChipKind.Assist, Glyph = "Calendar" });
+            kinds.Children.Add(new Chip { Text = "Nearby", Kind = ChipKind.Filter });
+            kinds.Children.Add(new Chip { Text = "Open now", Kind = ChipKind.Filter, IsSelected = true });
+            foreach (string address in new[] { "ada@lovelace.dev", "alan@turing.dev" }) {
+                var token = new Chip { Text = address, Kind = ChipKind.Input };
+                token.Removed += (s, __) => kinds.Children.Remove((UIElement)s!);
+                kinds.Children.Add(token);
+            }
+            kinds.Children.Add(new Chip { Text = "Sounds good", Kind = ChipKind.Suggestion });
+            foreach (UIElement chip in kinds.Children) ((FrameworkElement)chip).Margin = new Thickness(0, 0, 8, 8);
+            PageHost.Children.Add(kinds);
 
             Header("Chip size");
             Caption("Dense (default) reads as an annotation on a list row; Large carries its own weight beside a "
@@ -366,7 +464,7 @@ namespace Material3.Wpf.Gallery {
             var sizes = new WrapPanel();
             foreach (ChipSize size in new[] { ChipSize.Dense, ChipSize.Large }) {
                 sizes.Children.Add(new Chip {
-                    Text = size.ToString(), Size = size, Severity = ChipSeverity.Primary, IconKind = "Check",
+                    Text = size.ToString(), Size = size, Tone = Tone.Accent, Glyph = "Check",
                     Margin = new Thickness(0, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center,
                 });
             }
@@ -451,7 +549,7 @@ namespace Material3.Wpf.Gallery {
                 Overline = "WORKSPACE",
                 Title = "Projects",
                 Description = "Everything in this workspace, plus anything you have imported.",
-                OverlineTrailing = new Chip { Text = "24", Severity = ChipSeverity.Neutral },
+                OverlineTrailing = new Chip { Text = "24", Tone = Tone.Neutral },
                 Actions = headerActions,
             });
 
@@ -470,7 +568,7 @@ namespace Material3.Wpf.Gallery {
                 HorizontalAlignment = HorizontalAlignment.Left,
             };
             emptyHost.Child = new EmptyState {
-                IconKind = "InformationOutline",
+                Glyph = "InformationOutline",
                 Title = "Nothing here yet",
                 Text = "Create a project or import one — it will show up here.",
                 Action = StyledButton("TonalButton", "Create a project"),
@@ -501,12 +599,12 @@ namespace Material3.Wpf.Gallery {
             Caption("One line or two, decided by whether the row carries supporting text — so a list of mixed "
                   + "rows still lines up. A selected row keeps its fill when the pointer crosses it.");
             var rows = new StackPanel { Width = 460, HorizontalAlignment = HorizontalAlignment.Left };
-            rows.Children.Add(new M3ListItem { IconKind = "ViewList", Headline = "All items", TrailingText = "128" });
-            rows.Children.Add(new M3ListItem {
-                IconKind = "Star", Headline = "Favourites", SupportingText = "12 items · updated yesterday", IsSelected = true,
+            rows.Children.Add(new ListTile { Glyph = "ViewList", Headline = "All items", TrailingText = "128" });
+            rows.Children.Add(new ListTile {
+                Glyph = "Star", Headline = "Favourites", SupportingText = "12 items · updated yesterday", IsSelected = true,
             });
-            rows.Children.Add(new M3ListItem {
-                IconKind = "Delete", Headline = "Trash", SupportingText = "Emptied automatically after 30 days",
+            rows.Children.Add(new ListTile {
+                Glyph = "Delete", Headline = "Trash", SupportingText = "Emptied automatically after 30 days",
                 Trailing = new CheckBox { Style = (Style)FindResource("M3Switch"), IsChecked = true },
             });
             PageHost.Children.Add(rows);
@@ -531,19 +629,19 @@ namespace Material3.Wpf.Gallery {
             restore.Visibility = Visibility.Collapsed;
 
             var banners = new List<NoticeBanner>();
-            foreach (var (severity, icon, text) in new[] {
-                (NoticeSeverity.Neutral, "Information", "A newer version is available. Nothing breaks if you stay on this one."),
-                (NoticeSeverity.Accent, "CheckCircle", "Settings changed in another window — this one has caught up."),
-                (NoticeSeverity.Warning, "AlertCircle", "Two items point at a file that is no longer there. They are marked in the list."),
-                (NoticeSeverity.Error, "AlertCircle", "The last run failed. Open the log to see which step stopped it."),
+            foreach (var (tone, icon, text) in new[] {
+                (Tone.Neutral, "Information", "A newer version is available. Nothing breaks if you stay on this one."),
+                (Tone.Accent, "CheckCircle", "Settings changed in another window — this one has caught up."),
+                (Tone.Warning, "AlertCircle", "Two items point at a file that is no longer there. They are marked in the list."),
+                (Tone.Error, "AlertCircle", "The last run failed. Open the log to see which step stopped it."),
             }) {
                 var banner = new NoticeBanner {
-                    Severity = severity, IconKind = icon, Text = text, Margin = new Thickness(0, 0, 0, 8),
+                    Tone = tone, Glyph = icon, Text = text, Margin = new Thickness(0, 0, 0, 8),
                     // Collapsed, then expanded once it is in the tree: ExpandBanner animates from the measured
                     // height, so it needs a laid-out banner to animate to.
                     Visibility = Visibility.Collapsed,
                 };
-                if (severity == NoticeSeverity.Error) {
+                if (tone == Tone.Error) {
                     // Not StyledButton: its row margin would lift the button off the banner's centre line, and a
                     // banner action is 32 high so the row stays one line tall.
                     banner.Actions = new Button {
@@ -612,7 +710,7 @@ namespace Material3.Wpf.Gallery {
             PageHost.Children.Add(BuildSkeletonDemo());
 
             Header("Busy spinner");
-            Caption("Busy.IsBusy swaps an M3Icon's glyph for the spinner and rotates it, then puts the original "
+            Caption("Busy.IsBusy swaps an PathIcon's glyph for the spinner and rotates it, then puts the original "
                   + "glyph back; Busy.SpinWhileVisible spins a glyph that is already the spinner and stops the "
                   + "clock the moment it is hidden.");
             PageHost.Children.Add(BuildBusyDemo());
@@ -628,6 +726,41 @@ namespace Material3.Wpf.Gallery {
                 IsIndeterminate = true, Diameter = 24, StrokeThickness = 3, VerticalAlignment = VerticalAlignment.Center,
             });
             PageHost.Children.Add(rings);
+
+            Header("Step checklist");
+            Caption("The steps of a long operation: done steps carry a check, the running one spins and the rest wait "
+                  + "in outline. Moving on morphs each passed step into done, so a jump still reads as each one "
+                  + "finishing; a failure turns its step red.");
+            PageHost.Children.Add(BuildChecklistDemo());
+        }
+
+        private FrameworkElement BuildChecklistDemo() {
+            string[] steps = { "Download the package", "Verify the signature", "Unpack the files", "Register the app" };
+            var list = new StepChecklist { Steps = steps, Margin = new Thickness(0, 0, 0, 10) };
+            var run = StyledButton("TonalButton", "Run");
+            var fail = StyledButton("TextButton", "Run and fail at step 3");
+
+            async System.Threading.Tasks.Task RunAsync(int failAt) {
+                run.IsEnabled = fail.IsEnabled = false;
+                list.Steps = steps;
+                for (int i = 0; i < steps.Length; i++) {
+                    list.ActiveIndex = i;
+                    await System.Threading.Tasks.Task.Delay(700);
+                    if (i == failAt) { list.ErrorIndex = i; break; }
+                }
+                if (list.ErrorIndex < 0) await list.CompleteAsync(TimeSpan.FromSeconds(1));
+                run.IsEnabled = fail.IsEnabled = true;
+            }
+
+            run.Click += async (_, __) => await RunAsync(-1);
+            fail.Click += async (_, __) => await RunAsync(2);
+            var buttons = new StackPanel { Orientation = Orientation.Horizontal };
+            buttons.Children.Add(run);
+            buttons.Children.Add(fail);
+            var host = new StackPanel { HorizontalAlignment = HorizontalAlignment.Left };
+            host.Children.Add(list);
+            host.Children.Add(buttons);
+            return host;
         }
 
         private FrameworkElement BuildSkeletonDemo() {
@@ -663,8 +796,8 @@ namespace Material3.Wpf.Gallery {
         }
 
         private FrameworkElement BuildBusyDemo() {
-            var glyph = new M3Icon { Kind = "Refresh", Width = 20, Height = 20, VerticalAlignment = VerticalAlignment.Center };
-            glyph.SetResourceReference(M3Icon.ForegroundProperty, "Primary");
+            var glyph = new PathIcon { Glyph = "Refresh", Width = 20, Height = 20, VerticalAlignment = VerticalAlignment.Center };
+            glyph.SetResourceReference(PathIcon.ForegroundProperty, "Primary");
 
             var run = StyledButton("TonalButton", "Reload for two seconds");
             run.Margin = new Thickness(12, 0, 0, 0);
@@ -685,7 +818,39 @@ namespace Material3.Wpf.Gallery {
         private void BuildNavigation() {
             PageTitle("Navigation");
             Caption("Navigation components for the WPF library.");
-            Wip("Tabs, navigation rail and drawer");
+            Header("Tabs");
+            Caption("Tabs is a TabControl whose indicator slides to the selected tab. Primary tabs are a page's top "
+                  + "level: the label turns Primary over a short indicator as wide as the label. Secondary tabs sit a "
+                  + "level below and underline the whole tab.");
+            foreach (TabVariant variant in new[] { TabVariant.Primary, TabVariant.Secondary }) {
+                var tabs = new Tabs { Variant = variant, Width = 480, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 0, 0, 16) };
+                foreach (string header in variant == TabVariant.Primary ? new[] { "Flights", "Trips", "Explore" } : new[] { "Overview", "Specifications", "Reviews" })
+                    tabs.Items.Add(new TabItem {
+                        Header = header,
+                        Content = new TextBlock { Text = header + " content", Style = (Style)FindResource("BodySmall"), Margin = new Thickness(2, 12, 0, 0) },
+                    });
+                tabs.SelectedIndex = 0;
+                PageHost.Children.Add(tabs);
+            }
+
+            Header("Badge");
+            Caption("An Error-coloured count over the corner of what it annotates, or a dot for \"something new\" without "
+                  + "a number. Past 999 it reads 999+, and a count of zero shows nothing.");
+            var badges = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Left };
+            foreach (Badge badge in new[] { new Badge { IsDot = true }, new Badge { Count = 3 }, new Badge { Count = 1200 } }) {
+                var cell = new Grid { Width = 40, Height = 32, Margin = new Thickness(0, 0, 16, 0) };
+                var bell = new PathIcon { Glyph = "Bell", Width = 24, Height = 24 };
+                bell.SetResourceReference(PathIcon.ForegroundProperty, "OnSurfaceVariant");
+                cell.Children.Add(bell);
+                badge.HorizontalAlignment = HorizontalAlignment.Right;
+                badge.Margin = new Thickness(0, 0, -4, 0);
+                cell.Children.Add(badge);
+                badges.Children.Add(cell);
+            }
+            PageHost.Children.Add(badges);
+
+            Header("Navigation rail and drawer");
+            Wip("Navigation bar, rail and drawer");
         }
 
         private void BuildOverlays() {
@@ -697,6 +862,16 @@ namespace Material3.Wpf.Gallery {
             };
             Tip.SetText(hover, "Themed M3 tooltip — centered above the target, dark container, soft shadow, wraps long text.");
             PageHost.Children.Add(hover);
+
+            Header("Rich tooltip");
+            Caption("Tip.Title turns the tip rich: a heading over the text on a surface container, left-aligned and "
+                  + "wider — for a tip that explains rather than names.");
+            var rich = new Button {
+                Content = "Hover for details", Style = (Style)FindResource("OutlinedButton"), MinWidth = 160, HorizontalAlignment = HorizontalAlignment.Left,
+            };
+            Tip.SetTitle(rich, "Sync paused");
+            Tip.SetText(rich, "Changes stay on this device and sync once you are back online.");
+            PageHost.Children.Add(rich);
 
             Header("Context menu");
             Caption("Right-click for a fully themed dark menu (checkable items + separator).");
@@ -728,7 +903,7 @@ namespace Material3.Wpf.Gallery {
             PageHost.Children.Add(BuildBannerDemo());
 
             Header("Modal dialog");
-            Caption("M3Modal.Show renders a card above an app-wide scrim (blocks the whole window; Esc / scrim-click closes).");
+            Caption("Modal.Show renders a card above an app-wide scrim (blocks the whole window; Esc / scrim-click closes).");
             var openDialog = StyledButton("FilledButton", "Show dialog");
             openDialog.Click += (_, __) => ShowDemoDialog();
             PageHost.Children.Add(openDialog);
@@ -738,6 +913,13 @@ namespace Material3.Wpf.Gallery {
                   + "dismiss gestures are blocked, and the dialog closes only once the work finishes. The first "
                   + "attempt fails on purpose — the error surfaces in the dialog and it stays open.");
             PageHost.Children.Add(BuildAsyncConfirmDemo());
+
+            Header("Dialog");
+            Caption("Dialog.Show blocks and returns the answer, in a window of its own over the owner — no modal "
+                  + "layer needed. The tone picks the glyph; a destructive confirm turns red; a secondary action "
+                  + "steps cancel down to a text button; a hold-to-confirm only commits once its fill is full; and "
+                  + "a confirm given work spins and keeps the dialog up until the work is done.");
+            PageHost.Children.Add(BuildDialogDemo());
 
             Header("Snackbar");
             Caption("The brief confirmation that something happened, with at most one way to act on it. It never "
@@ -753,14 +935,19 @@ namespace Material3.Wpf.Gallery {
             PageHost.Children.Add(bars);
 
             Header("Dropdown select");
-            Wip("Dropdown-select picker");
+            Caption("M3Combo is the M3 look for a stock ComboBox: the chevron flips while the menu is open, the menu is a "
+                  + "PopupCard as wide as the field, the arrow keys move the highlight, and m3:Placeholder.Text shows until "
+                  + "something is picked. Tab onto it to see the keyboard-only focus ring.");
+            var select = new ComboBox { Style = (Style)FindResource("M3Combo"), Width = 240, HorizontalAlignment = HorizontalAlignment.Left, ItemsSource = new[] { "Day", "Week", "Month", "Year" } };
+            Placeholder.SetText(select, "Range");
+            PageHost.Children.Add(select);
         }
 
         private FrameworkElement BuildBannerDemo() {
             var text = new TextBlock { Text = "Heads up — this build is a preview.", VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap };
             text.SetResourceReference(TextBlock.ForegroundProperty, "OnWarningContainer");
-            var icon = new M3Icon { Kind = "AlertCircle", Width = 18, Height = 18, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 0) };
-            icon.SetResourceReference(M3Icon.ForegroundProperty, "OnWarningContainer");
+            var icon = new PathIcon { Glyph = "AlertCircle", Width = 18, Height = 18, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 0) };
+            icon.SetResourceReference(PathIcon.ForegroundProperty, "OnWarningContainer");
             var row = new StackPanel { Orientation = Orientation.Horizontal };
             row.Children.Add(icon);
             row.Children.Add(text);
@@ -784,6 +971,52 @@ namespace Material3.Wpf.Gallery {
             var host = new StackPanel { HorizontalAlignment = HorizontalAlignment.Left };
             host.Children.Add(banner);
             host.Children.Add(toggle);
+            return host;
+        }
+
+        private FrameworkElement BuildDialogDemo() {
+            var answer = new TextBlock { Style = (Style)FindResource("BodySmall"), Margin = new Thickness(2, 8, 0, 0) };
+            var row = new WrapPanel();
+
+            void Add(string label, Func<DialogOptions> options) {
+                var button = StyledButton("TonalButton", label);
+                button.Click += (_, __) => {
+                    try { answer.Text = "Answered: " + Dialog.Show(this, options()); }
+                    catch (InvalidOperationException ex) { answer.Text = "The work failed: " + ex.Message; }
+                };
+                row.Children.Add(button);
+            }
+
+            Add("Notice", () => new DialogOptions {
+                Title = "Export finished", Body = "12 files were written to the output folder.", Tone = Tone.Success,
+            });
+            Add("Three-way choice", () => new DialogOptions {
+                Title = "Save changes to “Aurora”?", Body = "Your changes are lost if you close without saving.",
+                ConfirmText = "Save", SecondaryText = "Don't save", CancelText = "Cancel",
+            });
+            Add("Hold to confirm", () => new DialogOptions {
+                Title = "Reset every setting?", Body = "Hold the button to confirm — a click alone is not enough.",
+                Tone = Tone.Warning, ConfirmText = "Hold to reset", CancelText = "Cancel",
+                HoldToConfirm = TimeSpan.FromSeconds(1),
+            });
+            Add("Confirm owns the work", () => new DialogOptions {
+                Title = "Delete “Aurora”?", Body = "The project and everything in it is removed.",
+                ConfirmText = "Delete", CancelText = "Cancel", Destructive = true,
+                ConfirmWork = () => System.Threading.Tasks.Task.Delay(1500),
+            });
+            Add("Error with links", () => {
+                var options = new DialogOptions {
+                    Title = "Could not open the project", Tone = Tone.Error,
+                    Body = "The file is locked by another program.",
+                };
+                options.Links.Add(new DialogAction("Show the log", () => answer.Text = "Link: Show the log"));
+                options.Links.Add(new DialogAction("Report a problem", () => answer.Text = "Link: Report a problem"));
+                return options;
+            });
+
+            var host = new StackPanel { HorizontalAlignment = HorizontalAlignment.Left };
+            host.Children.Add(row);
+            host.Children.Add(answer);
             return host;
         }
 
@@ -853,7 +1086,7 @@ namespace Material3.Wpf.Gallery {
             card.Child = stack;
 
             var opts = new ModalOptions();
-            IModalHandle handle = M3Modal.Show(card, opts);
+            IModalHandle handle = Modal.Show(card, opts);
             (FrameworkElement busy, RotateTransform spin) = BusyContent(confirm, "Deleting…");
             bool running = false;
             int attempt = 0;
@@ -899,8 +1132,8 @@ namespace Material3.Wpf.Gallery {
 
         private FrameworkElement BuildDropdownDemo() {
             var label = new TextBlock { Text = "Sort by", VerticalAlignment = VerticalAlignment.Center };
-            var chevron = new M3Icon {
-                Kind = "ChevronDown", Width = 16, Height = 16,
+            var chevron = new PathIcon {
+                Glyph = "ChevronDown", Width = 16, Height = 16,
                 VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(6, 0, 0, 0),
             };
             var content = new StackPanel { Orientation = Orientation.Horizontal };
@@ -917,7 +1150,7 @@ namespace Material3.Wpf.Gallery {
             var card = new PopupCard { MinWidth = 180, Margin = new Thickness(0, 0, 10, 10), Content = items };
 
             var popup = new AnimatedPopup { PlacementTarget = trigger, StaysOpen = false, AllowsTransparency = true, Child = card };
-            CenterPopup.SetEnable(popup, true);
+            CenterPopup.SetIsEnabled(popup, true);
             chevron.SetBinding(Chevron.IsOpenProperty,
                 new System.Windows.Data.Binding(nameof(AnimatedPopup.IsOpen)) { Source = popup });
 
@@ -947,7 +1180,7 @@ namespace Material3.Wpf.Gallery {
             var stack = new StackPanel();
             stack.Children.Add(new TextBlock { Text = "Reset the gallery?", Style = (Style)FindResource("TitleMedium") });
             stack.Children.Add(new TextBlock {
-                Text = "This is a real modal hosted by M3ModalLayer — the scrim covers the whole window, so the nav and content behind it are blocked until you close it.",
+                Text = "This is a real modal hosted by ModalLayer — the scrim covers the whole window, so the nav and content behind it are blocked until you close it.",
                 Style = (Style)FindResource("BodySmall"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 8, 0, 18),
             });
             var row = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
@@ -962,7 +1195,7 @@ namespace Material3.Wpf.Gallery {
             stack.Children.Add(row);
             card.Child = stack;
 
-            IModalHandle handle = M3Modal.Show(card);
+            IModalHandle handle = Modal.Show(card);
             cancel.Click += (_, __) => handle.Close();
             ok.Click += (_, __) => handle.Close();
         }

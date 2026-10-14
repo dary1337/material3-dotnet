@@ -15,16 +15,15 @@ namespace Material3.Wpf {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(EmptyState), new FrameworkPropertyMetadata(typeof(EmptyState)));
         }
 
-        /// <summary>Identifies the <see cref="IconKind"/> property.</summary>
-        public static readonly DependencyProperty IconKindProperty = DependencyProperty.Register(
-            nameof(IconKind), typeof(string), typeof(EmptyState),
+        /// <summary>Identifies the <see cref="Glyph"/> property.</summary>
+        public static readonly DependencyProperty GlyphProperty = DependencyProperty.Register(
+            nameof(Glyph), typeof(string), typeof(EmptyState),
             new FrameworkPropertyMetadata(DefaultGlyph, null, CoerceGlyph));
 
-        /// <summary>The glyph above the text, resolved through the icon set registered with <see cref="M3Icon"/>.</summary>
-        public string IconKind { get => (string)GetValue(IconKindProperty); set => SetValue(IconKindProperty, value); }
+        /// <summary>The glyph above the text, resolved through the icon set registered with <see cref="PathIcon"/>.</summary>
+        public string Glyph { get => (string)GetValue(GlyphProperty); set => SetValue(GlyphProperty, value); }
 
         /// <summary>Identifies the <see cref="Title"/> property.</summary>
-        // Coerced like PageHeader's: the empty-string trigger would not match a null a binding hands in.
         public static readonly DependencyProperty TitleProperty = DependencyProperty.Register(
             nameof(Title), typeof(string), typeof(EmptyState),
             new FrameworkPropertyMetadata(string.Empty, null, CoerceText));
@@ -49,8 +48,6 @@ namespace Material3.Wpf {
 
         private const string DefaultGlyph = "InformationOutline";
 
-        // Not CoerceText: an empty kind is not a glyph, so a null from a binding falls back to the default one
-        // rather than leaving the state headed by nothing.
         private static object CoerceGlyph(DependencyObject d, object value) => value ?? DefaultGlyph;
 
         private static object CoerceText(DependencyObject d, object value) => value ?? string.Empty;
