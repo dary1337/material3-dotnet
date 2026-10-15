@@ -29,40 +29,51 @@ jobs:
       - name: Release plan
         id: plan
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           $packages = @(
             @{ Id = 'Material3.Core'; Dir = 'src/Material3.Core'; UsesCore = $false },
             @{ Id = 'Material3.WinForms'; Dir = 'src/Material3.WinForms'; UsesCore = $true },
             @{ Id = 'Material3.Wpf'; Dir = 'src/Material3.Wpf'; UsesCore = $true }
           )
-          function TagVersion([string]$tag) { [version]$tag.Substring($tag.LastIndexOf('v') + 1) }
-          function LastTag([string]$id) {
-            $own = @(git tag -l "$id/v*") | Sort-Object { TagVersion $_ } | Select-Object -Last 1
-            if ($own) { return $own }
-            return @(git tag -l 'v*') | Sort-Object { TagVersion $_ } | Select-Object -Last 1
+          function Published([string]$id) {
+            try { $all = (Invoke-RestMethod "https://api.nuget.org/v3-flatcontainer/$($id.ToLowerInvariant())/index.json").versions }
+            catch { if ([int]$_.Exception.Response.StatusCode -eq 404) { $all = @() } else { throw } }
+            @($all | Where-Object { $_ -match '^\d+(\.\d+){1,3}$' } | ForEach-Object { [version]$_ })
+          }
+          $lastRelease = gh release list --limit 1 --exclude-drafts --exclude-pre-releases --json tagName --jq '.[0].tagName'
+          if ($LASTEXITCODE -ne 0) { throw 'Could not list releases' }
+          $released = @{}
+          if ($lastRelease) {
+            foreach ($asset in @(gh release view $lastRelease --json assets --jq '.assets[].name')) {
+              if ($asset -match '^(Material3\.\w+)\.(\d+(\.\d+){1,3})\.nupkg$') { $released[$Matches[1]] = [version]$Matches[2] }
+            }
           }
           $plan = foreach ($p in $packages) {
             $version = (([xml](Get-Content "$($p.Dir)/$($p.Id).csproj")).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1).Trim()
-            $last = LastTag $p.Id
-            if ($last -and [version]$version -lt (TagVersion $last)) { throw "$($p.Id) $version is older than its last release $last." }
-            $changes = @(git -c core.safecrlf=false diff --name-only $last -- $p.Dir ":(exclude)$($p.Dir)/*.csproj")
+            $published = Published $p.Id
+            $latest = $published | Sort-Object | Select-Object -Last 1
+            if ($latest -and [version]$version -lt $latest) { throw "$($p.Id) $version is older than its published $latest." }
+            $changes = if ($lastRelease) { @(git -c core.safecrlf=false diff --name-only $lastRelease -- $p.Dir ":(exclude)$($p.Dir)/*.csproj") } else { @($p.Dir) }
             [pscustomobject]@{
-              Id = $p.Id; Version = $version; Tag = "$($p.Id)/v$version"; LastTag = $last
-              Publish = -not ($last -and (TagVersion $last) -ge [version]$version)
+              Id = $p.Id; Version = $version; Latest = "$latest"
+              Publish = -not ($published -contains [version]$version)
+              Release = $released[$p.Id] -ne [version]$version
               Changed = $changes.Count -gt 0; UsesCore = $p.UsesCore
             }
           }
           foreach ($p in $plan | Where-Object { $_.Changed -and -not $_.Publish }) {
-            Write-Host "::warning::$($p.Id) has changes since $($p.LastTag) that stay unreleased until its <Version> is bumped."
+            Write-Host "::warning::$($p.Id) has changes since $lastRelease that stay unreleased until its <Version> is bumped."
           }
           $core = $plan | Where-Object Id -eq 'Material3.Core'
           $blocked = @($plan | Where-Object { $_.UsesCore -and $_.Publish } | ForEach-Object Id)
           if ($core.Changed -and -not $core.Publish -and $blocked.Count -gt 0) {
-            throw "Material3.Core changed since $($core.LastTag) but stays $($core.Version), so $($blocked -join ', ') cannot be published. Bump Material3.Core."
+            throw "Material3.Core changed since $lastRelease but stays $($core.Version), so $($blocked -join ', ') cannot be published. Bump Material3.Core."
           }
-          $plan | Format-Table Id, Version, LastTag, Changed, Publish -AutoSize | Out-String | Write-Host
-          ConvertTo-Json -InputObject @($plan) | Set-Content "$env:RUNNER_TEMP/plan.json"
-          "publish=$(([bool]($plan | Where-Object Publish)).ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+          $plan | Format-Table Id, Version, Latest, Changed, Publish, Release -AutoSize | Out-String | Write-Host
+          ConvertTo-Json -InputObject @{ LastRelease = $lastRelease; Packages = @($plan) } | Set-Content "$env:RUNNER_TEMP/plan.json"
+          "publish=$(([bool]($plan | Where-Object { $_.Publish -or $_.Release })).ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
 
       - name: Restore
         run: dotnet restore Material3.sln
@@ -98,15 +109,25 @@ jobs:
             'samples/Material3.WinForms.Gallery/bin/Release/net472/Material3.WinForms.Gallery.exe',
             'samples/Material3.Wpf.Gallery/bin/Release/net472/Material3.Wpf.Gallery.exe'
           )
-          $plan = Get-Content "$env:RUNNER_TEMP/plan.json" -Raw | ConvertFrom-Json
-          foreach ($p in $plan | Where-Object Publish) {
-            $nupkg = "artifacts/$($p.Id).$($p.Version).nupkg"
-            dotnet nuget push $nupkg --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
-            if ($LASTEXITCODE -ne 0) { throw "Push failed for $($p.Id)" }
-            git tag $p.Tag
-            git push origin $p.Tag
-            if ($LASTEXITCODE -ne 0) { throw "Tag push failed for $($p.Id)" }
-            $notesFrom = if ($p.LastTag) { @('--notes-start-tag', $p.LastTag) } else { @() }
-            gh release create $p.Tag --verify-tag --title "$($p.Id) $($p.Version)" --generate-notes @notesFrom @galleries $nupkg
-            if ($LASTEXITCODE -ne 0) { throw "Release failed for $($p.Id)" }
+          $state = Get-Content "$env:RUNNER_TEMP/plan.json" -Raw | ConvertFrom-Json
+          $pending = @($state.Packages | Where-Object Release)
+          $version = ($pending | ForEach-Object { [version]$_.Version } | Sort-Object | Select-Object -Last 1)
+          $release = "v$version"
+          if ($pending.Count -gt 0) {
+            gh release view $release --json tagName *> $null
+            if ($LASTEXITCODE -eq 0) { throw "Release $release exists without $(($pending | ForEach-Object Id) -join ', '): bump them above $version." }
           }
+          foreach ($p in $state.Packages | Where-Object Publish) {
+            dotnet nuget push "artifacts/$($p.Id).$($p.Version).nupkg" --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
+            if ($LASTEXITCODE -ne 0) { throw "Push failed for $($p.Id)" }
+          }
+          if ($pending.Count -eq 0) { exit 0 }
+          if (-not (git tag -l $release)) {
+            git tag $release
+            git push origin $release
+            if ($LASTEXITCODE -ne 0) { throw "Tag push failed for $release" }
+          }
+          $notesFrom = if ($state.LastRelease) { @('--notes-start-tag', $state.LastRelease) } else { @() }
+          $packages = @(Get-ChildItem artifacts -Filter *.nupkg | ForEach-Object FullName)
+          gh release create $release --verify-tag --title "Material3 for .NET $version" --generate-notes @notesFrom @galleries @packages
+          if ($LASTEXITCODE -ne 0) { throw "Release failed for $release" }

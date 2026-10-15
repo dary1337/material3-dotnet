@@ -161,8 +161,9 @@ reviews:
     - path: ".github/workflows/**/*.yml"
       instructions: >
         One workflow builds with -warnaserror, tests and packs on every push and PR, then publishes on a push to
-        main: a package publishes when its <Version> is above its last tag <PackageId>/vX.Y.Z (the old shared vX.Y.Z
-        counts before the first one), and CI creates that tag itself. Check that a failed push, tag push or release
+        main: a package publishes when nuget.org does not have its <Version> yet, and each publishing run makes ONE
+        GitHub release vX.Y.Z (the highest version it published, tagged by CI) carrying every package and both
+        galleries. Check that a failed push, tag push or release
         stops the run, that an existing version is never republished, and that a UI package cannot publish while
         Core has unreleased code. Actions pinned by major version or SHA, never @latest; secrets only via
         secrets.* or OIDC; no pull_request_target with a PR-head checkout; permissions minimal. A pwsh step ends
