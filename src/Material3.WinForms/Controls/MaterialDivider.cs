@@ -14,6 +14,7 @@ namespace Material3.WinForms.Controls {
         private bool _vertical;
         private int _inset;
 
+        /// <summary>Initializes a new instance of the <see cref="MaterialDivider"/> class.</summary>
         public MaterialDivider() {
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
@@ -32,7 +33,7 @@ namespace Material3.WinForms.Controls {
         [Category("Material Design")]
         [Description("Vertical orientation (1px wide); default is a horizontal rule (1px tall).")]
         [DefaultValue(false)]
-        public bool Vertical {
+        public bool IsVertical {
             get => _vertical;
             set {
                 _vertical = value;
@@ -55,6 +56,7 @@ namespace Material3.WinForms.Controls {
             set { _inset = Math.Max(0, value); Invalidate(); }
         }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             Graphics g = e.Graphics;
             using (var bg = new SolidBrush(BackColor)) {

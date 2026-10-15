@@ -14,11 +14,17 @@ namespace Material3.WinForms.Drawing {
     public static class ChipRenderer {
         /// <summary>Caller-supplied, already-DPI-scaled geometry. <see cref="Font"/> is the label font.</summary>
         public struct Metrics {
+            /// <summary>The chip height.</summary>
             public int Height;
+            /// <summary>The space at each end of the chip.</summary>
             public int PadX;
+            /// <summary>The leading glyph size.</summary>
             public int IconPx;
+            /// <summary>The space between the glyph and the label.</summary>
             public int IconGap;
+            /// <summary>The outline width.</summary>
             public float OutlineWidth;
+            /// <summary>The label font.</summary>
             public Font Font;
         }
 
@@ -26,6 +32,7 @@ namespace Material3.WinForms.Drawing {
         /// a null <see cref="Outline"/> draws no border; a non-null <see cref="StateOverlay"/> is laid
         /// over the shape for hover/press.</summary>
         public readonly struct Style {
+            /// <summary>Creates the colours a chip is painted with.</summary>
             public Style(Color container, Color content, Color label, Color? outline,
                          bool pill = false, Color? stateOverlay = null) {
                 Container = container;
@@ -36,11 +43,17 @@ namespace Material3.WinForms.Drawing {
                 StateOverlay = stateOverlay;
             }
 
+            /// <summary>The fill.</summary>
             public Color Container { get; }
+            /// <summary>The glyph colour.</summary>
             public Color Content { get; }
+            /// <summary>The text colour.</summary>
             public Color Label { get; }
+            /// <summary>The outline colour, or null for none.</summary>
             public Color? Outline { get; }
+            /// <summary>Fully rounded ends instead of the 8px corner.</summary>
             public bool Pill { get; }
+            /// <summary>The hover or press layer painted over the fill, or null for none.</summary>
             public Color? StateOverlay { get; }
         }
 
@@ -55,68 +68,60 @@ namespace Material3.WinForms.Drawing {
             return new Style(container, content, content, outline, pill: true);
         }
 
-        public static int Measure(Graphics g, string? text, bool hasLeading, in Metrics m) {
-            float textWidth = g.MeasureString(text ?? string.Empty, m.Font, int.MaxValue, StringFormat.GenericTypographic).Width;
-            return (int)Math.Ceiling(textWidth) + m.PadX * 2 + (hasLeading ? m.IconPx + m.IconGap : 0);
+        /// <summary>The width a chip needs for <paramref name="text"/>, with or without a leading glyph.</summary>
+        public static int Measure(Graphics graphics, string? text, bool hasLeading, in Metrics metrics) {
+            float textWidth = graphics.MeasureString(text ?? string.Empty, metrics.Font, int.MaxValue, StringFormat.GenericTypographic).Width;
+            return (int)Math.Ceiling(textWidth) + metrics.PadX * 2 + (hasLeading ? metrics.IconPx + metrics.IconGap : 0);
         }
 
         /// <summary>Paints the chip body into <c>[x, y, width, Metrics.Height]</c>; returns the right edge
         /// so inline hosts can chain chips. A non-null <paramref name="leadingImage"/> wins over
         /// <paramref name="glyph"/>.</summary>
-        public static int Draw(Graphics g, string? text, string? glyph, Image? leadingImage,
-                               in Style style, in Metrics m, int x, int y, int width) {
-            var rect = new Rectangle(x, y, width - 1, m.Height - 1);
+        public static int Draw(Graphics graphics, string? text, string? glyph, Image? leadingImage,
+                               in Style style, in Metrics metrics, int x, int y, int width) {
+            var rect = new Rectangle(x, y, width - 1, metrics.Height - 1);
             using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(rect, style.Pill ? Shape.Full : Shape.Small)) {
                 if (style.Container.A > 0) {
                     using (var brush = new SolidBrush(style.Container)) {
-                        g.FillPath(brush, path);
+                        graphics.FillPath(brush, path);
                     }
                 }
                 if (style.StateOverlay.HasValue) {
                     using (var brush = new SolidBrush(style.StateOverlay.Value)) {
-                        g.FillPath(brush, path);
+                        graphics.FillPath(brush, path);
                     }
                 }
                 if (style.Outline.HasValue) {
-                    using (var pen = new Pen(style.Outline.Value, m.OutlineWidth)) {
-                        g.DrawPath(pen, path);
+                    using (var pen = new Pen(style.Outline.Value, metrics.OutlineWidth)) {
+                        graphics.DrawPath(pen, path);
                     }
                 }
             }
 
-            float cx = x + m.PadX;
-            // Center on the drawn shape (its rect is Height-1 tall), not the nominal box, so the icon
-            // and label sit on the chip's true mid-line instead of half a pixel low.
-            float midY = y + (m.Height - 1) / 2f;
+            float cx = x + metrics.PadX;
+            float midY = y + (metrics.Height - 1) / 2f;
             if (leadingImage != null || !string.IsNullOrEmpty(glyph)) {
-                int iconY = (int)Math.Round(midY - m.IconPx / 2f);
+                int iconY = (int)Math.Round(midY - metrics.IconPx / 2f);
                 if (leadingImage != null) {
-                    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                    g.DrawImage(leadingImage, new Rectangle((int)cx, iconY, m.IconPx, m.IconPx));
+                    graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                    graphics.DrawImage(leadingImage, new Rectangle((int)cx, iconY, metrics.IconPx, metrics.IconPx));
                 }
                 else {
-                    Bitmap icon = MaterialIconRenderer.Get(glyph!, m.IconPx, style.Content);
-                    g.DrawImageUnscaled(icon, (int)cx, iconY);
+                    Bitmap icon = MaterialIconRenderer.Render(glyph!, metrics.IconPx, style.Content);
+                    graphics.DrawImageUnscaled(icon, (int)cx, iconY);
                 }
-                cx += m.IconPx + m.IconGap;
+                cx += metrics.IconPx + metrics.IconGap;
             }
 
-            // Center the font's cell box (ascent+descent), not the line box: DrawString anchors the
-            // line box, whose internal leading would sit the label low. This keeps GDI+ (no per-call
-            // GDI HDC round-trip like TextRenderer) while matching its vertical centering.
-            FontFamily family = m.Font.FontFamily;
-            // GDI+ simulates styles a family lacks natively; GetCellAscent on a simulated style throws,
-            // so fall back to Regular metrics (always present) for the centering math.
-            FontStyle fontStyle = family.IsStyleAvailable(m.Font.Style) ? m.Font.Style : FontStyle.Regular;
-            float cellHeight = m.Font.GetHeight(g) * CellRatio(family, fontStyle);
+            FontFamily family = metrics.Font.FontFamily;
+            FontStyle fontStyle = family.IsStyleAvailable(metrics.Font.Style) ? metrics.Font.Style : FontStyle.Regular;
+            float cellHeight = metrics.Font.GetHeight(graphics) * CellRatio(family, fontStyle);
             using (var brush = new SolidBrush(style.Label)) {
-                g.DrawString(text ?? string.Empty, m.Font, brush, cx, midY - cellHeight / 2f, StringFormat.GenericTypographic);
+                graphics.DrawString(text ?? string.Empty, metrics.Font, brush, cx, midY - cellHeight / 2f, StringFormat.GenericTypographic);
             }
             return x + width;
         }
 
-        // (ascent+descent)/lineSpacing depends only on the family+style, not on DPI or per-paint state.
-        // Caching it keeps a chips-heavy page (and the theme-change repaint storm) off the GDI+ metric calls.
         private static readonly ConcurrentDictionary<(string, FontStyle), float> CellRatioCache =
             new ConcurrentDictionary<(string, FontStyle), float>();
 

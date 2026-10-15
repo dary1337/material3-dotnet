@@ -25,8 +25,10 @@ namespace Material3.WinForms.Controls {
         private bool _multiSelect;
         private int _hotIndex = -1;
 
+        /// <summary>Raised when the selection changes.</summary>
         public event EventHandler? SelectionChanged;
 
+        /// <summary>Initializes a new instance of the <see cref="MaterialSegmentedButton"/> class.</summary>
         public MaterialSegmentedButton() {
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
@@ -50,6 +52,7 @@ namespace Material3.WinForms.Controls {
             set { _multiSelect = value; Invalidate(); }
         }
 
+        /// <summary>Appends a segment labelled <paramref name="text"/>.</summary>
         public void AddSegment(string text) {
             _segments.Add(text ?? string.Empty);
             if (_selected.Count == 0 && !_multiSelect) {
@@ -58,6 +61,7 @@ namespace Material3.WinForms.Controls {
             Invalidate();
         }
 
+        /// <summary>Removes every segment.</summary>
         public void ClearSegments() {
             _segments.Clear();
             _selected.Clear();
@@ -74,10 +78,12 @@ namespace Material3.WinForms.Controls {
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public IReadOnlyCollection<int> SelectedIndices => _selected;
 
+        /// <summary>Whether the segment at <paramref name="index"/> is selected.</summary>
         public bool IsSelected(int index) {
             return _selected.Contains(index);
         }
 
+        /// <summary>Selects or clears the segment at <paramref name="index"/>; in single-select mode selecting one clears the rest.</summary>
         public void SetSelected(int index, bool selected) {
             if (index < 0 || index >= _segments.Count) {
                 return;
@@ -106,7 +112,6 @@ namespace Material3.WinForms.Controls {
             if (_segments.Count == 0) {
                 return Rectangle.Empty;
             }
-            // Fractional edges distribute the remainder so the last segment reaches full width (no dead strip).
             int total = Width - 1;
             int left = index * total / _segments.Count;
             int right = (index + 1) * total / _segments.Count;
@@ -122,6 +127,7 @@ namespace Material3.WinForms.Controls {
             return -1;
         }
 
+        /// <inheritdoc />
         protected override void OnMouseMove(MouseEventArgs e) {
             base.OnMouseMove(e);
             int hit = HitTest(e.Location);
@@ -131,6 +137,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnMouseLeave(EventArgs e) {
             base.OnMouseLeave(e);
             if (_hotIndex != -1) {
@@ -139,6 +146,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnMouseUp(MouseEventArgs e) {
             base.OnMouseUp(e);
             if (e.Button != MouseButtons.Left) {
@@ -156,6 +164,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -171,7 +180,6 @@ namespace Material3.WinForms.Controls {
             Color outline = Enabled ? MaterialColors.Outline : MaterialColors.OnSurfaceMuted;
 
             using (GraphicsPath pillPath = RoundedControlRenderer.GetFigurePath(outer, Shape.Full)) {
-                // Clip fills to the pill so the end segments keep the rounded silhouette without per-segment path math.
                 using (Region prevClip = g.Clip) {
                     g.SetClip(pillPath);
 
@@ -212,19 +220,19 @@ namespace Material3.WinForms.Controls {
 
                 int checkPx = Dpi.Scale(this, CheckPx);
                 int checkGap = Dpi.Scale(this, CheckGap);
-                float textWidth = g.MeasureString(_segments[i], MaterialType.LabelLarge,
+                float textWidth = g.MeasureString(_segments[i], TypeScale.LabelLarge,
                     int.MaxValue, StringFormat.GenericTypographic).Width;
                 float contentWidth = textWidth + (active ? checkPx + checkGap : 0);
                 float x = rect.X + (rect.Width - contentWidth) / 2f;
 
                 if (active) {
-                    Bitmap check = MaterialIconRenderer.Get(MaterialIcons.Check, checkPx, content);
+                    Bitmap check = MaterialIconRenderer.Render(MaterialIcons.Check, checkPx, content);
                     g.DrawImageUnscaled(check, (int)x, rect.Y + (rect.Height - checkPx) / 2);
                     x += checkPx + checkGap;
                 }
                 using (var brush = new SolidBrush(content))
                 using (var fmt = new StringFormat(StringFormat.GenericTypographic) { LineAlignment = StringAlignment.Center }) {
-                    g.DrawString(_segments[i], MaterialType.LabelLarge, brush,
+                    g.DrawString(_segments[i], TypeScale.LabelLarge, brush,
                         new RectangleF(x, rect.Y, rect.Width, rect.Height), fmt);
                 }
             }

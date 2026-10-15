@@ -39,7 +39,6 @@ namespace Material3.WinForms.Tests {
 
         [Fact]
         public void EmphasizedDecelerate_FrontLoadsProgress() {
-            // Decelerate curves cover most of the distance early.
             Assert.True(Motion.EmphasizedDecelerate.Evaluate(0.3) > 0.6);
             Assert.True(Motion.EmphasizedAccelerate.Evaluate(0.3) < 0.2);
         }
@@ -62,20 +61,19 @@ namespace Material3.WinForms.Tests {
         [Fact]
         public void TypeScale_HasAllFifteenStyles() {
             TextStyle[] styles = {
-                MaterialType.DisplayLargeStyle, MaterialType.DisplayMediumStyle, MaterialType.DisplaySmallStyle,
-                MaterialType.HeadlineLargeStyle, MaterialType.HeadlineMediumStyle, MaterialType.HeadlineSmallStyle,
-                MaterialType.TitleLargeStyle, MaterialType.TitleMediumStyle, MaterialType.TitleSmallStyle,
-                MaterialType.BodyLargeStyle, MaterialType.BodyMediumStyle, MaterialType.BodySmallStyle,
-                MaterialType.LabelLargeStyle, MaterialType.LabelMediumStyle, MaterialType.LabelSmallStyle,
+                TypeScale.DisplayLargeStyle, TypeScale.DisplayMediumStyle, TypeScale.DisplaySmallStyle,
+                TypeScale.HeadlineLargeStyle, TypeScale.HeadlineMediumStyle, TypeScale.HeadlineSmallStyle,
+                TypeScale.TitleLargeStyle, TypeScale.TitleMediumStyle, TypeScale.TitleSmallStyle,
+                TypeScale.BodyLargeStyle, TypeScale.BodyMediumStyle, TypeScale.BodySmallStyle,
+                TypeScale.LabelLargeStyle, TypeScale.LabelMediumStyle, TypeScale.LabelSmallStyle,
             };
             foreach (TextStyle style in styles) {
                 Assert.NotNull(style.Font);
                 Assert.True(style.LineHeight > 0);
             }
-            // Spec ordering inside each family: Large > Medium > Small.
-            Assert.True(MaterialType.DisplayLarge.SizeInPoints > MaterialType.DisplayMedium.SizeInPoints);
-            Assert.True(MaterialType.BodyLarge.SizeInPoints > MaterialType.BodyMedium.SizeInPoints);
-            Assert.True(MaterialType.BodyMedium.SizeInPoints > MaterialType.BodySmall.SizeInPoints);
+            Assert.True(TypeScale.DisplayLarge.SizeInPoints > TypeScale.DisplayMedium.SizeInPoints);
+            Assert.True(TypeScale.BodyLarge.SizeInPoints > TypeScale.BodyMedium.SizeInPoints);
+            Assert.True(TypeScale.BodyMedium.SizeInPoints > TypeScale.BodySmall.SizeInPoints);
         }
     }
 }

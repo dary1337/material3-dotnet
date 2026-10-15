@@ -17,8 +17,8 @@ namespace Material3.WinForms {
         RoundSmall = 3,
     }
 
-    /// <summary>Themes the native window caption via DWM attributes (Windows 10 build 19041+), re-applying on theme change.</summary>
-    public static class WindowChrome {
+    /// <summary>Desktop Window Manager attributes: Windows 11 corner rounding and a caption painted in the current scheme.</summary>
+    public static class DwmWindow {
         private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
         private const int DWMWA_BORDER_COLOR = 34;
         private const int DWMWA_CAPTION_COLOR = 35;
@@ -46,20 +46,13 @@ namespace Material3.WinForms {
         private static readonly Lazy<bool> RoundingSupported = new Lazy<bool>(DetectRoundingSupport);
 
         /// <summary>Whether this Windows build rounds windows at all. False on Windows 10 and earlier.</summary>
-        public static bool IsRoundingSupported => RoundingSupported.Value;
+        public static bool IsSupported => RoundingSupported.Value;
 
         /// <summary>
-        /// Requests Windows 11 rounded corners (OS-level, anti-aliased — unlike a clip Region).
-        /// No-op on Windows 10 and earlier.
+        /// Applies a corner preference to a window handle. Returns false when the build predates the attribute;
+        /// the corners then stay square, so a caller that does not care about the outcome can ignore it.
         /// </summary>
-        public static void RoundCorners(IntPtr hwnd, bool small = false) =>
-            RoundCorners(hwnd, small ? WindowCornerPreference.RoundSmall : WindowCornerPreference.Round);
-
-        /// <summary>
-        /// Applies a corner preference to a window handle. Returns false when the build predates the attribute —
-        /// corners simply stay square, so a caller that does not care about the outcome can ignore it.
-        /// </summary>
-        public static bool RoundCorners(IntPtr hwnd, WindowCornerPreference preference) {
+        public static bool TrySetCornerPreference(IntPtr hwnd, WindowCornerPreference preference) {
             if (hwnd == IntPtr.Zero) {
                 return false;
             }
@@ -72,8 +65,10 @@ namespace Material3.WinForms {
             catch (EntryPointNotFoundException) { return false; }
         }
 
-        // RtlGetVersion, not Environment.OSVersion: the latter is shimmed down to 6.2 unless the HOST app's
-        // manifest declares a Windows 10 supportedOS GUID, and a library cannot control the host's manifest.
+        /// <summary>Applies a corner preference to <paramref name="form"/>, creating its handle if needed.</summary>
+        public static bool TrySetCornerPreference(Form form, WindowCornerPreference preference) =>
+            form != null && TrySetCornerPreference(form.Handle, preference);
+
         private static bool DetectRoundingSupport() {
             try {
                 var info = new OSVERSIONINFOW { OSVersionInfoSize = Marshal.SizeOf(typeof(OSVERSIONINFOW)) };
@@ -83,8 +78,8 @@ namespace Material3.WinForms {
             catch (EntryPointNotFoundException) { return false; }
         }
 
-        /// <summary>Applies the current scheme to the native caption and keeps it in sync with theme switches.</summary>
-        public static void Apply(Form form) {
+        /// <summary>Paints the native caption in the current scheme and keeps it in sync with theme switches.</summary>
+        public static void ThemeCaption(Form form) {
             if (form == null) {
                 return;
             }
@@ -98,8 +93,6 @@ namespace Material3.WinForms {
 
             form.HandleCreated += onHandleCreated;
             ThemeManager.ThemeChanged += onThemeChanged;
-            // Static event → without this the form (captured by the closure) is pinned for the
-            // life of the process. Mirrors the ThemeHook handle-lifetime pattern.
             form.Disposed += (s, e) => {
                 form.HandleCreated -= onHandleCreated;
                 ThemeManager.ThemeChanged -= onThemeChanged;
@@ -125,7 +118,6 @@ namespace Material3.WinForms {
                 DwmSetWindowAttribute(hwnd, DWMWA_TEXT_COLOR, ref text, sizeof(int));
             }
             catch {
-                // Older builds without these attributes simply keep the default chrome.
             }
         }
 

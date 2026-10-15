@@ -14,7 +14,7 @@ namespace Material3.Wpf {
 
     /// <summary>
     /// The floating action button: the one action a screen exists for, carried on a level-3 surface so it reads
-    /// as sitting above the content rather than in it. Give it <see cref="IconKind"/> alone for the round
+    /// as sitting above the content rather than in it. Give it <see cref="Glyph"/> alone for the round
     /// variant, or add <c>Content</c> for the extended pill.
     /// </summary>
     public class Fab : Button {
@@ -22,12 +22,12 @@ namespace Material3.Wpf {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(Fab), new FrameworkPropertyMetadata(typeof(Fab)));
         }
 
-        /// <summary>Identifies the <see cref="IconKind"/> property.</summary>
-        public static readonly DependencyProperty IconKindProperty = DependencyProperty.Register(
-            nameof(IconKind), typeof(string), typeof(Fab), new PropertyMetadata(null));
+        /// <summary>Identifies the <see cref="Glyph"/> property.</summary>
+        public static readonly DependencyProperty GlyphProperty = DependencyProperty.Register(
+            nameof(Glyph), typeof(string), typeof(Fab), new PropertyMetadata(null));
 
-        /// <summary>The glyph, resolved through the icon set registered with <see cref="M3Icon"/>.</summary>
-        public string? IconKind { get => (string?)GetValue(IconKindProperty); set => SetValue(IconKindProperty, value); }
+        /// <summary>The glyph, resolved through the icon set registered with <see cref="PathIcon"/>.</summary>
+        public string? Glyph { get => (string?)GetValue(GlyphProperty); set => SetValue(GlyphProperty, value); }
 
         /// <summary>Identifies the <see cref="Size"/> property.</summary>
         public static readonly DependencyProperty SizeProperty = DependencyProperty.Register(

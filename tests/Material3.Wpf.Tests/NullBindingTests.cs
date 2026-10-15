@@ -2,8 +2,6 @@ using Material3.Wpf;
 using Xunit;
 
 namespace Material3.Wpf.Tests {
-    // A view model hands null far more often than it hands "". Every text a template triggers on has to read as
-    // empty, and a glyph has to fall back to its default rather than to nothing at all.
     [Trait("Category", "Ui")]
     public class NullBindingTests {
         [Fact]
@@ -22,9 +20,9 @@ namespace Material3.Wpf.Tests {
 
         [Fact]
         public void AnEmptyStateFallsBackToItsDefaultGlyph() => Ui.Sta(() => {
-            var empty = new EmptyState { IconKind = "Star" };
-            empty.SetValue(EmptyState.IconKindProperty, null);
-            Assert.Equal("InformationOutline", empty.IconKind);
+            var empty = new EmptyState { Glyph = "Star" };
+            empty.SetValue(EmptyState.GlyphProperty, null);
+            Assert.Equal("InformationOutline", empty.Glyph);
         });
     }
 }

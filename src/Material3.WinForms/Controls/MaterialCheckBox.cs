@@ -23,8 +23,10 @@ namespace Material3.WinForms.Controls {
         private bool _pressed;
         private readonly AnimatedValue _mark;
 
+        /// <summary>Raised when the check state changes.</summary>
         public event EventHandler? CheckedChanged;
 
+        /// <summary>Initializes a new instance of the <see cref="MaterialCheckBox"/> class.</summary>
         public MaterialCheckBox() {
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
@@ -41,7 +43,7 @@ namespace Material3.WinForms.Controls {
             ThemeHook.Attach(this, Invalidate);
         }
 
-        // Hidden because CheckState is the serialized source of truth; avoids the designer writing both.
+        /// <summary>Whether the box is checked.</summary>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool Checked {
@@ -49,6 +51,7 @@ namespace Material3.WinForms.Controls {
             set => CheckState = value ? CheckState.Checked : CheckState.Unchecked;
         }
 
+        /// <summary>The check state: unchecked, checked or indeterminate.</summary>
         [Category("Material Design")]
         [Description("The check state: unchecked, checked or indeterminate.")]
         [DefaultValue(CheckState.Unchecked)]
@@ -69,8 +72,7 @@ namespace Material3.WinForms.Controls {
         private int _prefDpi = -1;
         private Size _prefSize;
 
-        // Cached: the layout engine calls GetPreferredSize several times per pass, and each measure
-        // opens a device context (CreateGraphics). Recompute only when the text or DPI actually changes.
+        /// <inheritdoc />
         public override Size GetPreferredSize(Size proposedSize) {
             string text = Text ?? string.Empty;
             if (_prefDpi == DeviceDpi && _prefText == text) {
@@ -80,7 +82,7 @@ namespace Material3.WinForms.Controls {
             if (text.Length > 0) {
                 using (Graphics g = CreateGraphics()) {
                     width += Dpi.Scale(this, LabelGap) + (int)Math.Ceiling(
-                        g.MeasureString(text, MaterialType.BodyMedium, int.MaxValue, StringFormat.GenericTypographic).Width);
+                        g.MeasureString(text, TypeScale.BodyMedium, int.MaxValue, StringFormat.GenericTypographic).Width);
                 }
             }
             _prefText = text;
@@ -89,8 +91,11 @@ namespace Material3.WinForms.Controls {
             return _prefSize;
         }
 
+        /// <inheritdoc />
         protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); _hovered = true; Invalidate(); }
+        /// <inheritdoc />
         protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); _hovered = false; _pressed = false; Invalidate(); }
+        /// <inheritdoc />
         protected override void OnMouseDown(MouseEventArgs e) {
             base.OnMouseDown(e);
             if (e.Button == MouseButtons.Left) {
@@ -100,6 +105,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnMouseUp(MouseEventArgs e) {
             base.OnMouseUp(e);
             if (e.Button == MouseButtons.Left && _pressed) {
@@ -111,6 +117,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnKeyDown(KeyEventArgs e) {
             base.OnKeyDown(e);
             if (e.KeyCode == Keys.Space) {
@@ -119,16 +126,17 @@ namespace Material3.WinForms.Controls {
             }
         }
 
-        // Indeterminate resolves to checked on user toggle (the M3/HTML convention).
         private void Toggle() {
             CheckState = _state == CheckState.Checked ? CheckState.Unchecked : CheckState.Checked;
         }
 
+        /// <inheritdoc />
         protected override void OnTextChanged(EventArgs e) {
             base.OnTextChanged(e);
             Invalidate();
         }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -143,7 +151,6 @@ namespace Material3.WinForms.Controls {
             var box = new Rectangle(Dpi.Scale(this, 4), (int)(cy - boxSize / 2f), boxSize, boxSize);
             bool marked = _state != CheckState.Unchecked;
 
-            // Hover/press state layer per M3; no persistent focus halo (it reads as a stuck glow).
             if (Enabled && (_hovered || _pressed)) {
                 double overlay = _pressed ? StateLayers.Pressed : StateLayers.Hover;
                 Color haloBase = marked ? MaterialColors.Primary : MaterialColors.OnSurface;
@@ -199,12 +206,13 @@ namespace Material3.WinForms.Controls {
                 using (var brush = new SolidBrush(textColor))
                 using (var fmt = new StringFormat(StringFormat.GenericTypographic) { LineAlignment = StringAlignment.Center }) {
                     int labelGap = Dpi.Scale(this, LabelGap);
-                    g.DrawString(Text, MaterialType.BodyMedium, brush,
+                    g.DrawString(Text, TypeScale.BodyMedium, brush,
                         new RectangleF(box.Right + labelGap, 0, Width - box.Right - labelGap, Height), fmt);
                 }
             }
         }
 
+        /// <inheritdoc />
         protected override void Dispose(bool disposing) {
             if (disposing) {
                 _mark.Dispose();

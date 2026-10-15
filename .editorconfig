@@ -15,7 +15,6 @@ indent_size = 2
 indent_size = 2
 
 [*.cs]
-# Match the codebase style: same-line braces, explicit types where they aid reading.
 csharp_new_line_before_open_brace = none
 csharp_new_line_before_else = true
 csharp_new_line_before_catch = true

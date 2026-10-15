@@ -68,7 +68,6 @@ namespace Material3.WinForms.Drawing {
         }
 
         private void OnTick(object? sender, EventArgs e) {
-            // Re-checked each frame so turning the flag off snaps an in-flight glide too.
             float delta = _target - _current;
             if (!_animated || !Motion.AnimationsEnabled || Math.Abs(delta) < _threshold) {
                 _current = _target;

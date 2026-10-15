@@ -31,8 +31,10 @@ namespace Material3.WinForms.Forms {
         private Rectangle _amRect;
         private Rectangle _pmRect;
 
+        /// <summary>Initializes a new instance of the <see cref="MaterialTimePickerDialog"/> class.</summary>
         public MaterialTimePickerDialog() : this(DateTime.Now.TimeOfDay) { }
 
+        /// <summary>Creates the picker set to <paramref name="initial"/>.</summary>
         public MaterialTimePickerDialog(TimeSpan initial) {
             if (initial < TimeSpan.Zero || initial >= TimeSpan.FromDays(1)) {
                 throw new ArgumentOutOfRangeException(nameof(initial), "Time of day must be within [00:00, 24:00).");
@@ -69,10 +71,11 @@ namespace Material3.WinForms.Forms {
         /// <summary>The picked time of day (valid when the dialog result is OK).</summary>
         public TimeSpan Value => _value;
 
+        /// <inheritdoc />
         protected override CreateParams CreateParams {
             get {
                 CreateParams cp = base.CreateParams;
-                cp.ClassStyle |= 0x00020000; // CS_DROPSHADOW
+                cp.ClassStyle |= 0x00020000;
                 return cp;
             }
         }
@@ -80,7 +83,7 @@ namespace Material3.WinForms.Forms {
         private TextBox BuildDigitBox() {
             var box = new TextBox {
                 BorderStyle = BorderStyle.None,
-                Font = MaterialType.DisplaySmall,
+                Font = TypeScale.DisplaySmall,
                 MaxLength = 2,
                 TextAlign = HorizontalAlignment.Center,
                 BackColor = MaterialColors.SurfaceContainerHighest,
@@ -100,7 +103,6 @@ namespace Material3.WinForms.Forms {
             int fieldsWidth = FieldWidth * 2 + 24 + (_use24Hour ? 0 : 12 + PeriodWidth);
             int left = (Width - fieldsWidth) / 2;
             int top = 72;
-            // The TextBox is vertically centered inside the painted 64px field box.
             int boxY = top + (FieldHeight - _hourBox.PreferredHeight) / 2;
             _hourBox.SetBounds(left + 6, boxY, FieldWidth - 12, _hourBox.PreferredHeight);
             _minuteBox.SetBounds(left + FieldWidth + 24 + 6, boxY, FieldWidth - 12, _minuteBox.PreferredHeight);
@@ -136,7 +138,6 @@ namespace Material3.WinForms.Forms {
             CancelButton = cancel;
         }
 
-        // Normalizes typed values into a valid time and mirrors them back into the boxes.
         private void ClampFields() {
             int.TryParse(_hourBox.Text, out int hour);
             int.TryParse(_minuteBox.Text, out int minute);
@@ -145,6 +146,7 @@ namespace Material3.WinForms.Forms {
             _minuteBox.Text = minute.ToString("00");
         }
 
+        /// <inheritdoc />
         protected override void OnLoad(EventArgs e) {
             using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(
                 new Rectangle(0, 0, Width, Height), Shape.ExtraLarge)) {
@@ -155,6 +157,7 @@ namespace Material3.WinForms.Forms {
             _ = FormAnimation.OpenAsync(this);
         }
 
+        /// <inheritdoc />
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData) {
             if (keyData == Keys.Escape) {
                 DialogResult = DialogResult.Cancel;
@@ -170,6 +173,7 @@ namespace Material3.WinForms.Forms {
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
+        /// <inheritdoc />
         protected override void OnMouseUp(MouseEventArgs e) {
             base.OnMouseUp(e);
             if (_use24Hour || e.Button != MouseButtons.Left) {
@@ -187,6 +191,7 @@ namespace Material3.WinForms.Forms {
             }
         }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -194,7 +199,7 @@ namespace Material3.WinForms.Forms {
             g.Clear(MaterialColors.SurfaceContainerHigh);
 
             using (var brush = new SolidBrush(MaterialColors.OnSurfaceVariant)) {
-                g.DrawString("Enter time", MaterialType.LabelMedium, brush, Pad + 8, 24);
+                g.DrawString("Enter time", TypeScale.LabelMedium, brush, Pad + 8, 24);
             }
 
             PaintField(g, _hourBox, "Hour");
@@ -206,7 +211,7 @@ namespace Material3.WinForms.Forms {
                 LineAlignment = StringAlignment.Center,
             }) {
                 var between = new RectangleF(_hourBox.Right + 6, 72, _minuteBox.Left - _hourBox.Right - 12, FieldHeight);
-                g.DrawString(":", MaterialType.DisplaySmall, brush, between, fmt);
+                g.DrawString(":", TypeScale.DisplaySmall, brush, between, fmt);
             }
 
             if (!_use24Hour) {
@@ -234,7 +239,7 @@ namespace Material3.WinForms.Forms {
                 }
             }
             using (var brush = new SolidBrush(MaterialColors.OnSurfaceVariant)) {
-                g.DrawString(caption, MaterialType.BodySmall, brush, field.X + 2, field.Bottom + 6);
+                g.DrawString(caption, TypeScale.BodySmall, brush, field.X + 2, field.Bottom + 6);
             }
         }
 
@@ -259,10 +264,10 @@ namespace Material3.WinForms.Forms {
                 LineAlignment = StringAlignment.Center,
             }) {
                 using (var brush = new SolidBrush(_isPm ? MaterialColors.OnSurfaceVariant : MaterialColors.OnTertiaryContainer)) {
-                    g.DrawString("AM", MaterialType.LabelMedium, brush, _amRect, fmt);
+                    g.DrawString("AM", TypeScale.LabelMedium, brush, _amRect, fmt);
                 }
                 using (var brush = new SolidBrush(_isPm ? MaterialColors.OnTertiaryContainer : MaterialColors.OnSurfaceVariant)) {
-                    g.DrawString("PM", MaterialType.LabelMedium, brush, _pmRect, fmt);
+                    g.DrawString("PM", TypeScale.LabelMedium, brush, _pmRect, fmt);
                 }
             }
         }

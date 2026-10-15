@@ -1,23 +1,23 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows;
 using System.Windows.Interop;
+using System.Windows.Media;
 using System.Windows.Threading;
 using Material3.Core;
 
 namespace Material3.Wpf.Tests {
-    // Every WPF test needs an STA thread, and most need a real window: a control that is never shown has no
-    // template, no visible state and no clocks, so the behaviour worth testing does not exist yet.
     internal static class Ui {
         private const int GwlExStyle = -20;
         private const int WsExNoActivate = 0x08000000;
         private const int WsExToolWindow = 0x00000080;
         private const uint GenericAll = 0x10000000;
 
-        // GetWindowLongPtr/SetWindowLongPtr are macros on 32-bit Windows and export no such symbol there,
-        // so a single declaration works on exactly one bitness.
+        static Ui() => Motion.IgnoreSystemSetting = true;
+
         [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
         private static extern IntPtr GetWindowLongPtr64(IntPtr hwnd, int index);
 
@@ -30,7 +30,7 @@ namespace Material3.Wpf.Tests {
         [DllImport("user32.dll", EntryPoint = "SetWindowLongW")]
         private static extern int SetWindowLong32(IntPtr hwnd, int index, int value);
 
-        private static long GetExStyle(IntPtr hwnd) =>
+        internal static long GetExStyle(IntPtr hwnd) =>
             IntPtr.Size == 8 ? GetWindowLongPtr64(hwnd, GwlExStyle).ToInt64() : GetWindowLong32(hwnd, GwlExStyle);
 
         private static void SetExStyle(IntPtr hwnd, long style) {
@@ -53,9 +53,6 @@ namespace Material3.Wpf.Tests {
         [DllImport("kernel32.dll")]
         private static extern int GetCurrentThreadId();
 
-        // The whole run happens on a desktop of its own. Off-screen and WS_EX_NOACTIVATE are not enough: a
-        // fullscreen game minimises when any top-level window is created in its session, and a test suite has no
-        // business interrupting whoever is at the machine. A window on another desktop cannot reach this one.
         internal static void Sta(Action body) {
             Exception? err = null;
             var t = new Thread(() => {
@@ -72,14 +69,9 @@ namespace Material3.Wpf.Tests {
             t.SetApartmentState(ApartmentState.STA);
             t.Start();
             t.Join();
-            // Rethrown as itself: wrapping turns every assertion failure into one opaque Exception in the report.
             if (err != null) ExceptionDispatchInfo.Capture(err).Throw();
         }
 
-        // WS_EX_NOACTIVATE on top of ShowActivated=false is belt and braces for the case where the isolated
-        // desktop could not be created. No Application either (one per AppDomain, and each test gets its own
-        // thread), so the control dictionary is merged per window — a lookless control needs its template to
-        // hand out its PART_ children.
         internal static void InWindow(Action<Window> body, bool transparent = false, bool withControls = true) =>
             Sta(() => {
                 Window? w = null;
@@ -97,9 +89,7 @@ namespace Material3.Wpf.Tests {
                         w.Resources.MergedDictionaries.Add(new ResourceDictionary {
                             Source = new Uri("pack://application:,,,/Material3.Wpf;component/Controls.xaml", UriKind.Absolute),
                         });
-                        // The templates reference every colour by role, so without a published scheme a control
-                        // renders with unresolved brushes — a state no consumer is ever in.
-                        M3Theme.Apply(MaterialTheme.Platinum(), isDark: true, w.Resources);
+                        ThemeManager.Apply(MaterialTheme.Platinum(), isDark: true, w.Resources);
                     }
                     w.Show();
                     body(w);
@@ -114,6 +104,16 @@ namespace Material3.Wpf.Tests {
 
         internal static void Pump(Window w) => w.Dispatcher.Invoke(() => { }, DispatcherPriority.Background);
 
+        internal static IEnumerable<T> Descendants<T>(DependencyObject root) where T : DependencyObject {
+            var queue = new Queue<DependencyObject>();
+            queue.Enqueue(root);
+            while (queue.Count > 0) {
+                DependencyObject d = queue.Dequeue();
+                if (!ReferenceEquals(d, root) && d is T hit) yield return hit;
+                for (int i = 0; i < VisualTreeHelper.GetChildrenCount(d); i++) queue.Enqueue(VisualTreeHelper.GetChild(d, i));
+            }
+        }
+
         internal static void Spin(Window w, int ms, Action? each = null) {
             DateTime end = DateTime.UtcNow.AddMilliseconds(ms);
             while (DateTime.UtcNow < end) {
@@ -123,8 +123,6 @@ namespace Material3.Wpf.Tests {
             }
         }
 
-        // Wait on the end state, not on a stopwatch: a fixed sleep long enough here is a bet on how fast the box
-        // is. The ceiling only turns a clock that never ticks into a failure instead of a hang.
         internal static void SpinUntil(Window w, Func<bool> done, string because, Action? each = null, int timeoutMs = 10000) {
             DateTime end = DateTime.UtcNow.AddMilliseconds(timeoutMs);
             while (!done()) {

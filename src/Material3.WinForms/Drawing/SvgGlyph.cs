@@ -80,7 +80,6 @@ namespace Material3.WinForms.Drawing {
                         curX = startX = x; curY = startY = y;
                         path.StartFigure();
                         open = true;
-                        // Subsequent coordinate pairs after a moveto are implicit lineto.
                         cmd = rel ? 'l' : 'L';
                         break;
                     }
@@ -120,8 +119,6 @@ namespace Material3.WinForms.Drawing {
                     case 'T': {
                         double x = Num(d, ref i), y = Num(d, ref i);
                         if (rel) { x += curX; y += curY; }
-                        // Smooth quadratic: reflect the previous control point about the current
-                        // point when the previous command was also a quadratic; else use current.
                         double cx, cy;
                         if (char.ToUpperInvariant(lastCmd) == 'Q' || char.ToUpperInvariant(lastCmd) == 'T') {
                             cx = 2 * curX - ctrlX; cy = 2 * curY - ctrlY;
@@ -148,8 +145,6 @@ namespace Material3.WinForms.Drawing {
                         double c2x = Num(d, ref i), c2y = Num(d, ref i);
                         double x = Num(d, ref i), y = Num(d, ref i);
                         if (rel) { c2x += curX; c2y += curY; x += curX; y += curY; }
-                        // Smooth cubic: reflect the previous cubic's 2nd control point about the
-                        // current point when the previous command was also a cubic; else use current.
                         double c1x, c1y;
                         if (char.ToUpperInvariant(lastCmd) == 'C' || char.ToUpperInvariant(lastCmd) == 'S') {
                             c1x = 2 * curX - ctrlX; c1y = 2 * curY - ctrlY;
@@ -163,7 +158,6 @@ namespace Material3.WinForms.Drawing {
                         break;
                     }
                     default:
-                        // Unsupported command (e.g. arcs) — stop this subpath.
                         return added;
                 }
                 lastCmd = cmd;
@@ -178,7 +172,6 @@ namespace Material3.WinForms.Drawing {
             }
         }
 
-        // Quadratic (P0, C, P2) → cubic, exact: C1 = P0 + 2/3(C-P0), C2 = P2 + 2/3(C-P2).
         private static void AddQuad(GraphicsPath path, double x0, double y0, double cx, double cy, double x2, double y2) {
             double c1x = x0 + 2.0 / 3.0 * (cx - x0);
             double c1y = y0 + 2.0 / 3.0 * (cy - y0);
@@ -199,8 +192,6 @@ namespace Material3.WinForms.Drawing {
             }
         }
 
-        // Reads one SVG number; a '+'/'-' that isn't the first char (and isn't an exponent sign)
-        // begins the next number, so "382-354" tokenizes as 382 then -354.
         private static double Num(string s, ref int i) {
             SkipSeparators(s, ref i);
             int start = i;

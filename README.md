@@ -21,11 +21,9 @@ Existing "Material for WinForms" libraries implement Material **2** and are larg
 This project targets the current spec: HCT tonal palettes, color roles, surface containers and
 the 2023+ component look.
 
-> Status (0.7): **WinForms** — foundation, component catalog and designer support complete.
-> **WPF** — the shared HCT engine, live dynamic-color theming, `M3Icon`, motion helpers, and a core set of
-> M3 controls (filled/tonal/outlined/text buttons, text field, chips, menus, tooltip, scrollbar, progress,
-> card, expander) all ship and work; the control suite is still growing toward WinForms parity
-> (selection, navigation and overlay components come next).
+**WinForms** ships the full component catalog with Visual Studio designer support. **WPF** ships the same
+engine and live theming plus most of the catalog; not there yet: navigation bar / rail / drawer, date and
+time pickers, title bar ([coverage](docs/wpf.md#control-coverage)).
 
 ## Packages
 
@@ -34,10 +32,12 @@ One HCT engine, three packages — a shared `Core` plus two UI stacks:
 | Package | Target | Status |
 |---|---|---|
 | `Material3.Core` | netstandard2.0 | HCT/CAM16 engine, tonal palettes, color roles, `MaterialTheme` — platform-neutral `Argb`, no UI deps |
-| `Material3.WinForms` | net472 / net8.0-windows | Full M3 control catalog + Visual Studio designer support — **preview, usable** |
-| `Material3.Wpf` | net472 / net8.0-windows | Dynamic-color `M3Theme` (live `DynamicResource` brushes from one seed), `M3Icon`, motion helpers, plus a core M3 control set (see [coverage](docs/wpf.md#control-coverage)) — **usable; growing toward WinForms parity** |
+| `Material3.WinForms` | net472 / net8.0-windows | Full M3 control catalog + Visual Studio designer support |
+| `Material3.Wpf` | net472 / net8.0-windows | Dynamic-color `ThemeManager` (live `DynamicResource` brushes from one seed), `PathIcon`, motion helpers and most of the M3 control set ([coverage](docs/wpf.md#control-coverage)) |
 
-Two demo galleries are published with each release: **`Material3.WinForms.Gallery`** (WinForms) and **`Material3.Wpf.Gallery`** (WPF).
+Each package is versioned and released on its own. Before 1.0 a minor version can change the public API; the release notes mark it **BREAKING**.
+
+Every release carries both demo galleries: **`Material3.WinForms.Gallery`** (WinForms) and **`Material3.Wpf.Gallery`** (WPF).
 
 ## Documentation
 
@@ -58,7 +58,7 @@ Rows: color roles · buttons & FAB · selection · cards & lists · overlays & p
 | ![Cards & lists, light theme](https://raw.githubusercontent.com/dary1337/material3-dotnet/main/docs/img/cards-lists-light.webp) | ![Cards & lists, dark theme](https://raw.githubusercontent.com/dary1337/material3-dotnet/main/docs/img/cards-lists-dark.webp) |
 | ![Overlays & pickers, light theme](https://raw.githubusercontent.com/dary1337/material3-dotnet/main/docs/img/overlays-light.webp) | ![Overlays & pickers, dark theme](https://raw.githubusercontent.com/dary1337/material3-dotnet/main/docs/img/overlays-dark.webp) |
 
-<sub>Screenshots and demos captured on **v0.5**.</sub>
+<sub>WinForms gallery, captured on **v0.5**.</sub>
 
 ## Requirements
 
@@ -76,7 +76,7 @@ dotnet test Material3.sln -c Release
 
 The HCT color pipeline is a C# port of Google's
 [material-color-utilities](https://github.com/material-foundation/material-color-utilities)
-(Apache 2.0). Icons are [Material Symbols](https://fonts.google.com/icons) (Apache 2.0).
+(Apache 2.0). The WinForms icons are [Material Symbols](https://fonts.google.com/icons) (Apache 2.0).
 
 ## License
 

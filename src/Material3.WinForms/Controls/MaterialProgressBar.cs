@@ -15,6 +15,7 @@ namespace Material3.WinForms.Controls {
         private int _value;
         private readonly AnimatedValue _fill;
 
+        /// <summary>Initializes a new instance of the <see cref="MaterialProgressBar"/> class.</summary>
         public MaterialProgressBar() {
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
@@ -30,11 +31,13 @@ namespace Material3.WinForms.Controls {
             ThemeHook.Attach(this, Invalidate);
         }
 
+        /// <inheritdoc />
         protected override void OnHandleCreated(EventArgs e) {
             base.OnHandleCreated(e);
             ApplyIntrinsicHeight();
         }
 
+        /// <inheritdoc />
         protected override void OnDpiChangedAfterParent(EventArgs e) {
             base.OnDpiChangedAfterParent(e);
             ApplyIntrinsicHeight();
@@ -44,6 +47,7 @@ namespace Material3.WinForms.Controls {
             Height = Dpi.Scale(this, ComponentSizes.LinearProgressHeight);
         }
 
+        /// <summary>Determinate progress in [0,100]; the painted fill tweens toward it.</summary>
         [Category("Material Design")]
         [Description("Determinate progress in [0,100]; the painted fill tweens toward it.")]
         [DefaultValue(0)]
@@ -55,7 +59,6 @@ namespace Material3.WinForms.Controls {
                     return;
                 }
                 _value = normalized;
-                // No timer ticks in the designer; show the value immediately instead of an empty bar.
                 if (DesignMode) {
                     _fill.SnapTo(_value);
                 }
@@ -65,6 +68,7 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <inheritdoc />
         protected override void Dispose(bool disposing) {
             if (disposing) {
                 _fill.Dispose();
@@ -72,6 +76,7 @@ namespace Material3.WinForms.Controls {
             base.Dispose(disposing);
         }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;

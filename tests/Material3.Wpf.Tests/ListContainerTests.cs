@@ -5,8 +5,6 @@ using System.Windows.Media;
 using Xunit;
 
 namespace Material3.Wpf.Tests {
-    // The container is what the Windows theme would otherwise draw: a rectangle sized to the cell rather than to
-    // the content, in colours that belong to no M3 scheme.
     [Trait("Category", "Ui")]
     public class ListContainerTests {
         [Fact]
@@ -30,8 +28,6 @@ namespace Material3.Wpf.Tests {
             Assert.Equal(w.FindResource("OnSecondaryContainer"), TextElement.GetForeground(content));
         });
 
-        // The pointer cannot be faked off-screen, so the invariant is read where it lives: the last matching
-        // trigger wins, so the selected one has to be declared after the hover one.
         [Fact]
         public void SelectionOutranksHover() => Ui.InWindow(w => {
             ListBoxItem item = Row(w, selected: true);
@@ -45,7 +41,6 @@ namespace Material3.Wpf.Tests {
             Assert.True(hover >= 0 && selected > hover, "the selected fill does not outrank the hover fill");
         });
 
-        // An overlay, so the ring costs no layout: a row that grows when it takes focus shoves the list about.
         [Fact]
         public void TheFocusRingCostsNoLayout() => Ui.InWindow(w => {
             ListBoxItem item = Row(w, selected: false);

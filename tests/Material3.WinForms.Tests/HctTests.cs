@@ -16,8 +16,6 @@ namespace Material3.WinForms.Tests {
             Hct measured = Hct.FromColor(original);
             Argb resolved = Hct.From(measured.Hue, measured.Chroma, measured.Tone).ToColor();
 
-            // The solver gamut-maps, so an exact byte match is not guaranteed — but a color
-            // measured from sRGB is in-gamut by definition and must come back nearly intact.
             Assert.InRange(System.Math.Abs(resolved.R - original.R), 0, 4);
             Assert.InRange(System.Math.Abs(resolved.G - original.G), 0, 4);
             Assert.InRange(System.Math.Abs(resolved.B - original.B), 0, 4);
@@ -48,7 +46,6 @@ namespace Material3.WinForms.Tests {
         }
 
         [Theory]
-        // Reference ladder from material-color-utilities palettes_test.ts ("ofBlue", seed #0000FF).
         [InlineData(90, 0xE0, 0xE0, 0xFF)]
         [InlineData(80, 0xBE, 0xC2, 0xFF)]
         [InlineData(50, 0x5A, 0x64, 0xFF)]
@@ -58,8 +55,6 @@ namespace Material3.WinForms.Tests {
             TonalPalette palette = TonalPalette.FromColor(Argb.FromArgb(0, 0, 255));
             Argb actual = palette.Tone(tone);
 
-            // The analytic solver matches the reference to the byte; ±2 absorbs float drift in the
-            // CAM16 measurement of the seed that feeds the palette's hue/chroma.
             Assert.InRange(System.Math.Abs(actual.R - r), 0, 2);
             Assert.InRange(System.Math.Abs(actual.G - g), 0, 2);
             Assert.InRange(System.Math.Abs(actual.B - b), 0, 2);

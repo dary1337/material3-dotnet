@@ -10,8 +10,9 @@ namespace Material3.WinForms.Controls {
     /// <summary>Drop-in <see cref="Label"/> replacement that owner-draws text via GDI+ with a controlled <see cref="TextRenderingHint"/>, staying consistent with the owner-drawn Material controls.</summary>
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
-    public class SoftLabel : Label {
-        public SoftLabel() {
+    public class MaterialLabel : Label {
+        /// <summary>Initializes a new instance of the <see cref="MaterialLabel"/> class.</summary>
+        public MaterialLabel() {
             SetStyle(
                 ControlStyles.UserPaint
                     | ControlStyles.AllPaintingInWmPaint
@@ -23,14 +24,11 @@ namespace Material3.WinForms.Controls {
             ThemeHook.Attach(this, Invalidate);
         }
 
-        // GDI+ DrawString measures a few px wider than the base TextRenderer AutoSize, so take the wider Width or our render wraps and drops text. Height stays from the base, which doesn't puff vertically.
         private (string, Font, int, int, bool) _prefKey;
         private Size _prefSize;
         private bool _prefValid;
 
-        // Cached: re-measuring allocates a Bitmap + Graphics + StringFormat each call, and layout asks
-        // repeatedly. Keyed on text, font, DPI, proposed width (wrapping) and AutoEllipsis (it toggles
-        // NoWrap/Trimming in BuildFormat, which changes the measured width).
+        /// <inheritdoc />
         public override Size GetPreferredSize(Size proposedSize) {
             string text = Text ?? string.Empty;
             var key = (text, Font, DeviceDpi, proposedSize.Width, AutoEllipsis);
@@ -60,6 +58,7 @@ namespace Material3.WinForms.Controls {
             return result;
         }
 
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -81,7 +80,6 @@ namespace Material3.WinForms.Controls {
         }
 
         private StringFormat BuildFormat() {
-            // NoClip lets the trailing glyph's ClearType extent render instead of being trimmed at the exact draw width; MeasureTrailingSpaces keeps trailing whitespace so alignment and width stay correct.
             var format = new StringFormat {
                 FormatFlags = StringFormatFlags.NoClip | StringFormatFlags.MeasureTrailingSpaces,
             };

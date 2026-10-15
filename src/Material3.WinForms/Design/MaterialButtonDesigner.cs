@@ -10,6 +10,8 @@ namespace Material3.WinForms.Design {
     public sealed class MaterialButtonDesigner : ControlDesigner {
         private DesignerActionListCollection? _actionLists;
 
+        /// <inheritdoc />
+
         public override DesignerActionListCollection ActionLists =>
             _actionLists ??= new DesignerActionListCollection { new MaterialButtonActionList(Component) };
 
@@ -24,17 +26,18 @@ namespace Material3.WinForms.Design {
                 set => Set(_button, nameof(MaterialButton.Variant), value);
             }
 
-            [Editor(typeof(IconGlyphEditor), typeof(UITypeEditor))]
-            public string IconGlyph {
-                get => _button.IconGlyph;
-                set => Set(_button, nameof(MaterialButton.IconGlyph), value);
+            [Editor(typeof(GlyphEditor), typeof(UITypeEditor))]
+            public string Glyph {
+                get => _button.Glyph;
+                set => Set(_button, nameof(MaterialButton.Glyph), value);
             }
+
 
             public override DesignerActionItemCollection GetSortedActionItems() => new() {
                 new DesignerActionHeaderItem("Material 3"),
                 new DesignerActionPropertyItem(nameof(Variant), "Variant", "Material 3",
                     "Elevated, Filled, Tonal, Outlined or Text."),
-                new DesignerActionPropertyItem(nameof(IconGlyph), "Icon glyph", "Material 3",
+                new DesignerActionPropertyItem(nameof(Glyph), "Glyph", "Material 3",
                     "Leading Material Symbols glyph."),
             };
         }

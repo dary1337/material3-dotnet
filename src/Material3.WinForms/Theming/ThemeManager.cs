@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Forms;
+using Material3.Core;
 
 namespace Material3.WinForms.Theming {
     /// <summary>
@@ -71,8 +72,6 @@ namespace Material3.WinForms.Theming {
     /// handle is gone cannot paint anyway.
     /// </summary>
     public static class ThemeHook {
-        // Guards against a second Attach on the same control double-subscribing, which would fire
-        // applyTheme N times per theme switch.
         private static readonly ConditionalWeakTable<Control, object> Attached =
             new ConditionalWeakTable<Control, object>();
 
@@ -85,8 +84,6 @@ namespace Material3.WinForms.Theming {
                 return;
             }
 
-            // In the designer the theme never changes and the static subscription would only add
-            // noise; controls still paint correctly from the default scheme.
             if (DesignTime.Active) {
                 return;
             }

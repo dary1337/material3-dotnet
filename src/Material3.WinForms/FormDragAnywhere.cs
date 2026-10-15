@@ -9,13 +9,12 @@ namespace Material3.WinForms {
         /// <summary>Controls implementing this are never treated as a drag surface.</summary>
         public interface IDragExcluded { }
 
+        /// <summary>Lets the user drag <paramref name="form"/> by any point that is not an interactive control.</summary>
         public static void Enable(Form form) {
             if (form == null) {
                 return;
             }
             var filter = new DragFilter(form);
-            // Re-add on HandleCreated so the filter survives handle-recreation cycles
-            // (style changes, ShowInTaskbar toggles).
             form.HandleCreated += (s, e) => Application.AddMessageFilter(filter);
             form.HandleDestroyed += (s, e) => Application.RemoveMessageFilter(filter);
             if (form.IsHandleCreated) {
@@ -56,7 +55,6 @@ namespace Material3.WinForms {
                         _dragging = true;
                         _dragOriginScreen = screen;
                         _formOriginLocation = _form.Location;
-                        // Don't swallow — labels/panels may have their own click handlers.
                         return false;
                     }
                     case WM_MOUSEMOVE: {
@@ -77,8 +75,6 @@ namespace Material3.WinForms {
                 return false;
             }
 
-            // lParam packs the cursor in the target window's client coords; convert via the
-            // hit-test target (m.HWnd) to screen coords.
             private static Point MessageToScreenPoint(Message m) {
                 long lp = m.LParam.ToInt64();
                 short x = unchecked((short)(lp & 0xFFFF));
@@ -101,15 +97,13 @@ namespace Material3.WinForms {
                 }
             }
 
-            // Walks the parent chain too — a Label inside a MaterialButton should count as
-            // interactive (it's a click target for the button, not a draggable surface).
             private static bool IsInteractive(Control c) {
                 for (Control? p = c; p != null; p = p.Parent) {
                     if (p is ButtonBase
                         || p is TextBoxBase
                         || p is ComboBox
                         || p is LinkLabel
-                        || p is DropdownSelect
+                        || p is MaterialDropdownSelect
                         || p is MaterialOptionCard
                         || p is MaterialScrollPanel
                         || p is MaterialTitleBar
