@@ -99,14 +99,20 @@ jobs:
             'samples/Material3.Wpf.Gallery/bin/Release/net472/Material3.Wpf.Gallery.exe'
           )
           $plan = Get-Content "$env:RUNNER_TEMP/plan.json" -Raw | ConvertFrom-Json
-          foreach ($p in $plan | Where-Object Publish) {
-            $nupkg = "artifacts/$($p.Id).$($p.Version).nupkg"
-            dotnet nuget push $nupkg --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
+          $published = @($plan | Where-Object Publish)
+          $version = ($published | ForEach-Object { [version]$_.Version } | Sort-Object | Select-Object -Last 1).ToString()
+          $release = "v$version"
+          if (git tag -l $release) { throw "Release $release already exists: bump a package above $version." }
+          $previous = @(git tag -l 'v*' --sort=-creatordate) | Select-Object -First 1
+          foreach ($p in $published) {
+            dotnet nuget push "artifacts/$($p.Id).$($p.Version).nupkg" --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
             if ($LASTEXITCODE -ne 0) { throw "Push failed for $($p.Id)" }
             git tag $p.Tag
-            git push origin $p.Tag
-            if ($LASTEXITCODE -ne 0) { throw "Tag push failed for $($p.Id)" }
-            $notesFrom = if ($p.LastTag) { @('--notes-start-tag', $p.LastTag) } else { @() }
-            gh release create $p.Tag --verify-tag --title "$($p.Id) $($p.Version)" --generate-notes @notesFrom @galleries $nupkg
-            if ($LASTEXITCODE -ne 0) { throw "Release failed for $($p.Id)" }
           }
+          git tag $release
+          git push origin @($published | ForEach-Object Tag) $release
+          if ($LASTEXITCODE -ne 0) { throw "Tag push failed" }
+          $notesFrom = if ($previous) { @('--notes-start-tag', $previous) } else { @() }
+          $packages = @(Get-ChildItem artifacts -Filter *.nupkg | ForEach-Object FullName)
+          gh release create $release --verify-tag --title "Material3 for .NET $version" --generate-notes @notesFrom @galleries @packages
+          if ($LASTEXITCODE -ne 0) { throw "Release failed for $release" }
