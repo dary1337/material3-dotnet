@@ -26,6 +26,7 @@ namespace Material3.WinForms.Controls {
                 true
             );
             Height = ComponentSizes.LinearProgressHeight;
+            AutoSize = true;
             BackColor = Color.Transparent;
             _fill = new AnimatedValue(this, factor: 0.22f, threshold: 0.1f);
             ThemeHook.Attach(this, Invalidate);
@@ -43,8 +44,34 @@ namespace Material3.WinForms.Controls {
             ApplyIntrinsicHeight();
         }
 
+        private int _trackThickness = ComponentSizes.LinearProgressHeight;
+
         private void ApplyIntrinsicHeight() {
-            Height = Dpi.Scale(this, ComponentSizes.LinearProgressHeight);
+            if (AutoSize) {
+                Height = GetPreferredSize(Size.Empty).Height;
+            }
+        }
+
+        /// <inheritdoc />
+        public override Size GetPreferredSize(Size proposedSize) => new Size(Width, Dpi.Scale(this, _trackThickness));
+
+        /// <summary>Whether the bar sizes its height to <see cref="TrackThickness"/>. Turn it off to give it a size of your own.</summary>
+        [Browsable(true)]
+        [EditorBrowsable(EditorBrowsableState.Always)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+        [DefaultValue(true)]
+        public override bool AutoSize {
+            get => base.AutoSize;
+            set { base.AutoSize = value; ApplyIntrinsicHeight(); }
+        }
+
+        /// <summary>The bar's thickness, in 96-DPI px. Without <see cref="AutoSize"/> a taller control centres the bar; the bar never grows past the control.</summary>
+        [Category("Material Design")]
+        [Description("The bar's thickness, in 96-DPI px.")]
+        [DefaultValue(ComponentSizes.LinearProgressHeight)]
+        public int TrackThickness {
+            get => _trackThickness;
+            set { _trackThickness = Math.Max(1, value); ApplyIntrinsicHeight(); Invalidate(); }
         }
 
         /// <summary>Determinate progress in [0,100]; the painted fill tweens toward it.</summary>
@@ -84,7 +111,7 @@ namespace Material3.WinForms.Controls {
                 g.FillRectangle(bg, ClientRectangle);
             }
 
-            int h = Math.Min(Height, Dpi.Scale(this, ComponentSizes.LinearProgressHeight));
+            int h = Math.Min(Height, Dpi.Scale(this, _trackThickness));
             int y = (Height - h) / 2;
             int radius = h / 2;
             int width = Width - 1;
@@ -92,17 +119,23 @@ namespace Material3.WinForms.Controls {
                 return;
             }
 
-            float fraction = _fill.Current / 100f;
-            int trackGapReserve = Dpi.Scale(this, 6);
+            float fraction = Math.Max(0f, Math.Min(1f, _fill.Current / 100f));
             int gapPx = Dpi.Scale(this, 4);
-            int indicatorWidth = (int)Math.Round((width - trackGapReserve) * fraction);
-            int gap = indicatorWidth > 0 && indicatorWidth < width - trackGapReserve ? gapPx : 0;
+            // The gap only exists between two segments: none before the first fill, none once the bar is full.
+            int indicatorWidth = fraction >= 1f ? width : (int)Math.Round((width - gapPx) * fraction);
+            int gap = indicatorWidth > 0 && indicatorWidth < width ? gapPx : 0;
 
             var trackRect = new Rectangle(indicatorWidth + gap, y, Math.Max(0, width - indicatorWidth - gap), h);
             if (trackRect.Width > 0) {
                 using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(trackRect, radius))
-                using (var brush = new SolidBrush(MaterialColors.SurfaceContainerHighest)) {
+                using (var brush = new SolidBrush(MaterialColors.SecondaryContainer)) {
                     g.FillPath(brush, path);
+                }
+                // The stop: a dot of the indicator colour where the track ends, marking how far the bar will go.
+                if (trackRect.Width > h * 2) {
+                    using (var brush = new SolidBrush(MaterialColors.Primary)) {
+                        g.FillEllipse(brush, trackRect.Right - h, y, h, h);
+                    }
                 }
             }
 

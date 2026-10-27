@@ -27,7 +27,10 @@ namespace Material3.WinForms {
         private static bool IsCurrent(Form form, int epoch) =>
             Epochs.TryGetValue(form, out StrongBox<int>? box) && box.Value == epoch;
 
-        /// <summary>Fades <paramref name="form"/> in while it slides down into place. A newer animation on the same form cancels this one.</summary>
+        /// <summary>
+        /// Fades <paramref name="form"/> in while it slides down into place. A newer animation on the same form cancels this one.
+        /// Start it from <c>OnShown</c> of a form created at <c>Opacity = 0</c>: every child is painted before the first visible frame.
+        /// </summary>
         public static async Task OpenAsync(Form form) {
             if (form == null || form.IsDisposed) {
                 return;
@@ -35,8 +38,9 @@ namespace Material3.WinForms {
             int epoch = BeginEpoch(form);
             Point target = form.Location;
             Point start = new Point(target.X, target.Y - SlideOffsetPx);
-            form.Location = start;
             form.Opacity = 0d;
+            form.Location = start;
+            form.Refresh();
 
             var sw = Stopwatch.StartNew();
             while (true) {

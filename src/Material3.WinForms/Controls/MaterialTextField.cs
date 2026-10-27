@@ -19,6 +19,16 @@ namespace Material3.WinForms.Controls {
         Outlined,
     }
 
+    /// <summary>What a <see cref="MaterialTextField"/> lets the user type.</summary>
+    public enum MaterialInputKind {
+        /// <summary>Anything.</summary>
+        Text,
+        /// <summary>A signed decimal with a <c>.</c> separator, whatever the culture.</summary>
+        Number,
+        /// <summary>A signed whole number.</summary>
+        Integer,
+    }
+
     /// <summary>Material 3 text field (filled or outlined) with floating label, icons, supporting text and error state, hosting a real borderless <see cref="TextBox"/> inside the painted chrome.</summary>
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
@@ -26,13 +36,17 @@ namespace Material3.WinForms.Controls {
     [System.ComponentModel.Designer(typeof(Material3.WinForms.Design.MaterialTextFieldDesigner))]
 #endif
     public sealed class MaterialTextField : Control {
-        private const int FieldHeight = 44;
+        private const int DefaultFieldHeight = ComponentSizes.FieldHeight;
         private const int SupportingHeight = 18;
         private const int LabelRise = 9;
-        private const int HorizontalPad = 16;
-        private const int IconSize = 20;
-        private const int IconGap = 12;
-        private const int OutlinedRadius = Shape.ExtraSmall;
+
+        private int _fieldHeight = DefaultFieldHeight;
+        private int _horizontalPadding = Spacing.Space4;
+        private int _iconSize = ComponentSizes.IconMedium;
+        private int _iconGap = Spacing.Space3;
+        private int _cornerRadius = Shape.ExtraSmall;
+        private Font? _labelFont;
+        private Font? _supportingFont;
 
         private readonly TextBox _editor;
         private MaterialTextFieldVariant _variant = MaterialTextFieldVariant.Filled;
@@ -43,6 +57,7 @@ namespace Material3.WinForms.Controls {
         private string _leadingIcon = string.Empty;
         private string _trailingIcon = string.Empty;
         private bool _hovered;
+        private readonly StateLayerFade _layer;
 
         private readonly AnimatedValue _float;
 
@@ -51,20 +66,19 @@ namespace Material3.WinForms.Controls {
 
         /// <summary>Initializes a new instance of the <see cref="MaterialTextField"/> class.</summary>
         public MaterialTextField() {
+            _layer = new StateLayerFade(this);
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
                     | ControlStyles.UserPaint
                     | ControlStyles.OptimizedDoubleBuffer
                     | ControlStyles.ResizeRedraw,
                 true);
-            Height = LabelRise + FieldHeight + SupportingHeight;
+            Height = LabelRise + DefaultFieldHeight + SupportingHeight;
             Width = 220;
+            AutoSize = true;
             MaterialCursors.Apply(this, MaterialCursors.IBeam);
 
-            _editor = new TextBox {
-                BorderStyle = BorderStyle.None,
-                Font = TypeScale.BodyLarge,
-            };
+            _editor = new FilteredTextBox { BorderStyle = BorderStyle.None };
             _editor.TextChanged += (s, e) => {
                 UpdateFloatTarget();
                 OnTextChanged(EventArgs.Empty);
@@ -75,6 +89,7 @@ namespace Material3.WinForms.Controls {
             Controls.Add(_editor);
 
             _float = new AnimatedValue(this, factor: 0.25f, threshold: 0.04f);
+            TypeRole.Follow(this, () => TypeScale.BodyLarge);
 
             Click += (s, e) => ActivateEditor();
             ThemeHook.Attach(this, ApplyTheme);
@@ -118,6 +133,18 @@ namespace Material3.WinForms.Controls {
             set { _errorText = value ?? string.Empty; Invalidate(); }
         }
 
+        /// <summary>
+        /// Refuses a keystroke or a paste that would leave the field holding something this kind cannot become; a
+        /// half-typed value (<c>-</c>, <c>1.</c>) passes. Text set from code is not filtered.
+        /// </summary>
+        [Category("Material Design")]
+        [Description("Refuses a keystroke or a paste that would leave the field holding something this kind cannot become.")]
+        [DefaultValue(MaterialInputKind.Text)]
+        public MaterialInputKind InputKind {
+            get => ((FilteredTextBox)_editor).Kind;
+            set => ((FilteredTextBox)_editor).Kind = value;
+        }
+
         /// <summary>Puts the field into the error state (accent and ErrorText).</summary>
         [Category("Material Design")]
         [Description("Puts the field into the error state (accent and ErrorText).")]
@@ -144,6 +171,104 @@ namespace Material3.WinForms.Controls {
             get => _trailingIcon;
             set { _trailingIcon = value ?? string.Empty; LayoutEditor(); Invalidate(); }
         }
+
+        /// <summary>The height of the field itself, without the supporting line, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The height of the field itself, without the supporting line, in 96-DPI px.")]
+        [DefaultValue(DefaultFieldHeight)]
+        public int FieldHeight {
+            get => _fieldHeight;
+            set { _fieldHeight = Math.Max(1, value); Relayout(); }
+        }
+
+        /// <summary>The space between the field's edges and its content, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The space between the field's edges and its content, in 96-DPI px.")]
+        [DefaultValue(Spacing.Space4)]
+        public int HorizontalPadding {
+            get => _horizontalPadding;
+            set { _horizontalPadding = Math.Max(0, value); Relayout(); }
+        }
+
+        /// <summary>The side of the leading and trailing glyphs, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The side of the leading and trailing glyphs, in 96-DPI px.")]
+        [DefaultValue(ComponentSizes.IconMedium)]
+        public int IconSize {
+            get => _iconSize;
+            set { _iconSize = Math.Max(0, value); Relayout(); }
+        }
+
+        /// <summary>The gap between a glyph and the text, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The gap between a glyph and the text, in 96-DPI px.")]
+        [DefaultValue(Spacing.Space3)]
+        public int IconGap {
+            get => _iconGap;
+            set { _iconGap = Math.Max(0, value); Relayout(); }
+        }
+
+        /// <summary>The radius of the outline, or of the filled container's top corners, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The radius of the outline, or of the filled container's top corners, in 96-DPI px.")]
+        [DefaultValue(Shape.ExtraSmall)]
+        public int CornerRadius {
+            get => _cornerRadius;
+            set { _cornerRadius = Math.Max(0, value); Invalidate(); }
+        }
+
+        /// <summary>The floated label's font. Null follows <see cref="TypeScale.BodySmall"/>. The text and the resting label use <see cref="Control.Font"/>.</summary>
+        [Category("Material Design")]
+        [Description("The floated label's font. Null follows the type scale's BodySmall.")]
+        [DefaultValue(null)]
+        public Font? LabelFont {
+            get => _labelFont;
+            set { _labelFont = value; Invalidate(); }
+        }
+
+        /// <summary>The supporting and error line's font. Null follows <see cref="TypeScale.BodySmall"/>.</summary>
+        [Category("Material Design")]
+        [Description("The supporting and error line's font. Null follows the type scale's BodySmall.")]
+        [DefaultValue(null)]
+        public Font? SupportingFont {
+            get => _supportingFont;
+            set { _supportingFont = value; Invalidate(); }
+        }
+
+        /// <summary>Whether the field sizes its height to the label, the field and the supporting line. Turn it off for a height of your own.</summary>
+        [Browsable(true)]
+        [EditorBrowsable(EditorBrowsableState.Always)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+        [DefaultValue(true)]
+        public override bool AutoSize {
+            get => base.AutoSize;
+            set { base.AutoSize = value; ApplyIntrinsicHeight(); }
+        }
+
+        /// <inheritdoc />
+        public override Size GetPreferredSize(Size proposedSize) =>
+            new Size(Width, Dpi.Scale(this, LabelRise + _fieldHeight + SupportingHeight));
+
+        private void Relayout() {
+            ApplyIntrinsicHeight();
+            LayoutEditor();
+            Invalidate();
+        }
+
+        /// <inheritdoc />
+        protected override void OnFontChanged(EventArgs e) {
+            base.OnFontChanged(e);
+            if (_editor != null) {
+                _editor.Font = Font;
+            }
+
+            LayoutEditor();
+            Invalidate();
+        }
+
+        private Font FloatFont => _labelFont ?? TypeScale.BodySmall;
+
+        private Font LineFont => _supportingFont ?? TypeScale.BodySmall;
 
         /// <inheritdoc />
         [Browsable(false)]
@@ -217,21 +342,12 @@ namespace Material3.WinForms.Controls {
         }
 
         private void ApplyTheme() {
-            BackColor = ResolveParentColor();
+            BackColor = SurfaceBehind.Of(this);
             _editor.BackColor = _variant == MaterialTextFieldVariant.Filled
                 ? MaterialColors.SurfaceContainerHighest
-                : ResolveParentColor();
+                : SurfaceBehind.Of(this);
             _editor.ForeColor = MaterialColors.OnSurface;
             Invalidate();
-        }
-
-        private Color ResolveParentColor() {
-            for (Control? p = Parent; p != null; p = p.Parent) {
-                if (p.BackColor.A > 0) {
-                    return p.BackColor;
-                }
-            }
-            return MaterialColors.Surface;
         }
 
         /// <inheritdoc />
@@ -248,11 +364,29 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override void OnMouseDown(MouseEventArgs e) {
             base.OnMouseDown(e);
-            if (!string.IsNullOrEmpty(_trailingIcon) && TrailingIconRect.Contains(e.Location)) {
+            if (HitsTrailingGlyph(e.Location)) {
                 TrailingGlyphClick?.Invoke(this, EventArgs.Empty);
                 return;
             }
             ActivateEditor();
+        }
+
+        /// <inheritdoc />
+        protected override void OnMouseMove(MouseEventArgs e) {
+            base.OnMouseMove(e);
+            Cursor = HitsTrailingGlyph(e.Location) ? MaterialCursors.Pointer : MaterialCursors.IBeam;
+        }
+
+        // The trailing glyph is an icon button in M3: its target is the 40 px state layer, not the 24 px glyph.
+        private bool HitsTrailingGlyph(Point point) {
+            if (string.IsNullOrEmpty(_trailingIcon)) {
+                return false;
+            }
+
+            Rectangle glyph = TrailingIconRect;
+            int grow = Math.Max(0, (Dpi.Scale(this, ComponentSizes.ControlHeight) - glyph.Width) / 2);
+            Rectangle target = Rectangle.Inflate(glyph, grow, grow);
+            return target.Contains(point) && point.X >= _editor.Right;
         }
 
         /// <inheritdoc />
@@ -281,29 +415,39 @@ namespace Material3.WinForms.Controls {
         }
 
         private void ApplyIntrinsicHeight() {
-            Height = Dpi.Scale(this, LabelRise + FieldHeight + SupportingHeight);
+            if (AutoSize) {
+                Height = GetPreferredSize(Size.Empty).Height;
+            }
         }
 
-        private int ContentLeft => Dpi.Scale(this, HorizontalPad) + (string.IsNullOrEmpty(_leadingIcon) ? 0 : Dpi.Scale(this, IconSize) + Dpi.Scale(this, IconGap));
-        private int ContentRight => Width - Dpi.Scale(this, HorizontalPad) - (string.IsNullOrEmpty(_trailingIcon) ? 0 : Dpi.Scale(this, IconSize) + Dpi.Scale(this, IconGap));
+        private int ContentLeft => Dpi.Scale(this, _horizontalPadding) + (string.IsNullOrEmpty(_leadingIcon) ? 0 : Dpi.Scale(this, _iconSize) + Dpi.Scale(this, _iconGap));
+        private int ContentRight => Width - Dpi.Scale(this, _horizontalPadding) - (string.IsNullOrEmpty(_trailingIcon) ? 0 : Dpi.Scale(this, _iconSize) + Dpi.Scale(this, _iconGap));
 
-        private Rectangle FieldRect => new Rectangle(0, Dpi.Scale(this, LabelRise), Math.Max(0, Width - 1), Dpi.Scale(this, FieldHeight));
+        private Rectangle FieldRect => new Rectangle(0, Dpi.Scale(this, LabelRise), Math.Max(0, Width - 1), Dpi.Scale(this, _fieldHeight));
 
         private Rectangle TrailingIconRect {
             get {
-                int iconSize = Dpi.Scale(this, IconSize);
+                int iconSize = Dpi.Scale(this, _iconSize);
                 return new Rectangle(
-                    Width - Dpi.Scale(this, HorizontalPad) - iconSize,
-                    Dpi.Scale(this, LabelRise) + (Dpi.Scale(this, FieldHeight) - iconSize) / 2,
+                    Width - Dpi.Scale(this, _horizontalPadding) - iconSize,
+                    Dpi.Scale(this, LabelRise) + (Dpi.Scale(this, _fieldHeight) - iconSize) / 2,
                     iconSize, iconSize);
             }
         }
+
+        // The filled variant's label and text insets, from the 44-px compact field to the 56-px M3 one.
+        private int FilledInset(int at44, int at56) =>
+            Math.Max(at44, Math.Min(at56, at44 + (_fieldHeight - 44) * (at56 - at44) / 12));
 
         private void LayoutEditor() {
             if (_editor == null) {
                 return;
             }
-            int top = Dpi.Scale(this, LabelRise) + (_variant == MaterialTextFieldVariant.Filled ? Dpi.Scale(this, 21) : (Dpi.Scale(this, FieldHeight) - _editor.Height) / 2);
+            int fieldTop = Dpi.Scale(this, LabelRise);
+            int fieldHeight = Dpi.Scale(this, _fieldHeight);
+            int top = _variant == MaterialTextFieldVariant.Filled
+                ? fieldTop + fieldHeight - _editor.Height - Dpi.Scale(this, FilledInset(2, 8))
+                : fieldTop + (fieldHeight - _editor.Height) / 2;
             _editor.SetBounds(ContentLeft, top, Math.Max(20, ContentRight - ContentLeft), _editor.Height);
         }
 
@@ -313,7 +457,7 @@ namespace Material3.WinForms.Controls {
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
 
-            Color parent = ResolveParentColor();
+            Color parent = SurfaceBehind.Of(this);
             g.Clear(parent);
 
             bool focused = _editor.Focused;
@@ -340,15 +484,16 @@ namespace Material3.WinForms.Controls {
 
         private void PaintFilled(Graphics g, Rectangle field, Color parent, bool focused, Color accent) {
             Color container = MaterialColors.SurfaceContainerHighest;
-            if (Enabled && _hovered && !focused) {
-                container = ArgbExtensions.Overlay(container, MaterialColors.OnSurface, StateLayers.Hover);
+            double hoverLayer = _layer.Resolve(_hovered && !focused, false, Enabled);
+            if (hoverLayer > 0) {
+                container = ArgbExtensions.Overlay(container, MaterialColors.OnSurface, hoverLayer);
             }
             if (!Enabled) {
                 container = ArgbExtensions.Overlay(parent, MaterialColors.OnSurface, StateLayers.DisabledContainer);
             }
 
             using (var path = new GraphicsPath()) {
-                int r = Dpi.Scale(this, Shape.ExtraSmall * 2);
+                int r = Math.Max(1, Dpi.Scale(this, _cornerRadius * 2));
                 path.StartFigure();
                 path.AddArc(field.X, field.Y, r, r, 180, 90);
                 path.AddArc(field.Right - r, field.Y, r, r, 270, 90);
@@ -381,7 +526,7 @@ namespace Material3.WinForms.Controls {
             float strokeWidth = Dpi.Scale(this, focused || _isError ? 2f : 1f);
 
             Rectangle rect = Rectangle.Inflate(field, -1, -1);
-            using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(rect, Dpi.Scale(this, OutlinedRadius)))
+            using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(rect, Dpi.Scale(this, _cornerRadius)))
             using (var pen = new Pen(outline, strokeWidth)) {
                 g.DrawPath(pen, path);
             }
@@ -396,17 +541,17 @@ namespace Material3.WinForms.Controls {
                 return;
             }
 
-            Font restFont = TypeScale.BodyLarge;
-            Font floatFont = TypeScale.BodySmall;
+            Font restFont = Font;
+            Font floatFont = FloatFont;
 
             float t = (float)Motion.Standard.Evaluate(_float.Current);
 
             SizeF floatSize = g.MeasureString(_labelText, floatFont, int.MaxValue, StringFormat.GenericTypographic);
 
             float labelRise = Dpi.Scale(this, LabelRise);
-            float restY = labelRise + (Dpi.Scale(this, FieldHeight) - restFont.Height) / 2f;
+            float restY = labelRise + (Dpi.Scale(this, _fieldHeight) - restFont.Height) / 2f;
             float floatY = _variant == MaterialTextFieldVariant.Filled
-                ? labelRise + Dpi.Scale(this, 5f)
+                ? labelRise + Dpi.Scale(this, (float)FilledInset(5, 8))
                 : labelRise - floatSize.Height / 2f;
             float y = restY + (floatY - restY) * t;
             float x = ContentLeft;
@@ -434,10 +579,10 @@ namespace Material3.WinForms.Controls {
 
         private void PaintIcons(Graphics g) {
             Color glyphColor = Enabled ? MaterialColors.OnSurfaceVariant : MaterialColors.OnSurfaceMuted;
-            int iconSize = Dpi.Scale(this, IconSize);
+            int iconSize = Dpi.Scale(this, _iconSize);
             if (!string.IsNullOrEmpty(_leadingIcon)) {
                 Bitmap icon = MaterialIconRenderer.Render(_leadingIcon, iconSize, glyphColor);
-                g.DrawImageUnscaled(icon, Dpi.Scale(this, HorizontalPad), Dpi.Scale(this, LabelRise) + (Dpi.Scale(this, FieldHeight) - iconSize) / 2);
+                g.DrawImageUnscaled(icon, Dpi.Scale(this, _horizontalPadding), Dpi.Scale(this, LabelRise) + (Dpi.Scale(this, _fieldHeight) - iconSize) / 2);
             }
             if (!string.IsNullOrEmpty(_trailingIcon)) {
                 Color trailing = _isError ? MaterialColors.Error : glyphColor;
@@ -456,14 +601,15 @@ namespace Material3.WinForms.Controls {
                 ? MaterialColors.OnSurfaceMuted
                 : _isError ? MaterialColors.Error : MaterialColors.OnSurfaceVariant;
             using (var brush = new SolidBrush(color)) {
-                g.DrawString(text, TypeScale.BodySmall, brush,
-                    new PointF(Dpi.Scale(this, HorizontalPad), Dpi.Scale(this, LabelRise) + Dpi.Scale(this, FieldHeight) + Dpi.Scale(this, 4)), StringFormat.GenericTypographic);
+                g.DrawString(text, LineFont, brush,
+                    new PointF(Dpi.Scale(this, _horizontalPadding), Dpi.Scale(this, LabelRise) + Dpi.Scale(this, _fieldHeight) + Dpi.Scale(this, 4)), StringFormat.GenericTypographic);
             }
         }
 
         /// <inheritdoc />
         protected override void Dispose(bool disposing) {
             if (disposing) {
+                _layer.Dispose();
                 _float.Dispose();
             }
             base.Dispose(disposing);

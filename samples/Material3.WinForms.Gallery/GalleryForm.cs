@@ -16,14 +16,10 @@ using Material3.WinForms.Tokens;
 using Material3.WinForms.Typography;
 
 namespace Material3.WinForms.Gallery {
-    /// <summary>
-    /// Component catalog: nav list on the left, live examples on the right, theme controls on
-    /// top of the nav. Doubles as the library's smoke-test — every control renders here in both
-    /// modes, and the screenshots for the README come from these pages.
-    /// </summary>
-    public sealed class GalleryForm : BorderlessForm {
+    public sealed partial class GalleryForm : BorderlessForm {
         private readonly MaterialTitleBar _titleBar;
         private readonly Panel _nav;
+        private readonly MaterialScrollPanel _pageList = new MaterialScrollPanel();
         private readonly MaterialScrollPanel _content;
         private readonly MaterialButton _modeToggle;
         private readonly MaterialDropdownSelect _seedSelect;
@@ -44,24 +40,24 @@ namespace Material3.WinForms.Gallery {
         private string _currentPage = PageColors;
 
         private const string PageColors = "Color roles";
-        private const string PageTypography = "Typography";
-        private const string PageElevation = "Elevation & Shape";
-        private const string PageButtons = "Buttons & FAB";
-        private const string PageInputs = "Text inputs";
-        private const string PageSelection = "Selection";
-        private const string PageCards = "Cards & Lists";
-        private const string PageProgress = "Progress & Loading";
-        private const string PageNavigation = "Navigation";
-        private const string PageOverlays = "Overlays & Pickers";
+        private const string PageSizes = "Sizes & Text";
+
+        internal static readonly string[] Pages = Material3.Gallery.GallerySpec.Pages.Select(p => p.Title).ToArray();
+
+        private static readonly (string label, string culture)[] Languages = { ("English", "en-US"), ("Русский", "ru-RU") };
 
         private const int NavWidth = 220;
 
-        // M3 baseline primary (#6750A4): the default seed and the brand fill behind the app icon.
+        // The M3 baseline primary, #6750A4
         private static readonly Color BaselineSeed = Color.FromArgb(0x67, 0x50, 0xA4);
 
+        public GalleryForm(string? startPage = null) : this() {
+            if (!string.IsNullOrEmpty(startPage)) {
+                _currentPage = startPage!;
+            }
+        }
+
         public GalleryForm() {
-            // Scale the layout (child bounds, fonts) with the monitor DPI; the owner-drawn controls
-            // scale their internals via Dpi.Scale, so the whole gallery stays crisp at 125/150/200%.
             AutoScaleMode = AutoScaleMode.Dpi;
             Text = "Material 3 Gallery — WinForms";
             Icon = BuildAppIcon();
@@ -69,7 +65,7 @@ namespace Material3.WinForms.Gallery {
             MinimumSize = new Size(860, 560);
             StartPosition = FormStartPosition.CenterScreen;
 
-            _titleBar = new MaterialTitleBar { TitleText = "Material 3 Gallery — WinForms" };
+            _titleBar = new MaterialTitleBar { TitleText = "Material 3 Gallery — WinForms", IconImage = Icon.ToBitmap() };
 
             _nav = new BufferedPanel {
                 Dock = DockStyle.Left,
@@ -115,15 +111,13 @@ namespace Material3.WinForms.Gallery {
                 Text = "Seed hue — drag to recolor",
                 Font = TypeScale.LabelMedium,
                 ForeColor = MaterialColors.OnSurfaceVariant,
-                // Fixed single-line bounds (AutoSize fights the L+R anchor); ellipsize rather than wrap
-                // so it stays tight to the slider and never clips a second line in a narrow rail.
+                // AutoSize fights the left and right anchors
                 AutoSize = false,
                 AutoEllipsis = true,
             };
             _hueSlider = new MaterialSlider { Minimum = 0, Maximum = 360, Value = (int)BaselineSeed.GetHue(), IsAnimated = false };
 
-            // Apply the recolor ~30×/s, not once per pixel: the full-window repaint is what starved the
-            // slider's own paint. Stops itself when no new hue arrived since the last tick.
+            // A repaint per mouse move starved the slider's own paint, so the recolor runs ~30 times a second
             _hueThrottle = new Timer { Interval = 33 };
             _hueThrottle.Tick += (s, e) => {
                 if (_pendingHue == _appliedHue) {
@@ -134,11 +128,9 @@ namespace Material3.WinForms.Gallery {
                 _currentSeed = HueToSeed(_appliedHue);
                 ApplySeed();
             };
-            // Don't recolor on the move itself — just record it; the throttle applies it. This keeps the
-            // mouse-move cheap (only the thumb repaints), so it stays under the cursor during a fast drag.
             _hueSlider.ValueChanged += (s, e) => {
                 if (_syncingHue) {
-                    return; // programmatic move to match a picked preset — don't recolor from it
+                    return;
                 }
                 _pendingHue = _hueSlider.Value;
                 if (!_hueThrottle.Enabled) {
@@ -146,8 +138,6 @@ namespace Material3.WinForms.Gallery {
                 }
             };
 
-            // Content wrap forwards edge hit-tests so resize works over the client area.
-            // Inset the content from the window's rounded edges so controls don't ride the border.
             var wrap = new HitTestForwardingPanel {
                 Dock = DockStyle.Fill,
                 Padding = new Padding(0, 0, Spacing.Space2, Spacing.Space2),
@@ -167,6 +157,12 @@ namespace Material3.WinForms.Gallery {
             _relayout = new Timer { Interval = 90 };
             _relayout.Tick += (s, e) => { _relayout.Stop(); RebuildCurrentPage(); };
 
+            _seedSelect.SelectByTag(BaselineSeed);
+            _variantSelect.SelectByTag(SchemeVariant.TonalSpot);
+            _currentSeed = BaselineSeed;
+            SyncHueSliderTo(BaselineSeed);
+            ApplySeed();
+
             // Coalesce rapid tab clicks: highlight immediately, but only build the page the user lands on.
             _navDebounce = new Timer { Interval = 60 };
             _navDebounce.Tick += (s, e) => {
@@ -180,7 +176,6 @@ namespace Material3.WinForms.Gallery {
         private SchemeVariant CurrentVariant() =>
             _variantSelect.SelectedTag is SchemeVariant v ? v : SchemeVariant.TonalSpot;
 
-        // Fixed saturation/value gives a pleasant, vivid-enough seed across the whole wheel.
         private static Color HueToSeed(int hue) => HsvToColor(((hue % 360) + 360) % 360, 0.70, 0.85);
 
         private static Color HsvToColor(double h, double s, double v) {
@@ -208,16 +203,13 @@ namespace Material3.WinForms.Gallery {
 
         protected override void OnShown(EventArgs e) {
             base.OnShown(e);
-            // First build happens here, not in the ctor: the content panel now has its real width,
-            // so swatch/button rows wrap correctly instead of stacking against a transient width.
+            // Built here, not in the constructor: rows wrap against the panel's real width
             RebuildCurrentPage();
         }
 
         protected override void OnSizeChanged(EventArgs e) {
             base.OnSizeChanged(e);
-            // Reflow on genuine window resizes (debounced). Triggering off the *form* size — not the
-            // content panel — is deliberate: the scrollbar reserves a gutter that shrinks the content
-            // width on every rebuild, so listening to the content panel would loop forever (flicker).
+            // Off the form's size: the scrollbar gutter changes the panel's width on every rebuild and would loop
             if (Visible) {
                 _relayout.Stop();
                 _relayout.Start();
@@ -244,8 +236,7 @@ namespace Material3.WinForms.Gallery {
         }
 
         private void OnThemeChanged(object? sender, EventArgs e) {
-            // Rebuild only on a light/dark flip: content labels bake their ForeColor, while a same-mode
-            // hue drag recolors live via ThemeHook (no rebuild — that drag fires ~30×/s).
+            // Only a light/dark flip rebuilds: labels bake their colour, a hue drag recolors live
             ApplyThemeToChrome();
             if (_builtDark != ThemeManager.IsDark) {
                 _builtDark = ThemeManager.IsDark;
@@ -253,13 +244,12 @@ namespace Material3.WinForms.Gallery {
             }
         }
 
-        // Single seed source: a variant change re-applies the active seed instead of snapping to the preset.
         private void ApplySeed() {
             Color seed = _currentSeed ?? (_seedSelect.SelectedTag as Color? ?? BaselineSeed);
             ThemeManager.Theme = MaterialTheme.FromSeed(seed.ToCore(), CurrentVariant());
         }
 
-        // Move the thumb to the preset's hue; the guard stops ValueChanged from re-recoloring from it.
+        // The guard keeps this programmatic move from recoloring
         private void SyncHueSliderTo(Color seed) {
             _syncingHue = true;
             int hue = (int)Math.Round(seed.GetHue());
@@ -271,8 +261,8 @@ namespace Material3.WinForms.Gallery {
         private void ApplyThemeToChrome() {
             BackColor = MaterialColors.Surface;
             _nav.BackColor = MaterialColors.Surface;
+            _pageList.BackColor = MaterialColors.Surface;
             _content.BackColor = MaterialColors.Surface;
-            // The hue label is in the nav, not the rebuilt content page, so refresh its baked ForeColor here.
             _hueLabel.ForeColor = MaterialColors.OnSurfaceVariant;
             foreach (MaterialRoundedButton b in _navButtons) {
                 StyleNavButton(b, (string)b.Tag! == _currentPage);
@@ -291,10 +281,7 @@ namespace Material3.WinForms.Gallery {
             _hueSlider.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             _nav.Controls.Add(_hueSlider);
 
-            foreach (string page in new[] {
-                PageColors, PageTypography, PageElevation, PageButtons, PageInputs, PageSelection,
-                PageCards, PageProgress, PageNavigation, PageOverlays,
-            }) {
+            foreach (string page in Pages) {
                 var button = new MaterialRoundedButton(Shape.Full) {
                     AutoSize = false,
                     Text = "  " + page,
@@ -305,19 +292,15 @@ namespace Material3.WinForms.Gallery {
                 };
                 button.Click += (s, e) => RequestPage((string)((Control)s!).Tag!);
                 _navButtons.Add(button);
-                _nav.Controls.Add(button);
+                _pageList.ContentPanel.Controls.Add(button);
             }
 
             LayoutNav();
         }
 
-        // Positions the rail with DPI-scaled spacing/heights so it keeps pace with the self-sized
-        // dropdowns/buttons. Built once in the ctor (DeviceDpi still 96 → identity) and re-run from
-        // OnHandleCreated once the real DPI is known, otherwise the scaled-taller dropdowns overlap.
+        // Runs again once the handle knows the real DPI; the constructor still sees 96
         private void LayoutNav() {
             int Sc(int px) => Dpi.Scale(this, px);
-            // Scale the rail itself so it (and its content) keep pace with the DPI-scaled controls,
-            // instead of a fixed 220px rail with a growing empty right gutter at high DPI.
             _nav.Width = Sc(NavWidth);
             int pad = Sc(Spacing.Space3);
             int width = _nav.Width - pad * 2;
@@ -332,15 +315,22 @@ namespace Material3.WinForms.Gallery {
             _variantSelect.SetBounds(pad, y, width, Sc(ComponentSizes.DropdownHeight));
             y += Sc(ComponentSizes.DropdownHeight) + Sc(Spacing.Space2);
 
-            int hueLabelHeight = Sc(18); // single line, sits tight above the slider
+            int hueLabelHeight = Sc(18);
             _hueLabel.SetBounds(pad, y, width, hueLabelHeight);
             y += hueLabelHeight + Sc(Spacing.Space1);
             _hueSlider.SetBounds(pad, y, width, Sc(32));
             y += Sc(32) + Sc(Spacing.Space4);
 
+            if (_pageList.Parent == null) {
+                _nav.Controls.Add(_pageList);
+            }
+            _pageList.SetBounds(0, y, _nav.Width, Math.Max(Sc(42), _nav.ClientSize.Height - y));
+            _pageList.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            int itemY = 0;
             foreach (MaterialRoundedButton button in _navButtons) {
-                button.SetBounds(pad, y, width, Sc(38));
-                y += Sc(42);
+                button.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+                button.SetBounds(pad, itemY, width, Sc(ComponentSizes.ControlHeight));
+                itemY += Sc(ComponentSizes.ControlHeight + 2);
             }
         }
 
@@ -358,9 +348,8 @@ namespace Material3.WinForms.Gallery {
             button.HoverColor = ArgbExtensions.Overlay(container, onContainer, StateLayers.Hover);
         }
 
-        private void ShowPage(string page) {
-            // Reset scroll only when navigating to a different page. A same-page rebuild (resize reflow
-            // or theme flip) keeps the offset, so resizing the window no longer throws scroll to the top.
+        internal void ShowPage(string page) {
+            // Only another page resets the scroll; a resize or theme rebuild keeps it
             bool pageChanged = page != _currentPage || _content.ContentPanel.Controls.Count == 0;
             _currentPage = page;
             _builtDark = ThemeManager.IsDark;
@@ -372,609 +361,23 @@ namespace Material3.WinForms.Gallery {
                 _content.ScrollToTop();
             }
             _content.BeginContentUpdate();
-            // finally: a throw in any BuildXPage must not leave the scroll panel's layout suspended.
+            // finally: a failed page must not leave the panel's layout suspended
             try {
                 foreach (Control c in _content.ContentPanel.Controls.Cast<Control>().ToArray()) {
                     _content.ContentPanel.Controls.Remove(c);
                     c.Dispose();
                 }
 
-                var builder = new PageBuilder(_content.ContentPanel);
-                switch (page) {
-                    case PageColors: BuildColorsPage(builder); break;
-                    case PageTypography: BuildTypographyPage(builder); break;
-                    case PageElevation: BuildElevationPage(builder); break;
-                    case PageButtons: BuildButtonsPage(builder); break;
-                    case PageInputs: BuildInputsPage(builder); break;
-                    case PageSelection: BuildSelectionPage(builder); break;
-                    case PageCards: BuildCardsPage(builder); break;
-                    case PageProgress: BuildProgressPage(builder); break;
-                    case PageNavigation: BuildNavigationPage(builder); break;
-                    case PageOverlays: BuildOverlaysPage(builder); break;
-                }
+                BuildPage(new PageBuilder(_content.ContentPanel), page);
             }
             finally {
                 _content.EndContentUpdate();
             }
         }
 
-        // ---- pages ----
 
-        private static void BuildColorsPage(PageBuilder b) {
-            b.Header("Color roles");
-            b.Caption("Every role of the active scheme. Switch seed / variant / mode on the left — controls follow.");
+        private void RebuildLater(string page) => BeginInvoke(new Action(() => ShowPage(page)));
 
-            // Live role getters so the swatches recolor with the theme (e.g. while the hue slider drags)
-            // without rebuilding the page.
-            static Func<Color> Role(Func<ColorScheme, Argb> get) => () => get(ThemeManager.Scheme).ToGdi();
-            b.SwatchGroup("Primary", new[] {
-                ("Primary", Role(s => s.Primary), Role(s => s.OnPrimary)),
-                ("OnPrimary", Role(s => s.OnPrimary), Role(s => s.Primary)),
-                ("PrimaryContainer", Role(s => s.PrimaryContainer), Role(s => s.OnPrimaryContainer)),
-                ("OnPrimaryContainer", Role(s => s.OnPrimaryContainer), Role(s => s.PrimaryContainer)),
-            });
-            b.SwatchGroup("Secondary / Tertiary", new[] {
-                ("Secondary", Role(s => s.Secondary), Role(s => s.OnSecondary)),
-                ("SecondaryContainer", Role(s => s.SecondaryContainer), Role(s => s.OnSecondaryContainer)),
-                ("Tertiary", Role(s => s.Tertiary), Role(s => s.OnTertiary)),
-                ("TertiaryContainer", Role(s => s.TertiaryContainer), Role(s => s.OnTertiaryContainer)),
-            });
-            b.SwatchGroup("Semantic", new[] {
-                ("Error", Role(s => s.Error), Role(s => s.OnError)),
-                ("ErrorContainer", Role(s => s.ErrorContainer), Role(s => s.OnErrorContainer)),
-                ("Success", Role(s => s.Success), Role(s => s.OnSuccess)),
-                ("SuccessContainer", Role(s => s.SuccessContainer), Role(s => s.OnSuccessContainer)),
-                ("Warning", Role(s => s.Warning), Role(s => s.OnWarning)),
-                ("WarningContainer", Role(s => s.WarningContainer), Role(s => s.OnWarningContainer)),
-            });
-            b.SwatchGroup("Surfaces", new[] {
-                ("Surface", Role(s => s.Surface), Role(s => s.OnSurface)),
-                ("SurfaceContainerLowest", Role(s => s.SurfaceContainerLowest), Role(s => s.OnSurface)),
-                ("SurfaceContainerLow", Role(s => s.SurfaceContainerLow), Role(s => s.OnSurface)),
-                ("SurfaceContainer", Role(s => s.SurfaceContainer), Role(s => s.OnSurface)),
-                ("SurfaceContainerHigh", Role(s => s.SurfaceContainerHigh), Role(s => s.OnSurface)),
-                ("SurfaceContainerHighest", Role(s => s.SurfaceContainerHighest), Role(s => s.OnSurface)),
-                ("InverseSurface", Role(s => s.InverseSurface), Role(s => s.InverseOnSurface)),
-            });
-            b.SwatchGroup("Content & outline", new[] {
-                ("OnSurface", Role(s => s.OnSurface), Role(s => s.Surface)),
-                ("OnSurfaceVariant", Role(s => s.OnSurfaceVariant), Role(s => s.Surface)),
-                ("OnSurfaceMuted", Role(s => s.OnSurfaceMuted), Role(s => s.Surface)),
-                ("Outline", Role(s => s.Outline), Role(s => s.Surface)),
-                ("OutlineVariant", Role(s => s.OutlineVariant), Role(s => s.OnSurface)),
-            });
-        }
-
-        private static void BuildTypographyPage(PageBuilder b) {
-            b.Header("Type scale");
-            b.Caption("All 15 M3 styles on Segoe UI; sizes are spec dp × 0.75 pt. Medium weights use Segoe UI Semibold.");
-
-            (string, TextStyle)[] styles = {
-                ("Display Large", TypeScale.DisplayLargeStyle),
-                ("Display Medium", TypeScale.DisplayMediumStyle),
-                ("Display Small", TypeScale.DisplaySmallStyle),
-                ("Headline Large", TypeScale.HeadlineLargeStyle),
-                ("Headline Medium", TypeScale.HeadlineMediumStyle),
-                ("Headline Small", TypeScale.HeadlineSmallStyle),
-                ("Title Large", TypeScale.TitleLargeStyle),
-                ("Title Medium", TypeScale.TitleMediumStyle),
-                ("Title Small", TypeScale.TitleSmallStyle),
-                ("Body Large", TypeScale.BodyLargeStyle),
-                ("Body Medium", TypeScale.BodyMediumStyle),
-                ("Body Small", TypeScale.BodySmallStyle),
-                ("Label Large", TypeScale.LabelLargeStyle),
-                ("Label Medium", TypeScale.LabelMediumStyle),
-                ("Label Small", TypeScale.LabelSmallStyle),
-            };
-            foreach ((string name, TextStyle style) in styles) {
-                b.TypeSample(name, style);
-            }
-        }
-
-        private static void BuildElevationPage(PageBuilder b) {
-            b.Header("Elevation");
-            b.Caption("Levels 0–5: painted shadow + surface tint. Tint opacity grows with level.");
-            b.ElevationRow();
-
-            b.Header("Shape scale");
-            b.Caption("ExtraSmall 4 · Small 8 · Medium 12 · Large 16 · ExtraLarge 28 · Full (pill).");
-            b.ShapeRow();
-        }
-
-        private static void BuildButtonsPage(PageBuilder b) {
-            b.Header("Buttons");
-            b.Caption("Five M3 variants. Hover and press to see state layers; the last row is disabled.");
-
-            b.ButtonRow("Enabled", enabled: true);
-            b.ButtonRow("With icon", enabled: true, icon: MaterialIcons.Download);
-            b.ButtonRow("Disabled", enabled: false);
-
-            b.Header("Icon buttons");
-            b.Caption("Standard / Filled / Tonal / Outlined; the second row toggles.");
-            b.Flow(flow => {
-                foreach (MaterialIconButtonVariant style in new[] {
-                    MaterialIconButtonVariant.Standard, MaterialIconButtonVariant.Filled,
-                    MaterialIconButtonVariant.Tonal, MaterialIconButtonVariant.Outlined,
-                }) {
-                    flow.Controls.Add(new MaterialIconButton {
-                        Variant = style,
-                        Glyph = MaterialIcons.Settings,
-                        Margin = new Padding(0, 0, Spacing.Space2, 0),
-                    });
-                }
-                flow.Controls.Add(new MaterialIconButton {
-                    Variant = MaterialIconButtonVariant.Tonal,
-                    Glyph = MaterialIcons.Copy,
-                    Margin = new Padding(0, 0, Spacing.Space2, 0),
-                });
-            });
-            b.Flow(flow => {
-                foreach (MaterialIconButtonVariant style in new[] {
-                    MaterialIconButtonVariant.Standard, MaterialIconButtonVariant.Filled,
-                    MaterialIconButtonVariant.Tonal, MaterialIconButtonVariant.Outlined,
-                }) {
-                    flow.Controls.Add(new MaterialIconButton {
-                        Variant = style,
-                        Glyph = MaterialIcons.CheckFilled,
-                        IsToggle = true,
-                        Checked = style == MaterialIconButtonVariant.Filled,
-                        Margin = new Padding(0, 0, Spacing.Space2, 0),
-                    });
-                }
-            });
-
-            b.Header("FAB");
-            b.Caption("Small / Standard / Large and the extended FAB; elevation drops while pressed.");
-            b.Flow(flow => {
-                flow.Controls.Add(new MaterialFab { FabSize = MaterialFabSize.Small, Glyph = MaterialIcons.Check });
-                flow.Controls.Add(new MaterialFab { FabSize = MaterialFabSize.Standard, Glyph = MaterialIcons.Download });
-                flow.Controls.Add(new MaterialFab { FabSize = MaterialFabSize.Large, Glyph = MaterialIcons.Settings });
-                flow.Controls.Add(new MaterialFab { Glyph = MaterialIcons.OpenInNew, Text = "Extended FAB" });
-            });
-        }
-
-        private static void BuildInputsPage(PageBuilder b) {
-            b.Header("Text fields");
-            b.Caption("Filled and outlined with floating labels; click to focus, type to float the label.");
-
-            var filled = new MaterialTextField {
-                Variant = MaterialTextFieldVariant.Filled,
-                LabelText = "Display name",
-                SupportingText = "Visible to other users",
-                LeadingGlyph = MaterialIcons.Info,
-            };
-            b.Add(filled);
-            b.Gap(Spacing.Space3);
-
-            var outlined = new MaterialTextField {
-                Variant = MaterialTextFieldVariant.Outlined,
-                LabelText = "Email",
-                SupportingText = "We never share it",
-            };
-            b.Add(outlined);
-            b.Gap(Spacing.Space3);
-
-            var error = new MaterialTextField {
-                Variant = MaterialTextFieldVariant.Outlined,
-                LabelText = "Password",
-                UseSystemPasswordChar = true,
-                IsError = true,
-                ErrorText = "At least 8 characters required",
-                TrailingGlyph = MaterialIcons.ErrorFilled,
-            };
-            error.Text = "1234";
-            b.Add(error);
-            b.Gap(Spacing.Space3);
-
-            var disabled = new MaterialTextField {
-                Variant = MaterialTextFieldVariant.Filled,
-                LabelText = "Disabled field",
-                Enabled = false,
-            };
-            b.Add(disabled);
-
-            b.Header("Search bar");
-            var search = new MaterialSearchBar { Placeholder = "Search components" };
-            b.Add(search);
-        }
-
-        private static void BuildSelectionPage(PageBuilder b) {
-            b.Header("Switch");
-            b.Flow(flow => {
-                flow.Controls.Add(new MaterialSwitch { Text = "Wi-Fi", Checked = true, AutoSize = true });
-                flow.Controls.Add(new MaterialSwitch { Text = "Bluetooth", AutoSize = true });
-                flow.Controls.Add(new MaterialSwitch { Text = "Disabled", Enabled = false, AutoSize = true });
-            });
-
-            b.Header("Checkbox");
-            b.Flow(flow => {
-                flow.Controls.Add(new MaterialCheckBox { Text = "Checked", Checked = true, AutoSize = true });
-                flow.Controls.Add(new MaterialCheckBox { Text = "Unchecked", AutoSize = true });
-                flow.Controls.Add(new MaterialCheckBox { Text = "Partial", CheckState = CheckState.Indeterminate, AutoSize = true });
-            });
-
-            b.Header("Radio buttons");
-            b.Flow(flow => {
-                flow.Controls.Add(new MaterialRadioButton { Text = "Light", AutoSize = true });
-                flow.Controls.Add(new MaterialRadioButton { Text = "Dark", Checked = true, AutoSize = true });
-                flow.Controls.Add(new MaterialRadioButton { Text = "System", AutoSize = true });
-            });
-
-            b.Header("Chips");
-            b.Caption("Assist · Filter (selectable) · Input (removable) · Suggestion.");
-            b.Flow(flow => {
-                flow.Controls.Add(new MaterialChip { Kind = MaterialChipKind.Assist, Text = "Add to calendar", LeadingGlyph = MaterialIcons.Info });
-                flow.Controls.Add(new MaterialChip { Kind = MaterialChipKind.Filter, Text = "Favorites", IsSelected = true });
-                flow.Controls.Add(new MaterialChip { Kind = MaterialChipKind.Filter, Text = "Recent" });
-                var input = new MaterialChip { Kind = MaterialChipKind.Input, Text = "Team member" };
-                input.Removed += (s, e) => input.Parent?.Controls.Remove(input);
-                flow.Controls.Add(input);
-                flow.Controls.Add(new MaterialChip { Kind = MaterialChipKind.Suggestion, Text = "Try dark mode" });
-            });
-
-            b.Header("Chips — custom colors");
-            b.Caption("SetAccent(container, content) paints any semantic role; a transparent container + outline makes a brand chip.");
-            MaterialChip Accent(string text, string? icon, Color container, Color content) {
-                var chip = new MaterialChip { Kind = MaterialChipKind.Suggestion, Text = text };
-                if (icon != null) {
-                    chip.LeadingGlyph = icon;
-                }
-                chip.SetAccent(container, content);
-                return chip;
-            }
-            b.Flow(flow => {
-                flow.Controls.Add(Accent("Needs attention", MaterialIcons.Warning, MaterialColors.WarningContainer, MaterialColors.OnWarningContainer));
-                flow.Controls.Add(Accent("Update available", MaterialIcons.Warning, MaterialColors.WarningContainer, MaterialColors.OnWarningContainer));
-                flow.Controls.Add(Accent("Not supported", MaterialIcons.ErrorFilled, MaterialColors.ErrorContainer, MaterialColors.OnErrorContainer));
-                flow.Controls.Add(Accent("Up to date", MaterialIcons.Check, MaterialColors.SuccessContainer, MaterialColors.OnSuccessContainer));
-                flow.Controls.Add(Accent("Recommended", null, MaterialColors.PrimaryContainer, MaterialColors.OnPrimaryContainer));
-            });
-            b.Flow(flow => {
-                // Outlined brand chip: transparent fill, brand color in text + border.
-                Color brandColor = Color.FromArgb(0x66, 0xC0, 0xF4);
-                var brand = new MaterialChip { Kind = MaterialChipKind.Suggestion, Text = "Cloud", LeadingGlyph = MaterialIcons.Cloud };
-                brand.SetAccent(Color.Transparent, brandColor, brandColor);
-                flow.Controls.Add(brand);
-
-                Color violet = Color.FromArgb(0x7C, 0x4D, 0xFF);
-                var custom = new MaterialChip { Kind = MaterialChipKind.Suggestion, Text = "Custom #7C4DFF" };
-                custom.SetAccent(violet, Color.White);
-                flow.Controls.Add(custom);
-
-                var pill = new MaterialChip { Kind = MaterialChipKind.Suggestion, Text = "Beta", Pill = true, LeadingGlyph = MaterialIcons.Info };
-                pill.SetAccent(MaterialColors.TertiaryContainer, MaterialColors.OnTertiaryContainer);
-                flow.Controls.Add(pill);
-            });
-
-            b.Header("Segmented button");
-            var single = new MaterialSegmentedButton();
-            single.AddSegment("Day");
-            single.AddSegment("Week");
-            single.AddSegment("Month");
-            single.Width = 360;
-            b.Add(single);
-            b.Gap(Spacing.Space2);
-            var multi = new MaterialSegmentedButton { MultiSelect = true, Width = 360 };
-            multi.AddSegment("Bold");
-            multi.AddSegment("Italic");
-            multi.AddSegment("Underline");
-            multi.SetSelected(0, true);
-            b.Add(multi);
-
-            b.Header("Slider");
-            b.Add(new MaterialSlider { Minimum = 0, Maximum = 100, Value = 30 });
-        }
-
-        private static void BuildNavigationPage(PageBuilder b) {
-            b.Header("Navigation");
-            b.Caption("Primary tabs switch the showcase below — each tab is a different navigation component.");
-
-            var tabs = new MaterialTabs();
-            tabs.AddTab("Bar", MaterialIcons.Layers);
-            tabs.AddTab("Rail & Drawer", MaterialIcons.Folder);
-            tabs.AddTab("Secondary", MaterialIcons.Info);
-            b.Add(tabs);
-
-            var host = new Panel {
-                Height = 290,
-                BackColor = Color.Transparent,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
-            };
-            b.Add(host);
-
-            void RenderTab(int index) {
-                foreach (Control c in host.Controls.Cast<Control>().ToArray()) {
-                    host.Controls.Remove(c);
-                    c.Dispose();
-                }
-                var sub = new PageBuilder(host);
-                switch (index) {
-                    case 0:
-                        sub.Caption("Bottom-bar destinations with badges — dock to the bottom in real apps.");
-                        var bar = new MaterialNavigationBar { Dock = DockStyle.None, Height = 64 };
-                        bar.AddItem(new NavigationItem("Home", MaterialIcons.Layers));
-                        bar.AddItem(new NavigationItem("Inbox", MaterialIcons.Cloud) { BadgeCount = 12 });
-                        bar.AddItem(new NavigationItem("Alerts", MaterialIcons.Warning) { BadgeCount = -1 });
-                        bar.AddItem(new NavigationItem("Settings", MaterialIcons.Settings));
-                        sub.Add(bar);
-                        break;
-                    case 1:
-                        sub.Caption("Side navigation for desktop layouts — dock to the left in real apps.");
-                        sub.Flow(flow => {
-                            var rail = new MaterialNavigationRail { Dock = DockStyle.None, Height = 220, Margin = new Padding(0, 0, Spacing.Space4, 0) };
-                            rail.AddItem("Files", MaterialIcons.Folder);
-                            rail.AddItem("Cloud", MaterialIcons.Cloud);
-                            rail.AddItem("Builds", MaterialIcons.DeployedCode);
-                            flow.Controls.Add(rail);
-
-                            var drawer = new MaterialNavigationDrawer { Dock = DockStyle.None, Height = 220, Headline = "Mail" };
-                            drawer.AddItem(new NavigationItem("Inbox", MaterialIcons.Download) { BadgeCount = 24 });
-                            drawer.AddItem("Sent", MaterialIcons.ArrowForward);
-                            drawer.AddItem("Trash", MaterialIcons.Close);
-                            flow.Controls.Add(drawer);
-                        });
-                        break;
-                    default:
-                        sub.Caption("Secondary tabs live inside content, not on the app bar.");
-                        var secondary = new MaterialTabs { Variant = MaterialTabVariant.Secondary };
-                        secondary.AddTab("Comments");
-                        secondary.AddTab("Activity");
-                        secondary.AddTab("Settings");
-                        sub.Add(secondary);
-                        break;
-                }
-            }
-
-            tabs.SelectedIndexChanged += (s, e) => RenderTab(tabs.SelectedIndex);
-            RenderTab(0);
-        }
-
-        private static void BuildCardsPage(PageBuilder b) {
-            b.Header("Card variants");
-            b.Caption("Elevated (tonal surface) · Filled · Outlined.");
-            foreach ((MaterialCardVariant variant, string note) in new[] {
-                (MaterialCardVariant.Elevated, "Elevated — SurfaceContainerLow at level 1."),
-                (MaterialCardVariant.Filled, "Filled — SurfaceContainerHighest, no border."),
-                (MaterialCardVariant.Outlined, "Outlined — Surface with an OutlineVariant hairline."),
-            }) {
-                var card = new MaterialCard { Variant = variant, Height = 84 };
-                card.Controls.Add(new MaterialLabel {
-                    Text = note,
-                    Font = TypeScale.BodyMedium,
-                    ForeColor = MaterialColors.OnSurfaceVariant,
-                    AutoSize = false,
-                    Dock = DockStyle.Fill,
-                });
-                b.Add(card);
-                b.Gap(Spacing.Space2);
-            }
-
-            b.Header("List items");
-            var item1 = new MaterialListItem {
-                Headline = "Quarterly report.pdf",
-                SupportingText = "Shared by Alex · 2.4 MB",
-                LeadingGlyph = MaterialIcons.Folder,
-                TrailingText = "12:40",
-            };
-            var divider = new MaterialDivider { Inset = 16 };
-            var item2 = new MaterialListItem {
-                Headline = "Build pipeline",
-                SupportingText = "Last run 14 minutes ago",
-                LeadingGlyph = MaterialIcons.DeployedCode,
-                TrailingGlyph = MaterialIcons.ChevronDown,
-                IsSelected = true,
-            };
-            var item3 = new MaterialListItem {
-                Headline = "Single-line item",
-                LeadingGlyph = MaterialIcons.Info,
-            };
-            b.Add(item1);
-            b.Gap(0);
-            b.Add(divider);
-            b.Gap(0);
-            b.Add(item2);
-            b.Gap(0);
-            b.Add(item3);
-
-            b.Header("Option cards");
-            b.Caption("Single-select list with animated radio. Click to switch.");
-            var first = new MaterialOptionCard(
-                "Standard install", "Recommended setup with all components", accentSuffix: "recommended",
-                fallbackGlyph: MaterialIcons.DeployedCode) { DetailText = "1.2 GB", Height = 68 };
-            var second = new MaterialOptionCard(
-                "Minimal install", "Core files only, fastest download",
-                fallbackGlyph: MaterialIcons.Download) { DetailText = "350 MB", Height = 68 };
-            second.SetAccentChip("needs update", () => MaterialColors.WarningContainer, () => MaterialColors.OnWarningContainer, glyph: MaterialIcons.Warning);
-            first.SelectedChanged += c => second.IsSelected = false;
-            second.SelectedChanged += c => first.IsSelected = false;
-            first.IsSelected = true;
-            b.Add(first);
-            b.Gap(Spacing.Space2);
-            b.Add(second);
-
-            b.Header("Step checklist");
-            var checklist = new MaterialStepChecklist();
-            checklist.SetSteps(new[] { "Download package", "Verify checksum", "Extract files", "Create shortcuts" });
-            checklist.ActiveIndex = 2;
-            b.Add(checklist);
-        }
-
-        private static void BuildProgressPage(PageBuilder b) {
-            b.Header("Linear progress");
-            b.Caption("Determinate with tweened value. The slider below drives it.");
-
-            var progress = new MaterialProgressBar { Value = 65 };
-            b.Add(progress);
-            b.Gap(Spacing.Space3);
-
-            var driver = new MaterialSlider {
-                Minimum = 0,
-                Maximum = 100,
-                Value = 65,
-            };
-            driver.ValueChanged += (s, e) => progress.Value = driver.Value;
-            b.Add(driver);
-
-            b.Header("Circular progress");
-            b.Caption("Determinate (left, driven by the slider) and the indeterminate spinner.");
-            var circular = new MaterialCircularProgress { Value = 65 };
-            driver.ValueChanged += (s, e) => circular.Value = driver.Value;
-            b.Flow(flow => {
-                flow.Controls.Add(circular);
-                flow.Controls.Add(new MaterialCircularProgress { IsIndeterminate = true });
-            });
-
-            b.Header("Skeleton loading");
-            b.Caption("Shimmer placeholder shown while content loads.");
-            b.Add(new MaterialSkeletonCard { Height = b.Scale(ComponentSizes.ListItemMinHeight) });
-            b.Gap(Spacing.Space2);
-            b.Add(new MaterialSkeletonCard { Height = b.Scale(ComponentSizes.ListItemMinHeight) });
-
-            b.Gap(Spacing.Space4);
-            b.Caption("Or compose MaterialSkeleton blocks for any layout — here a media card:");
-            var custom = new Panel {
-                Height = b.Scale(120),
-                BackColor = Color.Transparent,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
-            };
-            var image = new MaterialSkeleton { CornerRadius = 12 };
-            var avatar = new MaterialSkeleton { CornerRadius = 999 };
-            var line1 = new MaterialSkeleton { CornerRadius = 6 };
-            var line2 = new MaterialSkeleton { CornerRadius = 6 };
-            custom.Controls.AddRange(new Control[] { image, avatar, line1, line2 });
-            custom.Resize += (s, e) => {
-                int Sc(int px) => Dpi.Scale(custom, px);
-                image.SetBounds(0, 0, custom.Width, Sc(56));
-                avatar.SetBounds(0, Sc(66), Sc(40), Sc(40));
-                line1.SetBounds(Sc(52), Sc(68), Math.Max(Sc(80), custom.Width - Sc(52)), Sc(12));
-                line2.SetBounds(Sc(52), Sc(90), Sc(160), Sc(12));
-            };
-            b.Add(custom);
-        }
-
-        private static void BuildOverlaysPage(PageBuilder b) {
-            b.Header("Dropdown select");
-            var dropdown = new MaterialDropdownSelect();
-            dropdown.AddItem("First option", 1);
-            dropdown.AddItem("Second option", 2);
-            dropdown.AddItem("Third option", 3);
-            b.Add(dropdown);
-
-            b.Header("Dialog · Menu · Snackbar · Tooltip");
-            b.Caption("Hover the tooltip button for half a second; the snackbar action undoes nothing.");
-            b.Flow(flow => {
-                var openDialog = new MaterialButton {
-                    Variant = MaterialButtonVariant.Filled,
-                    Text = "Open dialog",
-                    AutoSize = true,
-                    Margin = new Padding(0, 0, Spacing.Space2, Spacing.Space2),
-                };
-                openDialog.Click += (s, e) => {
-                    using (var dialog = new MaterialDialog {
-                        Glyph = MaterialIcons.InfoFilled,
-                        TitleText = "Reset gallery settings?",
-                        BodyText = "Seed color, scheme variant and light/dark mode will return to their defaults. "
-                            + "This only affects the gallery preview, not your application.",
-                    }) {
-                        dialog.AddLink("Learn more", MaterialIcons.OpenInNew, () => { });
-                        dialog.AddAction("Cancel", DialogResult.Cancel, MaterialButtonVariant.Text);
-                        dialog.AddAction("Reset", DialogResult.OK, MaterialButtonVariant.Filled);
-                        dialog.ShowDialog(openDialog.FindForm());
-                    }
-                };
-                flow.Controls.Add(openDialog);
-
-                var openMenu = new MaterialButton {
-                    Variant = MaterialButtonVariant.Tonal,
-                    Text = "Open menu",
-                    Glyph = MaterialIcons.ChevronDown,
-                    AutoSize = true,
-                    Margin = new Padding(0, 0, Spacing.Space2, Spacing.Space2),
-                };
-                var menu = new MaterialMenu();
-                menu.AddItem("Refresh", MaterialIcons.Refresh, shortcut: "F5");
-                menu.AddItem("Open in browser", MaterialIcons.OpenInNew);
-                menu.AddSeparator();
-                menu.AddItem("Disabled action", MaterialIcons.Close, enabled: false);
-                menu.AddItem("Settings", MaterialIcons.Settings, shortcut: "Ctrl+,");
-                openMenu.Click += (s, e) => menu.Show(openMenu);
-                flow.Controls.Add(openMenu);
-
-                var showSnackbar = new MaterialButton {
-                    Variant = MaterialButtonVariant.Outlined,
-                    Text = "Show snackbar",
-                    AutoSize = true,
-                    Margin = new Padding(0, 0, Spacing.Space2, Spacing.Space2),
-                };
-                showSnackbar.Click += (s, e) => {
-                    Form? host = showSnackbar.FindForm();
-                    if (host != null) {
-                        MaterialSnackbar.Show(host, "Item archived", "Undo", () => { });
-                    }
-                };
-                flow.Controls.Add(showSnackbar);
-
-                var tooltipTarget = new MaterialButton {
-                    Variant = MaterialButtonVariant.Text,
-                    Text = "Hover for tooltip",
-                    AutoSize = true,
-                    Margin = new Padding(0, 0, Spacing.Space2, Spacing.Space2),
-                };
-                MaterialTooltip.SetTooltip(tooltipTarget, "Rich tooltip",
-                    "Plain and rich tooltips with inverse-surface colors; shown after a short hover delay.");
-                flow.Controls.Add(tooltipTarget);
-            });
-
-            b.Header("Pickers");
-            var pickResult = new MaterialLabel {
-                Text = "Pick a date or time…",
-                Font = TypeScale.BodyMedium,
-                ForeColor = MaterialColors.OnSurfaceVariant,
-                AutoSize = true,
-            };
-            b.Flow(flow => {
-                var pickDate = new MaterialButton {
-                    Variant = MaterialButtonVariant.Tonal,
-                    Text = "Pick date",
-                    AutoSize = true,
-                    Margin = new Padding(0, 0, Spacing.Space2, 0),
-                };
-                pickDate.Click += (s, e) => {
-                    using (var picker = new MaterialDatePickerDialog(DateTime.Today)) {
-                        if (picker.ShowDialog(pickDate.FindForm()) == DialogResult.OK) {
-                            pickResult.Text = $"Picked date: {picker.Value:D}";
-                        }
-                    }
-                };
-                flow.Controls.Add(pickDate);
-
-                var pickTime = new MaterialButton {
-                    Variant = MaterialButtonVariant.Tonal,
-                    Text = "Pick time",
-                    AutoSize = true,
-                    Margin = new Padding(0, 0, Spacing.Space2, 0),
-                };
-                pickTime.Click += (s, e) => {
-                    using (var picker = new MaterialTimePickerDialog(DateTime.Now.TimeOfDay)) {
-                        if (picker.ShowDialog(pickTime.FindForm()) == DialogResult.OK) {
-                            pickResult.Text = $"Picked time: {picker.Value:hh\\:mm}";
-                        }
-                    }
-                };
-                flow.Controls.Add(pickTime);
-            });
-            b.Add(pickResult);
-
-            b.Header("Badge");
-            b.Flow(flow => {
-                flow.Controls.Add(new MaterialBadge { Count = 3, Margin = new Padding(0, 4, Spacing.Space2, 0) });
-                flow.Controls.Add(new MaterialBadge { Count = 128, Margin = new Padding(0, 4, Spacing.Space2, 0) });
-                flow.Controls.Add(new MaterialBadge { IsDot = true, Margin = new Padding(0, 8, Spacing.Space2, 0) });
-            });
-        }
-
-        // App/taskbar icon rendered from a library glyph on a brand-purple rounded square, so the
-        // sample carries its own mark instead of the default WinForms exe icon.
         private static Icon BuildAppIcon() {
             const int s = 256;
             using (var bmp = new Bitmap(s, s, PixelFormat.Format32bppArgb)) {
@@ -987,8 +390,7 @@ namespace Material3.WinForms.Gallery {
                     }
                     int gpx = (int)(s * 0.56);
                     Bitmap glyph = MaterialIconRenderer.Render(MaterialIcons.Layers, gpx, Color.White);
-                    // Center on the glyph's painted bounds, not the nominal box: Material Symbols
-                    // carry uneven internal padding, so geometric placement reads off-center.
+                    // Material Symbols pad unevenly, so this centres the painted pixels, not the box
                     Rectangle cb = ContentBounds(glyph);
                     int dx = (s - cb.Width) / 2 - cb.X;
                     int dy = (s - cb.Height) / 2 - cb.Y;
@@ -1006,8 +408,7 @@ namespace Material3.WinForms.Gallery {
             }
         }
 
-        // Tight bounding box of the non-transparent pixels. LockBits + one Marshal.Copy instead of
-        // per-pixel GetPixel, which is ~60ms of interop over the glyph and showed up at startup.
+        // LockBits, not GetPixel: per-pixel interop cost ~60 ms at startup
         private static Rectangle ContentBounds(Bitmap bmp) {
             BitmapData data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
                 ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
@@ -1019,10 +420,21 @@ namespace Material3.WinForms.Gallery {
                     int row = yy * data.Stride;
                     for (int xx = 0; xx < bmp.Width; xx++) {
                         if (buffer[row + xx * 4 + 3] > 8) {
-                            if (xx < minX) minX = xx;
-                            if (xx > maxX) maxX = xx;
-                            if (yy < minY) minY = yy;
-                            if (yy > maxY) maxY = yy;
+                            if (xx < minX) {
+                                minX = xx;
+                            }
+
+                            if (xx > maxX) {
+                                maxX = xx;
+                            }
+
+                            if (yy < minY) {
+                                minY = yy;
+                            }
+
+                            if (yy > maxY) {
+                                maxY = yy;
+                            }
                         }
                     }
                 }
@@ -1036,8 +448,7 @@ namespace Material3.WinForms.Gallery {
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool DestroyIcon(IntPtr handle);
 
-        // Double-buffered so the nav repaints in one frame during the theme cross-fade instead of
-        // flickering a beat behind the (already buffered) title bar and content.
+        // Buffered so the nav repaints in step with the buffered title bar and content
         private sealed class BufferedPanel : Panel {
             public BufferedPanel() {
                 DoubleBuffered = true;

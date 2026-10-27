@@ -29,7 +29,7 @@ namespace Material3.WinForms.Drawing {
 
         /// <summary>
         /// Registers a consumer SVG under <paramref name="key"/> so <see cref="Render"/> renders it like a
-        /// bundled icon. Markup must use the grammar <see cref="SvgGlyph"/> supports (no arcs/gradients).
+        /// bundled icon. Markup must use the grammar <see cref="SvgGlyph"/> supports (paths only, no gradients).
         /// </summary>
         public static void Register(string key, string svgMarkup) {
             if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(svgMarkup)) {

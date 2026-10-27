@@ -16,17 +16,17 @@ namespace Material3.WinForms.Controls {
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Panel ContentPanel { get; }
 
-        /// <summary>The width reserved for the overlay scrollbar, in 96-DPI pixels.</summary>
-        public const int TrackWidth = 12;
+        internal const int DefaultTrackWidth = 12;
 
-        private const int ThumbInset = 2;
-        private const int ThumbIdleWidth = 4;
-        private const int ThumbHoverWidth = 8;
-        private const int ThumbMinLength = 24;
-        private const int WheelStepPixels = 60;
-
-        private static readonly TimeSpan AutoHideDelay = TimeSpan.FromMilliseconds(1500);
         private static readonly TimeSpan FadeDuration = TimeSpan.FromMilliseconds(220);
+
+        private int _trackWidth = DefaultTrackWidth;
+        private int _thumbInset = 2;
+        private int _thumbIdleWidth = 4;
+        private int _thumbHoverWidth = 8;
+        private int _thumbMinLength = 24;
+        private int _wheelStep;
+        private int _autoHideDelay = 1500;
 
         private int _scrollOffset;
         private int _wheelAccumulator;
@@ -79,6 +79,85 @@ namespace Material3.WinForms.Controls {
                 }
                 Invalidate();
             });
+        }
+
+        /// <summary>The width reserved for the overlay scrollbar on overflow, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The width reserved for the overlay scrollbar on overflow, in 96-DPI px.")]
+        [DefaultValue(DefaultTrackWidth)]
+        public int TrackWidth {
+            get => _trackWidth;
+            set { _trackWidth = Math.Max(0, value); Relayout(); Invalidate(); }
+        }
+
+        /// <summary>The gap between the thumb and the track's ends and edge, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The gap between the thumb and the track's ends and edge, in 96-DPI px.")]
+        [DefaultValue(2)]
+        public int ThumbInset {
+            get => _thumbInset;
+            set { _thumbInset = Math.Max(0, value); Invalidate(); }
+        }
+
+        /// <summary>The thumb's width at rest, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The thumb's width at rest, in 96-DPI px.")]
+        [DefaultValue(4)]
+        public int ThumbIdleWidth {
+            get => _thumbIdleWidth;
+            set { _thumbIdleWidth = Math.Max(1, value); Invalidate(); }
+        }
+
+        /// <summary>The thumb's width under the pointer or while dragged, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The thumb's width under the pointer or while dragged, in 96-DPI px.")]
+        [DefaultValue(8)]
+        public int ThumbHoverWidth {
+            get => _thumbHoverWidth;
+            set { _thumbHoverWidth = Math.Max(1, value); Invalidate(); }
+        }
+
+        /// <summary>The thumb's shortest length, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The thumb's shortest length, in 96-DPI px.")]
+        [DefaultValue(24)]
+        public int ThumbMinLength {
+            get => _thumbMinLength;
+            set { _thumbMinLength = Math.Max(1, value); Invalidate(); }
+        }
+
+        /// <summary>
+        /// The distance one mouse-wheel notch scrolls, in 96-DPI px. 0 follows the Windows setting: its lines per notch,
+        /// a third of 100 px each as on WPF, or a whole page when Windows is set to scroll a screen at a time.
+        /// </summary>
+        [Category("Material Design")]
+        [Description("The distance one mouse-wheel notch scrolls, in 96-DPI px; 0 follows the Windows wheel setting.")]
+        [DefaultValue(0)]
+        public int WheelStep {
+            get => _wheelStep;
+            set => _wheelStep = Math.Max(0, value);
+        }
+
+        private const double LinePx = 100.0 / 3;
+
+        private int NotchPixels {
+            get {
+                if (_wheelStep > 0) {
+                    return Dpi.Scale(this, _wheelStep);
+                }
+
+                int lines = SystemInformation.MouseWheelScrollLines;
+                return lines < 0 ? Math.Max(1, ClientSize.Height) : (int)Math.Round(Dpi.Scale(this, (float)(Math.Max(1, lines) * LinePx)));
+            }
+        }
+
+        /// <summary>The idle time before the thumb fades out, in milliseconds.</summary>
+        [Category("Material Design")]
+        [Description("The idle time before the thumb fades out, in milliseconds.")]
+        [DefaultValue(1500)]
+        public int AutoHideDelay {
+            get => _autoHideDelay;
+            set => _autoHideDelay = Math.Max(0, value);
         }
 
         /// <inheritdoc />
@@ -160,6 +239,43 @@ namespace Material3.WinForms.Controls {
 
         private const int WM_SETREDRAW = 0x000B;
 
+        /// <summary>
+        /// Scrolls the least distance that shows <paramref name="child"/>, a control inside <see cref="ContentPanel"/>,
+        /// whole; a control outside it is ignored.
+        /// </summary>
+        public void ScrollIntoView(Control child) {
+            if (child == null) {
+                throw new ArgumentNullException(nameof(child));
+            }
+
+            int top = 0;
+            Control? c = child;
+            for (; c != null && c != ContentPanel; c = c.Parent) {
+                top += c.Top;
+            }
+
+            if (c == null) {
+                return;
+            }
+            int viewport = ClientSize.Height;
+            int offset = _scrollOffset;
+            if (top < offset) {
+                offset = top;
+            }
+            else if (top + child.Height > offset + viewport) {
+                offset = top + child.Height - viewport;
+            }
+
+            offset = Math.Max(0, Math.Min(offset, ContentPanel.Height - viewport));
+            if (offset == _scrollOffset) {
+                return;
+            }
+            _scrollOffset = offset;
+            ContentPanel.Top = -_scrollOffset;
+            BumpActivity();
+            Invalidate();
+        }
+
         /// <summary>Reset scroll to the top — useful when host swaps content (e.g. step navigation).</summary>
         public void ScrollToTop() {
             if (_scrollOffset == 0) {
@@ -177,7 +293,7 @@ namespace Material3.WinForms.Controls {
             _inRelayout = true;
             try {
                 for (int pass = 0; pass < 2; pass++) {
-                    int targetWidth = Math.Max(0, ClientSize.Width - (_trackReserved ? Dpi.Scale(this, TrackWidth) : 0));
+                    int targetWidth = Math.Max(0, ClientSize.Width - (_trackReserved ? Dpi.Scale(this, _trackWidth) : 0));
                     if (ContentPanel.Width != targetWidth) {
                         ContentPanel.Width = targetWidth;
                     }
@@ -242,7 +358,7 @@ namespace Material3.WinForms.Controls {
                 return;
             }
             _wheelAccumulator -= notches * 120;
-            ScrollByPixels(-notches * WheelStepPixels);
+            ScrollByPixels(-notches * NotchPixels);
         }
 
         private void BumpActivity() {
@@ -261,7 +377,7 @@ namespace Material3.WinForms.Controls {
                 _targetOpacity = 1f;
                 _lastActivityUtc = DateTime.UtcNow;
             }
-            else if ((DateTime.UtcNow - _lastActivityUtc) > AutoHideDelay) {
+            else if ((DateTime.UtcNow - _lastActivityUtc) > TimeSpan.FromMilliseconds(_autoHideDelay)) {
                 _targetOpacity = 0f;
             }
 
@@ -292,7 +408,7 @@ namespace Material3.WinForms.Controls {
                 if (content <= viewport) {
                     return;
                 }
-                int trackHeight = ClientSize.Height - Dpi.Scale(this, ThumbInset) * 2;
+                int trackHeight = ClientSize.Height - Dpi.Scale(this, _thumbInset) * 2;
                 int thumbLen = ComputeThumbLength(viewport, content);
                 int travel = trackHeight - thumbLen;
                 if (travel <= 0) {
@@ -357,7 +473,7 @@ namespace Material3.WinForms.Controls {
             Rectangle track = GetTrackRect();
             if (track.Contains(e.Location)) {
                 int direction = e.Y < thumb.Top ? -1 : 1;
-                ScrollByPixels(direction * Math.Max(1, ClientSize.Height - WheelStepPixels));
+                ScrollByPixels(direction * Math.Max(1, ClientSize.Height - NotchPixels));
             }
         }
 
@@ -372,7 +488,7 @@ namespace Material3.WinForms.Controls {
         }
 
         private Rectangle GetTrackRect() {
-            int trackWidth = Dpi.Scale(this, TrackWidth);
+            int trackWidth = Dpi.Scale(this, _trackWidth);
             return new Rectangle(
                 ClientSize.Width - trackWidth,
                 0,
@@ -382,9 +498,9 @@ namespace Material3.WinForms.Controls {
         }
 
         private int ComputeThumbLength(int viewport, int content) {
-            int trackHeight = ClientSize.Height - Dpi.Scale(this, ThumbInset) * 2;
+            int trackHeight = ClientSize.Height - Dpi.Scale(this, _thumbInset) * 2;
             int raw = (int)Math.Round((double)viewport / content * trackHeight);
-            return Math.Max(Dpi.Scale(this, ThumbMinLength), Math.Min(trackHeight, raw));
+            return Math.Max(Dpi.Scale(this, _thumbMinLength), Math.Min(trackHeight, raw));
         }
 
         private Rectangle GetThumbRect() {
@@ -393,14 +509,14 @@ namespace Material3.WinForms.Controls {
             if (content <= viewport) {
                 return Rectangle.Empty;
             }
-            int thumbInset = Dpi.Scale(this, ThumbInset);
+            int thumbInset = Dpi.Scale(this, _thumbInset);
             int trackHeight = viewport - thumbInset * 2;
             int thumbLen = ComputeThumbLength(viewport, content);
             int travel = trackHeight - thumbLen;
             int maxOffset = content - viewport;
             int thumbTop = thumbInset + (maxOffset <= 0 ? 0 : (int)Math.Round((double)_scrollOffset / maxOffset * travel));
 
-            int visibleWidth = Dpi.Scale(this, _thumbHovered || _thumbDragging ? ThumbHoverWidth : ThumbIdleWidth);
+            int visibleWidth = Dpi.Scale(this, _thumbHovered || _thumbDragging ? _thumbHoverWidth : _thumbIdleWidth);
             int visibleLeft = ClientSize.Width - thumbInset - visibleWidth;
             return new Rectangle(visibleLeft, thumbTop, visibleWidth, thumbLen);
         }

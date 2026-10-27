@@ -53,10 +53,16 @@ namespace Material3.WinForms.Tokens {
 
     /// <summary>Default component dimensions (px @96 DPI).</summary>
     public static class ComponentSizes {
-        /// <summary>A button's height. In 96-DPI pixels.</summary>
-        public const int ButtonHeight = 40;
-        /// <summary>A compact button's height. In 96-DPI pixels.</summary>
-        public const int ButtonHeightSmall = 32;
+        /// <summary>The height of every standard control — buttons, icon buttons, selects, segmented buttons, the search bar, menu rows and selection rows. In 96-DPI pixels.</summary>
+        public const int ControlHeight = 40;
+        /// <summary>The height of an M3 text field with a floating label. In 96-DPI pixels.</summary>
+        public const int FieldHeight = 56;
+        /// <summary>The height of compact buttons and dense rows. In 96-DPI pixels.</summary>
+        public const int CompactControlHeight = 32;
+        /// <summary>A button's height (<see cref="ControlHeight"/>). In 96-DPI pixels.</summary>
+        public const int ButtonHeight = ControlHeight;
+        /// <summary>A compact button's height (<see cref="CompactControlHeight"/>). In 96-DPI pixels.</summary>
+        public const int ButtonHeightSmall = CompactControlHeight;
         /// <summary>A text button's height. In 96-DPI pixels.</summary>
         public const int TextButtonHeight = 36;
         /// <summary>A status chip's height. In 96-DPI pixels.</summary>
@@ -65,10 +71,10 @@ namespace Material3.WinForms.Tokens {
         public const int AssistChipHeight = 32;
         /// <summary>The least height of a one-line list row. In 96-DPI pixels.</summary>
         public const int ListItemMinHeight = 56;
-        /// <summary>A dropdown field's height. In 96-DPI pixels.</summary>
-        public const int DropdownHeight = 48;
+        /// <summary>A dropdown field's height (<see cref="ControlHeight"/>). In 96-DPI pixels.</summary>
+        public const int DropdownHeight = ControlHeight;
         /// <summary>The thickness of a linear progress bar. In 96-DPI pixels.</summary>
-        public const int LinearProgressHeight = 8;
+        public const int LinearProgressHeight = 4;
         /// <summary>The widest a dialog grows. In 96-DPI pixels.</summary>
         public const int DialogMaxWidth = 420;
         /// <summary>A title bar's height. In 96-DPI pixels.</summary>

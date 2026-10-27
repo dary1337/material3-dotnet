@@ -24,6 +24,8 @@ namespace Material3.WinForms.Drawing {
             public int IconGap;
             /// <summary>The outline width.</summary>
             public float OutlineWidth;
+            /// <summary>The corner radius when the style is not a pill; 0 takes the 8px M3 small shape, scaled to the graphics' DPI by the caller.</summary>
+            public int CornerRadius;
             /// <summary>The label font.</summary>
             public Font Font;
         }
@@ -80,7 +82,7 @@ namespace Material3.WinForms.Drawing {
         public static int Draw(Graphics graphics, string? text, string? glyph, Image? leadingImage,
                                in Style style, in Metrics metrics, int x, int y, int width) {
             var rect = new Rectangle(x, y, width - 1, metrics.Height - 1);
-            using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(rect, style.Pill ? Shape.Full : Shape.Small)) {
+            using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(rect, style.Pill ? Shape.Full : metrics.CornerRadius > 0 ? metrics.CornerRadius : Shape.Small)) {
                 if (style.Container.A > 0) {
                     using (var brush = new SolidBrush(style.Container)) {
                         graphics.FillPath(brush, path);

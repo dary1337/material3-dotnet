@@ -24,16 +24,20 @@ namespace Material3.WinForms.Controls {
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialFab : Control {
-        private const int ElevationLevel = 3;
+        private int _elevation = 3;
+        private int _cornerRadius = -1;
+        private int _iconSize = -1;
 
         private MaterialFabSize _fabSize = MaterialFabSize.Standard;
         private string _iconGlyph = MaterialIcons.Check;
         private Image? _iconImage;
         private bool _hovered;
+        private readonly StateLayerFade _layer;
         private bool _pressed;
 
         /// <summary>Initializes a new instance of the <see cref="MaterialFab"/> class.</summary>
         public MaterialFab() {
+            _layer = new StateLayerFade(this);
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
                     | ControlStyles.UserPaint
@@ -43,6 +47,8 @@ namespace Material3.WinForms.Controls {
                 true);
             BackColor = Color.Transparent;
             MaterialCursors.Apply(this, MaterialCursors.Pointer);
+            AutoSize = true;
+            TypeRole.Follow(this, () => TypeScale.LabelLarge);
             ApplySize();
             ThemeHook.Attach(this, Invalidate);
         }
@@ -54,6 +60,50 @@ namespace Material3.WinForms.Controls {
         public MaterialFabSize FabSize {
             get => _fabSize;
             set { _fabSize = value; ApplySize(); Invalidate(); }
+        }
+
+        /// <summary>Whether the FAB sizes itself to its size, glyph and label. Turn it off to give it a size of your own.</summary>
+        [Browsable(true)]
+        [EditorBrowsable(EditorBrowsableState.Always)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+        [DefaultValue(true)]
+        public override bool AutoSize {
+            get => base.AutoSize;
+            set { base.AutoSize = value; ApplySize(); }
+        }
+
+        /// <summary>The container's corner radius in 96-DPI px; −1 takes the size's own (12, 16 or 28).</summary>
+        [Category("Material Design")]
+        [Description("The container's corner radius in 96-DPI px; -1 takes the size's own.")]
+        [DefaultValue(-1)]
+        public int CornerRadius {
+            get => _cornerRadius;
+            set { _cornerRadius = Math.Max(-1, value); Invalidate(); }
+        }
+
+        /// <summary>The glyph's side in 96-DPI px; −1 takes the size's own (20, 24 or 32).</summary>
+        [Category("Material Design")]
+        [Description("The glyph's side in 96-DPI px; -1 takes the size's own.")]
+        [DefaultValue(-1)]
+        public int IconSize {
+            get => _iconSize;
+            set { _iconSize = Math.Max(-1, value); ApplySize(); Invalidate(); }
+        }
+
+        /// <summary>The shadow level, 0 to 5.</summary>
+        [Category("Material Design")]
+        [Description("The shadow level, 0 to 5.")]
+        [DefaultValue(3)]
+        public int ElevationLevel {
+            get => _elevation;
+            set { _elevation = Math.Max(0, Math.Min(5, value)); ApplySize(); Invalidate(); }
+        }
+
+        /// <inheritdoc />
+        protected override void OnFontChanged(EventArgs e) {
+            base.OnFontChanged(e);
+            ApplySize();
+            Invalidate();
         }
 
         /// <summary>Material Symbols key for the glyph.</summary>
@@ -95,24 +145,36 @@ namespace Material3.WinForms.Controls {
         }
 
         private (int surface, int radius, int icon) Metrics() {
+            (int surface, int radius, int icon) own;
             switch (_fabSize) {
-                case MaterialFabSize.Small: return (40, Shape.Medium, 20);
-                case MaterialFabSize.Large: return (96, Shape.ExtraLarge, 32);
-                default: return (56, Shape.Large, 24);
+                case MaterialFabSize.Small:
+                    own = (40, Shape.Medium, 20);
+                    break;
+                case MaterialFabSize.Large:
+                    own = (96, Shape.ExtraLarge, 32);
+                    break;
+                default:
+                    own = (56, Shape.Large, 24);
+                    break;
             }
+            return (own.surface, _cornerRadius >= 0 ? _cornerRadius : own.radius, _iconSize >= 0 ? _iconSize : own.icon);
         }
 
         private bool IsExtended => !string.IsNullOrEmpty(Text);
 
         private void ApplySize() {
+            if (!AutoSize) {
+                return;
+            }
+
             (int surface, _, int icon) = Metrics();
             int surfacePx = Dpi.Scale(this, surface);
-            int margin = Elevation.ShadowMargin(ElevationLevel);
+            int margin = Elevation.ShadowMargin(_elevation);
             if (IsExtended) {
                 int width = surfacePx;
                 if (IsHandleCreated) {
                     using (Graphics g = CreateGraphics()) {
-                        float text = g.MeasureString(Text, TypeScale.LabelLarge,
+                        float text = g.MeasureString(Text, Font,
                             int.MaxValue, StringFormat.GenericTypographic).Width;
                         width = Dpi.Scale(this, 16) + Dpi.Scale(this, icon) + Dpi.Scale(this, 12)
                             + (int)Math.Ceiling(text) + Dpi.Scale(this, 20);
@@ -158,24 +220,24 @@ namespace Material3.WinForms.Controls {
             (int _, int radiusDip, int iconDip) = Metrics();
             int radius = Dpi.Scale(this, radiusDip);
             int iconPx = Dpi.Scale(this, iconDip);
-            int margin = Elevation.ShadowMargin(ElevationLevel);
+            int margin = Elevation.ShadowMargin(_elevation);
             var surface = new Rectangle(margin, margin, Width - margin * 2 - 1, Height - margin * 2 - 1);
 
             Color container = Enabled
-                ? Elevation.TintedSurface(MaterialColors.PrimaryContainer, ElevationLevel)
-                : ArgbExtensions.Overlay(ResolveParentColor(), MaterialColors.OnSurface, StateLayers.DisabledContainer);
+                ? Elevation.TintedSurface(MaterialColors.PrimaryContainer, _elevation)
+                : ArgbExtensions.Overlay(SurfaceBehind.Of(this), MaterialColors.OnSurface, StateLayers.DisabledContainer);
             Color content = Enabled ? MaterialColors.OnPrimaryContainer : MaterialColors.OnSurfaceMuted;
 
-            if (Enabled) {
-                Elevation.PaintShadow(g, surface, radius, _pressed ? 1 : ElevationLevel);
+            if (Enabled && _elevation > 0) {
+                Elevation.PaintShadow(g, surface, radius, _pressed ? Math.Min(1, _elevation) : _elevation);
             }
 
             using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(surface, radius)) {
                 using (var brush = new SolidBrush(container)) {
                     g.FillPath(brush, path);
                 }
-                if (Enabled && (_hovered || _pressed)) {
-                    double overlay = _pressed ? StateLayers.Pressed : StateLayers.Hover;
+                double overlay = _layer.Resolve(_hovered, _pressed, Enabled);
+                if (overlay > 0) {
                     using (var brush = new SolidBrush(ArgbExtensions.Overlay(container, content, overlay))) {
                         g.FillPath(brush, path);
                     }
@@ -190,7 +252,7 @@ namespace Material3.WinForms.Controls {
                 }
                 using (var brush = new SolidBrush(content))
                 using (var fmt = new StringFormat(StringFormat.GenericTypographic) { LineAlignment = StringAlignment.Center }) {
-                    g.DrawString(Text, TypeScale.LabelLarge, brush,
+                    g.DrawString(Text, Font, brush,
                         new RectangleF(x, surface.Y, surface.Right - x, surface.Height), fmt);
                 }
             }
@@ -202,13 +264,12 @@ namespace Material3.WinForms.Controls {
             }
         }
 
-        private Color ResolveParentColor() {
-            for (Control? p = Parent; p != null; p = p.Parent) {
-                if (p.BackColor.A > 0) {
-                    return p.BackColor;
-                }
+        /// <inheritdoc />
+        protected override void Dispose(bool disposing) {
+            if (disposing) {
+                _layer.Dispose();
             }
-            return MaterialColors.Surface;
+            base.Dispose(disposing);
         }
     }
 }

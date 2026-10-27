@@ -10,8 +10,9 @@ namespace Material3.WinForms.Controls {
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public class MaterialRoundedButton : Button {
-        private readonly int _cornerRadius;
-        private readonly Color _borderColor;
+        private readonly int _defaultCornerRadius;
+        private int _cornerRadius;
+        private Color _borderColor;
 
         /// <summary>The fill shown under the pointer and while pressed.</summary>
         [Browsable(false)]
@@ -24,6 +25,32 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <summary>The corner radius, in 96-DPI pixels.</summary>
+        [Category("Material Design")]
+        [Description("The corner radius, in 96-DPI pixels.")]
+        public int CornerRadius {
+            get => _cornerRadius;
+            set {
+                _cornerRadius = Math.Max(0, value);
+                _regionSize = System.Drawing.Size.Empty;
+                UpdateRegion();
+                Invalidate();
+            }
+        }
+
+        private bool ShouldSerializeCornerRadius() => _cornerRadius != _defaultCornerRadius;
+
+        private void ResetCornerRadius() => CornerRadius = _defaultCornerRadius;
+
+        /// <summary>The border colour; <see cref="System.Drawing.Color.Empty"/> or a transparent colour hides it.</summary>
+        [Category("Material Design")]
+        [Description("The border colour; Empty or a transparent colour hides it.")]
+        [DefaultValue(typeof(Color), "")]
+        public Color BorderColor {
+            get => _borderColor;
+            set { _borderColor = value; Invalidate(); }
+        }
+
         /// <summary>Initializes a new instance of the <see cref="MaterialRoundedButton"/> class.</summary>
         public MaterialRoundedButton() : this(6) { }
 
@@ -33,10 +60,11 @@ namespace Material3.WinForms.Controls {
             Color hoverColor = default,
             Color borderColor = default
         ) {
+            _defaultCornerRadius = cornerRadius;
             _cornerRadius = cornerRadius;
 
             AutoSize = true;
-            FlatAppearance.BorderColor = BackColor;
+            FlatAppearance.BorderColor = BackColor.A == 255 ? BackColor : Color.Empty;
             FlatAppearance.BorderSize = 0;
             FlatStyle = FlatStyle.Flat;
             MaterialCursors.Apply(this, MaterialCursors.Pointer);
@@ -54,12 +82,19 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override void OnBackColorChanged(EventArgs e) {
             base.OnBackColorChanged(e);
-            FlatAppearance.BorderColor = BackColor;
+            FlatAppearance.BorderColor = BackColor.A == 255 ? BackColor : Color.Empty;
         }
 
         /// <inheritdoc />
         protected override void OnHandleCreated(EventArgs e) {
             base.OnHandleCreated(e);
+            _regionSize = System.Drawing.Size.Empty;
+            UpdateRegion();
+        }
+
+        /// <inheritdoc />
+        protected override void OnDpiChangedAfterParent(EventArgs e) {
+            base.OnDpiChangedAfterParent(e);
             _regionSize = System.Drawing.Size.Empty;
             UpdateRegion();
         }

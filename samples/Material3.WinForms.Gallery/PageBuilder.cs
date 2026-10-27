@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
 using System.Windows.Forms;
+using Material3.Gallery;
 using Material3.WinForms;
 using Material3.WinForms.Controls;
 using Material3.WinForms.Drawing;
@@ -11,74 +13,119 @@ using Material3.WinForms.Tokens;
 using Material3.WinForms.Typography;
 
 namespace Material3.WinForms.Gallery {
-    /// <summary>
-    /// Stacks demo blocks top-to-bottom inside the scroll panel's content. Width-tracking is
-    /// done with anchors so pages reflow on window resize without rebuilding.
-    /// </summary>
     internal sealed class PageBuilder {
+        private sealed class Slot {
+            public Control Control = null!;
+            public int Before;
+            public int After;
+        }
+
         private readonly Panel _host;
-        private int _y;
+        private readonly List<Slot> _slots = new List<Slot>();
+        private bool _restacking;
 
         private const int SidePad = 24;
 
         public PageBuilder(Panel host) {
             _host = host;
-            _y = S(Spacing.Space4);
         }
 
-        // Scale a 96-DPI layout value to the host's current DPI so the gallery's own rhythm
-        // (gaps, side padding) keeps pace with the DPI-scaled controls.
+        // Every block is placed by Restack, so one that hides or shrinks (a dismissed banner) closes the page up behind it.
+        private void Place(Control control, int after, int before = 0) {
+            control.Left = Pad;
+            _host.Controls.Add(control);
+            _slots.Add(new Slot { Control = control, Before = before, After = after });
+            control.SizeChanged += (s, e) => Restack();
+            control.VisibleChanged += (s, e) => Restack();
+            Restack();
+        }
+
+        private void Restack() {
+            if (_restacking) {
+                return;
+            }
+
+            _restacking = true;
+            try {
+                int y = S(Spacing.Space4);
+                foreach (Slot slot in _slots) {
+                    Control c = slot.Control;
+                    // A hidden host reports every child hidden; until it shows, lay each block out as shown.
+                    if (_host.Visible && !c.Visible) {
+                        continue;
+                    }
+
+                    y += slot.Before;
+                    if (c.Top != y) {
+                        c.Top = y;
+                    }
+
+                    y += (c is FlowLayoutPanel flow ? flow.PreferredSize.Height : c.Height) + slot.After;
+                }
+            }
+            finally {
+                _restacking = false;
+            }
+        }
+
         private int S(int px) => Dpi.Scale(_host, px);
 
-        /// <summary>Public DPI scale for callers sizing controls they add (e.g. skeleton height).</summary>
         public int Scale(int px) => S(px);
 
         private int Pad => S(SidePad);
 
         private int InnerWidth => Math.Max(200, _host.Width - Pad * 2);
 
+        // The ids of the sections built so far, in order, for the test that holds both galleries to one spec.
+        public List<string> Emitted { get; } = new List<string>();
+
         public void Add(Control control) {
-            control.Location = new Point(Pad, _y);
-            if (control.Width <= 0 || control.Anchor.HasFlag(AnchorStyles.Right)) {
+            if (control.Width <= 0 || control.Width > InnerWidth || control.Anchor.HasFlag(AnchorStyles.Right)) {
                 control.Width = InnerWidth;
             }
-            else if (control.Width > InnerWidth || control is MaterialCard || control is MaterialRoundedPanel
-                || control is MaterialProgressBar || control is MaterialStepChecklist || control is MaterialSlider
-                || control is MaterialDropdownSelect || control is MaterialSkeletonCard
-                || control is MaterialTabs || control is MaterialNavigationBar
-                || control is MaterialListItem || control is MaterialDivider) {
-                control.Width = InnerWidth;
-                control.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            }
-            _host.Controls.Add(control);
-            _y = control.Bottom + S(Spacing.Space3);
+            Place(control, S(Spacing.Space3));
         }
 
-        /// <summary>Adds a wrapping flow row and lets the caller fill it with controls.</summary>
-        public void Flow(Action<FlowLayoutPanel> fill) {
+        public void PageTitle(GalleryPage page) {
+            var title = new MaterialLabel {
+                Text = page.Title,
+                Font = TypeScale.TitleLarge,
+                ForeColor = MaterialColors.OnSurface,
+                AutoSize = true,
+            };
+            Place(title, S(Spacing.Space1));
+            if (page.Caption.Length > 0) {
+                Caption(page.Caption);
+            }
+        }
+
+        public void Section(GallerySection section) {
+            Emitted.Add(section.Id);
+            Header(section.Title);
+            if (section.Caption.Length > 0) {
+                Caption(section.Caption);
+            }
+        }
+
+        public void Flow(Action<FlowLayoutPanel> fill, int maxWidth = 0) {
             var flow = new FlowLayoutPanel {
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 BackColor = Color.Transparent,
-                Location = new Point(Pad, _y),
-                MaximumSize = new Size(InnerWidth, 0),
+                MaximumSize = new Size(maxWidth > 0 ? Math.Min(S(maxWidth), InnerWidth) : InnerWidth, 0),
             };
             fill(flow);
-            // Default margins keep flow children from touching; explicit margins win.
             foreach (Control child in flow.Controls) {
                 if (child.Margin == new Padding(3)) {
                     child.Margin = new Padding(0, 0, S(Spacing.Space2), S(Spacing.Space2));
                 }
             }
             CenterRow(flow);
-            _host.Controls.Add(flow);
             flow.PerformLayout();
-            _y = flow.Top + flow.PreferredSize.Height + S(Spacing.Space3);
+            Place(flow, S(Spacing.Space3));
         }
 
-        // Vertically center a flow row's children on a common mid-line so a row mixing different
-        // control heights (e.g. the FAB sizes) reads as one aligned row instead of top-ragged.
-        // Equal-height rows are unaffected (the extra space is zero).
+        // A row of mixed heights (the FAB sizes) centres on one mid-line
         private static void CenterRow(FlowLayoutPanel flow) {
             int rowHeight = 0;
             foreach (Control child in flow.Controls) {
@@ -96,127 +143,75 @@ namespace Material3.WinForms.Gallery {
         }
 
         public void Gap(int px) {
-            _y += S(px) - S(Spacing.Space3);
+            _slots[_slots.Count - 1].After += S(px) - S(Spacing.Space3);
+            Restack();
         }
 
         public void Header(string text) {
-            if (_y > S(Spacing.Space4)) {
-                _y += S(Spacing.Space3);
-            }
             var label = new MaterialLabel {
                 Text = text,
                 Font = TypeScale.TitleMedium,
                 ForeColor = MaterialColors.OnSurface,
                 AutoSize = true,
-                Location = new Point(Pad, _y),
             };
-            _host.Controls.Add(label);
-            _y = label.Bottom + S(Spacing.Space1);
+            Place(label, S(Spacing.Space1), before: _slots.Count > 0 ? S(Spacing.Space3) : 0);
         }
 
         public void Caption(string text) {
+            int height = TextRenderer.MeasureText(text, TypeScale.BodySmall, new Size(InnerWidth, int.MaxValue), TextFormatFlags.WordBreak).Height;
             var label = new MaterialLabel {
                 Text = text,
                 Font = TypeScale.BodySmall,
                 ForeColor = MaterialColors.OnSurfaceVariant,
                 AutoSize = false,
                 Width = InnerWidth,
-                Height = S(34),
-                Location = new Point(Pad, _y),
+                Height = height + S(4),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
             };
-            _host.Controls.Add(label);
-            _y = label.Bottom + S(Spacing.Space1);
+            Place(label, S(Spacing.Space1));
         }
 
-        public void SwatchGroup(string title, (string name, Func<Color> fill, Func<Color> content)[] roles) {
-            Header(title);
+        public void Swatches((string name, Func<Color> fill, Func<Color> content)[] roles) {
             var flow = new FlowLayoutPanel {
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 BackColor = Color.Transparent,
-                Location = new Point(Pad, _y),
                 MaximumSize = new Size(InnerWidth, 0),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left,
             };
             foreach ((string name, Func<Color> fill, Func<Color> content) in roles) {
                 flow.Controls.Add(new SwatchTile(name, fill, content));
             }
-            _host.Controls.Add(flow);
-            // AutoSize height is only valid after a layout pass; PreferredSize gives the wrapped
-            // height immediately so the next block doesn't stack on top of the unwrapped rows.
             flow.PerformLayout();
-            _y = flow.Top + flow.PreferredSize.Height + S(Spacing.Space3);
+            Place(flow, S(Spacing.Space3));
         }
 
         public void TypeSample(string name, TextStyle style) {
             var sample = new TypeSampleControl(name, style) {
-                Location = new Point(Pad, _y),
                 Width = InnerWidth,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
             };
-            _host.Controls.Add(sample);
-            _y = sample.Bottom + S(Spacing.Space1);
+            Place(sample, S(Spacing.Space1));
         }
 
         public void ElevationRow() {
             var row = new ElevationRowControl {
-                Location = new Point(Pad, _y),
                 Width = InnerWidth,
-                Height = 130,
+                Height = S(100),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
             };
-            _host.Controls.Add(row);
-            _y = row.Bottom + S(Spacing.Space3);
+            Place(row, S(Spacing.Space3));
         }
 
         public void ShapeRow() {
             var row = new ShapeRowControl {
-                Location = new Point(Pad, _y),
                 Width = InnerWidth,
-                Height = 96,
+                Height = S(84),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
             };
-            _host.Controls.Add(row);
-            _y = row.Bottom + S(Spacing.Space3);
+            Place(row, S(Spacing.Space3));
         }
 
-        public void ButtonRow(string caption, bool enabled, string? icon = null) {
-            Caption(caption);
-            var flow = new FlowLayoutPanel {
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                BackColor = Color.Transparent,
-                Location = new Point(Pad, _y),
-                MaximumSize = new Size(InnerWidth, 0),
-            };
-            foreach (MaterialButtonVariant variant in new[] {
-                MaterialButtonVariant.Elevated, MaterialButtonVariant.Filled, MaterialButtonVariant.Tonal,
-                MaterialButtonVariant.Outlined, MaterialButtonVariant.Text,
-            }) {
-                var button = new MaterialButton {
-                    Variant = variant,
-                    Text = variant.ToString(),
-                    Enabled = enabled,
-                    AutoSize = true,
-                    // Lock height (floor + ceiling) so every variant sits on one baseline; width
-                    // still auto-grows. Min alone left Outlined taller. Scaled so the lock keeps
-                    // pace with the DPI-scaled button content instead of clipping it.
-                    MinimumSize = new Size(0, S(ComponentSizes.ButtonHeight)),
-                    MaximumSize = new Size(0, S(ComponentSizes.ButtonHeight)),
-                    Margin = new Padding(0, 0, S(Spacing.Space2), S(Spacing.Space2)),
-                };
-                if (icon != null) {
-                    button.Glyph = icon;
-                }
-                flow.Controls.Add(button);
-            }
-            _host.Controls.Add(flow);
-            flow.PerformLayout();
-            _y = flow.Top + flow.PreferredSize.Height + S(Spacing.Space3);
-        }
-
-        // ---- demo controls (paint at read-time so theme switches recolor without rebuild) ----
 
         private sealed class SwatchTile : Control {
             private readonly string _name;
@@ -272,8 +267,6 @@ namespace Material3.WinForms.Gallery {
                 ThemeHook.Attach(this, Invalidate);
             }
 
-            // Spec line height + meta row, scaled to DPI: the pt-based sample font renders larger at
-            // high DPI, so a raw height clipped the descenders. DeviceDpi needs a handle.
             protected override void OnHandleCreated(EventArgs e) {
                 base.OnHandleCreated(e);
                 ApplyIntrinsicHeight();
@@ -285,8 +278,7 @@ namespace Material3.WinForms.Gallery {
             }
 
             private void ApplyIntrinsicHeight() {
-                // Size to the real font height, not spec LineHeight: Segoe renders taller at the big
-                // display sizes and was clipping descenders. 16 clears the meta row, 8 is bottom margin.
+                // The real font height, not the spec line height: big Segoe sizes clip their descenders otherwise
                 Height = Dpi.Scale(this, Math.Max(16 + _style.Font.Height + 8, 44));
             }
 
@@ -295,19 +287,25 @@ namespace Material3.WinForms.Gallery {
                 g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
                 g.Clear(MaterialColors.Surface);
 
-                string meta = $"{_name}  ·  {_style.Font.SizeInPoints:0.##}pt  ·  ls {_style.LetterSpacing:0.##}px";
+                string meta = $"{_name}  ·  {_style.Font.SizeInPoints * 96f / 72f:0.##}px";
                 using (var metaBrush = new SolidBrush(MaterialColors.OnSurfaceMuted)) {
                     g.DrawString(meta, TypeScale.LabelSmall, metaBrush, 0, 0);
                 }
                 TypeScale.DrawString(
                     g,
-                    "The quick brown fox",
+                    GallerySpec.TypeSample,
                     _style,
                     MaterialColors.OnSurface,
                     new PointF(0, Dpi.Scale(this, 16))
                 );
             }
         }
+
+        private const int TileGap = 20;
+
+        private static void DrawTileLabel(Graphics g, string text, Rectangle tile, Color color) =>
+            TextRenderer.DrawText(g, text, TypeScale.LabelMedium, tile, color,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
 
         private sealed class ElevationRowControl : Control {
             public ElevationRowControl() {
@@ -319,21 +317,18 @@ namespace Material3.WinForms.Gallery {
             protected override void OnPaint(PaintEventArgs e) {
                 Graphics g = e.Graphics;
                 g.SmoothingMode = SmoothingMode.AntiAlias;
-                g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
                 g.Clear(MaterialColors.Surface);
 
-                int slot = Math.Max(90, Width / 6);
+                int w = Dpi.Scale(this, 96), h = Dpi.Scale(this, 72), step = w + Dpi.Scale(this, TileGap);
                 for (int level = 0; level <= 5; level++) {
-                    var rect = new Rectangle(level * slot + 14, 24, Math.Min(96, slot - 24), 64);
-                    Elevation.PaintShadow(g, rect, Shape.Medium, level);
-                    Color fill = Elevation.TintedSurface(MaterialColors.SurfaceContainerLow, level);
-                    using (var path = RoundedControlRenderer.GetFigurePath(rect, Shape.Medium))
-                    using (var brush = new SolidBrush(fill)) {
+                    var rect = new Rectangle(level * step, Dpi.Scale(this, 4), w, h);
+                    int radius = Dpi.Scale(this, Shape.Medium);
+                    Elevation.PaintShadow(g, rect, radius, level);
+                    using (var path = RoundedControlRenderer.GetFigurePath(rect, radius))
+                    using (var brush = new SolidBrush(Elevation.TintedSurface(MaterialColors.Surface, level))) {
                         g.FillPath(brush, path);
                     }
-                    using (var brush = new SolidBrush(MaterialColors.OnSurfaceVariant)) {
-                        g.DrawString($"Level {level}", TypeScale.LabelMedium, brush, rect.X + 8, rect.Y + 24);
-                    }
+                    DrawTileLabel(g, "Level " + level, rect, MaterialColors.OnSurface);
                 }
             }
         }
@@ -348,7 +343,6 @@ namespace Material3.WinForms.Gallery {
             protected override void OnPaint(PaintEventArgs e) {
                 Graphics g = e.Graphics;
                 g.SmoothingMode = SmoothingMode.AntiAlias;
-                g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
                 g.Clear(MaterialColors.Surface);
 
                 (string name, int radius)[] shapes = {
@@ -356,20 +350,19 @@ namespace Material3.WinForms.Gallery {
                     ("Sm 8", Shape.Small),
                     ("Md 12", Shape.Medium),
                     ("Lg 16", Shape.Large),
+                    ("Pill 20", Shape.LargeIncreased),
                     ("Xl 28", Shape.ExtraLarge),
                     ("Full", Shape.Full),
                 };
 
-                int slot = Math.Max(90, Width / shapes.Length);
+                int w = Dpi.Scale(this, 120), h = Dpi.Scale(this, 72), step = w + Dpi.Scale(this, 12);
                 for (int i = 0; i < shapes.Length; i++) {
-                    var rect = new Rectangle(i * slot + 14, 8, Math.Min(96, slot - 24), 56);
-                    using (var path = RoundedControlRenderer.GetFigurePath(rect, shapes[i].radius))
+                    var rect = new Rectangle(i * step, 0, w, h);
+                    using (var path = RoundedControlRenderer.GetFigurePath(rect, Math.Min(Dpi.Scale(this, shapes[i].radius), h / 2)))
                     using (var brush = new SolidBrush(MaterialColors.SecondaryContainer)) {
                         g.FillPath(brush, path);
                     }
-                    using (var brush = new SolidBrush(MaterialColors.OnSurfaceVariant)) {
-                        g.DrawString(shapes[i].name, TypeScale.LabelMedium, brush, rect.X + 4, rect.Bottom + 6);
-                    }
+                    DrawTileLabel(g, shapes[i].name, rect, MaterialColors.OnSecondaryContainer);
                 }
             }
         }

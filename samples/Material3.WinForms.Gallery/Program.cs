@@ -6,15 +6,15 @@ using Material3.WinForms.Theming;
 namespace Material3.WinForms.Gallery {
     internal static class Program {
         [STAThread]
-        private static void Main() {
+        private static void Main(string[] args) {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            // Default look: near-monochrome dark. The gallery's own controls switch seed,
-            // variant and mode at runtime.
             ThemeManager.Apply(MaterialTheme.Platinum(), isDark: true);
 
-            Application.Run(new GalleryForm());
+            // "--page <name>" opens that page first, for screenshots of one page.
+            int at = Array.IndexOf(args, "--page");
+            Application.Run(new GalleryForm(at >= 0 && at + 1 < args.Length ? args[at + 1] : null));
         }
     }
 }

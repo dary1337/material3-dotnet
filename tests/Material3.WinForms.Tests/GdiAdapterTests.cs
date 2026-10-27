@@ -1,4 +1,4 @@
-﻿using Material3.Core;
+using Material3.Core;
 using Material3.WinForms.Theming;
 using Xunit;
 
@@ -28,7 +28,10 @@ namespace Material3.WinForms.Tests {
             try {
                 int matched = 0;
                 foreach (var role in typeof(ColorScheme).GetProperties()) {
-                    if (role.PropertyType != typeof(Argb)) continue;
+                    if (role.PropertyType != typeof(Argb)) {
+                        continue;
+                    }
+
                     var gdiRole = typeof(MaterialColors).GetProperty(role.Name);
                     Assert.True(gdiRole != null, $"MaterialColors is missing role {role.Name}");
                     var expected = ((Argb)role.GetValue(ThemeManager.Scheme)!).ToGdi().ToArgb();

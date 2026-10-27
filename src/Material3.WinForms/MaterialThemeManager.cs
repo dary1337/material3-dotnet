@@ -2,8 +2,8 @@ using System.ComponentModel;
 using System.ComponentModel.Design;
 using System.Drawing;
 using System.Windows.Forms;
-using Material3.WinForms.Theming;
 using Material3.Core;
+using Material3.WinForms.Theming;
 
 namespace Material3.WinForms {
     /// <summary>

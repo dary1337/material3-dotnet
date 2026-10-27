@@ -16,20 +16,25 @@ namespace Material3.WinForms.Controls {
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialSegmentedButton : Control {
-        private const int SegmentHeight = 40;
-        private const int CheckPx = 16;
-        private const int CheckGap = 6;
+        private const int DefaultSegmentHeight = ComponentSizes.ControlHeight;
+
+        private int _segmentHeight = DefaultSegmentHeight;
+        private int _cornerRadius = -1;
+        private int _checkSize = 16;
+        private int _checkGap = 6;
 
         private readonly List<string> _segments = new List<string>();
         private readonly HashSet<int> _selected = new HashSet<int>();
         private bool _multiSelect;
         private int _hotIndex = -1;
+        private readonly ItemHoverFade _hover;
 
         /// <summary>Raised when the selection changes.</summary>
         public event EventHandler? SelectionChanged;
 
         /// <summary>Initializes a new instance of the <see cref="MaterialSegmentedButton"/> class.</summary>
         public MaterialSegmentedButton() {
+            _hover = new ItemHoverFade(this);
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
                     | ControlStyles.UserPaint
@@ -39,8 +44,83 @@ namespace Material3.WinForms.Controls {
                 true);
             BackColor = Color.Transparent;
             MaterialCursors.Apply(this, MaterialCursors.Pointer);
-            Height = SegmentHeight;
+            Height = DefaultSegmentHeight;
+            AutoSize = true;
+            TypeRole.Follow(this, () => TypeScale.LabelLarge);
             ThemeHook.Attach(this, Invalidate);
+        }
+
+        /// <summary>Whether the control sizes its height to <see cref="SegmentHeight"/>. Turn it off to give it a size of your own.</summary>
+        [Browsable(true)]
+        [EditorBrowsable(EditorBrowsableState.Always)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+        [DefaultValue(true)]
+        public override bool AutoSize {
+            get => base.AutoSize;
+            set { base.AutoSize = value; ApplyIntrinsicHeight(); }
+        }
+
+        /// <summary>The height AutoSize gives the control, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The height AutoSize gives the control, in 96-DPI px.")]
+        [DefaultValue(DefaultSegmentHeight)]
+        public int SegmentHeight {
+            get => _segmentHeight;
+            set { _segmentHeight = Math.Max(1, value); ApplyIntrinsicHeight(); Invalidate(); }
+        }
+
+        /// <summary>The outer corner radius, in 96-DPI px; -1 draws a full pill.</summary>
+        [Category("Material Design")]
+        [Description("The outer corner radius, in 96-DPI px; -1 draws a full pill.")]
+        [DefaultValue(-1)]
+        public int CornerRadius {
+            get => _cornerRadius;
+            set { _cornerRadius = Math.Max(-1, value); Invalidate(); }
+        }
+
+        /// <summary>The side of the check glyph on an active segment, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The side of the check glyph on an active segment, in 96-DPI px.")]
+        [DefaultValue(16)]
+        public int CheckSize {
+            get => _checkSize;
+            set { _checkSize = Math.Max(0, value); Invalidate(); }
+        }
+
+        /// <summary>The gap between the check glyph and the label, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The gap between the check glyph and the label, in 96-DPI px.")]
+        [DefaultValue(6)]
+        public int CheckGap {
+            get => _checkGap;
+            set { _checkGap = Math.Max(0, value); Invalidate(); }
+        }
+
+        /// <inheritdoc />
+        public override Size GetPreferredSize(Size proposedSize) => new Size(Width, Dpi.Scale(this, _segmentHeight));
+
+        /// <inheritdoc />
+        protected override void OnHandleCreated(EventArgs e) {
+            base.OnHandleCreated(e);
+            ApplyIntrinsicHeight();
+        }
+
+        /// <inheritdoc />
+        protected override void OnDpiChangedAfterParent(EventArgs e) {
+            base.OnDpiChangedAfterParent(e);
+            ApplyIntrinsicHeight();
+        }
+
+        /// <inheritdoc />
+        protected override void OnFontChanged(EventArgs e) {
+            base.OnFontChanged(e);
+            Invalidate();
+        }
+
+        private void ApplyIntrinsicHeight() {
+            if (AutoSize) {
+                Height = GetPreferredSize(Size.Empty).Height;
+            }
         }
 
         /// <summary>Allows several segments to be active at once (filter-style).</summary>
@@ -68,10 +148,39 @@ namespace Material3.WinForms.Controls {
             Invalidate();
         }
 
-        /// <summary>Index of the active segment in single-select mode (-1 when none).</summary>
+        /// <summary>The lowest selected index, or -1. Setting it selects exactly that segment; -1 clears them all.</summary>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public int SelectedIndex => _selected.Count > 0 ? _selected.Min() : -1;
+        public int SelectedIndex {
+            get => _selected.Count > 0 ? _selected.Min() : -1;
+            set {
+                if (value < -1 || value >= _segments.Count) {
+                    return;
+                }
+
+                if (value < 0 ? _selected.Count == 0 : _selected.Count == 1 && _selected.Contains(value)) {
+                    return;
+                }
+
+                _selected.Clear();
+                if (value >= 0) {
+                    _selected.Add(value);
+                }
+
+                SelectionChanged?.Invoke(this, EventArgs.Empty);
+                Invalidate();
+            }
+        }
+
+        /// <summary>Renames the segment at <paramref name="index"/>, keeping the selection.</summary>
+        public void SetSegmentText(int index, string text) {
+            if (index < 0 || index >= _segments.Count) {
+                throw new ArgumentOutOfRangeException(nameof(index));
+            }
+
+            _segments[index] = text ?? string.Empty;
+            Invalidate();
+        }
 
         /// <summary>Active segment indices (useful with <see cref="MultiSelect"/>).</summary>
         [Browsable(false)]
@@ -133,7 +242,7 @@ namespace Material3.WinForms.Controls {
             int hit = HitTest(e.Location);
             if (hit != _hotIndex) {
                 _hotIndex = hit;
-                Invalidate();
+                _hover.SetHot(hit);
             }
         }
 
@@ -142,7 +251,7 @@ namespace Material3.WinForms.Controls {
             base.OnMouseLeave(e);
             if (_hotIndex != -1) {
                 _hotIndex = -1;
-                Invalidate();
+                _hover.SetHot(-1);
             }
         }
 
@@ -179,7 +288,7 @@ namespace Material3.WinForms.Controls {
             var outer = new Rectangle(0, 0, Width - 1, Height - 1);
             Color outline = Enabled ? MaterialColors.Outline : MaterialColors.OnSurfaceMuted;
 
-            using (GraphicsPath pillPath = RoundedControlRenderer.GetFigurePath(outer, Shape.Full)) {
+            using (GraphicsPath pillPath = RoundedControlRenderer.GetFigurePath(outer, _cornerRadius < 0 ? Shape.Full : Dpi.Scale(this, _cornerRadius))) {
                 using (Region prevClip = g.Clip) {
                     g.SetClip(pillPath);
 
@@ -191,9 +300,9 @@ namespace Material3.WinForms.Controls {
                                 g.FillRectangle(brush, rect);
                             }
                         }
-                        if (i == _hotIndex && Enabled) {
+                        if (_hover.Opacity(i) > 0 && Enabled) {
                             Color content = active ? MaterialColors.OnSecondaryContainer : MaterialColors.OnSurface;
-                            using (var brush = new SolidBrush(Color.FromArgb((int)(StateLayers.Hover * 255), content))) {
+                            using (var brush = new SolidBrush(Color.FromArgb((int)(_hover.Opacity(i) * 255), content))) {
                                 g.FillRectangle(brush, rect);
                             }
                         }
@@ -218,9 +327,9 @@ namespace Material3.WinForms.Controls {
                     ? MaterialColors.OnSurfaceMuted
                     : active ? MaterialColors.OnSecondaryContainer : MaterialColors.OnSurface;
 
-                int checkPx = Dpi.Scale(this, CheckPx);
-                int checkGap = Dpi.Scale(this, CheckGap);
-                float textWidth = g.MeasureString(_segments[i], TypeScale.LabelLarge,
+                int checkPx = Dpi.Scale(this, _checkSize);
+                int checkGap = Dpi.Scale(this, _checkGap);
+                float textWidth = g.MeasureString(_segments[i], Font,
                     int.MaxValue, StringFormat.GenericTypographic).Width;
                 float contentWidth = textWidth + (active ? checkPx + checkGap : 0);
                 float x = rect.X + (rect.Width - contentWidth) / 2f;
@@ -232,10 +341,18 @@ namespace Material3.WinForms.Controls {
                 }
                 using (var brush = new SolidBrush(content))
                 using (var fmt = new StringFormat(StringFormat.GenericTypographic) { LineAlignment = StringAlignment.Center }) {
-                    g.DrawString(_segments[i], TypeScale.LabelLarge, brush,
+                    g.DrawString(_segments[i], Font, brush,
                         new RectangleF(x, rect.Y, rect.Width, rect.Height), fmt);
                 }
             }
+        }
+
+        /// <inheritdoc />
+        protected override void Dispose(bool disposing) {
+            if (disposing) {
+                _hover.Dispose();
+            }
+            base.Dispose(disposing);
         }
     }
 }

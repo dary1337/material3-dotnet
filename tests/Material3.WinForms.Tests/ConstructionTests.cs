@@ -26,6 +26,16 @@ namespace Material3.WinForms.Tests {
             () => new MaterialNavigationDrawer(),
             () => new MaterialProgressBar(),
             () => new MaterialSkeletonCard(),
+            () => new MaterialSkeleton(),
+            () => new MaterialRoundedButton(),
+            () => new MaterialRoundedPanel(),
+            () => new MaterialLabel(),
+            () => new MaterialCard(),
+            () => new MaterialScrollPanel(),
+            () => new MaterialOptionCard(),
+            () => new MaterialStepChecklist(),
+            () => new MaterialTitleBar(),
+            () => new MaterialButton(),
         };
 
         [Theory]
@@ -33,6 +43,17 @@ namespace Material3.WinForms.Tests {
         public void Construct_DoesNotThrow(Func<System.Windows.Forms.Control> factory) {
             System.Windows.Forms.Control control = factory();
             control.Dispose();
+        }
+
+        [Theory]
+        [MemberData(nameof(Factories))]
+        public void AddToATransparentParent_DoesNotThrow(Func<System.Windows.Forms.Control> factory) {
+            using var form = new System.Windows.Forms.Form();
+            var host = new System.Windows.Forms.Panel { BackColor = System.Drawing.Color.Transparent };
+            form.Controls.Add(host);
+            System.Windows.Forms.Control control = factory();
+            host.Controls.Add(control);
+            form.CreateControl();
         }
     }
 }
