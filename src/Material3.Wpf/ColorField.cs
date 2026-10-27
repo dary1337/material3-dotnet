@@ -1,11 +1,11 @@
 using System;
-using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using Material3.Core;
 
 namespace Material3.Wpf {
     /// <summary>
@@ -131,15 +131,24 @@ namespace Material3.Wpf {
         /// <inheritdoc />
         public override void OnApplyTemplate() {
             base.OnApplyTemplate();
-            if (_swatch != null) _swatch.Click -= OnSwatchClick;
+            if (_swatch != null) {
+                _swatch.Click -= OnSwatchClick;
+            }
+
             if (_plane != null) {
                 _plane.MouseLeftButtonDown -= OnPlaneDown;
                 _plane.MouseMove -= OnPlaneMove;
                 _plane.MouseLeftButtonUp -= OnPlaneUp;
                 _plane.SizeChanged -= OnPlaneSized;
             }
-            if (_hue != null) _hue.ValueChanged -= OnHueChanged;
-            if (_alpha != null) _alpha.ValueChanged -= OnAlphaChanged;
+            if (_hue != null) {
+                _hue.ValueChanged -= OnHueChanged;
+            }
+
+            if (_alpha != null) {
+                _alpha.ValueChanged -= OnAlphaChanged;
+            }
+
             if (_hex != null) { _hex.KeyDown -= OnHexKey; _hex.LostFocus -= OnHexCommit; }
 
             _swatch = GetTemplateChild(PartSwatch) as ButtonBase;
@@ -150,15 +159,24 @@ namespace Material3.Wpf {
             _alpha = GetTemplateChild(PartAlpha) as RangeBase;
             _hex = GetTemplateChild(PartHex) as TextBox;
 
-            if (_swatch != null) _swatch.Click += OnSwatchClick;
+            if (_swatch != null) {
+                _swatch.Click += OnSwatchClick;
+            }
+
             if (_plane != null) {
                 _plane.MouseLeftButtonDown += OnPlaneDown;
                 _plane.MouseMove += OnPlaneMove;
                 _plane.MouseLeftButtonUp += OnPlaneUp;
                 _plane.SizeChanged += OnPlaneSized;
             }
-            if (_hue != null) _hue.ValueChanged += OnHueChanged;
-            if (_alpha != null) _alpha.ValueChanged += OnAlphaChanged;
+            if (_hue != null) {
+                _hue.ValueChanged += OnHueChanged;
+            }
+
+            if (_alpha != null) {
+                _alpha.ValueChanged += OnAlphaChanged;
+            }
+
             if (_hex != null) { _hex.KeyDown += OnHexKey; _hex.LostFocus += OnHexCommit; }
 
             FromColor(Color);
@@ -166,14 +184,22 @@ namespace Material3.Wpf {
         }
 
         private void OnSwatchClick(object sender, RoutedEventArgs e) {
-            if (Locked || _popup == null) return;
+            if (Locked || _popup == null) {
+                return;
+            }
+
             _popup.IsOpen = !_popup.IsOpen;
-            if (_popup.IsOpen) Dispatcher.BeginInvoke(new Action(PlaceThumb), DispatcherPriority.Loaded);
+            if (_popup.IsOpen) {
+                Dispatcher.BeginInvoke(new Action(PlaceThumb), DispatcherPriority.Loaded);
+            }
         }
 
         private static void OnColorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             var self = (ColorField)d;
-            if (!self._syncing) self.FromColor((Color)e.NewValue);
+            if (!self._syncing) {
+                self.FromColor((Color)e.NewValue);
+            }
+
             self.Push();
             self.RaiseEvent(new RoutedPropertyChangedEventArgs<Color>((Color)e.OldValue, (Color)e.NewValue, ColorChangedEvent));
         }
@@ -182,12 +208,17 @@ namespace Material3.Wpf {
 
         private static void OnLockChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             var self = (ColorField)d;
-            if (self.Locked && self._popup != null) self._popup.IsOpen = false;
+            if (self.Locked && self._popup != null) {
+                self._popup.IsOpen = false;
+            }
         }
 
         private void FromColor(Color c) {
             (double h, double s, double v) = ToHsv(c);
-            if (s > 0) _h = h;
+            if (s > 0) {
+                _h = h;
+            }
+
             _s = s;
             _v = v;
         }
@@ -199,65 +230,55 @@ namespace Material3.Wpf {
                 SetValue(HexTextKey, ToHex(c, ShowAlpha));
                 SetValue(HueColorKey, FromHsv(_h, 1, 1, 255));
                 SetValue(OpaqueColorKey, Color.FromRgb(c.R, c.G, c.B));
-                if (_hue != null && Math.Abs(_hue.Value - _h) > 0.01) _hue.Value = _h;
-                if (_alpha != null && Math.Abs(_alpha.Value - c.A) > 0.5) _alpha.Value = c.A;
-                if (_hex != null && !_hex.IsKeyboardFocusWithin) _hex.Text = HexText;
+                if (_hue != null && Math.Abs(_hue.Value - _h) > 0.01) {
+                    _hue.Value = _h;
+                }
+
+                if (_alpha != null && Math.Abs(_alpha.Value - c.A) > 0.5) {
+                    _alpha.Value = c.A;
+                }
+
+                if (_hex != null && !_hex.IsKeyboardFocusWithin) {
+                    _hex.Text = HexText;
+                }
             }
             finally { _syncing = false; }
             PlaceThumb();
         }
 
         private void Commit(double h, double s, double v, byte a) {
-            _h = h; _s = s; _v = v;
+            _h = h;
+            _s = s;
+            _v = v;
             _syncing = true;
             try { Color = FromHsv(h, s, v, a); }
             finally { _syncing = false; }
             Push();
         }
 
-        internal static string ToHex(Color c, bool withAlpha) => withAlpha
-            ? $"#{c.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}"
-            : $"#{c.R:X2}{c.G:X2}{c.B:X2}";
+        internal static string ToHex(Color c, bool withAlpha) => ColorMath.ToHex(ToArgb(c), withAlpha);
 
-        internal static (double H, double S, double V) ToHsv(Color c) {
-            double r = c.R / 255.0, g = c.G / 255.0, b = c.B / 255.0;
-            double max = Math.Max(r, Math.Max(g, b)), min = Math.Min(r, Math.Min(g, b));
-            double d = max - min;
-            double h = 0;
-            if (d > 0) {
-                if (max == r) h = 60 * (((g - b) / d) % 6);
-                else if (max == g) h = 60 * (((b - r) / d) + 2);
-                else h = 60 * (((r - g) / d) + 4);
-            }
-            if (h < 0) h += 360;
-            return (h, max <= 0 ? 0 : d / max, max);
-        }
+        internal static (double H, double S, double V) ToHsv(Color c) => ColorMath.ToHsv(ToArgb(c));
 
-        internal static Color FromHsv(double h, double s, double v, byte a) {
-            h = ((h % 360) + 360) % 360;
-            s = Math.Min(1, Math.Max(0, s));
-            v = Math.Min(1, Math.Max(0, v));
-            double c = v * s, x = c * (1 - Math.Abs((h / 60 % 2) - 1)), m = v - c;
-            double r = 0, g = 0, b = 0;
-            if (h < 60) { r = c; g = x; }
-            else if (h < 120) { r = x; g = c; }
-            else if (h < 180) { g = c; b = x; }
-            else if (h < 240) { g = x; b = c; }
-            else if (h < 300) { r = x; b = c; }
-            else { r = c; b = x; }
-            return Color.FromArgb(a, Channel(r + m), Channel(g + m), Channel(b + m));
-        }
+        internal static Color FromHsv(double h, double s, double v, byte a) => ToColor(ColorMath.FromHsv(h, s, v, a));
 
-        private static byte Channel(double v) => (byte)Math.Round(Math.Min(1, Math.Max(0, v)) * 255);
+        private static Argb ToArgb(Color c) => new Argb(c.A, c.R, c.G, c.B);
+
+        private static Color ToColor(Argb c) => Color.FromArgb(c.A, c.R, c.G, c.B);
 
         private void OnPlaneDown(object sender, MouseButtonEventArgs e) {
-            if (_plane == null) return;
+            if (_plane == null) {
+                return;
+            }
+
             _plane.CaptureMouse();
             PickFromPlane(e.GetPosition(_plane));
         }
 
         private void OnPlaneMove(object sender, MouseEventArgs e) {
-            if (_plane != null && _plane.IsMouseCaptured) PickFromPlane(e.GetPosition(_plane));
+            if (_plane != null && _plane.IsMouseCaptured) {
+                PickFromPlane(e.GetPosition(_plane));
+            }
         }
 
         private void OnPlaneUp(object sender, MouseButtonEventArgs e) => _plane?.ReleaseMouseCapture();
@@ -265,38 +286,59 @@ namespace Material3.Wpf {
         private void OnPlaneSized(object sender, SizeChangedEventArgs e) => PlaceThumb();
 
         private void PickFromPlane(Point p) {
-            if (_plane == null || _plane.ActualWidth <= 0 || _plane.ActualHeight <= 0) return;
+            if (_plane == null || _plane.ActualWidth <= 0 || _plane.ActualHeight <= 0) {
+                return;
+            }
+
             double s = Math.Min(1, Math.Max(0, p.X / _plane.ActualWidth));
             double v = 1 - Math.Min(1, Math.Max(0, p.Y / _plane.ActualHeight));
             Commit(_h, s, v, Color.A);
         }
 
         private void PlaceThumb() {
-            if (_plane == null || _planeThumb == null || _plane.ActualWidth <= 0) return;
+            if (_plane == null || _planeThumb == null || _plane.ActualWidth <= 0) {
+                return;
+            }
+
             double x = _s * _plane.ActualWidth, y = (1 - _v) * _plane.ActualHeight;
             _planeThumb.Margin = new Thickness(x - _planeThumb.Width / 2, y - _planeThumb.Height / 2, 0, 0);
         }
 
         private void OnHueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
-            if (_syncing) return;
+            if (_syncing) {
+                return;
+            }
+
             Commit(e.NewValue, _s, _v, Color.A);
         }
 
         private void OnAlphaChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
-            if (_syncing) return;
+            if (_syncing) {
+                return;
+            }
+
             Commit(_h, _s, _v, (byte)Math.Round(e.NewValue));
         }
 
         private void OnHexKey(object sender, KeyEventArgs e) {
-            if (e.Key != Key.Enter) return;
+            if (e.Key != Key.Enter) {
+                return;
+            }
+
             OnHexCommit(sender, e);
             e.Handled = true;
         }
 
         private void OnHexCommit(object sender, RoutedEventArgs e) {
-            if (_hex == null) return;
+            if (_hex == null) {
+                return;
+            }
+
             if (!Locked && TryParseHex(_hex.Text, out Color parsed)) {
-                if (!ShowAlpha) parsed = Color.FromArgb(Color.A, parsed.R, parsed.G, parsed.B);
+                if (!ShowAlpha) {
+                    parsed = Color.FromArgb(Color.A, parsed.R, parsed.G, parsed.B);
+                }
+
                 _syncing = true;
                 try { Color = parsed; }
                 finally { _syncing = false; }
@@ -307,16 +349,9 @@ namespace Material3.Wpf {
 
         /// <summary>Parses <c>#RGB</c>, <c>#RRGGBB</c> or <c>#AARRGGBB</c>, with or without the hash.</summary>
         public static bool TryParseHex(string? text, out Color color) {
-            color = Colors.Black;
-            if (string.IsNullOrWhiteSpace(text)) return false;
-            string s = text!.Trim().TrimStart('#');
-            if (s.Length == 3) s = string.Concat(s[0], s[0], s[1], s[1], s[2], s[2]);
-            if (s.Length != 6 && s.Length != 8) return false;
-            if (!uint.TryParse(s, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out uint v)) return false;
-            color = s.Length == 6
-                ? Color.FromRgb((byte)(v >> 16), (byte)(v >> 8), (byte)v)
-                : Color.FromArgb((byte)(v >> 24), (byte)(v >> 16), (byte)(v >> 8), (byte)v);
-            return true;
+            bool ok = ColorMath.TryParseHex(text, out Argb parsed);
+            color = ok ? ToColor(parsed) : Colors.Black;
+            return ok;
         }
     }
 }

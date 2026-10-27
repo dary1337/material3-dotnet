@@ -47,18 +47,26 @@ namespace Material3.Wpf {
         }
 
         private void Sync() {
-            if (IsVisible) Start();
-            else Stop();
+            if (IsVisible) {
+                Start();
+            }
+            else {
+                Stop();
+            }
         }
 
         private void Start() {
-            if (_shimmer == null || _sweep != null) return;
+            if (_shimmer == null || _sweep != null) {
+                return;
+            }
+
             Color on = (TryFindResource("OnSurface") as SolidColorBrush)?.Color ?? Colors.White;
             Color highlight = Color.FromArgb(28, on.R, on.G, on.B);
             Color clear = Color.FromArgb(0, on.R, on.G, on.B);
 
             var brush = new LinearGradientBrush {
-                StartPoint = new Point(0, 0), EndPoint = new Point(1, 0),
+                StartPoint = new Point(0, 0),
+                EndPoint = new Point(1, 0),
                 SpreadMethod = GradientSpreadMethod.Repeat,
             };
             brush.GradientStops.Add(new GradientStop(clear, 0.0));
@@ -79,7 +87,9 @@ namespace Material3.Wpf {
                 _sweep.BeginAnimation(TranslateTransform.XProperty, null);
                 _sweep = null;
             }
-            if (_shimmer != null) _shimmer.Background = null;
+            if (_shimmer != null) {
+                _shimmer.Background = null;
+            }
         }
     }
 }

@@ -49,6 +49,13 @@ namespace Material3.Wpf {
             SizeChanged += (_, __) => UpdateLabel(animate: false);
         }
 
+        /// <summary>Identifies the <see cref="FieldHeight"/> property.</summary>
+        public static readonly DependencyProperty FieldHeightProperty = DependencyProperty.Register(
+            nameof(FieldHeight), typeof(double), typeof(TextField), new PropertyMetadata(56.0));
+
+        /// <summary>The height of the field itself, without the supporting line under it.</summary>
+        public double FieldHeight { get => (double)GetValue(FieldHeightProperty); set => SetValue(FieldHeightProperty, value); }
+
         /// <summary>Identifies the <see cref="Text"/> property.</summary>
         public static readonly DependencyProperty TextProperty = DependencyProperty.Register(
             nameof(Text), typeof(string), typeof(TextField),
@@ -127,6 +134,19 @@ namespace Material3.Wpf {
         /// <summary>Masks the content.</summary>
         public bool IsPassword { get => (bool)GetValue(IsPasswordProperty); set => SetValue(IsPasswordProperty, value); }
 
+        /// <summary>Identifies the <see cref="InputKind"/> property.</summary>
+        public static readonly DependencyProperty InputKindProperty = DependencyProperty.Register(
+            nameof(InputKind), typeof(InputKind), typeof(TextField), new PropertyMetadata(InputKind.Text, OnInputKindChanged));
+
+        /// <summary>What the field accepts, enforced as the user types and pastes — see <see cref="InputFilter"/>.</summary>
+        public InputKind InputKind { get => (InputKind)GetValue(InputKindProperty); set => SetValue(InputKindProperty, value); }
+
+        private static void OnInputKindChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+            if (((TextField)d)._editor is TextBox editor) {
+                InputFilter.SetKind(editor, (InputKind)e.NewValue);
+            }
+        }
+
         private static readonly DependencyPropertyKey IsFloatingKey = DependencyProperty.RegisterReadOnly(
             nameof(IsFloating), typeof(bool), typeof(TextField), new PropertyMetadata(false));
 
@@ -168,10 +188,19 @@ namespace Material3.Wpf {
         /// <inheritdoc />
         public override void OnApplyTemplate() {
             base.OnApplyTemplate();
-            if (_password != null) _password.PasswordChanged -= OnPasswordChanged;
-            if (_trailing != null) _trailing.Click -= OnTrailingClick;
+            if (_password != null) {
+                _password.PasswordChanged -= OnPasswordChanged;
+            }
+
+            if (_trailing != null) {
+                _trailing.Click -= OnTrailingClick;
+            }
 
             _editor = GetTemplateChild(PartEditor) as TextBox;
+            if (_editor != null) {
+                InputFilter.SetKind(_editor, InputKind);
+            }
+
             _password = GetTemplateChild(PartPassword) as PasswordBox;
             _label = GetTemplateChild(PartLabel) as FrameworkElement;
             _outline = GetTemplateChild(PartOutline) as NotchedOutline;
@@ -182,7 +211,10 @@ namespace Material3.Wpf {
                 _password.PasswordChanged += OnPasswordChanged;
                 SyncPassword();
             }
-            if (_trailing != null) _trailing.Click += OnTrailingClick;
+            if (_trailing != null) {
+                _trailing.Click += OnTrailingClick;
+            }
+
             if (_label != null) {
                 var transforms = new TransformGroup();
                 transforms.Children.Add(_labelScale);
@@ -196,8 +228,12 @@ namespace Material3.Wpf {
 
         /// <summary>Puts the caret in the field.</summary>
         public void FocusEditor() {
-            if (IsPassword) _password?.Focus();
-            else _editor?.Focus();
+            if (IsPassword) {
+                _password?.Focus();
+            }
+            else {
+                _editor?.Focus();
+            }
         }
 
         private static object CoerceText(DependencyObject d, object value) => value ?? string.Empty;
@@ -221,20 +257,30 @@ namespace Material3.Wpf {
 
         private void UpdateLine() {
             string? line = IsError && ErrorText != null ? ErrorText : SupportingText;
-            if (line == LineText) return;
+            if (line == LineText) {
+                return;
+            }
+
             SetValue(LineTextKey, line);
-            if (IsLoaded && line != null && _line != null) Motion.FadeIn(_line);
+            if (IsLoaded && line != null && _line != null) {
+                Motion.FadeIn(_line);
+            }
         }
 
         private void SyncPassword() {
-            if (_password == null || !IsPassword || _password.Password == Text) return;
+            if (_password == null || !IsPassword || _password.Password == Text) {
+                return;
+            }
+
             _syncingPassword = true;
             try { _password.Password = Text; }
             finally { _syncingPassword = false; }
         }
 
         private void OnPasswordChanged(object sender, RoutedEventArgs e) {
-            if (!_syncingPassword && IsPassword) SetCurrentValue(TextProperty, _password!.Password);
+            if (!_syncingPassword && IsPassword) {
+                SetCurrentValue(TextProperty, _password!.Password);
+            }
         }
 
         private void OnTrailingClick(object sender, RoutedEventArgs e) {
@@ -248,7 +294,10 @@ namespace Material3.Wpf {
             bool floating = ShouldFloat;
             SetValue(IsFloatingKey, floating);
             if (_label == null || !(_label.Parent is FrameworkElement host) || _label.ActualHeight <= 0) {
-                if (_outline != null) _outline.GapWidth = 0;
+                if (_outline != null) {
+                    _outline.GapWidth = 0;
+                }
+
                 return;
             }
             Point rest = _label.TranslatePoint(new Point(0, 0), host);
@@ -262,7 +311,9 @@ namespace Material3.Wpf {
                     x = OutlinedFloatLeft - rest.X;
                     y = -floatedHeight / 2 - rest.Y;
                 }
-                else y = FilledFloatTop - rest.Y;
+                else {
+                    y = FilledFloatTop - rest.Y;
+                }
             }
             double gap = floating && Variant == TextFieldVariant.Outlined ? _label.ActualWidth * FloatScale + NotchPad * 2 : 0;
 

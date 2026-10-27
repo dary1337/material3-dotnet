@@ -85,31 +85,46 @@ namespace Material3.Wpf {
         /// <summary>Shows a message with one action.</summary>
         public static void Show(FrameworkElement anchor, string message, string actionText, Action onAction, TimeSpan? duration = null) =>
             Enqueue(new Pending {
-                Anchor = anchor, Message = message, ActionText = actionText, OnAction = onAction,
+                Anchor = anchor,
+                Message = message,
+                ActionText = actionText,
+                OnAction = onAction,
                 Duration = duration ?? ActionDuration,
             });
 
         /// <summary>Takes every visible message on this thread down early. Does nothing when none is showing.</summary>
         public static void DismissCurrent() {
-            foreach (SnackbarAdorner adorner in Showing.ToArray()) adorner.Hide();
+            foreach (SnackbarAdorner adorner in Showing.ToArray()) {
+                adorner.Hide();
+            }
         }
 
         /// <summary>Takes the visible message in <paramref name="anchor"/>'s window down early.</summary>
         public static void DismissCurrent(FrameworkElement anchor) {
-            if (anchor != null && Lanes.TryGetValue(LaneKey(anchor), out Lane? lane)) lane.Current?.Hide();
+            if (anchor != null && Lanes.TryGetValue(LaneKey(anchor), out Lane? lane)) {
+                lane.Current?.Hide();
+            }
         }
 
         private static DependencyObject LaneKey(FrameworkElement anchor) => (DependencyObject?)Window.GetWindow(anchor) ?? anchor;
 
         private static void Enqueue(Pending pending) {
-            if (pending.Anchor == null) throw new ArgumentNullException(nameof(pending));
+            if (pending.Anchor == null) {
+                throw new ArgumentNullException(nameof(pending));
+            }
+
             Lane lane = Lanes.GetValue(LaneKey(pending.Anchor), _ => new Lane());
             lane.Waiting.Enqueue(pending);
-            if (lane.Current == null) ShowNext(lane);
+            if (lane.Current == null) {
+                ShowNext(lane);
+            }
         }
 
         private static void ShowNext(Lane lane) {
-            if (lane.Waiting.Count == 0) return;
+            if (lane.Waiting.Count == 0) {
+                return;
+            }
+
             Pending next = lane.Waiting.Dequeue();
 
             AdornerLayer? layer = ResolveLayer(next.Anchor, out UIElement? host, out Window? owner);
@@ -120,7 +135,9 @@ namespace Material3.Wpf {
             }
 
             var bar = new Snackbar {
-                Text = next.Message, ActionText = next.ActionText, Action = next.OnAction,
+                Text = next.Message,
+                ActionText = next.ActionText,
+                Action = next.OnAction,
             };
             var adorner = new SnackbarAdorner(host, bar, next.Duration);
             bar.Dismissed = adorner.Hide;
@@ -129,7 +146,10 @@ namespace Material3.Wpf {
                 detachOwner();
                 layer.Remove(adorner);
                 Showing.Remove(adorner);
-                if (!ReferenceEquals(lane.Current, adorner)) return;
+                if (!ReferenceEquals(lane.Current, adorner)) {
+                    return;
+                }
+
                 lane.Current = null;
                 ShowNext(lane);
             };
@@ -140,7 +160,10 @@ namespace Material3.Wpf {
                     detachOwner();
                     adorner.Cancel();
                     Showing.Remove(adorner);
-                    if (!ReferenceEquals(lane.Current, adorner)) return;
+                    if (!ReferenceEquals(lane.Current, adorner)) {
+                        return;
+                    }
+
                     lane.Current = null;
                     lane.Waiting.Clear();
                 }
@@ -212,7 +235,10 @@ namespace Material3.Wpf {
             }
 
             internal void Hide() {
-                if (_hiding) return;
+                if (_hiding) {
+                    return;
+                }
+
                 _hiding = true;
                 _timer.Stop();
                 var fade = new DoubleAnimation(0, Motion.Ms(180));

@@ -31,7 +31,9 @@ namespace Material3.Wpf.Tests {
         [InlineData(50)]
         public void EmptyOrZeroSize_YieldsNothing(int count) {
             Assert.Equal((0, -1), VirtualizingWrapPanel.VisibleRange(0, 400, 800, 0, 120, count));
-            if (count == 0) Assert.Equal((0, -1), VirtualizingWrapPanel.VisibleRange(0, 400, 800, 160, 120, 0));
+            if (count == 0) {
+                Assert.Equal((0, -1), VirtualizingWrapPanel.VisibleRange(0, 400, 800, 160, 120, 0));
+            }
         }
 
         [Fact]

@@ -66,12 +66,17 @@ namespace Material3.Wpf {
         /// <summary>Initializes a new instance of the <see cref="ModalLayer"/> class.</summary>
         public ModalLayer() {
             Loaded += (_, __) => {
-                if (!Loaded_.Contains(this)) Loaded_.Add(this);
+                if (!Loaded_.Contains(this)) {
+                    Loaded_.Add(this);
+                }
+
                 Active = this;
             };
             Unloaded += (_, __) => {
                 Loaded_.Remove(this);
-                if (ReferenceEquals(Active, this)) Active = Loaded_.Count > 0 ? Loaded_[Loaded_.Count - 1] : null;
+                if (ReferenceEquals(Active, this)) {
+                    Active = Loaded_.Count > 0 ? Loaded_[Loaded_.Count - 1] : null;
+                }
             };
         }
 
@@ -80,13 +85,17 @@ namespace Material3.Wpf {
             base.OnApplyTemplate();
             Scrim = GetTemplateChild("PART_Scrim") as Border;
             ModalHost = GetTemplateChild("PART_ModalHost") as Panel;
-            if (Scrim != null) Scrim.MouseLeftButtonDown += (_, __) => Modal.DismissTop(this, scrimClick: true);
+            if (Scrim != null) {
+                Scrim.MouseLeftButtonDown += (_, __) => Modal.DismissTop(this, scrimClick: true);
+            }
         }
 
         /// <inheritdoc />
         protected override void OnPreviewKeyDown(KeyEventArgs e) {
             base.OnPreviewKeyDown(e);
-            if (e.Key == Key.Escape && Entries.Count > 0 && Modal.DismissTop(this, esc: true)) e.Handled = true;
+            if (e.Key == Key.Escape && Entries.Count > 0 && Modal.DismissTop(this, esc: true)) {
+                e.Handled = true;
+            }
         }
     }
 
@@ -100,7 +109,9 @@ namespace Material3.Wpf {
             public ModalOptions Options = null!;
             public ModalLayer Layer = null!;
             public IInputElement? PrevFocus;
-            public object? PrevHAlign; public object? PrevVAlign; public object? PrevTabNav;
+            public object? PrevHAlign;
+            public object? PrevVAlign;
+            public object? PrevTabNav;
             public void Close() => CloseEntry(this);
         }
 
@@ -122,8 +133,12 @@ namespace Material3.Wpf {
             ShowIn(PickLayer(owner ?? throw new ArgumentNullException(nameof(owner))), content, options);
 
         internal static ModalLayer? LayerOf(DependencyObject owner) {
-            for (DependencyObject? d = owner; d != null; d = VisualTreeHelper.GetParent(d) ?? LogicalTreeHelper.GetParent(d))
-                if (d is ModalLayer layer) return layer;
+            for (DependencyObject? d = owner; d != null; d = VisualTreeHelper.GetParent(d) ?? LogicalTreeHelper.GetParent(d)) {
+                if (d is ModalLayer layer) {
+                    return layer;
+                }
+            }
+
             Window? window = owner as Window ?? Window.GetWindow(owner);
             return window == null ? null : ModalLayer.All.LastOrDefault(l => ReferenceEquals(Window.GetWindow(l), window));
         }
@@ -136,18 +151,31 @@ namespace Material3.Wpf {
         }
 
         private static IModalHandle ShowIn(ModalLayer layer, FrameworkElement content, ModalOptions? options) {
-            if (layer.ModalHost == null || layer.Scrim == null) layer.ApplyTemplate();
-            if (layer.ModalHost == null || layer.Scrim == null)
+            if (layer.ModalHost == null || layer.Scrim == null) {
+                layer.ApplyTemplate();
+            }
+
+            if (layer.ModalHost == null || layer.Scrim == null) {
                 throw new InvalidOperationException("ModalLayer template is missing PART_ModalHost / PART_Scrim.");
+            }
+
             ModalOptions opts = options ?? new ModalOptions();
-            Action? pending = layer.PendingClose; layer.PendingClose = null; pending?.Invoke();
-            if (ModalLayer.All.Any(l => l.Entries.Exists(x => ReferenceEquals(x.Content, content))))
+            Action? pending = layer.PendingClose;
+            layer.PendingClose = null;
+            pending?.Invoke();
+            if (ModalLayer.All.Any(l => l.Entries.Exists(x => ReferenceEquals(x.Content, content)))) {
                 throw new InvalidOperationException("Modal.Show: this content is already open as a modal.");
-            if (VisualTreeHelper.GetParent(content) != null)
+            }
+
+            if (VisualTreeHelper.GetParent(content) != null) {
                 throw new InvalidOperationException("Modal.Show: content already has a parent — remove it from its current host first.");
+            }
 
             var e = new Entry {
-                Content = content, Options = opts, Layer = layer, PrevFocus = Keyboard.FocusedElement,
+                Content = content,
+                Options = opts,
+                Layer = layer,
+                PrevFocus = Keyboard.FocusedElement,
                 PrevHAlign = content.ReadLocalValue(FrameworkElement.HorizontalAlignmentProperty),
                 PrevVAlign = content.ReadLocalValue(FrameworkElement.VerticalAlignmentProperty),
                 PrevTabNav = content.ReadLocalValue(KeyboardNavigation.TabNavigationProperty),
@@ -160,18 +188,32 @@ namespace Material3.Wpf {
             layer.Entries.Add(e);
 
             ApplyScrim(layer, opts.Dim);
-            if (first) Motion.OpenModal(layer.Scrim!, content);
-            else Motion.Pop(content);
+            if (first) {
+                Motion.OpenModal(layer.Scrim!, content);
+            }
+            else {
+                Motion.Pop(content);
+            }
+
             content.Dispatcher.BeginInvoke(new Action(() => content.MoveFocus(new TraversalRequest(FocusNavigationDirection.First))),
                 System.Windows.Threading.DispatcherPriority.Input);
             return e;
         }
 
         internal static bool DismissTop(ModalLayer layer, bool scrimClick = false, bool esc = false) {
-            if (layer.Entries.Count == 0) return false;
+            if (layer.Entries.Count == 0) {
+                return false;
+            }
+
             Entry top = layer.Entries[layer.Entries.Count - 1];
-            if (scrimClick && !top.Options.DismissOnScrimClick) return false;
-            if (esc && !top.Options.DismissOnEsc) return false;
+            if (scrimClick && !top.Options.DismissOnScrimClick) {
+                return false;
+            }
+
+            if (esc && !top.Options.DismissOnEsc) {
+                return false;
+            }
+
             if (top.Options.DismissHandler != null) { top.Options.DismissHandler(); return true; }
             CloseEntry(top);
             return true;
@@ -180,7 +222,10 @@ namespace Material3.Wpf {
         private static void CloseEntry(Entry e) {
             ModalLayer layer = e.Layer;
             int index = layer.Entries.IndexOf(e);
-            if (index < 0) return;
+            if (index < 0) {
+                return;
+            }
+
             bool wasTop = index == layer.Entries.Count - 1;
             layer.Entries.RemoveAt(index);
             void RemoveAndRestore() {
@@ -188,16 +233,25 @@ namespace Material3.Wpf {
                 Restore(e.Content, FrameworkElement.HorizontalAlignmentProperty, e.PrevHAlign);
                 Restore(e.Content, FrameworkElement.VerticalAlignmentProperty, e.PrevVAlign);
                 Restore(e.Content, KeyboardNavigation.TabNavigationProperty, e.PrevTabNav);
-                if (wasTop && e.PrevFocus != null) Keyboard.Focus(e.PrevFocus);
+                if (wasTop && e.PrevFocus != null) {
+                    Keyboard.Focus(e.PrevFocus);
+                }
+
                 e.Options.ClosedHandler?.Invoke();
             }
             if (layer.Entries.Count == 0) {
                 bool done = false;
                 Action? finish = null;
                 void Once() {
-                    if (done) return;
+                    if (done) {
+                        return;
+                    }
+
                     done = true;
-                    if (ReferenceEquals(layer.PendingClose, finish)) layer.PendingClose = null;
+                    if (ReferenceEquals(layer.PendingClose, finish)) {
+                        layer.PendingClose = null;
+                    }
+
                     RemoveAndRestore();
                 }
                 finish = Motion.CloseModal(layer.Scrim!, e.Content, Once);
@@ -210,16 +264,31 @@ namespace Material3.Wpf {
         }
 
         private static void ApplyScrim(ModalLayer layer, bool dim) {
-            if (layer.Scrim == null) return;
-            if (!dim) layer.Scrim.Background = Brushes.Transparent;
-            else if (layer.TryFindResource("Scrim") is Brush) layer.Scrim.SetResourceReference(Border.BackgroundProperty, "Scrim");
-            else layer.Scrim.Background = new SolidColorBrush(Color.FromArgb(168, 0, 0, 0));
+            if (layer.Scrim == null) {
+                return;
+            }
+
+            if (!dim) {
+                layer.Scrim.Background = Brushes.Transparent;
+            }
+            else if (layer.TryFindResource("Scrim") is Brush) {
+                layer.Scrim.SetResourceReference(Border.BackgroundProperty, "Scrim");
+            }
+            else {
+                layer.Scrim.Background = new SolidColorBrush(Color.FromArgb(168, 0, 0, 0));
+            }
         }
 
         private static void Restore(FrameworkElement el, DependencyProperty prop, object? prev) {
-            if (prev == DependencyProperty.UnsetValue) el.ClearValue(prop);
-            else if (prev is System.Windows.Data.BindingExpressionBase b) System.Windows.Data.BindingOperations.SetBinding(el, prop, b.ParentBindingBase);
-            else el.SetValue(prop, prev!);
+            if (prev == DependencyProperty.UnsetValue) {
+                el.ClearValue(prop);
+            }
+            else if (prev is System.Windows.Data.BindingExpressionBase b) {
+                System.Windows.Data.BindingOperations.SetBinding(el, prop, b.ParentBindingBase);
+            }
+            else {
+                el.SetValue(prop, prev!);
+            }
         }
     }
 }

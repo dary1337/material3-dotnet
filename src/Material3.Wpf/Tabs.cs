@@ -51,13 +51,20 @@ namespace Material3.Wpf {
         protected override void OnSelectionChanged(SelectionChangedEventArgs e) {
             base.OnSelectionChanged(e);
             _slideNext = true;
-            if (IsLoaded && _content != null) Motion.FadeIn(_content);
+            if (IsLoaded && _content != null) {
+                Motion.FadeIn(_content);
+            }
         }
 
         internal Rect IndicatorTarget() {
-            if (_indicator == null || !(_indicator.Parent is UIElement host)) return Rect.Empty;
-            if (!(ItemContainerGenerator.ContainerFromItem(SelectedItem) is TabItem tab) || !tab.IsVisible || tab.ActualWidth <= 0)
+            if (_indicator == null || !(_indicator.Parent is UIElement host)) {
                 return Rect.Empty;
+            }
+
+            if (!(ItemContainerGenerator.ContainerFromItem(SelectedItem) is TabItem tab) || !tab.IsVisible || tab.ActualWidth <= 0) {
+                return Rect.Empty;
+            }
+
             FrameworkElement span = Variant == TabVariant.Primary && tab.Template?.FindName("label", tab) is FrameworkElement label
                 ? label : tab;
             Point origin = span.TranslatePoint(new Point(0, 0), host);
@@ -70,14 +77,20 @@ namespace Material3.Wpf {
         }
 
         private void FollowSelection() {
-            if (_indicator == null) return;
+            if (_indicator == null) {
+                return;
+            }
+
             Rect target = IndicatorTarget();
             if (target.IsEmpty) {
                 _indicator.Visibility = Visibility.Collapsed;
                 _placed = Rect.Empty;
                 return;
             }
-            if (target == _placed) return;
+            if (target == _placed) {
+                return;
+            }
+
             bool slide = _slideNext && !_placed.IsEmpty;
             _slideNext = false;
             _placed = target;

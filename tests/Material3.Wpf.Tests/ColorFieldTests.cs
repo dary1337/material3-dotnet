@@ -28,12 +28,14 @@ namespace Material3.Wpf.Tests {
 
         [Fact]
         public void HsvRoundTripsEveryChannel() {
-            for (int r = 0; r < 256; r += 15)
-            for (int g = 0; g < 256; g += 15)
-            for (int b = 0; b < 256; b += 15) {
-                Color c = Color.FromArgb(200, (byte)r, (byte)g, (byte)b);
-                (double h, double s, double v) = ColorField.ToHsv(c);
-                Assert.Equal(c, ColorField.FromHsv(h, s, v, 200));
+            for (int r = 0; r < 256; r += 15) {
+                for (int g = 0; g < 256; g += 15) {
+                    for (int b = 0; b < 256; b += 15) {
+                        Color c = Color.FromArgb(200, (byte)r, (byte)g, (byte)b);
+                        (double h, double s, double v) = ColorField.ToHsv(c);
+                        Assert.Equal(c, ColorField.FromHsv(h, s, v, 200));
+                    }
+                }
             }
         }
 

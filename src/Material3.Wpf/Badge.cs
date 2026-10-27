@@ -26,6 +26,20 @@ namespace Material3.Wpf {
         /// <summary>Shows a 6px dot instead of the count — "something new" without a number.</summary>
         public bool IsDot { get => (bool)GetValue(IsDotProperty); set => SetValue(IsDotProperty, value); }
 
+        /// <summary>Identifies the <see cref="PillHeight"/> property.</summary>
+        public static readonly DependencyProperty PillHeightProperty = DependencyProperty.Register(
+            nameof(PillHeight), typeof(double), typeof(Badge), new PropertyMetadata(16.0));
+
+        /// <summary>The height of the count pill, and its narrowest width. The dot is <c>m3:Metrics.IndicatorSize</c>.</summary>
+        public double PillHeight { get => (double)GetValue(PillHeightProperty); set => SetValue(PillHeightProperty, value); }
+
+        /// <summary>Identifies the <see cref="Tone"/> property.</summary>
+        public static readonly DependencyProperty ToneProperty = DependencyProperty.Register(
+            nameof(Tone), typeof(Tone), typeof(Badge), new PropertyMetadata(Tone.Error));
+
+        /// <summary>The role pair the badge is painted with. <see cref="Wpf.Tone.Error"/> by default, as M3 draws it.</summary>
+        public Tone Tone { get => (Tone)GetValue(ToneProperty); set => SetValue(ToneProperty, value); }
+
         private static readonly DependencyPropertyKey TextKey = DependencyProperty.RegisterReadOnly(
             nameof(Text), typeof(string), typeof(Badge), new PropertyMetadata(string.Empty));
 
@@ -42,15 +56,21 @@ namespace Material3.Wpf {
             var badge = (Badge)d;
             string before = badge.Text;
             badge.SetValue(TextKey, Format((int)e.NewValue));
-            if (before.Length == 0 && badge.Text.Length > 0) badge.Arrive();
+            if (before.Length == 0 && badge.Text.Length > 0) {
+                badge.Arrive();
+            }
         }
 
         private static void OnIsDotChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-            if ((bool)e.NewValue) ((Badge)d).Arrive();
+            if ((bool)e.NewValue) {
+                ((Badge)d).Arrive();
+            }
         }
 
         private void Arrive() {
-            if (IsLoaded && GetTemplateChild("PART_Root") is FrameworkElement root) Motion.Pop(root);
+            if (IsLoaded && GetTemplateChild("PART_Root") is FrameworkElement root) {
+                Motion.Pop(root);
+            }
         }
     }
 }

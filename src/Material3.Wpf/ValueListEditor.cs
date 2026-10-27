@@ -18,13 +18,13 @@ namespace Material3.Wpf {
         /// <summary>The entry as typed.</summary>
         public string Text {
             get => _text;
-            set { if (_text == value) return; _text = value; Raise(nameof(Text)); }
+            set { if (_text == value) { return; } _text = value; Raise(nameof(Text)); }
         }
 
         /// <summary>The caption above a fixed slot, from <see cref="ValueListEditor.SlotLabels"/>.</summary>
         public string? Label {
             get => _label;
-            set { if (_label == value) return; _label = value; Raise(nameof(Label)); Raise(nameof(HasLabel)); }
+            set { if (_label == value) { return; } _label = value; Raise(nameof(Label)); Raise(nameof(HasLabel)); }
         }
 
         /// <summary>Whether the slot has a caption to show.</summary>
@@ -55,13 +55,13 @@ namespace Material3.Wpf {
             Rows.CollectionChanged += OnRowsChanged;
             CommandBindings.Add(new CommandBinding(AddRowCommand, (s, e) => AddRow(), (s, e) => e.CanExecute = IsGrowable));
             CommandBindings.Add(new CommandBinding(RemoveRowCommand,
-                (s, e) => { if (e.Parameter is ValueListRow row) RemoveRow(row); },
+                (s, e) => { if (e.Parameter is ValueListRow row) { RemoveRow(row); } },
                 (s, e) => e.CanExecute = IsGrowable));
             CommandBindings.Add(new CommandBinding(MoveRowUpCommand,
-                (s, e) => { if (e.Parameter is ValueListRow row) MoveRow(row, -1); },
+                (s, e) => { if (e.Parameter is ValueListRow row) { MoveRow(row, -1); } },
                 (s, e) => e.CanExecute = e.Parameter is ValueListRow up && Rows.IndexOf(up) > 0));
             CommandBindings.Add(new CommandBinding(MoveRowDownCommand,
-                (s, e) => { if (e.Parameter is ValueListRow row) MoveRow(row, 1); },
+                (s, e) => { if (e.Parameter is ValueListRow row) { MoveRow(row, 1); } },
                 (s, e) => e.CanExecute = e.Parameter is ValueListRow down && Rows.IndexOf(down) >= 0 && Rows.IndexOf(down) < Rows.Count - 1));
         }
 
@@ -142,12 +142,19 @@ namespace Material3.Wpf {
         /// <summary>The hint an empty entry shows.</summary>
         public string Placeholder { get => (string)GetValue(PlaceholderProperty); set => SetValue(PlaceholderProperty, value); }
 
+        /// <summary>Identifies the <see cref="RowHeight"/> property.</summary>
+        public static readonly DependencyProperty RowHeightProperty = DependencyProperty.Register(
+            nameof(RowHeight), typeof(double), typeof(ValueListEditor), new PropertyMetadata(40.0, OnShapeChanged));
+
+        /// <summary>The height of one entry. <c>m3:Metrics.CornerRadius</c> rounds it.</summary>
+        public double RowHeight { get => (double)GetValue(RowHeightProperty); set => SetValue(RowHeightProperty, value); }
+
         /// <summary>Identifies the <see cref="AddText"/> property.</summary>
         public static readonly DependencyProperty AddTextProperty = DependencyProperty.Register(
-            nameof(AddText), typeof(string), typeof(ValueListEditor), new PropertyMetadata("Add"));
+            nameof(AddText), typeof(string), typeof(ValueListEditor), new PropertyMetadata(null));
 
-        /// <summary>The label of the add button.</summary>
-        public string AddText { get => (string)GetValue(AddTextProperty); set => SetValue(AddTextProperty, value); }
+        /// <summary>The label of the add button. Null shows the library's own, <see cref="Material3.Core.TextKey.Add"/>.</summary>
+        public string? AddText { get => (string?)GetValue(AddTextProperty); set => SetValue(AddTextProperty, value); }
 
         /// <summary>Identifies the <see cref="EmptyText"/> property.</summary>
         public static readonly DependencyProperty EmptyTextProperty = DependencyProperty.Register(
@@ -194,11 +201,19 @@ namespace Material3.Wpf {
             _loading = true;
             try {
                 Rows.Clear();
-                foreach (string value in values ?? Enumerable.Empty<string>()) Rows.Add(new ValueListRow { Text = value });
+                foreach (string value in values ?? Enumerable.Empty<string>()) {
+                    Rows.Add(new ValueListRow { Text = value });
+                }
+
                 int fixedLength = FixedLength;
                 if (fixedLength > 0) {
-                    while (Rows.Count > fixedLength) Rows.RemoveAt(Rows.Count - 1);
-                    while (Rows.Count < fixedLength) Rows.Add(new ValueListRow());
+                    while (Rows.Count > fixedLength) {
+                        Rows.RemoveAt(Rows.Count - 1);
+                    }
+
+                    while (Rows.Count < fixedLength) {
+                        Rows.Add(new ValueListRow());
+                    }
                 }
                 ApplyLabels();
             }
@@ -220,7 +235,10 @@ namespace Material3.Wpf {
 
         /// <summary>Appends an empty entry, unless the list is fixed.</summary>
         public void AddRow() {
-            if (!IsGrowable) return;
+            if (!IsGrowable) {
+                return;
+            }
+
             var row = new ValueListRow();
             Rows.Add(row);
             RowMotion.Added(_items, row);
@@ -228,7 +246,10 @@ namespace Material3.Wpf {
 
         /// <summary>Removes <paramref name="row"/>, unless the list is fixed. While the list is on screen the row closes first, so <see cref="Rows"/> loses it when the exit ends.</summary>
         public void RemoveRow(ValueListRow row) {
-            if (!IsGrowable) return;
+            if (!IsGrowable) {
+                return;
+            }
+
             RowMotion.Remove(_items, row, _leaving, () => Rows.Remove(row));
         }
 
@@ -236,7 +257,10 @@ namespace Material3.Wpf {
         public void MoveRow(ValueListRow row, int by) {
             int at = Rows.IndexOf(row);
             int to = at + by;
-            if (at < 0 || to < 0 || to >= Rows.Count) return;
+            if (at < 0 || to < 0 || to >= Rows.Count) {
+                return;
+            }
+
             RowMotion.Move(_items, new object[] { row, Rows[to] }, () => Rows.Move(at, to));
         }
 
@@ -249,24 +273,39 @@ namespace Material3.Wpf {
 
         private void ApplyLabels() {
             IList<string>? labels = SlotLabels;
-            for (int i = 0; i < Rows.Count; i++) Rows[i].Label = labels != null && i < labels.Count ? labels[i] : null;
+            for (int i = 0; i < Rows.Count; i++) {
+                Rows[i].Label = labels != null && i < labels.Count ? labels[i] : null;
+            }
         }
 
         private void OnRowsChanged(object? sender, NotifyCollectionChangedEventArgs e) {
-            if (e.OldItems != null)
-                foreach (ValueListRow row in e.OldItems.OfType<ValueListRow>()) row.PropertyChanged -= OnRowEdited;
-            if (e.NewItems != null)
-                foreach (ValueListRow row in e.NewItems.OfType<ValueListRow>()) row.PropertyChanged += OnRowEdited;
-            if (_loading) return;
+            if (e.OldItems != null) {
+                foreach (ValueListRow row in e.OldItems.OfType<ValueListRow>()) {
+                    row.PropertyChanged -= OnRowEdited;
+                }
+            }
+
+            if (e.NewItems != null) {
+                foreach (ValueListRow row in e.NewItems.OfType<ValueListRow>()) {
+                    row.PropertyChanged += OnRowEdited;
+                }
+            }
+
+            if (_loading) {
+                return;
+            }
+
             ApplyLabels();
             Refresh();
         }
 
         private void OnRowEdited(object? sender, PropertyChangedEventArgs e) {
-            if (e.PropertyName == nameof(ValueListRow.Text) && !_loading) ValuesChanged?.Invoke(this, EventArgs.Empty);
+            if (e.PropertyName == nameof(ValueListRow.Text) && !_loading) {
+                ValuesChanged?.Invoke(this, EventArgs.Empty);
+            }
         }
 
-        private const double RowHeight = 46;
+        private const double RowGap = 6;
         private const double LabelHeight = 18;
 
         private void Refresh() {
@@ -274,9 +313,11 @@ namespace Material3.Wpf {
             int cap = MaxVisibleRows;
             bool capped = cap > 0 && Orientation == Orientation.Vertical && Rows.Count > cap;
             SetValue(RowsScrollHeightKey, capped
-                ? cap * (RowHeight + (SlotLabels != null ? LabelHeight : 0))
+                ? cap * (RowHeight + RowGap + (SlotLabels != null ? LabelHeight : 0))
                 : double.PositiveInfinity);
-            if (!_loading) ValuesChanged?.Invoke(this, EventArgs.Empty);
+            if (!_loading) {
+                ValuesChanged?.Invoke(this, EventArgs.Empty);
+            }
         }
     }
 }

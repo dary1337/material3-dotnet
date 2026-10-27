@@ -46,7 +46,10 @@ namespace Material3.Wpf.Tests {
         });
 
         private static bool IsShimmering(Skeleton skeleton) {
-            if (!(skeleton.Template?.FindName("PART_Shimmer", skeleton) is Border shimmer)) return false;
+            if (!(skeleton.Template?.FindName("PART_Shimmer", skeleton) is Border shimmer)) {
+                return false;
+            }
+
             return shimmer.Background is LinearGradientBrush brush
                 && brush.RelativeTransform is TranslateTransform sweep
                 && sweep.HasAnimatedProperties;

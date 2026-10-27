@@ -155,8 +155,10 @@ namespace Material3.Wpf.Tests {
     public class TabsTests {
         private static Tabs Shown(Window w, TabVariant variant) {
             var tabs = new Tabs { Variant = variant };
-            foreach (string header in new[] { "Flights", "Trips", "Explore" })
+            foreach (string header in new[] { "Flights", "Trips", "Explore" }) {
                 tabs.Items.Add(new TabItem { Header = header, Content = new TextBlock { Text = header } });
+            }
+
             tabs.SelectedIndex = 0;
             w.Content = tabs;
             Ui.Settle(w);

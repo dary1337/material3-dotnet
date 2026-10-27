@@ -11,8 +11,13 @@ namespace Material3.Wpf {
     public static class PopupWatch {
         /// <summary>Closes <paramref name="popup"/> once its anchor scrolls or virtualizes out of view, for as long as it is open.</summary>
         public static void Watch(Popup? popup) {
-            if (popup?.PlacementTarget is not FrameworkElement target) return;
-            if (Window.GetWindow(target) is not Window wnd) return;
+            if (popup?.PlacementTarget is not FrameworkElement target) {
+                return;
+            }
+
+            if (Window.GetWindow(target) is not Window wnd) {
+                return;
+            }
 
             ScrollChangedEventHandler onScroll = null!;
             DependencyPropertyChangedEventHandler onVis = null!;
@@ -23,9 +28,11 @@ namespace Material3.Wpf {
                 popup.Closed -= onClosed;
             }
             onScroll = (_, e) => {
-                if ((e.VerticalChange != 0 || e.HorizontalChange != 0) && !InView(target)) popup.IsOpen = false;
+                if ((e.VerticalChange != 0 || e.HorizontalChange != 0) && !InView(target)) {
+                    popup.IsOpen = false;
+                }
             };
-            onVis = (_, e) => { if (e.NewValue is false) popup.IsOpen = false; };
+            onVis = (_, e) => { if (e.NewValue is false) { popup.IsOpen = false; } };
             onClosed = (_, _) => Cleanup();
 
             wnd.AddHandler(ScrollViewer.ScrollChangedEvent, onScroll, handledEventsToo: true);
@@ -34,13 +41,18 @@ namespace Material3.Wpf {
         }
 
         private static bool InView(FrameworkElement t) {
-            if (!t.IsVisible) return false;
+            if (!t.IsVisible) {
+                return false;
+            }
+
             try {
                 DependencyObject? p = VisualTreeHelper.GetParent(t);
                 while (p != null) {
                     if (p is ScrollViewer sv && sv.ActualWidth > 0) {
                         Rect r = t.TransformToAncestor(sv).TransformBounds(new Rect(0, 0, t.ActualWidth, t.ActualHeight));
-                        if (!r.IntersectsWith(new Rect(0, 0, sv.ActualWidth, sv.ActualHeight))) return false;
+                        if (!r.IntersectsWith(new Rect(0, 0, sv.ActualWidth, sv.ActualHeight))) {
+                            return false;
+                        }
                     }
                     p = VisualTreeHelper.GetParent(p);
                 }

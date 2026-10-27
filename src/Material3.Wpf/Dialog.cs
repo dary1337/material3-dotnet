@@ -5,13 +5,15 @@ using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using Material3.Core;
 
 namespace Material3.Wpf {
-        /// <summary>How an <see cref="Dialog"/> was answered.</summary>
+    /// <summary>How an <see cref="Dialog"/> was answered.</summary>
     public enum DialogChoice {
         /// <summary>Cancelled, or dismissed with Esc or a click on the scrim.</summary>
         Cancel,
@@ -54,7 +56,7 @@ namespace Material3.Wpf {
         public Tone Tone { get; set; } = Tone.Accent;
 
         /// <summary>The confirm label. A notice is a dialog with nothing but this.</summary>
-        public string ConfirmText { get; set; } = "OK";
+        public string ConfirmText { get; set; } = LibraryText.Get(TextKey.Ok);
 
         /// <summary>The cancel label; null leaves the dialog without one.</summary>
         public string? CancelText { get; set; }
@@ -89,6 +91,10 @@ namespace Material3.Wpf {
 
         /// <summary>Links under the body, each with the <c>OpenInNew</c> glyph. They run without closing the dialog.</summary>
         public IList<DialogAction> Links { get; } = new List<DialogAction>();
+
+        internal bool IsHeaderHidden { get; set; }
+
+        internal double? CardWidth { get; set; }
     }
 
     /// <summary>
@@ -98,8 +104,8 @@ namespace Material3.Wpf {
     /// <remarks>
     /// <see cref="Modal"/> hosts a card you build inside the window's own <see cref="ModalLayer"/>; this one needs
     /// no layer and hands back the answer. The theme is read from the owner's resources and the application's.
-    /// Glyphs come from <see cref="PathIcon.Register(string,string)"/>: the tone's, <c>OpenInNew</c> for links and
-    /// <c>Loading</c> for the busy confirm.
+    /// The tone's glyph, <c>OpenInNew</c> for links and <c>Loading</c> for the busy confirm are built in; an app's own
+    /// <see cref="PathIcon.Register(string,string)"/> replaces them.
     /// </remarks>
     public static class Dialog {
         /// <summary>
@@ -107,11 +113,28 @@ namespace Material3.Wpf {
         /// application's main window, and without one the dialog centres on the screen.
         /// </summary>
         public static DialogChoice Show(Window? owner, DialogOptions options) {
-            if (options == null) throw new ArgumentNullException(nameof(options));
+            if (options == null) {
+                throw new ArgumentNullException(nameof(options));
+            }
+
             var window = new DialogWindow(options);
             window.ShowOver(owner);
             window.Failure?.Throw();
             return window.Choice;
+        }
+
+        /// <summary>
+        /// Closes the dialog that hosts <paramref name="inside"/> with <see cref="DialogChoice.Cancel"/>, as Esc does — for
+        /// content that leads somewhere else. Nothing happens outside a dialog or while its confirm is running work.
+        /// </summary>
+        public static void Dismiss(DependencyObject inside) {
+            if (inside == null) {
+                throw new ArgumentNullException(nameof(inside));
+            }
+
+            if (Window.GetWindow(inside) is DialogWindow dialog) {
+                dialog.Dismiss();
+            }
         }
 
         internal static (string Glyph, string Role) ToneGlyph(Tone tone) {
@@ -125,8 +148,6 @@ namespace Material3.Wpf {
         }
 
         private sealed class DialogWindow : Window {
-            private const double CardWidth = 420;
-
             private readonly DialogOptions _options;
             private readonly Grid _root = new Grid { Opacity = 0 };
             private readonly Border _scrim = new Border { Opacity = 0.6 };
@@ -152,45 +173,53 @@ namespace Material3.Wpf {
                 WindowStartupLocation = WindowStartupLocation.CenterScreen;
 
                 _scrim.SetResourceReference(Border.BackgroundProperty, "Scrim");
-                _card.SetResourceReference(Border.BackgroundProperty, "SurfaceContainerHigh");
-                _card.SetResourceReference(Border.CornerRadiusProperty, "RadiusXl");
-                _card.Padding = new Thickness(24);
+                _card.SetResourceReference(StyleProperty, "DialogCard");
                 _card.HorizontalAlignment = HorizontalAlignment.Center;
                 _card.VerticalAlignment = VerticalAlignment.Center;
-                _card.Margin = new Thickness(32);
-                _card.Child = BuildContent();
                 _card.MouseLeftButtonDown += (_, e) => e.Handled = true;
                 _scrim.MouseLeftButtonDown += (_, __) => Dismiss();
 
                 _root.Children.Add(_scrim);
                 _root.Children.Add(_card);
                 Content = _root;
+                _card.Child = BuildContent();
                 PreviewKeyDown += (_, e) => { if (e.Key == Key.Escape) { e.Handled = true; Dismiss(); } };
                 Loaded += (_, __) => Motion.OpenModal(_root, _card);
             }
 
             private UIElement BuildContent() {
                 var content = new StackPanel();
+                double width = _options.CardWidth ?? (TryFindResource("DialogWidth") is double w ? w : 420);
                 double wide = _options.Content is FrameworkElement fe ? fe.MaxWidth : 0;
-                if (wide > CardWidth && !double.IsInfinity(wide)) content.MaxWidth = wide;
-                else content.Width = CardWidth;
+                if (wide > width && !double.IsInfinity(wide)) {
+                    content.MaxWidth = wide;
+                }
+                else if (width > 0) {
+                    content.Width = width;
+                }
 
-                content.Children.Add(BuildHeader());
+                if (!_options.IsHeaderHidden) {
+                    content.Children.Add(BuildHeader());
+                }
+
                 content.Children.Add(_options.Content ?? BuildBody(_options.Body ?? string.Empty));
-                if (_options.Links.Count > 0) content.Children.Add(BuildLinks(_options.Links));
+                if (_options.Links.Count > 0) {
+                    content.Children.Add(BuildLinks(_options.Links));
+                }
+
                 content.Children.Add(BuildActions());
                 return content;
             }
 
             private UIElement BuildHeader() {
                 (string glyph, string role) = ToneGlyph(_options.Tone);
-                var icon = new PathIcon {
-                    Glyph = glyph, Width = 26, Height = 26, Margin = new Thickness(0, 0, 12, 0),
-                    VerticalAlignment = VerticalAlignment.Center,
-                };
+                var icon = new PathIcon { Glyph = glyph, VerticalAlignment = VerticalAlignment.Center };
+                icon.SetBinding(WidthProperty, new Binding { Path = new PropertyPath(Metrics.GlyphSizeProperty), Source = _card });
+                icon.SetBinding(HeightProperty, new Binding { Path = new PropertyPath(Metrics.GlyphSizeProperty), Source = _card });
+                icon.SetBinding(MarginProperty, new Binding { Path = new PropertyPath(Metrics.GlyphMarginProperty), Source = _card });
                 icon.SetResourceReference(PathIcon.ForegroundProperty, role);
                 var title = new TextBlock { Text = _options.Title, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
-                title.SetResourceReference(StyleProperty, "TitleLarge");
+                title.SetResourceReference(StyleProperty, "HeadlineSmall");
                 var header = new DockPanel { LastChildFill = true };
                 DockPanel.SetDock(icon, Dock.Left);
                 header.Children.Add(icon);
@@ -200,7 +229,10 @@ namespace Material3.Wpf {
 
             private static UIElement BuildBody(string body) {
                 var text = new TextBlock {
-                    Text = body, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 8, 0, 0), LineHeight = 20,
+                    Text = body,
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(0, 8, 0, 0),
+                    LineHeight = 20,
                 };
                 text.SetResourceReference(StyleProperty, "Body");
                 text.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
@@ -212,17 +244,24 @@ namespace Material3.Wpf {
                 for (int i = 0; i < links.Count; i++) {
                     DialogAction link = links[i];
                     var inner = new StackPanel {
-                        Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, i == links.Count - 1 ? 0 : 18, 0),
+                        Orientation = Orientation.Horizontal,
+                        Margin = new Thickness(0, 0, i == links.Count - 1 ? 0 : 18, 0),
                     };
                     var glyph = new PathIcon {
-                        Glyph = "OpenInNew", Width = 14, Height = 14, VerticalAlignment = VerticalAlignment.Center,
+                        Glyph = "OpenInNew",
+                        Width = 14,
+                        Height = 14,
+                        VerticalAlignment = VerticalAlignment.Center,
                         Margin = new Thickness(0, 0, 4, 0),
                     };
                     glyph.SetResourceReference(PathIcon.ForegroundProperty, "Primary");
                     var label = new TextBlock {
-                        Text = link.Text, FontSize = 13, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center,
+                        Text = link.Text,
+                        FontSize = 13,
+                        VerticalAlignment = VerticalAlignment.Center,
                     };
                     label.SetResourceReference(TextBlock.ForegroundProperty, "Primary");
+                    label.SetResourceReference(TextBlock.FontWeightProperty, "FontWeightMedium");
                     inner.Children.Add(glyph);
                     inner.Children.Add(label);
                     var hit = new Border { Background = Brushes.Transparent, Cursor = Cursors.Hand, Child = inner };
@@ -249,7 +288,9 @@ namespace Material3.Wpf {
                     buttons.Children.Add(secondary);
                 }
                 _confirm = MakeButton(_options.ConfirmText, _options.Destructive ? "ErrorTonalButton" : "FilledButton");
-                if (_options.HoldToConfirm > TimeSpan.Zero) ArmHold(_confirm);
+                if (_options.HoldToConfirm > TimeSpan.Zero) {
+                    ArmHold(_confirm);
+                }
                 else {
                     _confirm.IsDefault = true;
                     _confirm.Click += async (_, __) => await OnConfirmAsync();
@@ -260,7 +301,7 @@ namespace Material3.Wpf {
                 if (_options.SupportingAction is DialogAction extra) {
                     Button supporting = MakeButton(extra.Text, "TextButton");
                     supporting.VerticalAlignment = VerticalAlignment.Center;
-                    supporting.Click += (_, __) => { if (!_working) extra.Run(); };
+                    supporting.Click += (_, __) => { if (!_working) { extra.Run(); } };
                     DockPanel.SetDock(supporting, Dock.Left);
                     row.Children.Add(supporting);
                 }
@@ -276,7 +317,10 @@ namespace Material3.Wpf {
             }
 
             private async Task OnConfirmAsync() {
-                if (_working) return;
+                if (_working) {
+                    return;
+                }
+
                 if (_options.ConfirmWork == null) { Answer(DialogChoice.Confirm); return; }
                 Choice = DialogChoice.Confirm;
                 _working = true;
@@ -288,11 +332,19 @@ namespace Material3.Wpf {
             }
 
             private void ShowConfirmBusy() {
-                foreach (Button b in _actions) if (!ReferenceEquals(b, _confirm)) b.IsEnabled = false;
+                foreach (Button b in _actions) {
+                    if (!ReferenceEquals(b, _confirm)) {
+                        b.IsEnabled = false;
+                    }
+                }
+
                 _confirm.IsHitTestVisible = false;
                 var spinner = new PathIcon {
-                    Glyph = Busy.SpinnerGlyph, Width = 18, Height = 18,
-                    HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
+                    Glyph = Busy.SpinnerGlyph,
+                    Width = 18,
+                    Height = 18,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
                 };
                 Busy.SetSpinWhileVisible(spinner, true);
                 if (_holdLabel != null) {
@@ -306,12 +358,15 @@ namespace Material3.Wpf {
             }
 
             private void Answer(DialogChoice choice) {
-                if (_working) return;
+                if (_working) {
+                    return;
+                }
+
                 Choice = choice;
                 Close();
             }
 
-            private void Dismiss() => Answer(DialogChoice.Cancel);
+            internal void Dismiss() => Answer(DialogChoice.Cancel);
 
             private void ArmHold(Button button) {
                 var fillScale = new ScaleTransform(0, 1);
@@ -320,21 +375,30 @@ namespace Material3.Wpf {
                 string onFillRole = _options.Destructive ? "OnError" : "OnPrimary";
 
                 var face = new Border {
-                    CornerRadius = new CornerRadius(20), MinHeight = 40, MinWidth = 120, ClipToBounds = true,
-                    RenderTransform = shake, RenderTransformOrigin = new Point(0.5, 0.5),
+                    CornerRadius = new CornerRadius(20),
+                    MinHeight = 40,
+                    MinWidth = 120,
+                    ClipToBounds = true,
+                    RenderTransform = shake,
+                    RenderTransformOrigin = new Point(0.5, 0.5),
                 };
                 face.SetResourceReference(Border.BackgroundProperty, fillRole);
                 var fill = new Border {
-                    Opacity = 0.3, CornerRadius = new CornerRadius(20),
-                    RenderTransform = fillScale, RenderTransformOrigin = new Point(0, 0.5),
+                    Opacity = 0.3,
+                    CornerRadius = new CornerRadius(20),
+                    RenderTransform = fillScale,
+                    RenderTransformOrigin = new Point(0, 0.5),
                 };
                 fill.SetResourceReference(Border.BackgroundProperty, onFillRole);
                 var label = new TextBlock {
-                    Text = _options.ConfirmText, FontSize = 14, FontWeight = FontWeights.SemiBold,
-                    HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
-                    Margin = new Thickness(17, 0, 17, 0),
+                    Text = _options.ConfirmText,
+                    FontSize = 14,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(24, 0, 24, 0),
                 };
                 label.SetResourceReference(TextBlock.ForegroundProperty, onFillRole);
+                label.SetResourceReference(TextBlock.FontWeightProperty, "FontWeightMedium");
                 _holdRole = onFillRole;
                 _holdLabel = label;
                 var layers = new Grid();
@@ -351,42 +415,61 @@ namespace Material3.Wpf {
                 var timer = new DispatcherTimer { Interval = _options.HoldToConfirm };
                 timer.Tick += async (_, __) => {
                     timer.Stop();
-                    if (committed) return;
+                    if (committed) {
+                        return;
+                    }
+
                     committed = true;
                     await OnConfirmAsync();
                 };
 
                 void Start() {
-                    if (committed || timer.IsEnabled || _working) return;
+                    if (committed || timer.IsEnabled || _working) {
+                        return;
+                    }
+
                     fillScale.BeginAnimation(ScaleTransform.ScaleXProperty,
                         new DoubleAnimation(0, 1, _options.HoldToConfirm) { FillBehavior = FillBehavior.HoldEnd });
                     timer.Start();
                 }
 
                 void Abort() {
-                    if (committed || !timer.IsEnabled) return;
+                    if (committed || !timer.IsEnabled) {
+                        return;
+                    }
+
                     timer.Stop();
                     fillScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
                     fillScale.ScaleX = 0;
                     var nope = new DoubleAnimationUsingKeyFrames { Duration = TimeSpan.FromMilliseconds(260) };
-                    foreach ((double at, double x) in new[] { (0.0, 0.0), (0.15, -7.0), (0.35, 7.0), (0.55, -5.0), (0.75, 4.0), (1.0, 0.0) })
+                    foreach ((double at, double x) in new[] { (0.0, 0.0), (0.15, -7.0), (0.35, 7.0), (0.55, -5.0), (0.75, 4.0), (1.0, 0.0) }) {
                         nope.KeyFrames.Add(new EasingDoubleKeyFrame(x, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(260 * at))));
-                    if (Motion.IsAnimating) shake.BeginAnimation(TranslateTransform.XProperty, nope);
+                    }
+
+                    if (Motion.IsAnimating) {
+                        shake.BeginAnimation(TranslateTransform.XProperty, nope);
+                    }
                 }
 
                 button.PreviewMouseLeftButtonDown += (_, __) => Start();
                 button.PreviewMouseLeftButtonUp += (_, __) => Abort();
                 button.MouseLeave += (_, __) => Abort();
-                button.PreviewKeyDown += (_, e) => { if (e.Key == Key.Space && !e.IsRepeat) Start(); };
-                button.PreviewKeyUp += (_, e) => { if (e.Key == Key.Space) Abort(); };
+                button.PreviewKeyDown += (_, e) => { if (e.Key == Key.Space && !e.IsRepeat) { Start(); } };
+                button.PreviewKeyUp += (_, e) => { if (e.Key == Key.Space) { Abort(); } };
             }
 
             protected override void OnClosing(CancelEventArgs e) {
                 base.OnClosing(e);
                 if (_working) { e.Cancel = true; return; }
-                if (_faded) return;
+                if (_faded) {
+                    return;
+                }
+
                 e.Cancel = true;
-                if (_closing) return;
+                if (_closing) {
+                    return;
+                }
+
                 _closing = true;
                 Motion.CloseModal(_root, _card, () => { _faded = true; Close(); });
             }
@@ -403,10 +486,14 @@ namespace Material3.Wpf {
                     Width = owner.ActualWidth;
                     Height = owner.ActualHeight;
                     WindowStartupLocation = WindowStartupLocation.CenterOwner;
-                    if (DwmWindow.IsRounded(owner)) _scrim.CornerRadius = new CornerRadius(DwmWindow.RoundRadiusDip);
+                    if (DwmWindow.IsRounded(owner)) {
+                        _scrim.CornerRadius = new CornerRadius(DwmWindow.RoundRadiusDip);
+                    }
                 }
                 ShowDialog();
-                if (Owner != null && Owner.IsLoaded) Owner.Activate();
+                if (Owner != null && Owner.IsLoaded) {
+                    Owner.Activate();
+                }
             }
         }
     }

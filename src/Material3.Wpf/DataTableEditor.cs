@@ -34,7 +34,7 @@ namespace Material3.Wpf {
         /// <summary>The cell as typed.</summary>
         public string Text {
             get => _text;
-            set { if (_text == value) return; _text = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Text))); }
+            set { if (_text == value) { return; } _text = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Text))); }
         }
 
         /// <summary>Whether the cell is a field rather than read-only text.</summary>
@@ -54,7 +54,7 @@ namespace Material3.Wpf {
         /// <summary>Whether the record is picked, while <see cref="DataTableEditor.IsSelectable"/> is on.</summary>
         public bool Included {
             get => _included;
-            set { if (_included == value) return; _included = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Included))); }
+            set { if (_included == value) { return; } _included = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Included))); }
         }
 
         /// <inheritdoc />
@@ -80,7 +80,7 @@ namespace Material3.Wpf {
             Rows.CollectionChanged += OnRowsChanged;
             CommandBindings.Add(new CommandBinding(AddRowCommand, (s, e) => AddRow(), (s, e) => e.CanExecute = CanAddRows));
             CommandBindings.Add(new CommandBinding(RemoveRowCommand,
-                (s, e) => { if (e.Parameter is DataTableRow row) RemoveRow(row); },
+                (s, e) => { if (e.Parameter is DataTableRow row) { RemoveRow(row); } },
                 (s, e) => e.CanExecute = CanRemoveRows));
         }
 
@@ -141,14 +141,21 @@ namespace Material3.Wpf {
         /// <summary>The height the template caps the rows at, derived from <see cref="MaxVisibleRows"/>.</summary>
         public double RowsScrollHeight => (double)GetValue(RowsScrollHeightProperty);
 
+        /// <summary>Identifies the <see cref="RowHeight"/> property.</summary>
+        public static readonly DependencyProperty RowHeightProperty = DependencyProperty.Register(
+            nameof(RowHeight), typeof(double), typeof(DataTableEditor), new PropertyMetadata(40.0, OnCapChanged));
+
+        /// <summary>The height of one entry. <c>m3:Metrics.CornerRadius</c> rounds it.</summary>
+        public double RowHeight { get => (double)GetValue(RowHeightProperty); set => SetValue(RowHeightProperty, value); }
+
         /// <summary>Identifies the <see cref="AddText"/> property.</summary>
         public static readonly DependencyProperty AddTextProperty = DependencyProperty.Register(
-            nameof(AddText), typeof(string), typeof(DataTableEditor), new PropertyMetadata("Add"));
+            nameof(AddText), typeof(string), typeof(DataTableEditor), new PropertyMetadata(null));
 
-        /// <summary>The label of the add button.</summary>
-        public string AddText { get => (string)GetValue(AddTextProperty); set => SetValue(AddTextProperty, value); }
+        /// <summary>The label of the add button. Null shows the library's own, <see cref="Material3.Core.TextKey.Add"/>.</summary>
+        public string? AddText { get => (string?)GetValue(AddTextProperty); set => SetValue(AddTextProperty, value); }
 
-        private const double RowHeight = 44;
+        private const double RowGap = 4;
 
         private bool _loading;
 
@@ -157,7 +164,7 @@ namespace Material3.Wpf {
 
         private void ApplyCap() {
             int cap = MaxVisibleRows;
-            SetValue(RowsScrollHeightKey, cap > 0 && Rows.Count > cap ? cap * RowHeight : double.PositiveInfinity);
+            SetValue(RowsScrollHeightKey, cap > 0 && Rows.Count > cap ? cap * (RowHeight + RowGap) : double.PositiveInfinity);
         }
 
         /// <summary>Replaces the columns and the records. A key a record lacks loads as an empty cell.</summary>
@@ -165,9 +172,14 @@ namespace Material3.Wpf {
             _loading = true;
             try {
                 Columns.Clear();
-                foreach (DataTableColumn column in columns) Columns.Add(column);
+                foreach (DataTableColumn column in columns) {
+                    Columns.Add(column);
+                }
+
                 Rows.Clear();
-                foreach (IDictionary<string, string> record in records) Rows.Add(RowOf(record));
+                foreach (IDictionary<string, string> record in records) {
+                    Rows.Add(RowOf(record));
+                }
             }
             finally { _loading = false; }
             ApplyCap();
@@ -182,7 +194,10 @@ namespace Material3.Wpf {
 
         /// <summary>Appends an empty record, unless <see cref="CanAddRows"/> is off.</summary>
         public void AddRow() {
-            if (!CanAddRows) return;
+            if (!CanAddRows) {
+                return;
+            }
+
             DataTableRow row = RowOf(new Dictionary<string, string>(StringComparer.Ordinal));
             Rows.Add(row);
             RowMotion.Added(_rows, row);
@@ -190,7 +205,10 @@ namespace Material3.Wpf {
 
         /// <summary>Removes <paramref name="row"/>, unless <see cref="CanRemoveRows"/> is off. While the table is on screen the row closes first, so <see cref="Rows"/> loses it when the exit ends.</summary>
         public void RemoveRow(DataTableRow row) {
-            if (!CanRemoveRows) return;
+            if (!CanRemoveRows) {
+                return;
+            }
+
             RowMotion.Remove(_rows, row, _leaving, () => Rows.Remove(row));
         }
 
@@ -218,13 +236,18 @@ namespace Material3.Wpf {
         }
 
         private void OnRowsChanged(object? sender, NotifyCollectionChangedEventArgs e) {
-            if (_loading) return;
+            if (_loading) {
+                return;
+            }
+
             ApplyCap();
             ValuesChanged?.Invoke(this, EventArgs.Empty);
         }
 
         private void OnCellEdited(object? sender, PropertyChangedEventArgs e) {
-            if (!_loading) ValuesChanged?.Invoke(this, EventArgs.Empty);
+            if (!_loading) {
+                ValuesChanged?.Invoke(this, EventArgs.Empty);
+            }
         }
     }
 }

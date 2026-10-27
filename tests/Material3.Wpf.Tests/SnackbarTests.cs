@@ -88,7 +88,9 @@ namespace Material3.Wpf.Tests {
             var content = (UIElement)w.Content;
             Adorner adorner = AdornerLayer.GetAdornerLayer(content)!.GetAdorners(content)![0];
             foreach (object child in LogicalTreeHelper.GetChildren(adorner)) {
-                if (child is Snackbar bar) return bar;
+                if (child is Snackbar bar) {
+                    return bar;
+                }
             }
             throw new InvalidOperationException("the adorner is holding no snackbar");
         }

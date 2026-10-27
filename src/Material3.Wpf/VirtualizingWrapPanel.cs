@@ -36,14 +36,18 @@ namespace Material3.Wpf {
         /// <summary>Initializes a new instance of the <see cref="VirtualizingWrapPanel"/> class.</summary>
         public VirtualizingWrapPanel() {
             IsVisibleChanged += (_, e) => {
-                if (e.NewValue is bool v && v)
+                if (e.NewValue is bool v && v) {
                     Dispatcher.BeginInvoke(new Action(InvalidateMeasure), System.Windows.Threading.DispatcherPriority.Loaded);
+                }
             };
         }
 
         /// <inheritdoc />
         protected override Size MeasureOverride(Size availableSize) {
-            if (FixedSize) _itemSize = new Size(ItemWidth, ItemHeight);
+            if (FixedSize) {
+                _itemSize = new Size(ItemWidth, ItemHeight);
+            }
+
             ItemsControl? owner = ItemsControl.GetItemsOwner(this);
             int count = owner?.Items.Count ?? 0;
             UpdateScrollInfo(availableSize, count);
@@ -51,7 +55,9 @@ namespace Material3.Wpf {
             (int first, int last) = VisibleRange(_offset.Y, _viewport.Height, _viewport.Width, _itemSize.Width, _itemSize.Height, count);
 
             var generator = ItemContainerGenerator;
-            if (generator == null) return availableSize;
+            if (generator == null) {
+                return availableSize;
+            }
 
             GeneratorPosition startPos = generator.GeneratorPositionFromIndex(first);
             int childIndex = startPos.Offset == 0 ? startPos.Index : startPos.Index + 1;
@@ -59,13 +65,19 @@ namespace Material3.Wpf {
                 for (int i = first; i <= last && i < count; i++, childIndex++) {
                     UIElement child = (UIElement)generator.GenerateNext(out bool newlyRealized);
                     if (newlyRealized) {
-                        if (childIndex >= InternalChildren.Count) AddInternalChild(child);
-                        else InsertInternalChild(childIndex, child);
+                        if (childIndex >= InternalChildren.Count) {
+                            AddInternalChild(child);
+                        }
+                        else {
+                            InsertInternalChild(childIndex, child);
+                        }
+
                         generator.PrepareItemContainer(child);
                     }
                     child.Measure(new Size(_itemSize.Width, _itemSize.Height));
-                    if (!FixedSize && child.DesiredSize.Width > 1 && child.DesiredSize.Height > 1)
+                    if (!FixedSize && child.DesiredSize.Width > 1 && child.DesiredSize.Height > 1) {
                         _itemSize = child.DesiredSize;
+                    }
                 }
             }
             CleanUpChildren(first, last);
@@ -82,7 +94,10 @@ namespace Material3.Wpf {
             for (int vi = 0; vi < InternalChildren.Count; vi++) {
                 UIElement child = InternalChildren[vi];
                 int itemIndex = generator.IndexFromGeneratorPosition(new GeneratorPosition(vi, 0));
-                if (itemIndex < 0) continue;
+                if (itemIndex < 0) {
+                    continue;
+                }
+
                 int row = itemIndex / cols, col = itemIndex % cols;
                 child.Arrange(new Rect(col * _itemSize.Width - _offset.X, row * _itemSize.Height - _offset.Y,
                     _itemSize.Width, _itemSize.Height));
@@ -121,7 +136,10 @@ namespace Material3.Wpf {
 
         internal static (int first, int last) VisibleRange(double offsetY, double viewportH, double viewportW,
                                                          double itemW, double itemH, int count) {
-            if (count <= 0 || itemW <= 0 || itemH <= 0) return (0, -1);
+            if (count <= 0 || itemW <= 0 || itemH <= 0) {
+                return (0, -1);
+            }
+
             int cols = Math.Max(1, (int)Math.Floor(viewportW / itemW));
             int firstRow = Math.Max(0, (int)Math.Floor(offsetY / itemH) - 1);
             int lastRow = (int)Math.Ceiling((offsetY + viewportH) / itemH);
@@ -137,7 +155,9 @@ namespace Material3.Wpf {
             if (extent != _extent) { _extent = extent; ScrollOwner?.InvalidateScrollInfo(); }
             if (available != _viewport) { _viewport = available; ScrollOwner?.InvalidateScrollInfo(); }
             double maxY = Math.Max(0, _extent.Height - _viewport.Height);
-            if (_offset.Y > maxY) SetVerticalOffset(maxY);
+            if (_offset.Y > maxY) {
+                SetVerticalOffset(maxY);
+            }
         }
 
         /// <inheritdoc />
@@ -200,7 +220,10 @@ namespace Material3.Wpf {
         public void SetVerticalOffset(double offset) {
             double maxY = Math.Max(0, _extent.Height - _viewport.Height);
             double y = Math.Max(0, Math.Min(offset, maxY));
-            if (Math.Abs(y - _offset.Y) < 0.001) return;
+            if (Math.Abs(y - _offset.Y) < 0.001) {
+                return;
+            }
+
             _offset.Y = y;
             ScrollOwner?.InvalidateScrollInfo();
             InvalidateMeasure();
@@ -209,13 +232,24 @@ namespace Material3.Wpf {
         /// <inheritdoc />
         public Rect MakeVisible(Visual visual, Rect rectangle) {
             for (int i = 0; i < InternalChildren.Count; i++) {
-                if (!ReferenceEquals(InternalChildren[i], visual)) continue;
+                if (!ReferenceEquals(InternalChildren[i], visual)) {
+                    continue;
+                }
+
                 int itemIndex = ItemContainerGenerator.IndexFromGeneratorPosition(new GeneratorPosition(i, 0));
-                if (itemIndex < 0) break;
+                if (itemIndex < 0) {
+                    break;
+                }
+
                 int row = itemIndex / Columns;
                 double top = row * _itemSize.Height, bottom = top + _itemSize.Height;
-                if (top < _offset.Y) SetVerticalOffset(top);
-                else if (bottom > _offset.Y + _viewport.Height) SetVerticalOffset(bottom - _viewport.Height);
+                if (top < _offset.Y) {
+                    SetVerticalOffset(top);
+                }
+                else if (bottom > _offset.Y + _viewport.Height) {
+                    SetVerticalOffset(bottom - _viewport.Height);
+                }
+
                 break;
             }
             return rectangle;

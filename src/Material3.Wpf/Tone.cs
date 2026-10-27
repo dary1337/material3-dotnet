@@ -1,4 +1,4 @@
-﻿namespace Material3.Wpf {
+namespace Material3.Wpf {
     /// <summary>The meaning a <see cref="Chip"/>, a <see cref="NoticeBanner"/> or a <see cref="Dialog"/> is tinted with.</summary>
     public enum Tone {
         /// <summary>No particular meaning: surface colours.</summary>

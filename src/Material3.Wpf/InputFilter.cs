@@ -1,7 +1,7 @@
-using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using Material3.Core;
 
 namespace Material3.Wpf {
     /// <summary>What a filtered <see cref="TextBox"/> lets the user type.</summary>
@@ -24,9 +24,6 @@ namespace Material3.Wpf {
     /// passes: the field is mid-edit, and only the caller knows whether it may stay that way.
     /// </remarks>
     public static class InputFilter {
-        private static readonly Regex PartialNumber = new Regex(@"^-?[0-9]*\.?[0-9]*$");
-        private static readonly Regex PartialInteger = new Regex(@"^-?[0-9]*$");
-
         /// <summary>Identifies the <c>Kind</c> attached property.</summary>
         public static readonly DependencyProperty KindProperty = DependencyProperty.RegisterAttached(
             "Kind", typeof(InputKind), typeof(InputFilter), new PropertyMetadata(InputKind.Text, OnKindChanged));
@@ -40,17 +37,23 @@ namespace Material3.Wpf {
         /// <summary>Whether <paramref name="text"/> is a value of <paramref name="kind"/>, or the start of one.</summary>
         public static bool Accepts(InputKind kind, string text) {
             switch (kind) {
-                case InputKind.Number: return PartialNumber.IsMatch(text);
-                case InputKind.Integer: return PartialInteger.IsMatch(text);
+                case InputKind.Number: return TextInputRules.IsNumberPrefix(text);
+                case InputKind.Integer: return TextInputRules.IsIntegerPrefix(text);
                 default: return true;
             }
         }
 
         private static void OnKindChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-            if (!(d is TextBox box)) return;
+            if (!(d is TextBox box)) {
+                return;
+            }
+
             box.PreviewTextInput -= OnPreviewTextInput;
             DataObject.RemovePastingHandler(box, OnPasting);
-            if ((InputKind)e.NewValue == InputKind.Text) return;
+            if ((InputKind)e.NewValue == InputKind.Text) {
+                return;
+            }
+
             box.PreviewTextInput += OnPreviewTextInput;
             DataObject.AddPastingHandler(box, OnPasting);
         }
@@ -65,7 +68,9 @@ namespace Material3.Wpf {
             string pasted = e.DataObject.GetDataPresent(DataFormats.UnicodeText)
                 ? e.DataObject.GetData(DataFormats.UnicodeText) as string ?? string.Empty
                 : string.Empty;
-            if (!Accepts(GetKind(box), Proposed(box, pasted))) e.CancelCommand();
+            if (!Accepts(GetKind(box), Proposed(box, pasted))) {
+                e.CancelCommand();
+            }
         }
 
         internal static string Proposed(TextBox box, string insert) =>
