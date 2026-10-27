@@ -22,8 +22,7 @@ This project targets the current spec: HCT tonal palettes, color roles, surface 
 the 2023+ component look.
 
 **WinForms** ships the full component catalog with Visual Studio designer support. **WPF** ships the same
-engine and live theming plus most of the catalog; not there yet: navigation bar / rail / drawer, date and
-time pickers, title bar ([coverage](docs/wpf.md#control-coverage)).
+engine and live theming plus the same catalog ([coverage](docs/wpf.md#control-coverage)).
 
 ## Packages
 
@@ -33,15 +32,16 @@ One HCT engine, three packages — a shared `Core` plus two UI stacks:
 |---|---|---|
 | `Material3.Core` | netstandard2.0 | HCT/CAM16 engine, tonal palettes, color roles, `MaterialTheme` — platform-neutral `Argb`, no UI deps |
 | `Material3.WinForms` | net472 / net8.0-windows | Full M3 control catalog + Visual Studio designer support |
-| `Material3.Wpf` | net472 / net8.0-windows | Dynamic-color `ThemeManager` (live `DynamicResource` brushes from one seed), `PathIcon`, motion helpers and most of the M3 control set ([coverage](docs/wpf.md#control-coverage)) |
+| `Material3.Wpf` | net472 / net8.0-windows | Dynamic-color `ThemeManager` (live `DynamicResource` brushes from one seed), `PathIcon`, motion helpers and the M3 control set ([coverage](docs/wpf.md#control-coverage)) |
 
 Each package is versioned and released on its own. Before 1.0 a minor version can change the public API; the release notes mark it **BREAKING**.
 
 Every release carries both demo galleries: **`Material3.WinForms.Gallery`** (WinForms) and **`Material3.Wpf.Gallery`** (WPF).
+The galleries show every control.
 
 ## Documentation
 
-- **[Material3.WinForms →](docs/winforms.md)** — controls, quickstart, designer support, high-DPI.
+- **[Material3.WinForms →](docs/winforms.md)** — controls, getting started, designer support, high-DPI.
 - **[Material3.Wpf →](docs/wpf.md)** — dynamic-color theming, controls, WPF ↔ WinForms coverage.
 - **[Material3.Core](https://www.nuget.org/packages/Material3.Core)** — the platform-neutral HCT engine (`Argb`, netstandard2.0).
 

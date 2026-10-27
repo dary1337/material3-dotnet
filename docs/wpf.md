@@ -11,7 +11,7 @@ centered popup tooltip. Built on [`Material3.Core`](https://www.nuget.org/packag
 dotnet add package Material3.Wpf
 ```
 
-## Quickstart
+## Getting started
 
 Merge the control dictionary (it self-contains its tokens) and apply a theme once at startup:
 
@@ -24,13 +24,21 @@ Merge the control dictionary (it self-contains its tokens) and apply a theme onc
 ```
 
 ```csharp
-// One seed → every role published as a live DynamicResource brush; call again to recolor or toggle dark.
+// One seed → every role published as a live DynamicResource brush.
 ThemeManager.Apply(MaterialTheme.FromSeed(Argb.FromArgb(0x67, 0x50, 0xA4)), isDark: true, Application.Current.Resources);
+
+// Later, one at a time — each republishes into the same dictionary.
+ThemeManager.IsDark = !ThemeManager.IsDark;
+ThemeManager.Theme = MaterialTheme.FromSeed(Argb.FromArgb(0x2E, 0x7D, 0x32), SchemeVariant.Vibrant);
 ```
 
 Wrap the window content in one `<m3:ModalLayer>` to enable `Modal.Show(card)` (an app-wide scrim that
 blocks everything behind it), use `m3:Tip.Text="…"` for a centered popup tooltip, and `<m3:AnimatedPopup>` in
 place of `<Popup>` for an M3 close animation.
+
+The glyphs the library's own templates draw are built in (`PathIcon.BuiltInKeys`: `Check`, `Close`, the four
+chevrons, `Plus`, `Minus`, `Magnify`, `OpenInNew`, `Loading` and the dialog tones). A key the app registers wins,
+so one icon set stays consistent.
 
 ## Naming
 
@@ -44,60 +52,127 @@ place of `<Popup>` for an M3 close animation.
 | 6 | Boolean state | `Is…` (`IsSelected`, `IsDot`, `IsEnabled`), the same in the WinForms package | One rule across both packages; WinForms keeps a name its base control already fixed (`Checked`, `ReadOnly`) |
 | 7 | Keyed styles | `M3<Control>` for the M3 look of a stock control (`M3CheckBox`, `M3Switch`, `M3Combo`); the M3 component name otherwise (`FilledButton`, `Card`) | Resource keys share one app-wide namespace, so a restyle must not take a bare control name |
 
+## Sizes, type and text
+
+Every size, radius, glyph and font in the templates is a default the app can override; a template hard-codes none.
+
+| # | Lever | Reach | Example |
+|---|---|---|---|
+| 1 | Style setter (`Padding`, `MinHeight`, `FontSize`, `FontFamily`, `FontWeight`) | One control, or every one through a `BasedOn` style | `<Setter Property="FontSize" Value="13" />` on `{x:Type m3:Chip}` |
+| 2 | `m3:Metrics.CornerRadius` · `GlyphSize` · `GlyphMargin` · `IndicatorSize` | Template geometry that has no CLR property | `<Button Style="{StaticResource FilledButton}" m3:Metrics.GlyphSize="20" />` |
+| 3 | Token resources | App-wide, read as `DynamicResource` | `<CornerRadius x:Key="RadiusPill">12</CornerRadius>` after the merged dictionary |
+| 4 | Keyed styles for parts built in code or deep in a template | `Dialog` and `Tip` cards, the nav badge | Redefine `DialogCard` with `BasedOn="{StaticResource DialogCard}"` |
+| 5 | Control properties | One control | `PageHeader.DescriptionMaxWidth`, `EmptyState.TextMaxWidth`, `ValueListEditor.RowHeight`, `Badge.PillHeight`, `TextField.FieldHeight`, `SliderMotion.TrackThickness` · `TrackGap`, `OptionCard.HoverOpacity` |
+| 6 | Static settings | Placement the library computes | `CenteredToolTip.Gap` |
+
+What each `Metrics` property means, per control family:
+
+| # | Property | Read by | Meaning |
+|---|---|---|---|
+| 1 | `CornerRadius` | Buttons, chips, fields, menus, tooltips, cards, banners, list tiles, nav items, tabs, badges, slider track | The outer corner radius |
+| 2 | `GlyphSize` | Buttons, chips, menu items, nav items, list tiles, banners, fields, title bar | The side of the leading glyph |
+| 3 | `GlyphMargin` | The same, plus `Dialog`'s header glyph | The space around the glyph (its gap to the label) |
+| 4 | `IndicatorSize` | Check box, radio, switch, option card, slider thumb, nav pill, tab underline, badge dot, step ring | The selection mark's size |
+
+| # | Token | Default |
+|---|---|---|
+| 1 | `RadiusXs` · `RadiusSm` · `RadiusMd` · `RadiusLg` · `RadiusPill` · `RadiusXl` | 4 · 8 · 12 · 16 · 20 · 28 |
+| 2 | `FocusRingRadius` | 8 |
+| 3 | `Space1` … `Space7` | 4 · 8 · 12 · 16 · 24 · 32 · 48 |
+| 4 | `CompactControlHeight` · `ControlHeight` · `FieldHeight` | 32 · 40 · 56 |
+| 5 | `DialogWidth` · `DatePickerCellSize` | 420 · 40 |
+| 6 | `TimePickerFieldSize` · `TimePickerFieldFontSize` | 96,72 · 45 |
+| 7 | `FontFamily` · `FontWeightMedium` | Segoe UI · SemiBold |
+
+A template radius is capped at half the element's shorter side (`{m3:FitCornerRadius}`), so a pill radius on a shorter control keeps round ends.
+A select's list opens centred under it and at least as wide as it.
+
+One height scale, the same on both stacks, so controls placed side by side line up:
+
+| # | Height | Token (WPF resource · WinForms `ComponentSizes`) | Used by |
+|---|---|---|---|
+| 1 | 32 | `CompactControlHeight` | Compact buttons and dense rows |
+| 2 | 40 | `ControlHeight` | Every button and icon button, selects (`M3Combo`, `MaterialDropdownSelect`), segmented buttons, plain and pill text boxes, the search bar, a check box, radio or switch row (the M3 state layer) |
+| 3 | 56 | `FieldHeight` | Only the M3 text field with a floating label, which needs the room |
+
+Code-built cards take the keyed styles `DialogCard`, `TipCard`, `RichTipCard`, `TipText`, `RichTipText` and `TipTitle`.
+A navigation item's badge takes `NavigationBadge`; define that key in the item's resources to move or resize one dot.
+A `Badge`'s `Background`, `Foreground` and `BorderBrush` override its `Tone`.
+
+### Library text
+
+The strings the library itself shows (OK, Cancel, Search, the caption buttons' names, the picker captions) come from
+`Material3.Core.LibraryText`, so they follow `CultureInfo.CurrentUICulture`. Built in: English and Russian; any other language goes through `LibraryText.Resolver`.
+
+| # | Need | Call |
+|---|---|---|
+| 1 | Replace one string | `LibraryText.Set(TextKey.Ok, "Apply")`; `null` restores it |
+| 2 | Plug in your own resources | `LibraryText.Resolver = (key, culture) => Strings.ResourceManager.GetString(key.ToString(), culture)`; `null` falls through |
+| 3 | Switch language at run time | Set `CurrentUICulture`, then `LibraryText.Refresh()`; every `{m3:Text Key}` binding updates |
+| 4 | Use a library string in your XAML | `Content="{m3:Text Cancel}"` |
+
+Resolution order: `Set` override, then `Resolver`, then the built-in table for the culture and its parents, then English.
+
 ## Control coverage
 
-The shared engine (dynamic color, type/shape scale, `PathIcon`, motion) is the same on both stacks. The
-**control suite** differs; the table is what each stack ships.
+The shared engine (dynamic color, type/shape scale, icons, motion) and the control suite are the same on both stacks;
+the rows marked – are WPF infrastructure with no WinForms counterpart to build.
 Legend: **✓ shipped · – not yet**.
 
 | Category | Component | WPF | WinForms |
 |---|---|:---:|:---:|
 | **Foundation** | Dynamic color (`ThemeManager` / `ThemeManager`) | ✓ | ✓ |
-| | Type scale · Shape scale | ✓ | ✓ |
+| | Type scale *(all 15 M3 roles)* · Shape scale | ✓ | ✓ |
 | | Icon (icon-set-agnostic) | ✓ | ✓ |
 | | Motion helpers | ✓ | ✓ |
 | | Painted elevation (levels 0–5) | ✓ | ✓ |
 | | Window corners (`DwmWindow`) | ✓ | ✓ |
-| **Actions** | Buttons — filled · tonal · outlined · text | ✓ | ✓ |
-| | Buttons — warning · error *(filled + tonal)* · shiny (attention) | ✓ | – |
-| | Icon button | ✓ | ✓ |
-| | Icon toggle | ✓ | ✓ *(MaterialIconButton.IsToggle)* |
+| **Actions** | Buttons — elevated · filled · tonal · outlined · text | ✓ | ✓ |
+| | Buttons — warning · error *(filled + tonal)* · shiny (attention) | ✓ | ✓ |
+| | Leading glyph on a button (`ButtonContent.LeadingGlyph`) | ✓ | ✓ |
+| | Busy button *(spinner in the glyph, clicks ignored)* | ✓ | ✓ |
+| | Icon button — standard · filled · tonal · outlined · error | ✓ | ✓ |
+| | Icon toggle — standard · filled · tonal · outlined | ✓ | ✓ |
 | | FAB *(round + extended, three sizes)* | ✓ | ✓ |
 | **Inputs & selection** | Text field *(filled/outlined, floating label, error)* | ✓ | ✓ |
-| | Chips *(assist/filter/input/suggestion)* | ✓ *(+ status)* | ✓ |
+| | Chips *(assist/filter/input/suggestion)* | ✓ | ✓ |
+| | Chip colours of your own | ✓ | ✓ |
+| | Status chip *(tone + size)* | ✓ | – |
 | | Search bar | ✓ | ✓ |
 | | Radio · Switch | ✓ | ✓ |
 | | Checkbox *(three-state)* | ✓ | ✓ |
-| | Segmented button | ✓ | ✓ |
+| | Segmented button *(check on the selected segment)* | ✓ | ✓ |
 | | Slider | ✓ | ✓ |
-| | Colour field (`ColorField`) | ✓ | – |
-| | List and record editors (`ValueListEditor` · `DataTableEditor`) | ✓ | – |
-| | Number input filter (`InputFilter`) | ✓ | – |
-| **Containers** | Card | ✓ | ✓ *(elevated/filled/outlined)* |
-| | Expander | ✓ | – |
-| | Page header (`PageHeader`) | ✓ | – |
+| | Colour field | ✓ | ✓ |
+| | List and record editors | ✓ | ✓ |
+| | Number input filter *(text box and floating field)* | ✓ | ✓ |
+| **Containers** | Card *(elevated/filled/outlined)* | ✓ | ✓ |
+| | Option card *(radio · check · none, tone)* | ✓ | ✓ |
+| | Expander | ✓ | ✓ |
+| | Page header | ✓ | ✓ |
 | | List item · Divider · list container | ✓ | ✓ |
 | **Feedback** | Linear progress | ✓ | ✓ |
-| | Skeleton | ✓ | ✓ |
-| | Busy spinner (`Busy`) | ✓ | – |
-| | Notice banner (`NoticeBanner`) | ✓ | – |
-| | Empty state (`EmptyState`) | ✓ | – |
+| | Skeleton *(+ ready-made card)* | ✓ | ✓ |
+| | Notice banner | ✓ | ✓ |
+| | Empty state | ✓ | ✓ |
 | | Circular progress | ✓ | ✓ |
 | | Step checklist (`StepChecklist`) | ✓ | ✓ |
 | | Snackbar | ✓ | ✓ |
 | | Tooltip *(plain + rich)* | ✓ | ✓ |
-| **Nav & overlays** | Menu · Context menu | ✓ | ✓ |
+| **Nav & overlays** | Menu · Context menu *(glyph, shortcut, disabled row)* | ✓ | ✓ |
 | | Scrollbar *(+ auto-hide)* | ✓ | ✓ |
 | | Popup surface (`PopupCard`) | ✓ | – |
 | | Dropdown select (`M3Combo`) | ✓ | ✓ |
-| | Dialog (`Dialog`) | ✓ | ✓ |
-| | Date / time pickers | – | ✓ |
+| | Dialog *(tone, destructive, hold to confirm, confirm that runs work)* | ✓ | ✓ |
+| | Date / time pickers | ✓ | ✓ |
 | | Modal host + scrim (`Modal`) | ✓ | – |
 | | Popup helpers (`CenterPopup` · `PopupWatch` · `PopupToggle` · `Chevron`) | ✓ | – |
 | | Tabs *(primary/secondary)* | ✓ | ✓ |
-| | Navigation bar · rail · drawer | – | ✓ |
+| | Navigation bar · rail · drawer *(badge tone, busy, selected glyph)* | ✓ | ✓ |
 | | Badge | ✓ | ✓ |
-| | Title bar | – | ✓ |
+| | Title bar | ✓ | ✓ |
+| | Taskbar progress *(sessions)* | ✓ | ✓ |
+| | Window placement | ✓ | ✓ |
 | **Layout** | `VirtualizingWrapPanel` | ✓ | – |
 | | System-paced mouse wheel (`WheelScroll`) | ✓ | – |
 
@@ -129,7 +204,12 @@ nothing is lost.
 | `m3:CircularProgress` | `Value` `Minimum` `Maximum` `IsIndeterminate` `Diameter` `StrokeThickness` `IndicatorBrush` `TrackBrush` | The indeterminate arc breathes 20°→270° as it turns, so the head chases the tail |
 | `m3:Chip` | `Kind` (`Status` `Assist` `Filter` `Input` `Suggestion`) `Text` `Glyph` `IsSelected`, `Click` `Removed`; `Tone` `Size` for status | A status chip is a label, not a button: it takes no focus and raises no click. An input chip never removes itself — only the host knows the token is gone |
 | `m3:Tabs` | `Variant` (`Primary` `Secondary`), ordinary `TabItem`s | The indicator follows the selected tab through every layout pass, so a header that changes width or a resize keeps it in place; only a selection change slides it |
-| `m3:Badge` | `Count` `IsDot` | Zero shows nothing and past 999 it reads `999+`. It does not place itself: put it in the corner of a Grid cell over what it annotates |
+| `m3:Badge` | `Count` `IsDot` `Tone` | Zero shows nothing and past 999 it reads `999+`. It does not place itself: put it in the corner of a Grid cell over what it annotates |
+| `m3:OptionCard` | `Leading` content, `Indicator` (`Radio` `Check` `None`) `IsChecked` `GroupName` `Tone` | A radio card behaves like a `RadioButton`: a click only chooses, and it unchooses its panel's siblings or its `GroupName` window-wide. `Tone` tints the outline before the option is picked |
+| `M3RoundCheckBox` *(style)* | any `CheckBox` | A round check for an on/off that lives inside a selectable card, so it does not read as a second list selection |
+| `ElevatedCard` / `FilledCard` / `OutlinedCard` *(styles)* | any `Border` | The three M3 card containers; `Card` stays the plain SurfaceContainer one |
+| `ErrorIconButton` *(style)* | any `Button` | The hover turns ErrorContainer, so the colour warns about the click instead of decorating every icon. Keeps a `Background` you give it |
+| `m3:ButtonContent.LeadingGlyph` | on the shipped button styles | The glyph follows the label's colour, the disabled one included |
 | `m3:Snackbar` | `Snackbar.Show(anchor, message[, actionText, onAction][, duration])`, `DismissCurrent([anchor])` | Goes into the window's adorner layer, so it needs no host element; one shows at a time in each window and the rest of that window queue |
 
 
@@ -142,16 +222,37 @@ control was dropped into — a role assigned by a style setter never gets a say.
 | Type | Knobs | Why it behaves that way |
 |---|---|---|
 | `m3:TextField` | `Text` `Label` `Variant` (`Filled` `Outlined`) `SupportingText` `ErrorText` `IsError` `LeadingGlyph` `TrailingGlyph` `IsPassword` `IsReadOnly` `MaxLength`, `TrailingGlyphClick` | The label is laid out at rest and floats by a transform, so the editor never reflows. `IsPassword` swaps in a `PasswordBox` whose content still flows through `Text` |
-| `m3:SearchBar` | `Query` `Placeholder`, `QueryChanged` `QuerySubmitted` | Esc clears the query first and lets the key through once it is empty, so an Esc that closes the page still works. Needs `Magnify` and `Close` |
+| `m3:SearchBar` | `Query` `Placeholder`, `QueryChanged` `QuerySubmitted` | Esc clears the query first and lets the key through once it is empty, so an Esc that closes the page still works |
 | `M3Combo` *(style)* | any `ComboBox`, `m3:Placeholder.Text` | The menu is a `PopupCard`, so it is never narrower than the field; the highlight follows the arrow keys, not just the mouse |
+| `M3PillTextBox` *(style)* | any `TextBox` | A 30 px pill for an inline rename; the outline turns Primary while it has focus |
 | `M3FocusRing` *(style)* | as any control's `FocusVisualStyle` | WPF draws a focus visual only when focus arrived from the keyboard, so the ring answers Tab and never a click |
 | `m3:InputFilter.Kind` | `Text` `Number` `Integer`, on any `TextBox`; `InputFilter.Accepts(kind, text)` | Judges the text as it would read after the keystroke or paste, so `-` is taken only first and a second `.` is refused. A half-typed `-` or `1.` passes |
 | `m3:ColorField` | `Color` `ShowAlpha` `IsReadOnly` `ReadOnlyCaption`, `ColorChanged` | A caption replaces the hex and locks the field: a colour that follows another one says so instead of offering an edit that would break the link. Without the alpha rail a pasted alpha is ignored |
 | `m3:ValueListEditor` | `Load` `Values` `AddRow` `RemoveRow` `MoveRow` `Kind` `FixedLength` `SlotLabels` `Orientation` `MaxVisibleRows` `Placeholder` `AddText` `EmptyText` `IsValid`, `ValuesChanged` | A list is never a text box holding commas. `FixedLength` turns it into labelled slots that cannot be added, removed or moved. A row on screen leaves `Rows` when its exit ends, not at the call |
 | `m3:DataTableEditor` | `Load(columns, records)` `Records` `AddRow` `RemoveRow` `CanAddRows` `CanRemoveRows` `IsSelectable` `MaxVisibleRows`, `ValuesChanged` | Columns are data, so one control serves every list of one shape. Equal columns line up with the header without a measuring pass |
 
-Both editors scroll and virtualize inside themselves past `MaxVisibleRows`. Their rows need the `ChevronUp`,
-`ChevronDown`, `Close` and `Plus` glyphs registered.
+Both editors scroll and virtualize inside themselves past `MaxVisibleRows`.
+
+## Navigation
+
+`NavigationRail` (80 px column), `NavigationBar` (equal-width row) and `NavigationDrawer` (full-width pills under
+an optional `Headline`) share one selection model: they are `ListBox`es of `NavigationItem`, exactly one item is
+selected once there is one, and clicking the selected item keeps it.
+
+| `NavigationItem` | Behaviour |
+|---|---|
+| `Glyph` `SelectedGlyph` | M3 fills the active icon; `SelectedGlyph` is that filled one. A drawer item with no glyph is text only |
+| `BadgeCount` `IsBadgeDot` `BadgeTone` | A count or a dot over the glyph's corner, Error by default |
+| `IsBusy` | A spinner in the badge's place for work still running behind the destination; it hides the badge |
+
+## Window
+
+| Type | Knobs | Why it behaves that way |
+|---|---|---|
+| `m3:TitleBar` | `Title` `Icon` (default: the window's), `Header` `Actions` slots, `ShowMinimize` `ShowMaximize` `ShowClose`, `IsMaximized` | Installs the `WindowChrome` and keeps the system's minimize / maximize animations; a maximized window is inset by the resize border so the caption is not clipped |
+| `WindowPlacement` | `Capture(window)` → string, `Apply(window, string)` before `Show` | A placement that would land off every screen is ignored, and a size below the window's minimum is raised to it |
+| `TaskbarProgress` | `Begin(window)` → session: `SetNormal` `SetIndeterminate` `SetPaused` `SetError` `SetComplete`, `Dispose` | The oldest open session of a window drives its bar, so two producers never fight over it |
+| `CenteredToolTip` | `Register()` once | Centres every stock `ToolTip` over its element, above when there is room |
 
 ## Modals
 
@@ -177,6 +278,10 @@ window holding `owner`, and Esc or a scrim click closes only that window's top m
 | `ConfirmWork` | Runs before the close; the confirm spins and nothing dismisses the dialog meanwhile. Its exception is rethrown by `Show` |
 | `SupportingAction` | A text button at the far end of the row that neither confirms nor cancels |
 | `Links` | `OpenInNew`-marked links under the body that run without closing |
+
+`DatePickerDialog.Show(owner, DatePickerOptions)` and `TimePickerDialog.Show(owner, TimePickerOptions)` answer with
+the value or null for a cancel. Every label in their options is overridable; the culture picks the first weekday
+and whether the time picker shows AM/PM, and a typed time is clamped into range.
 
 ## Motion
 
@@ -234,9 +339,8 @@ Lookless, so an `x:Name` inside a content slot compiles — a `UserControl` name
 | `m3:Skeleton` | `Width` `Height` `CornerRadius` | Shimmer runs on the render thread, so it moves while the dispatcher rebuilds; stops itself on hide and on unload |
 | `m3:Busy.IsBusy` | on `PathIcon` — swaps the glyph for the spinner | Inert elsewhere, so a template can trigger off it (`IconToggle` does) |
 | `m3:Busy.SpinWhileVisible` | on an already-spinner glyph | Drops the clock the moment it hides |
-| `m3:StepChecklist` | `Steps` `ActiveIndex` `ErrorIndex`, `Complete()` `CompleteAsync(hold)` | Moving `ActiveIndex` on morphs every passed step into done, so a jump still reads as each finishing. New `Steps` start over; moving on clears an error. Needs `Check` and `Close` |
+| `m3:StepChecklist` | `Steps` `ActiveIndex` `ErrorIndex`, `Complete()` `CompleteAsync(hold)` | Moving `ActiveIndex` on morphs every passed step into done, so a jump still reads as each finishing. New `Steps` start over; moving on clears an error |
 
-Both `Busy` modes resolve `"Loading"` through `PathIcon.Register` — unregistered, the spinner renders blank.
 
 ## Auto-hiding scrollbar
 
@@ -261,6 +365,13 @@ Two rules, both silent when broken — the bar just turns into the native Window
 `WheelScroll.Register()` once at startup steps every pixel-scrolling `ScrollViewer` by the Windows wheel setting
 at a browser's 33 px line, where WPF's fixed 16 px made the same setting feel half as fast. A viewer that scrolls
 by item is left to WPF, and one with nothing to scroll lets the wheel reach the page around it.
+
+## Code helpers
+
+| Type | Use |
+|---|---|
+| `element.Themed(property, "Role")` | `DynamicResource` from code: a brush read once stays the old colour after `ThemeManager.Apply` |
+| `NullToVisibilityConverter` (`IsInverted`) · `EqualsToVisibilityConverter` | An empty-state placeholder that steps aside, an image shown once it resolved, the mark on a menu's active row |
 
 ## Window corners
 
