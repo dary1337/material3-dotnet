@@ -295,8 +295,10 @@ namespace Material3.WinForms.Controls {
             float outer = track / 2f;
             float inner = Math.Min(Dpi.Scale(this, 2f), outer);
 
-            Color active = Enabled ? MaterialColors.Primary : Color.FromArgb(97, MaterialColors.OnSurface);
-            Color inactive = Enabled ? MaterialColors.SecondaryContainer : Color.FromArgb(31, MaterialColors.OnSurface);
+            Color active = Enabled ? MaterialColors.Primary : MaterialColors.OnSurfaceMuted;
+            Color inactive = Enabled
+                ? MaterialColors.SecondaryContainer
+                : ArgbExtensions.Overlay(SurfaceBehind.Of(this), MaterialColors.OnSurface, StateLayers.DisabledContainer);
 
             float activeRight = centre - handleWidth / 2f - gap;
             if (activeRight > 0) {

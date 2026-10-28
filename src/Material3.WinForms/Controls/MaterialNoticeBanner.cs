@@ -25,6 +25,7 @@ namespace Material3.WinForms.Controls {
         private int _glyphSize = ComponentSizes.IconExtraSmall;
         private Control? _actions;
         private bool _dismissHovered;
+        private readonly StateLayerFade _dismissLayer;
         private Rectangle _glyphRect, _textRect, _dismissRect;
 
         /// <summary>Raised when the user dismisses the banner, after it starts to collapse.</summary>
@@ -34,6 +35,7 @@ namespace Material3.WinForms.Controls {
         public MaterialNoticeBanner() {
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer
                 | ControlStyles.ResizeRedraw | ControlStyles.SupportsTransparentBackColor, true);
+            _dismissLayer = new StateLayerFade(this);
             Padding = new Padding(12, 8, 12, 8);
             Width = 480;
             ThemeHook.Attach(this, ApplyTone);
@@ -290,8 +292,9 @@ namespace Material3.WinForms.Controls {
 
             TextRenderer.DrawText(g, Text, Font, _textRect, content, Wrapped);
             if (_dismissRect.Width > 0) {
-                if (_dismissHovered) {
-                    using (var brush = new SolidBrush(Color.FromArgb((int)(255 * 0.12), content))) {
+                double layer = _dismissLayer.Resolve(_dismissHovered, false);
+                if (layer > 0) {
+                    using (var brush = new SolidBrush(Color.FromArgb((int)(255 * layer), content))) {
                         g.FillEllipse(brush, _dismissRect);
                     }
                 }
@@ -305,6 +308,7 @@ namespace Material3.WinForms.Controls {
         protected override void Dispose(bool disposing) {
             if (disposing) {
                 TypeScale.Changed -= OnTypeScaleChanged;
+                _dismissLayer.Dispose();
             }
             base.Dispose(disposing);
         }

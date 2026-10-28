@@ -13,6 +13,8 @@ namespace Material3.WinForms.Forms {
     // and an early release snaps it back with a shake.
     internal sealed class HoldButton : Control {
         private const double ShakeMs = 260;
+        // The sweep is the same content colour as the label, faint enough to read through.
+        private const double SweepOpacity = 0.3;
 
         private readonly TimeSpan _hold;
         private readonly bool _destructive;
@@ -149,7 +151,7 @@ namespace Material3.WinForms.Forms {
                 if (progress > 0) {
                     GraphicsState saved = g.Save();
                     g.SetClip(path);
-                    using (var brush = new SolidBrush(Color.FromArgb((int)(255 * 0.3), onFill))) {
+                    using (var brush = new SolidBrush(Color.FromArgb((int)(255 * SweepOpacity), onFill))) {
                         g.FillRectangle(brush, rect.X, 0, (float)(rect.Width * progress), Height);
                     }
                     g.Restore(saved);
