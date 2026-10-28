@@ -4,7 +4,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
-using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Material3.WinForms.Drawing;
 using Material3.WinForms.Theming;
@@ -24,7 +23,7 @@ namespace Material3.WinForms.Controls {
         private int _iconGap = Spacing.Space3;
         private int _cornerRadius = Shape.Full;
 
-        private readonly TextBox _editor;
+        private readonly FilteredTextBox _editor;
         private string? _placeholder;
         private bool _hovered;
         private readonly StateLayerFade _layer;
@@ -63,8 +62,8 @@ namespace Material3.WinForms.Controls {
             };
             _editor.GotFocus += (s, e) => Invalidate();
             _editor.LostFocus += (s, e) => Invalidate();
-            _editor.HandleCreated += (s, e) => ApplyPlaceholder();
             Controls.Add(_editor);
+            ApplyPlaceholder();
 
             Click += (s, e) => _editor.Focus();
             TypeRole.Follow(this, () => TypeScale.BodyMedium);
@@ -184,21 +183,11 @@ namespace Material3.WinForms.Controls {
             base.Dispose(disposing);
         }
 
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-        private static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, string lParam);
-
-        private const int EM_SETCUEBANNER = 0x1501;
-
-        private void ApplyPlaceholder() {
-            if (_editor.IsHandleCreated) {
-                SendMessage(_editor.Handle, EM_SETCUEBANNER, (IntPtr)1, Placeholder);
-            }
-        }
+        private void ApplyPlaceholder() => _editor.Cue = Placeholder;
 
         /// <summary>Hint text shown while the query is empty. Null shows the library's own, <see cref="Material3.Core.TextKey.Search"/>.</summary>
         [Category("Material Design")]
         [Description("Hint text shown while the query is empty. Null shows the library's own.")]
-        [DefaultValue(null)]
         [AllowNull]
         public string Placeholder {
             get => _placeholder ?? Material3.Core.LibraryText.Get(Material3.Core.TextKey.Search);
@@ -208,6 +197,10 @@ namespace Material3.WinForms.Controls {
                 Invalidate();
             }
         }
+
+        private bool ShouldSerializePlaceholder() => _placeholder != null;
+
+        private void ResetPlaceholder() => Placeholder = null;
 
         /// <summary>The current query text.</summary>
         [Browsable(false)]

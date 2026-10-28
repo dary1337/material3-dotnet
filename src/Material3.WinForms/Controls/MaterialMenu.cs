@@ -97,6 +97,14 @@ namespace Material3.WinForms.Controls {
 
         internal bool IsOpen => _popup != null;
 
+        internal void MarkSelected(int index) {
+            for (int i = 0; i < _entries.Count; i++) {
+                _entries[i].Selected = i == index;
+            }
+
+            _popup?.Invalidate();
+        }
+
         internal event Action? Closed;
 
         /// <summary>Appends a divider.</summary>

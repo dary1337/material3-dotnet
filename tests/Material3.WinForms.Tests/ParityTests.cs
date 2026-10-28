@@ -293,6 +293,7 @@ namespace Material3.WinForms.Tests {
             typeof(MaterialValueListEditor).GetMethod("MoveRow", BindingFlags.Instance | BindingFlags.NonPublic)!
                 .Invoke(list, new[] { RowAt(list, 1), (object)(-1) });
             Assert.Equal(new[] { "b", "a", "" }, list.Values);
+            Assert.True(list.EntryAt(0).TabIndex < list.EntryAt(1).TabIndex, "Tab does not follow the moved rows");
             typeof(MaterialValueListEditor).GetMethod("Remove", BindingFlags.Instance | BindingFlags.NonPublic)!
                 .Invoke(list, new[] { RowAt(list, 2) });
             Assert.Equal(new[] { "b", "a" }, list.Values);
@@ -423,6 +424,72 @@ namespace Material3.WinForms.Tests {
             System.Threading.Thread.Sleep(90);
             Method("OnTick").Invoke(hold, new object?[] { null, EventArgs.Empty });
             Assert.Equal(1, committed);
+        }
+
+        [Fact]
+        public void AHoldTakesEnterAsItsOwnAndEndsWhenFocusLeaves() {
+            using var hold = new Material3.WinForms.Forms.HoldButton("Reset", TimeSpan.FromMilliseconds(60), destructive: false);
+            int committed = 0;
+            hold.Committed += (s, e) => committed++;
+            MethodInfo Method(string name) => typeof(Material3.WinForms.Forms.HoldButton).GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic)!;
+            Assert.True((bool)Method("IsInputKey").Invoke(hold, new object[] { Keys.Enter })!);
+            Assert.True((bool)Method("IsInputKey").Invoke(hold, new object[] { Keys.Space })!);
+            Method("Begin").Invoke(hold, null);
+            Method("OnLostFocus").Invoke(hold, new object[] { EventArgs.Empty });
+            System.Threading.Thread.Sleep(90);
+            Method("OnTick").Invoke(hold, new object?[] { null, EventArgs.Empty });
+            Assert.Equal(0, committed);
+        }
+
+        [Fact]
+        public void AnIconOnlyButtonCentresItsIcon() {
+            using var button = new MaterialButton { Glyph = Material3.WinForms.Drawing.MaterialIcons.Add, Text = string.Empty };
+            Assert.Equal(button.Padding.Horizontal + Dpi.Scale(button, button.IconSize), button.GetPreferredSize(Size.Empty).Width);
+        }
+
+        [Fact]
+        public void ASearchBarSerializesOnlyAPlaceholderItWasGiven() {
+            using var bar = new MaterialSearchBar();
+            System.ComponentModel.PropertyDescriptor placeholder = System.ComponentModel.TypeDescriptor.GetProperties(bar)["Placeholder"]!;
+            Assert.False(placeholder.ShouldSerializeValue(bar));
+            bar.Placeholder = "Find a deck";
+            Assert.True(placeholder.ShouldSerializeValue(bar));
+            placeholder.ResetValue(bar);
+            Assert.False(placeholder.ShouldSerializeValue(bar));
+            Assert.Equal(LibraryText.Get(TextKey.Search), bar.Placeholder);
+        }
+
+        [Fact]
+        public void AnEditorCellIsSkippedByTabSoShiftTabCanLeaveIt() {
+            using var cell = new PlainEntry { Placeholder = "Name" };
+            Assert.False(cell.TabStop);
+            Assert.True(cell.Box.TabStop);
+            Assert.True(cell.Box.Visible);
+            Assert.Equal("Name", cell.Placeholder);
+        }
+
+        [Fact]
+        public void AnOpenSelectFollowsTheArrowsAndClosesOnEscape() {
+            using var select = new MaterialDropdownSelect();
+            select.AddItem("Day", "d");
+            select.AddItem("Week", "w");
+            MaterialMenu menu = (MaterialMenu)typeof(MaterialDropdownSelect).GetField("_menu", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(select)!;
+            void Key(Keys key) => typeof(MaterialDropdownSelect).GetMethod("OnKeyDown", BindingFlags.Instance | BindingFlags.NonPublic)!
+                .Invoke(select, new object[] { new KeyEventArgs(key) });
+            menu.AddChoice("Day", true, () => { });
+            menu.AddChoice("Week", false, () => { });
+            // An unshown popup stands in for the open menu, so no window appears on screen.
+            typeof(MaterialMenu).GetField("_popup", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(menu, new MaterialMenu.MenuPopup(menu, _ => { }));
+            Assert.True(menu.IsOpen);
+            Assert.True((bool)typeof(MaterialDropdownSelect).GetMethod("IsInputKey", BindingFlags.Instance | BindingFlags.NonPublic)!
+                .Invoke(select, new object[] { Keys.Escape })!);
+            Key(Keys.Down);
+            Assert.Equal(1, select.SelectedIndex);
+            var entries = (System.Collections.IList)typeof(MaterialMenu).GetField("_entries", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(menu)!;
+            Assert.True(((MaterialMenu.Entry)entries[1]!).Selected);
+            Assert.False(((MaterialMenu.Entry)entries[0]!).Selected);
+            Key(Keys.Escape);
+            Assert.False(menu.IsOpen);
         }
 
         [Fact]

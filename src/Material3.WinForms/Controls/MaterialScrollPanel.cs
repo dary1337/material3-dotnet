@@ -473,7 +473,7 @@ namespace Material3.WinForms.Controls {
             Rectangle track = GetTrackRect();
             if (track.Contains(e.Location)) {
                 int direction = e.Y < thumb.Top ? -1 : 1;
-                ScrollByPixels(direction * Math.Max(1, ClientSize.Height - NotchPixels));
+                ScrollByPixels(direction * Math.Max(1, ClientSize.Height));
             }
         }
 
