@@ -5,6 +5,7 @@ using System.Drawing.Text;
 using System.Globalization;
 using System.Windows.Forms;
 using Material3.Core;
+using Material3.Shared;
 using Material3.WinForms.Controls;
 using Material3.WinForms.Drawing;
 using Material3.WinForms.Theming;

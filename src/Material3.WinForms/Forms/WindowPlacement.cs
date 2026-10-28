@@ -1,8 +1,8 @@
 using System;
 using System.Drawing;
-using System.Globalization;
 using System.Linq;
 using System.Windows.Forms;
+using Material3.Shared;
 
 namespace Material3.WinForms.Forms {
     /// <summary>
@@ -10,9 +10,6 @@ namespace Material3.WinForms.Forms {
     /// next start.
     /// </summary>
     public static class WindowPlacement {
-        private const int MinVisibleWidth = 80;
-        private const int MinVisibleHeight = 40;
-
         /// <summary>
         /// The form's restored bounds and whether it is maximized, as <c>left,top,width,height,maximized</c>. A maximized
         /// form reports the bounds it restores to. Empty when the form has no size yet.
@@ -27,8 +24,7 @@ namespace Material3.WinForms.Forms {
                 return string.Empty;
             }
 
-            return string.Format(CultureInfo.InvariantCulture, "{0},{1},{2},{3},{4}",
-                r.Left, r.Top, r.Width, r.Height, form.WindowState == FormWindowState.Maximized ? 1 : 0);
+            return PlacementText.Format(r.Left, r.Top, r.Width, r.Height, form.WindowState == FormWindowState.Maximized);
         }
 
         /// <summary>
@@ -41,7 +37,7 @@ namespace Material3.WinForms.Forms {
                 throw new ArgumentNullException(nameof(form));
             }
 
-            if (!TryParse(placement, out Rectangle bounds, out bool maximized)) {
+            if (!PlacementText.TryParse(placement, out (int Left, int Top, int Width, int Height) bounds, out bool maximized)) {
                 return false;
             }
 
@@ -61,29 +57,7 @@ namespace Material3.WinForms.Forms {
             return true;
         }
 
-        internal static bool TryParse(string? placement, out Rectangle bounds, out bool maximized) {
-            bounds = Rectangle.Empty;
-            maximized = false;
-            string[] p = (placement ?? string.Empty).Split(',');
-            if (p.Length != 5
-                || !int.TryParse(p[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out int left)
-                || !int.TryParse(p[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int top)
-                || !int.TryParse(p[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out int width)
-                || !int.TryParse(p[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out int height)
-                || width <= 0 || height <= 0) {
-                return false;
-            }
-
-            bounds = new Rectangle(left, top, width, height);
-            maximized = p[4] == "1";
-            return true;
-        }
-
-        internal static bool IsReachable(Rectangle window, Rectangle screen) {
-            Rectangle overlap = Rectangle.Intersect(window, screen);
-            return overlap.Width > 0 && overlap.Height > 0
-                && overlap.Width >= Math.Min(MinVisibleWidth, Math.Min(window.Width, screen.Width))
-                && overlap.Height >= Math.Min(MinVisibleHeight, Math.Min(window.Height, screen.Height));
-        }
+        internal static bool IsReachable(Rectangle window, Rectangle screen) =>
+            PlacementText.IsReachable((window.Left, window.Top, window.Width, window.Height), (screen.Left, screen.Top, screen.Width, screen.Height));
     }
 }
