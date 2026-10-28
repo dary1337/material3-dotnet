@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using Material3.Core;
+using Material3.Shared;
 
 namespace Material3.Wpf {
     /// <summary>What a <see cref="DatePickerDialog"/> opens on and says.</summary>
@@ -100,7 +101,7 @@ namespace Material3.Wpf {
             Children.Add(nav);
 
             var weekdays = new UniformGrid { Rows = 1, Columns = 7, Height = _cell + CellRoom };
-            foreach (string letter in WeekdayLetters(_firstDay, culture)) {
+            foreach (string letter in CalendarMath.WeekdayHeaders(_firstDay, culture)) {
                 var head = new TextBlock { Text = letter, FontSize = 16, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
                 head.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurface));
                 weekdays.Children.Add(head);
@@ -115,18 +116,6 @@ namespace Material3.Wpf {
         internal DateTime Selected { get; private set; }
 
         internal DateTime ShownMonth => _shown;
-
-        internal static int FirstDayOffset(DateTime month, DayOfWeek firstDay) => ((int)month.DayOfWeek - (int)firstDay + 7) % 7;
-
-        internal static string[] WeekdayLetters(DayOfWeek firstDay, CultureInfo culture) {
-            string[] names = culture.DateTimeFormat.AbbreviatedDayNames;
-            var letters = new string[7];
-            for (int i = 0; i < 7; i++) {
-                string name = names[((int)firstDay + i) % 7];
-                letters[i] = name.Length > 0 ? name.Substring(0, 1).ToUpper(culture) : string.Empty;
-            }
-            return letters;
-        }
 
         internal void Select(DateTime date) {
             Selected = date.Date;
@@ -166,7 +155,7 @@ namespace Material3.Wpf {
             _headline.Text = Selected.ToString("ddd, MMM d", _culture);
             _month.Text = _shown.ToString("Y", _culture);
             _days.Children.Clear();
-            int offset = FirstDayOffset(_shown, _firstDay);
+            int offset = CalendarMath.FirstDayOffset(_shown.Year, _shown.Month, _firstDay);
             int length = DateTime.DaysInMonth(_shown.Year, _shown.Month);
             for (int cell = 0; cell < 42; cell++) {
                 int day = cell - offset + 1;

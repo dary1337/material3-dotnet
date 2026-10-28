@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Material3.Core;
+using Material3.Shared;
 
 namespace Material3.Wpf {
     /// <summary>What a <see cref="TimePickerDialog"/> opens on and says.</summary>
@@ -107,7 +108,7 @@ namespace Material3.Wpf {
             Loaded += (_, __) => _hour.Focus();
         }
 
-        internal TimeSpan Value => Normalize(Read(_hour), Read(_minute), _hasPeriod && _pm, _is24);
+        internal TimeSpan Value => TimeMath.Normalize(Read(_hour), Read(_minute), _hasPeriod && _pm, _is24).value;
 
         // The M3 period selector: AM over PM in one outlined 52-wide column beside the fields, the chosen half tertiary.
         private FrameworkElement PeriodSelector(CultureInfo culture, double height) {
@@ -143,12 +144,6 @@ namespace Material3.Wpf {
             };
             column.SetResourceReference(Border.BorderBrushProperty, nameof(ColorScheme.Outline));
             return column;
-        }
-
-        internal static TimeSpan Normalize(int hour, int minute, bool isPm, bool is24) {
-            hour = Math.Max(is24 ? 0 : 1, Math.Min(is24 ? 23 : 12, hour));
-            minute = Math.Max(0, Math.Min(59, minute));
-            return new TimeSpan(is24 ? hour : hour % 12 + (isPm ? 12 : 0), minute, 0);
         }
 
         internal void Type(int hour, int minute) {
