@@ -48,13 +48,15 @@ so one icon set stays consistent.
 | 2 | `ListTile` | Not `ListItem` | `System.Windows.Documents.ListItem` is in every default WPF code-behind's usings |
 | 3 | `PathIcon` | Not `Icon` | Inside a `Window`, `Icon` is the window's own property, so `Icon.Register(…)` would not compile |
 | 4 | Glyph keys | `Glyph`, `LeadingGlyph`, `TrailingGlyph` on every control, the same in the WinForms package | One word for a registered glyph key; `Kind` is left for categories such as `ChipKind` |
-| 5 | Tints | One `Tone` enum for chips, banners and dialogs | The same meaning reads the same everywhere |
+| 5 | Tints | One `Tone` enum for chips, banners and dialogs; WinForms buttons take the same `MaterialTone` | The same meaning reads the same everywhere |
 | 6 | Boolean state | `Is…` (`IsSelected`, `IsDot`, `IsEnabled`), the same in the WinForms package | One rule across both packages; WinForms keeps a name its base control already fixed (`Checked`, `ReadOnly`) |
 | 7 | Keyed styles | `M3<Control>` for the M3 look of a stock control (`M3CheckBox`, `M3Switch`, `M3Combo`); the M3 component name otherwise (`FilledButton`, `Card`) | Resource keys share one app-wide namespace, so a restyle must not take a bare control name |
+| 8 | Tests | A sentence that states the behaviour (`ARadioCardUnchoosesItsGroupAcrossPanelsOfOneTree`), in both test projects | A failing name says what broke, and the two suites read alike |
 
 ## Sizes, type and text
 
-Every size, radius, glyph and font in the templates is a default the app can override; a template hard-codes none.
+Every size, radius, glyph and font in the templates is a default the app can override. The pickers, built in code, read the
+same keys (`DatePickerCellSize`, `TimePickerFieldSize`, `TimePickerPeriodWidth`) and the type styles; the rest is named in the code.
 
 | # | Lever | Reach | Example |
 |---|---|---|---|

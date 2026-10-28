@@ -37,7 +37,7 @@ dotnet add package Material3.WinForms
 
 | Family | Included |
 |---|---|
-| Actions | `MaterialButton` (5 M3 variants, warning / error / shiny, `IsBusy`), `MaterialIconButton` (standard / filled / tonal / outlined / error, toggle, `IsBusy`), `MaterialFab` (small / standard / large / extended), `MaterialSegmentedButton` |
+| Actions | `MaterialButton` (5 M3 variants, a `Tone` such as Error for a destructive action, `IsShiny`, `IsBusy`), `MaterialIconButton` (standard / filled / tonal / outlined / error, toggle, `IsBusy`), `MaterialFab` (small / standard / large / extended), `MaterialSegmentedButton` |
 | Text inputs | `MaterialTextField` (filled + outlined, floating label, error state, icons, `InputKind` number filter), `MaterialSearchBar`, `MaterialColorField`, `MaterialValueListEditor` (+ fixed slots), `MaterialDataTableEditor` |
 | Selection | `MaterialSwitch`, `MaterialCheckBox` (incl. indeterminate), `MaterialRadioButton`, `MaterialChip` (assist / filter / input / suggestion, colours of your own), `MaterialSlider`, `MaterialOptionCard` (radio / check / none, tone), `MaterialDropdownSelect` |
 | Navigation | `MaterialTabs` (primary / secondary), `MaterialNavigationBar`, `MaterialNavigationRail`, `MaterialNavigationDrawer` |
