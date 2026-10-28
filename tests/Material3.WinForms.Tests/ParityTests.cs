@@ -650,6 +650,15 @@ namespace Material3.WinForms.Tests {
             Assert.False(Material3.WinForms.Forms.WindowPlacement.Apply(form, "not,a,placement"));
         }
 
+        [Fact]
+        public void AWindowIsReachableWhenEnoughOfItShowsOnOneScreen() {
+            var screen = new Rectangle(0, 0, 1920, 1080);
+            Assert.True(Material3.WinForms.Forms.WindowPlacement.IsReachable(new Rectangle(0, 0, 50, 30), screen));
+            Assert.True(Material3.WinForms.Forms.WindowPlacement.IsReachable(new Rectangle(1800, 100, 800, 600), screen));
+            Assert.False(Material3.WinForms.Forms.WindowPlacement.IsReachable(new Rectangle(1900, 100, 800, 600), screen));
+            Assert.False(Material3.WinForms.Forms.WindowPlacement.IsReachable(new Rectangle(1880, 1050, 50, 30), screen));
+        }
+
         [Theory]
         [InlineData("-", true)]
         [InlineData("1.", true)]
