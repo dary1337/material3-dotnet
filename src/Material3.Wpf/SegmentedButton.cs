@@ -104,7 +104,7 @@ namespace Material3.Wpf {
         public void SetSelected(int index, bool selected) {
             SegmentedItem? item = Container(index);
             if (item != null) {
-                item.IsChecked = selected;
+                item.SetCurrentValue(ToggleButton.IsCheckedProperty, selected);
             }
         }
 
@@ -153,10 +153,10 @@ namespace Material3.Wpf {
                 for (int i = 1; i < selected.Count; i++) {
                     SegmentedItem? extra = row.Container(selected[i]);
                     if (extra != null) {
-                        extra.IsChecked = false;
+                        extra.SetCurrentValue(ToggleButton.IsCheckedProperty, false);
                     }
                 }
-                row.SelectedIndex = selected[0];
+                row.SetCurrentValue(SelectedIndexProperty, selected[0]);
             }
             finally { row._syncing = false; }
             row.SelectionChanged?.Invoke(row, EventArgs.Empty);
@@ -174,7 +174,7 @@ namespace Material3.Wpf {
                 for (int i = 0; i < row.Items.Count; i++) {
                     SegmentedItem? segment = row.Container(i);
                     if (segment != null) {
-                        segment.IsChecked = i == wanted;
+                        segment.SetCurrentValue(ToggleButton.IsCheckedProperty, i == wanted);
                     }
                 }
             }
@@ -193,12 +193,12 @@ namespace Material3.Wpf {
                 if (!MultiSelect && changed.IsChecked == true) {
                     foreach (SegmentedItem other in Containers()) {
                         if (!ReferenceEquals(other, changed)) {
-                            other.IsChecked = false;
+                            other.SetCurrentValue(ToggleButton.IsCheckedProperty, false);
                         }
                     }
                 }
                 IReadOnlyList<int> selected = SelectedIndices;
-                SelectedIndex = selected.Count > 0 ? selected[0] : -1;
+                SetCurrentValue(SelectedIndexProperty, selected.Count > 0 ? selected[0] : -1);
             }
             finally { _syncing = false; }
             SelectionChanged?.Invoke(this, EventArgs.Empty);

@@ -80,7 +80,9 @@ namespace Material3.Wpf {
 
             if (SelectedIndex < 0 && e.RemovedItems.Count > 0 && Items.Contains(e.RemovedItems[0])) {
                 _restoring = true;
-                try { SelectedItem = e.RemovedItems[0]; }
+                try {
+                    SetCurrentValue(SelectedItemProperty, e.RemovedItems[0]);
+                }
                 finally { _restoring = false; }
                 e.Handled = true;
                 return;
@@ -92,7 +94,7 @@ namespace Material3.Wpf {
         protected override void OnItemsChanged(System.Collections.Specialized.NotifyCollectionChangedEventArgs e) {
             base.OnItemsChanged(e);
             if (SelectedIndex < 0 && Items.Count > 0) {
-                SelectedIndex = 0;
+                SetCurrentValue(SelectedIndexProperty, 0);
             }
         }
     }
