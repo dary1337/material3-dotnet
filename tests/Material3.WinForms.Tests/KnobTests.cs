@@ -62,14 +62,19 @@ namespace Material3.WinForms.Tests {
         [Fact]
         public void TintOpacity_IsReplaceableAndValidated() {
             var original = Elevation.TintOpacity;
+            int changes = 0;
+            void Count(object? s, EventArgs e) => changes++;
+            Elevation.Changed += Count;
             try {
                 Elevation.TintOpacity = new[] { 0.0, 0.1, 0.2, 0.3, 0.4, 0.5 };
                 Assert.Equal(0.5, Elevation.TintOpacity[5]);
+                Assert.Equal(1, changes);
                 Assert.Throws<ArgumentException>(() => Elevation.TintOpacity = new[] { 0.0, 0.1 });
                 Assert.Throws<ArgumentException>(() => Elevation.TintOpacity = new[] { 0.0, 0.1, 0.2, 0.3, 0.4, 2.0 });
                 Assert.Throws<ArgumentException>(() => Elevation.TintOpacity = new[] { 0.0, 0.1, 0.2, 0.3, 0.4, double.NaN });
             }
             finally {
+                Elevation.Changed -= Count;
                 Elevation.TintOpacity = original;
             }
         }
