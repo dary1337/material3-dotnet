@@ -61,7 +61,7 @@ namespace Material3.WinForms.Controls {
             Height = DefaultBarHeight;
             AutoSize = true;
             TypeRole.Follow(this, () => TypeScale.LabelLarge);
-            _slide = new Timer { Interval = 16 };
+            _slide = new Timer { Interval = Motion.FrameIntervalMs };
             _slide.Tick += OnSlideTick;
             ThemeHook.Attach(this, Invalidate);
         }

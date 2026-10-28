@@ -47,7 +47,7 @@ namespace Material3.WinForms.Controls {
             MaterialCursors.Apply(this, MaterialCursors.Pointer);
             _actionLayer = new StateLayerFade(this);
 
-            _animator = new Timer { Interval = 16 };
+            _animator = new Timer { Interval = Motion.FrameIntervalMs };
             _animator.Tick += OnAnimatorTick;
         }
 

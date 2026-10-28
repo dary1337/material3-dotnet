@@ -22,7 +22,7 @@ namespace Material3.WinForms.Controls {
         private readonly MaterialMenu _menu = new MaterialMenu();
         private readonly StateLayerFade _layer;
         private int _selectedIndex = -1;
-        private int _headerHeight = ComponentSizes.DropdownHeight;
+        private int _headerHeight = ComponentSizes.ControlHeight;
         private int _optionHeight = ComponentSizes.ControlHeight;
         private int _cornerRadius = Shape.ExtraSmall;
         private bool _hovered;
@@ -39,7 +39,7 @@ namespace Material3.WinForms.Controls {
                 true);
             BackColor = Color.Transparent;
             Margin = new Padding(0, 0, 0, 8);
-            Size = new Size(320, ComponentSizes.DropdownHeight);
+            Size = new Size(320, ComponentSizes.ControlHeight);
             AutoSize = true;
             TabStop = true;
             MaterialCursors.Apply(this, MaterialCursors.Pointer);
@@ -62,7 +62,7 @@ namespace Material3.WinForms.Controls {
         /// <summary>The field's height, in 96-DPI px.</summary>
         [Category("Material Design")]
         [Description("The field's height, in 96-DPI px.")]
-        [DefaultValue(ComponentSizes.DropdownHeight)]
+        [DefaultValue(ComponentSizes.ControlHeight)]
         public int HeaderHeight {
             get => _headerHeight;
             set { _headerHeight = Math.Max(1, value); ApplyIntrinsicHeight(); Invalidate(); }

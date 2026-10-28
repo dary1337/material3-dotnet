@@ -22,7 +22,7 @@ namespace Material3.WinForms.Drawing {
         public void Run(bool on) {
             if (on && _timer == null) {
                 _clock.Restart();
-                _timer = new Timer { Interval = 16 };
+                _timer = new Timer { Interval = Motion.FrameIntervalMs };
                 _timer.Tick += (s, e) => _owner.Invalidate();
                 if (Motion.AnimationsEnabled) {
                     _timer.Start();

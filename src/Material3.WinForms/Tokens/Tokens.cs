@@ -59,10 +59,6 @@ namespace Material3.WinForms.Tokens {
         public const int FieldHeight = 56;
         /// <summary>The height of compact buttons and dense rows. In 96-DPI pixels.</summary>
         public const int CompactControlHeight = 32;
-        /// <summary>A button's height (<see cref="ControlHeight"/>). In 96-DPI pixels.</summary>
-        public const int ButtonHeight = ControlHeight;
-        /// <summary>A compact button's height (<see cref="CompactControlHeight"/>). In 96-DPI pixels.</summary>
-        public const int ButtonHeightSmall = CompactControlHeight;
         /// <summary>A text button's height. In 96-DPI pixels.</summary>
         public const int TextButtonHeight = 36;
         /// <summary>A status chip's height. In 96-DPI pixels.</summary>
@@ -71,8 +67,6 @@ namespace Material3.WinForms.Tokens {
         public const int AssistChipHeight = 32;
         /// <summary>The least height of a one-line list row. In 96-DPI pixels.</summary>
         public const int ListItemMinHeight = 56;
-        /// <summary>A dropdown field's height (<see cref="ControlHeight"/>). In 96-DPI pixels.</summary>
-        public const int DropdownHeight = ControlHeight;
         /// <summary>The thickness of a linear progress bar. In 96-DPI pixels.</summary>
         public const int LinearProgressHeight = 4;
         /// <summary>The widest a dialog grows. In 96-DPI pixels.</summary>

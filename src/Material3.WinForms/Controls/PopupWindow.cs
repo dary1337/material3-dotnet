@@ -11,7 +11,7 @@ namespace Material3.WinForms.Controls {
         private const int WS_EX_NOACTIVATE = 0x08000000;
         private const int SlidePx = 4;
 
-        private readonly Timer _fade = new Timer { Interval = 15 };
+        private readonly Timer _fade = new Timer { Interval = Motion.FrameIntervalMs };
         private readonly Stopwatch _clock = new Stopwatch();
         private Point _target;
         private int _slideFrom;

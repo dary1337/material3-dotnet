@@ -5,6 +5,7 @@ using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Material3.WinForms.Theming;
+using Material3.WinForms.Tokens;
 
 namespace Material3.WinForms.Controls {
     /// <summary>Material You overlay scrollbar host: add content to <see cref="ContentPanel"/>; a pill thumb fades in over the right edge on overflow.</summary>
@@ -68,7 +69,7 @@ namespace Material3.WinForms.Controls {
             ContentPanel.ControlRemoved += OnContentChildRemoved;
             base.Controls.Add(ContentPanel);
 
-            _fadeTimer = new Timer { Interval = 16 };
+            _fadeTimer = new Timer { Interval = Motion.FrameIntervalMs };
             _fadeTimer.Tick += OnFadeTick;
 
             _wheelFilter = new WheelMessageFilter(this);

@@ -13,7 +13,6 @@ namespace Material3.WinForms.Controls {
     public sealed class MaterialCircularProgress : Control {
         private int _strokeWidth = 4;
         private int _diameter = DefaultDiameter;
-        private const int FrameMs = 16;
         private const float RotationPerFrame = 4.4f;
         private const int DefaultDiameter = 40;
         private const float IndicatorTrackGap = 4f;
@@ -37,7 +36,7 @@ namespace Material3.WinForms.Controls {
             BackColor = Color.Transparent;
             Size = new Size(DefaultDiameter, DefaultDiameter);
             AutoSize = true;
-            _timer = new Timer { Interval = FrameMs };
+            _timer = new Timer { Interval = Motion.FrameIntervalMs };
             _timer.Tick += OnTick;
             ThemeHook.Attach(this, Invalidate);
         }

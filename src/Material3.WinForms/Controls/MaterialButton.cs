@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -47,12 +48,12 @@ namespace Material3.WinForms.Controls {
         private int _cornerRadius = Shape.Full;
         private int _iconSize = ComponentSizes.IconSmall;
         private int _iconGap = Spacing.Space2;
-        private int _buttonHeight = ComponentSizes.ButtonHeight;
+        private int _buttonHeight = ComponentSizes.ControlHeight;
 
         private Bitmap? _buffer;
         private readonly BusySpinner _busy;
         private Timer? _shine;
-        private readonly System.Diagnostics.Stopwatch _shineClock = new System.Diagnostics.Stopwatch();
+        private readonly Stopwatch _shineClock = new Stopwatch();
         private Form? _shineForm;
 
         private const double ShineSweepMs = 1000;
@@ -77,7 +78,7 @@ namespace Material3.WinForms.Controls {
             MaterialCursors.Apply(this, MaterialCursors.Pointer);
             TypeRole.Follow(this, () => TypeScale.LabelLarge);
             AutoSize = false;
-            Height = ComponentSizes.ButtonHeight;
+            Height = ComponentSizes.ControlHeight;
             BackColor = Color.Transparent;
             ApplyVariantColors();
             ThemeHook.Attach(this, () => { ApplyVariantColors(); Invalidate(); });
@@ -224,7 +225,7 @@ namespace Material3.WinForms.Controls {
         /// <summary>The height <see cref="Control.AutoSize"/> grows the button to, in 96-DPI px; a taller font still wins.</summary>
         [Category("Material Design")]
         [Description("The height AutoSize grows the button to, in 96-DPI px; a taller font still wins.")]
-        [DefaultValue(ComponentSizes.ButtonHeight)]
+        [DefaultValue(ComponentSizes.ControlHeight)]
         public int ButtonHeight {
             get => _buttonHeight;
             set { _buttonHeight = Math.Max(0, value); InvalidateLayout(); }
@@ -345,7 +346,7 @@ namespace Material3.WinForms.Controls {
             }
             bool run = form != null && Visible && Enabled && Motion.AnimationsEnabled && ReferenceEquals(Form.ActiveForm, form);
             if (run && _shine == null) {
-                _shine = new Timer { Interval = 16 };
+                _shine = new Timer { Interval = Motion.FrameIntervalMs };
                 _shine.Tick += (s, e) => Invalidate();
                 _shineClock.Restart();
                 _shine.Start();

@@ -15,6 +15,8 @@ namespace Material3.WinForms.Tokens {
         /// won't restart on its own), so set it before animations begin if you can.</para></summary>
         public static bool AnimationsEnabled { get; set; } = true;
 
+        internal const int FrameIntervalMs = 16;
+
         /// <summary>The M3 <c>Short1</c> duration, 50 ms.</summary>
         public const int Short1 = 50;
         /// <summary>The M3 <c>Short2</c> duration, 100 ms.</summary>

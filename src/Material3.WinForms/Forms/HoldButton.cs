@@ -22,7 +22,7 @@ namespace Material3.WinForms.Forms {
         private readonly bool _destructive;
         private readonly Stopwatch _held = new Stopwatch();
         private readonly Stopwatch _shake = new Stopwatch();
-        private readonly Timer _tick = new Timer { Interval = 16 };
+        private readonly Timer _tick = new Timer { Interval = Motion.FrameIntervalMs };
         private readonly BusySpinner _busy;
         private bool _committed;
 

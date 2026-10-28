@@ -306,14 +306,14 @@ namespace Material3.WinForms.Gallery {
             int width = _nav.Width - pad * 2;
             int y = Sc(Spacing.Space2);
 
-            _modeToggle.SetBounds(pad, y, width, Sc(ComponentSizes.ButtonHeight));
-            y += Sc(ComponentSizes.ButtonHeight) + Sc(Spacing.Space2);
+            _modeToggle.SetBounds(pad, y, width, Sc(ComponentSizes.ControlHeight));
+            y += Sc(ComponentSizes.ControlHeight) + Sc(Spacing.Space2);
 
-            _seedSelect.SetBounds(pad, y, width, Sc(ComponentSizes.DropdownHeight));
-            y += Sc(ComponentSizes.DropdownHeight) + Sc(Spacing.Space2);
+            _seedSelect.SetBounds(pad, y, width, Sc(ComponentSizes.ControlHeight));
+            y += Sc(ComponentSizes.ControlHeight) + Sc(Spacing.Space2);
 
-            _variantSelect.SetBounds(pad, y, width, Sc(ComponentSizes.DropdownHeight));
-            y += Sc(ComponentSizes.DropdownHeight) + Sc(Spacing.Space2);
+            _variantSelect.SetBounds(pad, y, width, Sc(ComponentSizes.ControlHeight));
+            y += Sc(ComponentSizes.ControlHeight) + Sc(Spacing.Space2);
 
             int hueLabelHeight = Sc(18);
             _hueLabel.SetBounds(pad, y, width, hueLabelHeight);
