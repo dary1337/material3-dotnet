@@ -172,8 +172,8 @@ namespace Material3.Wpf {
                 SizeToContent = SizeToContent.WidthAndHeight;
                 WindowStartupLocation = WindowStartupLocation.CenterScreen;
 
-                _scrim.SetResourceReference(Border.BackgroundProperty, "Scrim");
-                _card.SetResourceReference(StyleProperty, "DialogCard");
+                _scrim.SetResourceReference(Border.BackgroundProperty, nameof(ColorScheme.Scrim));
+                _card.SetResourceReference(StyleProperty, ResourceKeys.DialogCard);
                 _card.HorizontalAlignment = HorizontalAlignment.Center;
                 _card.VerticalAlignment = VerticalAlignment.Center;
                 _card.MouseLeftButtonDown += (_, e) => e.Handled = true;
@@ -189,7 +189,7 @@ namespace Material3.Wpf {
 
             private UIElement BuildContent() {
                 var content = new StackPanel();
-                double width = _options.CardWidth ?? (TryFindResource("DialogWidth") is double w ? w : 420);
+                double width = _options.CardWidth ?? (TryFindResource(ResourceKeys.DialogWidth) is double w ? w : 420);
                 double wide = _options.Content is FrameworkElement fe ? fe.MaxWidth : 0;
                 if (wide > width && !double.IsInfinity(wide)) {
                     content.MaxWidth = wide;
@@ -219,7 +219,7 @@ namespace Material3.Wpf {
                 icon.SetBinding(MarginProperty, new Binding { Path = new PropertyPath(Metrics.GlyphMarginProperty), Source = _card });
                 icon.SetResourceReference(PathIcon.ForegroundProperty, role);
                 var title = new TextBlock { Text = _options.Title, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
-                title.SetResourceReference(StyleProperty, "HeadlineSmall");
+                title.SetResourceReference(StyleProperty, ResourceKeys.HeadlineSmall);
                 var header = new DockPanel { LastChildFill = true };
                 DockPanel.SetDock(icon, Dock.Left);
                 header.Children.Add(icon);
@@ -234,8 +234,8 @@ namespace Material3.Wpf {
                     Margin = new Thickness(0, 8, 0, 0),
                     LineHeight = 20,
                 };
-                text.SetResourceReference(StyleProperty, "Body");
-                text.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+                text.SetResourceReference(StyleProperty, ResourceKeys.Body);
+                text.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurfaceVariant));
                 return text;
             }
 
@@ -254,14 +254,14 @@ namespace Material3.Wpf {
                         VerticalAlignment = VerticalAlignment.Center,
                         Margin = new Thickness(0, 0, 4, 0),
                     };
-                    glyph.SetResourceReference(PathIcon.ForegroundProperty, "Primary");
+                    glyph.SetResourceReference(PathIcon.ForegroundProperty, nameof(ColorScheme.Primary));
                     var label = new TextBlock {
                         Text = link.Text,
                         FontSize = 13,
                         VerticalAlignment = VerticalAlignment.Center,
                     };
-                    label.SetResourceReference(TextBlock.ForegroundProperty, "Primary");
-                    label.SetResourceReference(TextBlock.FontWeightProperty, "FontWeightMedium");
+                    label.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.Primary));
+                    label.SetResourceReference(TextBlock.FontWeightProperty, ResourceKeys.FontWeightMedium);
                     inner.Children.Add(glyph);
                     inner.Children.Add(label);
                     var hit = new Border { Background = Brushes.Transparent, Cursor = Cursors.Hand, Child = inner };
@@ -398,7 +398,7 @@ namespace Material3.Wpf {
                     Margin = new Thickness(24, 0, 24, 0),
                 };
                 label.SetResourceReference(TextBlock.ForegroundProperty, onFillRole);
-                label.SetResourceReference(TextBlock.FontWeightProperty, "FontWeightMedium");
+                label.SetResourceReference(TextBlock.FontWeightProperty, ResourceKeys.FontWeightMedium);
                 _holdRole = onFillRole;
                 _holdLabel = label;
                 var layers = new Grid();

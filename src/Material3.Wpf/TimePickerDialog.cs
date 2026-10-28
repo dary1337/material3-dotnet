@@ -48,8 +48,8 @@ namespace Material3.Wpf {
             CultureInfo culture = options.Culture ?? CultureInfo.CurrentCulture;
             bool is24 = options.Is24Hour ?? !culture.DateTimeFormat.ShortTimePattern.Contains("h");
             var input = new TimeInput(options, culture, is24,
-                DatePickerDialog.Resource(owner, "TimePickerFieldSize", new Size(96, 72)),
-                DatePickerDialog.Resource(owner, "TimePickerFieldFontSize", 45.0));
+                DatePickerDialog.Resource(owner, ResourceKeys.TimePickerFieldSize, new Size(96, 72)),
+                DatePickerDialog.Resource(owner, ResourceKeys.TimePickerFieldFontSize, 45.0));
             DialogChoice choice = Dialog.Show(owner, new DialogOptions {
                 Content = input,
                 ConfirmText = options.ConfirmText,
@@ -76,8 +76,8 @@ namespace Material3.Wpf {
             }
 
             var overline = new TextBlock { Text = options.Title, FontSize = 12, Margin = new Thickness(0, 0, 0, 20) };
-            overline.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
-            overline.SetResourceReference(TextBlock.FontWeightProperty, "FontWeightMedium");
+            overline.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurfaceVariant));
+            overline.SetResourceReference(TextBlock.FontWeightProperty, ResourceKeys.FontWeightMedium);
             Children.Add(overline);
 
             int hour = options.Initial.Hours, minute = options.Initial.Minutes;
@@ -94,7 +94,7 @@ namespace Material3.Wpf {
                 TextAlignment = TextAlignment.Center,
                 Margin = new Thickness(0, -6, 0, 0),
             };
-            colon.SetResourceReference(TextBlock.ForegroundProperty, "OnSurface");
+            colon.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurface));
             row.Children.Add(hourColumn);
             row.Children.Add(colon);
             row.Children.Add(minuteColumn);
@@ -113,7 +113,7 @@ namespace Material3.Wpf {
         private FrameworkElement PeriodSelector(CultureInfo culture, double height) {
             Border Half(string text, CornerRadius corners, bool afternoon) {
                 var label = new TextBlock { Text = text, FontSize = 16, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
-                label.SetResourceReference(TextBlock.FontWeightProperty, "FontWeightMedium");
+                label.SetResourceReference(TextBlock.FontWeightProperty, ResourceKeys.FontWeightMedium);
                 var half = new Border { CornerRadius = corners, Background = Brushes.Transparent, Cursor = Cursors.Hand, Child = label };
                 half.MouseLeftButtonUp += (_, e) => { e.Handled = true; ChooseAfternoon(afternoon); };
                 return half;
@@ -121,7 +121,7 @@ namespace Material3.Wpf {
             _am = Half(culture.DateTimeFormat.AMDesignator, new CornerRadius(7, 7, 0, 0), false);
             _pmRow = Half(culture.DateTimeFormat.PMDesignator, new CornerRadius(0, 0, 7, 7), true);
             var divider = new Border { Height = 1 };
-            divider.SetResourceReference(Border.BackgroundProperty, "Outline");
+            divider.SetResourceReference(Border.BackgroundProperty, nameof(ColorScheme.Outline));
             var halves = new Grid();
             halves.RowDefinitions.Add(new RowDefinition());
             halves.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
@@ -141,7 +141,7 @@ namespace Material3.Wpf {
                 BorderThickness = new Thickness(1),
                 Child = halves,
             };
-            column.SetResourceReference(Border.BorderBrushProperty, "Outline");
+            column.SetResourceReference(Border.BorderBrushProperty, nameof(ColorScheme.Outline));
             return column;
         }
 
@@ -164,7 +164,7 @@ namespace Material3.Wpf {
             _pm = pm;
             foreach ((Border half, bool chosen) in new[] { (_am, !pm), (_pmRow, pm) }) {
                 if (chosen) {
-                    half.SetResourceReference(Border.BackgroundProperty, "TertiaryContainer");
+                    half.SetResourceReference(Border.BackgroundProperty, nameof(ColorScheme.TertiaryContainer));
                 }
                 else {
                     half.Background = Brushes.Transparent;
@@ -191,20 +191,20 @@ namespace Material3.Wpf {
                 BorderBrush = Brushes.Transparent,
             };
             InputFilter.SetKind(box, InputKind.Integer);
-            box.SetResourceReference(Control.ForegroundProperty, "OnSurface");
-            box.SetResourceReference(Control.BackgroundProperty, "SurfaceContainerHighest");
+            box.SetResourceReference(Control.ForegroundProperty, nameof(ColorScheme.OnSurface));
+            box.SetResourceReference(Control.BackgroundProperty, nameof(ColorScheme.SurfaceContainerHighest));
             bool overwrite = false;
             box.GotKeyboardFocus += (_, __) => {
-                box.SetResourceReference(Control.BorderBrushProperty, "Primary");
-                box.SetResourceReference(Control.BackgroundProperty, "PrimaryContainer");
-                box.SetResourceReference(Control.ForegroundProperty, "OnPrimaryContainer");
+                box.SetResourceReference(Control.BorderBrushProperty, nameof(ColorScheme.Primary));
+                box.SetResourceReference(Control.BackgroundProperty, nameof(ColorScheme.PrimaryContainer));
+                box.SetResourceReference(Control.ForegroundProperty, nameof(ColorScheme.OnPrimaryContainer));
                 box.CaretIndex = box.Text.Length;
                 overwrite = true;
             };
             box.LostKeyboardFocus += (_, __) => {
                 box.BorderBrush = Brushes.Transparent;
-                box.SetResourceReference(Control.BackgroundProperty, "SurfaceContainerHighest");
-                box.SetResourceReference(Control.ForegroundProperty, "OnSurface");
+                box.SetResourceReference(Control.BackgroundProperty, nameof(ColorScheme.SurfaceContainerHighest));
+                box.SetResourceReference(Control.ForegroundProperty, nameof(ColorScheme.OnSurface));
             };
             box.PreviewTextInput += (_, __) => {
                 if (!overwrite) {
@@ -220,7 +220,7 @@ namespace Material3.Wpf {
                 }
             };
             var label = new TextBlock { Text = caption, FontSize = 12, Margin = new Thickness(0, 7, 0, 0) };
-            label.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+            label.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurfaceVariant));
             var stack = new StackPanel();
             stack.Children.Add(box);
             stack.Children.Add(label);

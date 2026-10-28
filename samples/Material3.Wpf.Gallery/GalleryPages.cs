@@ -79,7 +79,7 @@ namespace Material3.Wpf.Gallery {
                 }) {
                     var sample = new TextBlock { Text = GallerySpec.TypeSample, Style = (Style)FindResource(role.Replace(" ", "")), Margin = new Thickness(0, 0, 0, 8) };
                     var meta = new TextBlock { Text = $"{role}  ·  {sample.FontSize:0.##}px", FontSize = 11, Margin = new Thickness(0, 4, 0, 0) };
-                    meta.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceMuted");
+                    meta.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurfaceMuted));
                     PageHost.Children.Add(meta);
                     PageHost.Children.Add(sample);
                 }
@@ -96,7 +96,7 @@ namespace Material3.Wpf.Gallery {
                     box.SetResourceReference(Border.BackgroundProperty, Elevation.SurfaceKey(level));
                     box.SetResourceReference(Border.CornerRadiusProperty, "RadiusMd");
                     var tag = new TextBlock { Text = "Level " + level, FontSize = 12, FontWeight = FontWeights.Medium, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
-                    tag.SetResourceReference(TextBlock.ForegroundProperty, "OnSurface");
+                    tag.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurface));
                     box.Child = tag;
                     levels.Children.Add(box);
                 }
@@ -106,7 +106,7 @@ namespace Material3.Wpf.Gallery {
                 var row = new WrapPanel();
                 foreach (var (label, radius) in new[] { ("Xs 4", "RadiusXs"), ("Sm 8", "RadiusSm"), ("Md 12", "RadiusMd"), ("Lg 16", "RadiusLg"), ("Pill 20", "RadiusPill"), ("Xl 28", "RadiusXl"), ("Full", null) }) {
                     var box = new Border { Width = 120, Height = 72, Margin = new Thickness(0, 0, 12, 12) };
-                    box.SetResourceReference(Border.BackgroundProperty, "SecondaryContainer");
+                    box.SetResourceReference(Border.BackgroundProperty, nameof(ColorScheme.SecondaryContainer));
                     if (radius == null) {
                         box.CornerRadius = new CornerRadius(36);
                     }
@@ -115,7 +115,7 @@ namespace Material3.Wpf.Gallery {
                     }
 
                     var text = new TextBlock { Text = label, FontSize = 12, FontWeight = FontWeights.Medium, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
-                    text.SetResourceReference(TextBlock.ForegroundProperty, "OnSecondaryContainer");
+                    text.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSecondaryContainer));
                     box.Child = text;
                     row.Children.Add(box);
                 }

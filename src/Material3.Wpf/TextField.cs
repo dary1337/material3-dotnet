@@ -335,7 +335,7 @@ namespace Material3.Wpf {
                 return;
             }
             animatable.BeginAnimation(property, new DoubleAnimation(to, Motion.Ms(150)) {
-                EasingFunction = TryFindResource("M3StandardDecelerate") as IEasingFunction,
+                EasingFunction = TryFindResource(ResourceKeys.M3StandardDecelerate) as IEasingFunction,
             });
         }
     }

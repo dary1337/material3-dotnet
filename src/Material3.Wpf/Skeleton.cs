@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using Material3.Core;
 
 namespace Material3.Wpf {
     /// <summary>
@@ -60,7 +61,7 @@ namespace Material3.Wpf {
                 return;
             }
 
-            Color on = (TryFindResource("OnSurface") as SolidColorBrush)?.Color ?? Colors.White;
+            Color on = (TryFindResource(nameof(ColorScheme.OnSurface)) as SolidColorBrush)?.Color ?? Colors.White;
             Color highlight = Color.FromArgb(28, on.R, on.G, on.B);
             Color clear = Color.FromArgb(0, on.R, on.G, on.B);
 

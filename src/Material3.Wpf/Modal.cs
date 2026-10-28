@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using Material3.Core;
 
 namespace Material3.Wpf {
     /// <summary>Per-modal behaviour for <see cref="Modal"/>.</summary>
@@ -271,8 +272,8 @@ namespace Material3.Wpf {
             if (!dim) {
                 layer.Scrim.Background = Brushes.Transparent;
             }
-            else if (layer.TryFindResource("Scrim") is Brush) {
-                layer.Scrim.SetResourceReference(Border.BackgroundProperty, "Scrim");
+            else if (layer.TryFindResource(nameof(ColorScheme.Scrim)) is Brush) {
+                layer.Scrim.SetResourceReference(Border.BackgroundProperty, nameof(ColorScheme.Scrim));
             }
             else {
                 layer.Scrim.Background = new SolidColorBrush(Color.FromArgb(168, 0, 0, 0));

@@ -166,14 +166,14 @@ namespace Material3.Wpf {
             }
 
             _label = new TextBlock { FontSize = 12, TextWrapping = TextWrapping.Wrap, MaxWidth = 320 };
-            _label.SetResourceReference(TextBlock.FontFamilyProperty, "FontFamily");
+            _label.SetResourceReference(TextBlock.FontFamilyProperty, ResourceKeys.FontFamily);
             _title = new TextBlock {
                 FontSize = 14,
                 TextWrapping = TextWrapping.Wrap,
                 Margin = new Thickness(0, 0, 0, 4),
             };
-            _title.SetResourceReference(TextBlock.FontFamilyProperty, "FontFamily");
-            _title.SetResourceReference(TextBlock.FontWeightProperty, "FontWeightMedium");
+            _title.SetResourceReference(TextBlock.FontFamilyProperty, ResourceKeys.FontFamily);
+            _title.SetResourceReference(TextBlock.FontWeightProperty, ResourceKeys.FontWeightMedium);
             var stack = new StackPanel();
             stack.Children.Add(_title);
             stack.Children.Add(_label);
@@ -214,7 +214,7 @@ namespace Material3.Wpf {
             _title.Visibility = rich ? Visibility.Visible : Visibility.Collapsed;
             if (target.TryFindResource(rich ? "RichTipCard" : "TipCard") is Style card
                 && target.TryFindResource(rich ? "RichTipText" : "TipText") is Style text
-                && target.TryFindResource("TipTitle") is Style head) {
+                && target.TryFindResource(ResourceKeys.TipTitle) is Style head) {
                 foreach (DependencyProperty p in new[] { Border.CornerRadiusProperty, Border.PaddingProperty, Border.BackgroundProperty, Border.BorderBrushProperty, Border.BorderThicknessProperty, UIElement.EffectProperty }) {
                     _border!.ClearValue(p);
                 }

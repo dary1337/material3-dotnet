@@ -38,7 +38,7 @@ namespace Material3.Wpf {
                 throw new ArgumentNullException(nameof(options));
             }
 
-            double cell = Resource(owner, "DatePickerCellSize", 40.0);
+            double cell = Resource(owner, ResourceKeys.DatePickerCellSize, 40.0);
             var calendar = new DateGrid(options.Initial.Date, options.Culture ?? CultureInfo.CurrentCulture, options.Title, cell);
             DialogChoice choice = Dialog.Show(owner, new DialogOptions {
                 Content = calendar,
@@ -77,14 +77,14 @@ namespace Material3.Wpf {
             FocusVisualStyle = null;
 
             var overline = new TextBlock { Text = title, FontSize = 14 };
-            overline.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
-            overline.SetResourceReference(TextBlock.FontWeightProperty, "FontWeightMedium");
-            _month.SetResourceReference(TextBlock.FontWeightProperty, "FontWeightMedium");
-            _headline.SetResourceReference(TextBlock.ForegroundProperty, "OnSurface");
+            overline.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurfaceVariant));
+            overline.SetResourceReference(TextBlock.FontWeightProperty, ResourceKeys.FontWeightMedium);
+            _month.SetResourceReference(TextBlock.FontWeightProperty, ResourceKeys.FontWeightMedium);
+            _headline.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurface));
             Children.Add(overline);
             Children.Add(_headline);
             var divider = new Border { Height = 1, Margin = new Thickness(0, 12, 0, 8) };
-            divider.SetResourceReference(Border.BackgroundProperty, "OutlineVariant");
+            divider.SetResourceReference(Border.BackgroundProperty, nameof(ColorScheme.OutlineVariant));
             Children.Add(divider);
 
             var nav = new DockPanel { Height = 48 };
@@ -92,7 +92,7 @@ namespace Material3.Wpf {
             DockPanel.SetDock(next, Dock.Right);
             Button previous = NavButton("ChevronLeft", -1);
             DockPanel.SetDock(previous, Dock.Right);
-            _month.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+            _month.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurfaceVariant));
             _month.Margin = new Thickness(12, 0, 0, 0);
             nav.Children.Add(next);
             nav.Children.Add(previous);
@@ -102,7 +102,7 @@ namespace Material3.Wpf {
             var weekdays = new UniformGrid { Rows = 1, Columns = 7, Height = _cell + CellRoom };
             foreach (string letter in WeekdayLetters(_firstDay, culture)) {
                 var head = new TextBlock { Text = letter, FontSize = 16, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
-                head.SetResourceReference(TextBlock.ForegroundProperty, "OnSurface");
+                head.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurface));
                 weekdays.Children.Add(head);
             }
             Children.Add(weekdays);
@@ -157,7 +157,7 @@ namespace Material3.Wpf {
         private Button NavButton(string glyph, int delta) {
             var icon = new PathIcon { Glyph = glyph, Width = 20, Height = 20 };
             var button = new Button { Content = icon, Width = 40, Height = 40 };
-            button.SetResourceReference(StyleProperty, "RowIconButton");
+            button.SetResourceReference(StyleProperty, ResourceKeys.RowIconButton);
             button.Click += (_, __) => ShowMonth(delta);
             return button;
         }
@@ -185,17 +185,17 @@ namespace Material3.Wpf {
                 VerticalAlignment = VerticalAlignment.Center,
             };
             if (selected) {
-                fill.SetResourceReference(Shape.FillProperty, "Primary");
-                label.SetResourceReference(TextBlock.ForegroundProperty, "OnPrimary");
-                state.SetResourceReference(Shape.FillProperty, "OnPrimary");
+                fill.SetResourceReference(Shape.FillProperty, nameof(ColorScheme.Primary));
+                label.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnPrimary));
+                state.SetResourceReference(Shape.FillProperty, nameof(ColorScheme.OnPrimary));
             }
             else {
                 if (today) {
                     fill.StrokeThickness = 1;
-                    fill.SetResourceReference(Shape.StrokeProperty, "Primary");
+                    fill.SetResourceReference(Shape.StrokeProperty, nameof(ColorScheme.Primary));
                 }
                 label.SetResourceReference(TextBlock.ForegroundProperty, today ? "Primary" : "OnSurface");
-                state.SetResourceReference(Shape.FillProperty, "OnSurface");
+                state.SetResourceReference(Shape.FillProperty, nameof(ColorScheme.OnSurface));
             }
             var root = new Grid { Width = _cell + CellRoom, Height = _cell + CellRoom, Background = Brushes.Transparent, Cursor = Cursors.Hand, Tag = date };
             root.Children.Add(fill);
