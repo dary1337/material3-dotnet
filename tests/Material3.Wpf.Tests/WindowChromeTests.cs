@@ -138,6 +138,8 @@ namespace Material3.Wpf.Tests {
             Assert.False(WindowPlacement.IsReachable(new Rect(1900, 100, 800, 600), screen));
             Assert.False(WindowPlacement.IsReachable(new Rect(-790, 100, 800, 600), screen));
             Assert.False(WindowPlacement.IsReachable(new Rect(100, 1050, 800, 600), screen));
+            Assert.True(WindowPlacement.IsReachable(new Rect(0, 0, 50, 30), screen));
+            Assert.False(WindowPlacement.IsReachable(new Rect(1880, 1050, 50, 30), screen));
         }
 
         [Fact]
