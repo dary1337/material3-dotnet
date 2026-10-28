@@ -188,7 +188,8 @@ namespace Material3.WinForms.Controls {
                 return true;
             }
 
-            return _inputKind == MaterialInputKind.Integer ? long.TryParse(t, out _)
+            return _inputKind == MaterialInputKind.Integer
+                ? long.TryParse(t, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out _)
                 : double.TryParse(t, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _);
         });
 

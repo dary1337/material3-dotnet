@@ -223,6 +223,8 @@ namespace Material3.WinForms.Tests {
         [InlineData("#3a7", true, 0xFF33AA77u)]
         [InlineData("80FF0000", true, 0x80FF0000u)]
         [InlineData("#12345", false, 0xFF000000u)]
+        [InlineData("##fff", false, 0xFF000000u)]
+        [InlineData("# 1234F", false, 0xFF000000u)]
         public void TheSharedHexParserReadsEveryShortAndLongForm(string text, bool ok, uint argb) {
             Assert.Equal(ok, ColorMath.TryParseHex(text, out Argb parsed));
             Assert.Equal(argb, (uint)parsed.ToInt());
@@ -586,6 +588,7 @@ namespace Material3.WinForms.Tests {
         [InlineData("1.", true)]
         [InlineData("1.2.3", false)]
         [InlineData("1-", false)]
+        [InlineData("1\n", false)]
         public void TheSharedNumberRuleAcceptsWhatIsStillBeingTyped(string text, bool accepted) =>
             Assert.Equal(accepted, TextInputRules.IsNumberPrefix(text));
     }
