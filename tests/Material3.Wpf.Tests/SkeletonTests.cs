@@ -50,7 +50,7 @@ namespace Material3.Wpf.Tests {
                 return false;
             }
 
-            return shimmer.Background is LinearGradientBrush brush
+            return shimmer.OpacityMask is LinearGradientBrush brush
                 && brush.RelativeTransform is TranslateTransform sweep
                 && sweep.HasAnimatedProperties;
         }

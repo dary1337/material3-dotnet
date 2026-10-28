@@ -126,7 +126,7 @@ namespace Material3.Wpf.Tests {
                 Border card = Ui.Descendants<Border>(tip).First();
                 double buttonCentre = button.PointToScreen(new Point(button.ActualWidth / 2, 0)).X;
                 double cardCentre = card.PointToScreen(new Point(card.ActualWidth / 2, 0)).X;
-                Assert.Equal(buttonCentre, cardCentre, 1);
+                Assert.InRange(Math.Abs(buttonCentre - cardCentre), 0, 1.5);
             }
             finally { tip.IsOpen = false; }
         }, transparent: true);

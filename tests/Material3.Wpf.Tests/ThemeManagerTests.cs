@@ -48,5 +48,24 @@ namespace Material3.Wpf.Tests {
                 ThemeManager.Apply(before, wasDark, new ResourceDictionary());
             }
         }
+
+        [Fact]
+        public void AModeSwitchReachesTheAppAndEveryWindowItWasAppliedTo() {
+            MaterialTheme before = ThemeManager.Theme;
+            bool wasDark = ThemeManager.IsDark;
+            var app = new ResourceDictionary();
+            var window = new ResourceDictionary();
+            try {
+                ThemeManager.Apply(MaterialTheme.Platinum(), isDark: true, app);
+                ThemeManager.Apply(MaterialTheme.Platinum(), isDark: true, window);
+                ThemeManager.IsDark = false;
+                Color light = ThemeManager.Scheme.Surface.ToMedia();
+                Assert.Equal(light, ((SolidColorBrush)app["Surface"]).Color);
+                Assert.Equal(light, ((SolidColorBrush)window["Surface"]).Color);
+            }
+            finally {
+                ThemeManager.Apply(before, wasDark, new ResourceDictionary());
+            }
+        }
     }
 }

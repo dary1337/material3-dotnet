@@ -285,8 +285,8 @@ namespace Material3.Wpf.Gallery {
                 var row = Row();
                 Chip Accent(string text, string? glyph, string container, string content, Brush? outline = null) {
                     var chip = new Chip { Kind = ChipKind.Suggestion, Text = text, Glyph = glyph, Margin = new Thickness(0, 0, 8, 8) };
-                    chip.AccentContainer = (Brush)FindResource(container);
-                    chip.AccentContent = (Brush)FindResource(content);
+                    chip.SetResourceReference(Chip.AccentContainerProperty, container);
+                    chip.SetResourceReference(Chip.AccentContentProperty, content);
                     chip.AccentOutline = outline;
                     return chip;
                 }
