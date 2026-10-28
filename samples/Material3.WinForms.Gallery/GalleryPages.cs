@@ -660,16 +660,19 @@ namespace Material3.WinForms.Gallery {
             },
             ["sizes.percontrol"] = b => b.Flow(flow => {
                 flow.Controls.Add(Button(MaterialButtonVariant.Filled, "Default"));
-                flow.Controls.Add(new MaterialButton {
+                var largeFont = new Font(TypeScale.DefaultFamilyMedium, 12f);
+                var large = new MaterialButton {
                     Text = "Taller, larger",
                     Glyph = MaterialIcons.Check,
                     AutoSize = true,
                     Margin = Gap,
                     ButtonHeight = 52,
                     IconSize = 22,
-                    Font = new Font(TypeScale.DefaultFamilyMedium, 12f),
+                    Font = largeFont,
                     Padding = new Padding(Dpi.Scale(flow, 28), 0, Dpi.Scale(flow, 28), 0),
-                });
+                };
+                large.Disposed += (s, e) => largeFont.Dispose();
+                flow.Controls.Add(large);
                 flow.Controls.Add(new MaterialChip { Text = "Default chip", Margin = Gap });
                 flow.Controls.Add(new MaterialChip { Text = "Square chip", ChipHeight = 40, CornerRadius = 4, Margin = Gap });
                 flow.Controls.Add(new MaterialSwitch { Text = "Default", Margin = Gap });

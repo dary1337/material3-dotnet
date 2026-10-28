@@ -36,6 +36,7 @@ namespace Material3.Wpf {
         /// <summary>The block's corner radius. Match the element it stands in for.</summary>
         public CornerRadius CornerRadius { get => (CornerRadius)GetValue(CornerRadiusProperty); set => SetValue(CornerRadiusProperty, value); }
 
+        private const double ShimmerOpacity = 28 / 255.0;
         private Border? _shimmer;
         private TranslateTransform? _sweep;
 
@@ -61,24 +62,23 @@ namespace Material3.Wpf {
                 return;
             }
 
-            Color on = (TryFindResource(nameof(ColorScheme.OnSurface)) as SolidColorBrush)?.Color ?? Colors.White;
-            var highlight = Color.FromArgb(28, on.R, on.G, on.B);
-            var clear = Color.FromArgb(0, on.R, on.G, on.B);
-
+            // The colour is a resource so a theme switch recolours a running sweep; the gradient only shapes it.
             var brush = new LinearGradientBrush {
                 StartPoint = new Point(0, 0),
                 EndPoint = new Point(1, 0),
                 SpreadMethod = GradientSpreadMethod.Repeat,
             };
-            brush.GradientStops.Add(new GradientStop(clear, 0.0));
-            brush.GradientStops.Add(new GradientStop(clear, 0.35));
-            brush.GradientStops.Add(new GradientStop(highlight, 0.5));
-            brush.GradientStops.Add(new GradientStop(clear, 0.65));
-            brush.GradientStops.Add(new GradientStop(clear, 1.0));
+            brush.GradientStops.Add(new GradientStop(Colors.Transparent, 0.0));
+            brush.GradientStops.Add(new GradientStop(Colors.Transparent, 0.35));
+            brush.GradientStops.Add(new GradientStop(Colors.Black, 0.5));
+            brush.GradientStops.Add(new GradientStop(Colors.Transparent, 0.65));
+            brush.GradientStops.Add(new GradientStop(Colors.Transparent, 1.0));
 
             _sweep = new TranslateTransform();
             brush.RelativeTransform = _sweep;
-            _shimmer.Background = brush;
+            _shimmer.SetResourceReference(Border.BackgroundProperty, nameof(ColorScheme.OnSurface));
+            _shimmer.SetCurrentValue(OpacityProperty, ShimmerOpacity);
+            _shimmer.OpacityMask = brush;
             _sweep.BeginAnimation(TranslateTransform.XProperty,
                 new DoubleAnimation(0, 1, new Duration(TimeSpan.FromMilliseconds(1400))) { RepeatBehavior = RepeatBehavior.Forever });
         }
@@ -89,7 +89,8 @@ namespace Material3.Wpf {
                 _sweep = null;
             }
             if (_shimmer != null) {
-                _shimmer.Background = null;
+                _shimmer.ClearValue(Border.BackgroundProperty);
+                _shimmer.ClearValue(OpacityMaskProperty);
             }
         }
     }

@@ -45,8 +45,8 @@ namespace Material3.Wpf {
                 return;
             }
 
-            if (DependencyPropertyHelper.GetValueSource(owner, ToolTipService.PlacementProperty).BaseValueSource == BaseValueSource.Local
-                && ToolTipService.GetPlacement(owner) != PlacementMode.Custom) {
+            if (IsPlacedByHand(owner, ToolTipService.PlacementProperty, ToolTipService.GetPlacement(owner))
+                || (owner.ToolTip is ToolTip own && IsPlacedByHand(own, ToolTip.PlacementProperty, own.Placement))) {
                 return;
             }
 
@@ -71,9 +71,14 @@ namespace Material3.Wpf {
             }
         }
 
+        private static bool IsPlacedByHand(DependencyObject d, DependencyProperty placement, PlacementMode value) =>
+            DependencyPropertyHelper.GetValueSource(d, placement).BaseValueSource == BaseValueSource.Local && value != PlacementMode.Custom;
+
         internal static void Apply(ToolTip tip) {
-            tip.Placement = PlacementMode.Custom;
-            tip.CustomPopupPlacementCallback = Place;
+            tip.SetCurrentValue(ToolTip.PlacementProperty, PlacementMode.Custom);
+            if (tip.CustomPopupPlacementCallback == null) {
+                tip.CustomPopupPlacementCallback = Place;
+            }
         }
 
         internal static CustomPopupPlacement[] Place(Size popupSize, Size targetSize, Point offset) {

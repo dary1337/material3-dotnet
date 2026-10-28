@@ -472,6 +472,14 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
+        public void AChipSizedByHandPaintsAtItsOwnHeight() {
+            using var chip = new MaterialChip { Text = "Tag", AutoSize = false, Width = 120, Height = 50 };
+            _ = chip.Handle;
+            object metrics = typeof(MaterialChip).GetMethod("BuildMetrics", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(chip, null)!;
+            Assert.Equal(50, (int)metrics.GetType().GetField("Height")!.GetValue(metrics)!);
+        }
+
+        [Fact]
         public void AnIconOnlyButtonCentresItsIcon() {
             using var button = new MaterialButton { Glyph = Material3.WinForms.Drawing.MaterialIcons.Add, Text = string.Empty };
             Assert.Equal(button.Padding.Horizontal + Dpi.Scale(button, button.IconSize), button.GetPreferredSize(Size.Empty).Width);

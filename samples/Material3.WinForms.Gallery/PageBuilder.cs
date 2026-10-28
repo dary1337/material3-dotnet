@@ -355,7 +355,9 @@ namespace Material3.WinForms.Gallery {
                     ("Full", Shape.Full),
                 };
 
-                int w = Dpi.Scale(this, 120), h = Dpi.Scale(this, 72), step = w + Dpi.Scale(this, 12);
+                int gap = Dpi.Scale(this, 12), h = Dpi.Scale(this, 72);
+                int w = Math.Max(1, Math.Min(Dpi.Scale(this, 120), (Width - gap * (shapes.Length - 1)) / shapes.Length));
+                int step = w + gap;
                 for (int i = 0; i < shapes.Length; i++) {
                     var rect = new Rectangle(i * step, 0, w, h);
                     using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(rect, Math.Min(Dpi.Scale(this, shapes[i].radius), h / 2)))

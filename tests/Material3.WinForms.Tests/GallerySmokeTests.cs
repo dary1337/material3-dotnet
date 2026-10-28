@@ -10,8 +10,14 @@ using Material3.WinForms.Typography;
 using Xunit;
 
 namespace Material3.WinForms.Tests {
-    [Collection("TypeScale")]
-    public class GallerySmokeTests {
+    [Collection("GlobalStyle")]
+    public class GallerySmokeTests : IDisposable {
+        private readonly MaterialTheme _theme = Theming.ThemeManager.Theme;
+        private readonly bool _dark = Theming.ThemeManager.IsDark;
+
+        // The gallery's seed picker writes the shared theme; the next test must not inherit it.
+        public void Dispose() => Theming.ThemeManager.Apply(_theme, _dark);
+
         public static TheoryData<string> Pages() {
             var data = new TheoryData<string>();
             foreach (string page in GalleryForm.Pages) {
@@ -30,6 +36,15 @@ namespace Material3.WinForms.Tests {
             string[] expected = Material3.Gallery.GallerySpec.Page(page).Sections
                 .Where(s => s.ShowsOn(Material3.Gallery.GallerySpec.WinForms)).Select(s => s.Id).ToArray();
             Assert.Equal(expected, form.LastSections);
+        }
+
+        [Theory]
+        [InlineData("sizes & text", "Sizes & Text")]
+        [InlineData("No such page", "Color roles")]
+        public void AStartPageMatchesIgnoringCaseOrFallsBackToTheFirst(string asked, string shown) {
+            using var form = new GalleryForm(asked);
+            string current = (string)typeof(GalleryForm).GetField("_currentPage", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(form)!;
+            Assert.Equal(shown, current);
         }
 
         [Fact]

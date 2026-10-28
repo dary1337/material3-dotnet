@@ -1,7 +1,9 @@
 using System;
 using System.Globalization;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using Material3.Core;
@@ -76,6 +78,11 @@ namespace Material3.Wpf {
         private readonly bool _hasPeriod;
         private bool _pm;
         private Border? _am, _pmRow;
+        private RadioButton? _amChoice, _pmChoice;
+
+        private static readonly ControlTemplate PresenterOnly = new ControlTemplate(typeof(RadioButton)) {
+            VisualTree = new FrameworkElementFactory(typeof(ContentPresenter)),
+        };
 
         internal TimeInput(TimePickerOptions options, CultureInfo culture, bool is24, Size field = default, double fontSize = 45,
             double periodWidth = 52, CornerRadius periodRadius = default) {
@@ -114,6 +121,17 @@ namespace Material3.Wpf {
             }
             Children.Add(row);
             Loaded += (_, __) => _hour.Focus();
+            PreviewKeyDown += OnPeriodKey;
+        }
+
+        // A and P pick the half of the day from anywhere in the picker, as a 12-hour clock app does.
+        private void OnPeriodKey(object sender, KeyEventArgs e) {
+            if (!_hasPeriod || (e.Key != Key.A && e.Key != Key.P)) {
+                return;
+            }
+
+            ChooseAfternoon(e.Key == Key.P);
+            e.Handled = true;
         }
 
         internal TimeSpan Value => TimeMath.Normalize(Read(_hour), Read(_minute), _hasPeriod && _pm, _is24).value;
@@ -127,6 +145,19 @@ namespace Material3.Wpf {
                 half.MouseLeftButtonUp += (_, e) => { e.Handled = true; ChooseAfternoon(afternoon); };
                 return half;
             }
+
+            // Each half is a radio button to UI Automation: named by its designator and selectable.
+            RadioButton Choice(Border half, string text, bool afternoon) {
+                var choice = new RadioButton {
+                    Content = half,
+                    GroupName = "period",
+                    Focusable = false,
+                    Template = PresenterOnly,
+                };
+                AutomationProperties.SetName(choice, text);
+                choice.Checked += (_, __) => ChooseAfternoon(afternoon);
+                return choice;
+            }
             // The halves sit inside the 1 px outline, so they round by one less.
             double inner = Math.Max(0, radius.TopLeft - 1);
             _am = Half(culture.DateTimeFormat.AMDesignator, new CornerRadius(inner, inner, 0, 0), false);
@@ -138,10 +169,12 @@ namespace Material3.Wpf {
             halves.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             halves.RowDefinitions.Add(new RowDefinition());
             Grid.SetRow(divider, 1);
-            Grid.SetRow(_pmRow, 2);
-            halves.Children.Add(_am);
+            _amChoice = Choice(_am, culture.DateTimeFormat.AMDesignator, false);
+            _pmChoice = Choice(_pmRow, culture.DateTimeFormat.PMDesignator, true);
+            Grid.SetRow(_pmChoice, 2);
+            halves.Children.Add(_amChoice);
             halves.Children.Add(divider);
-            halves.Children.Add(_pmRow);
+            halves.Children.Add(_pmChoice);
             var column = new Border {
                 Name = "period",
                 Width = width,
@@ -167,6 +200,8 @@ namespace Material3.Wpf {
             }
 
             _pm = pm;
+            _amChoice?.SetCurrentValue(ToggleButton.IsCheckedProperty, !pm);
+            _pmChoice?.SetCurrentValue(ToggleButton.IsCheckedProperty, pm);
             foreach ((Border half, bool chosen) in new[] { (_am, !pm), (_pmRow, pm) }) {
                 if (chosen) {
                     half.SetResourceReference(Border.BackgroundProperty, nameof(ColorScheme.TertiaryContainer));

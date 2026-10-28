@@ -20,11 +20,15 @@ namespace Material3.Wpf {
         internal const string M3StandardDecelerate = nameof(M3StandardDecelerate);
         internal const string RadiusPill = nameof(RadiusPill);
         internal const string RadiusSm = nameof(RadiusSm);
+        internal const string RichTipCard = nameof(RichTipCard);
+        internal const string RichTipText = nameof(RichTipText);
         internal const string RowIconButton = nameof(RowIconButton);
         internal const string TextButton = nameof(TextButton);
         internal const string TimePickerFieldFontSize = nameof(TimePickerFieldFontSize);
         internal const string TimePickerFieldSize = nameof(TimePickerFieldSize);
         internal const string TimePickerPeriodWidth = nameof(TimePickerPeriodWidth);
+        internal const string TipCard = nameof(TipCard);
+        internal const string TipText = nameof(TipText);
         internal const string TipTitle = nameof(TipTitle);
         internal const string TitleMedium = nameof(TitleMedium);
         internal const string TonalButton = nameof(TonalButton);

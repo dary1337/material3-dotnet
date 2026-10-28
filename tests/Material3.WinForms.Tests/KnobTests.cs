@@ -13,10 +13,11 @@ using Material3.WinForms.Typography;
 using Xunit;
 
 namespace Material3.WinForms.Tests {
-    [CollectionDefinition("TypeScale", DisableParallelization = true)]
-    public class TypeScaleCollection { }
+    // The type scale and the theme are process-wide; every test that reads or writes them runs alone.
+    [CollectionDefinition("GlobalStyle", DisableParallelization = true)]
+    public class GlobalStyleCollection { }
 
-    [Collection("TypeScale")]
+    [Collection("GlobalStyle")]
     public class TypeScaleTests {
         [Fact]
         public void AControlFollowsItsRoleUntilTheAppSetsAFont() {

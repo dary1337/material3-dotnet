@@ -133,9 +133,7 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override void OnLayout(LayoutEventArgs levent) {
             base.OnLayout(levent);
-            if (!_open.Animated) {
-                ApplyHeight();
-            }
+            ApplyHeight();
         }
 
         /// <inheritdoc />

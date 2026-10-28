@@ -247,7 +247,7 @@ namespace Material3.Wpf {
 
             bool maximized = _window.WindowState == WindowState.Maximized;
             SetValue(IsMaximizedKey, maximized);
-            _window.BorderThickness = maximized ? SystemParameters.WindowResizeBorderThickness : _restoredBorder;
+            _window.SetCurrentValue(Control.BorderThicknessProperty, maximized ? SystemParameters.WindowResizeBorderThickness : _restoredBorder);
         }
     }
 }

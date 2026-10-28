@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls.Primitives;
+using System.Windows.Media;
 
 namespace Material3.Wpf {
     /// <summary>Centers a <see cref="Popup"/> horizontally over its trigger and places it below with a small gap,
@@ -28,30 +29,39 @@ namespace Material3.Wpf {
         private static void OnEnableChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             if (d is Popup popup && (bool)e.NewValue) {
                 popup.Placement = PlacementMode.Custom;
-                popup.CustomPopupPlacementCallback = (p, t, o) => Place(Unscaled(popup, p, t), t, GetPreferAbove(popup), ShadowRoom(popup, t));
+                popup.CustomPopupPlacementCallback = (p, t, o) => Place(Unscaled(popup, p), t, GetPreferAbove(popup), ShadowRoom(popup));
                 Motion.SetScaleOnOpen(popup, true);
             }
         }
 
         // The open animation scales the child, so the size WPF reports shrinks and the centre would drift while it runs.
-        internal static Size Unscaled(Popup popup, Size reported, Size target) {
+        internal static Size Unscaled(Popup popup, Size reported) {
             if (!(popup.Child is UIElement child) || child.DesiredSize.Width <= 0) {
                 return reported;
             }
 
-            double toDevice = popup.PlacementTarget is FrameworkElement anchor && anchor.ActualWidth > 0 ? target.Width / anchor.ActualWidth : 1;
-            return new Size(child.DesiredSize.Width * toDevice, child.DesiredSize.Height * toDevice);
+            (double x, double y) = ToDevice(popup);
+            return new Size(child.DesiredSize.Width * x, child.DesiredSize.Height * y);
+        }
+
+        // The callback works in device pixels; the target's own size there would carry its render transform too.
+        private static (double X, double Y) ToDevice(Popup popup) {
+            if (popup.PlacementTarget is Visual anchor && PresentationSource.FromVisual(anchor)?.CompositionTarget is CompositionTarget target) {
+                Matrix m = target.TransformToDevice;
+                return (m.M11, m.M22);
+            }
+            return (1, 1);
         }
 
         // The card's margin is room for its shadow, often on one side only; centring the margin box would shift the card off-centre.
-        internal static Thickness ShadowRoom(Popup popup, Size target) {
+        internal static Thickness ShadowRoom(Popup popup) {
             if (!(popup.Child is FrameworkElement child)) {
                 return default;
             }
 
-            double toDevice = popup.PlacementTarget is FrameworkElement anchor && anchor.ActualWidth > 0 ? target.Width / anchor.ActualWidth : 1;
+            (double x, double y) = ToDevice(popup);
             Thickness m = child.Margin;
-            return new Thickness(m.Left * toDevice, m.Top * toDevice, m.Right * toDevice, m.Bottom * toDevice);
+            return new Thickness(m.Left * x, m.Top * y, m.Right * x, m.Bottom * y);
         }
 
         internal static CustomPopupPlacement[] Place(Size popup, Size target, bool preferAbove, Thickness room = default) {

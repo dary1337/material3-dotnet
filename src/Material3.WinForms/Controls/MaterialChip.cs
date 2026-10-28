@@ -226,7 +226,7 @@ namespace Material3.WinForms.Controls {
         private bool ShowsRemove => _kind == MaterialChipKind.Input;
 
         private ChipRenderer.Metrics BuildMetrics() => new ChipRenderer.Metrics {
-            Height = Dpi.Scale(this, _chipHeight),
+            Height = AutoSize || !IsHandleCreated ? Dpi.Scale(this, _chipHeight) : Math.Max(1, Height),
             PadX = Dpi.Scale(this, _horizontalPadding),
             IconPx = Dpi.Scale(this, _iconSize),
             IconGap = Dpi.Scale(this, _iconGap),

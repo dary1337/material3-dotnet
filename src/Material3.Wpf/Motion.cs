@@ -222,7 +222,7 @@ namespace Material3.Wpf {
             }
 
             c.BeginAnimation(UIElement.OpacityProperty, null);
-            c.Opacity = 1;
+            c.SetCurrentValue(UIElement.OpacityProperty, 1.0);
             if (c.RenderTransform is ScaleTransform st && !st.IsFrozen) {
                 st.BeginAnimation(ScaleTransform.ScaleXProperty, null);
                 st.BeginAnimation(ScaleTransform.ScaleYProperty, null);

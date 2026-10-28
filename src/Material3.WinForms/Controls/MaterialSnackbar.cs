@@ -138,7 +138,7 @@ namespace Material3.WinForms.Controls {
                     }
                     int available = host.ClientSize.Width - Dpi.Scale(this, Spacing.Space6 * 2);
                     int minWidth = Math.Min(Dpi.Scale(this, MinWidth), available);
-                    Width = Math.Min((int)Math.Ceiling(width), Math.Max(minWidth, available));
+                    Width = Math.Max(minWidth, Math.Min((int)Math.Ceiling(width), available));
                 }
             }
             PositionIn(host, 0f);

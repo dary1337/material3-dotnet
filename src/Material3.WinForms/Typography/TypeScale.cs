@@ -168,24 +168,40 @@ namespace Material3.WinForms.Typography {
             Changed?.Invoke(null, EventArgs.Empty);
         }
 
-        // The one place the M3 sizes live: (pt, tracking px, line height px).
+        // The one place the M3 sizes live: (pt, tracking px, line height px), all built before any is replaced.
         private static void Build(string family, string? medium) {
-            _displayLarge = Style(family, 42.75f, -0.25f, 64);
-            _displayMedium = Style(family, 33.75f, 0f, 52);
-            _displaySmall = Style(family, 27f, 0f, 44);
-            _headlineLarge = Style(family, 24f, 0f, 40);
-            _headlineMedium = Style(family, 21f, 0f, 36);
-            _headlineSmall = Style(family, 18f, 0f, 32);
-            _titleLarge = Style(family, 16.5f, 0f, 28);
-            _titleMedium = Medium(family, medium, 12f, 0.15f, 24);
-            _titleSmall = Medium(family, medium, 10.5f, 0.1f, 20);
-            _bodyLarge = Style(family, 12f, 0.5f, 24);
-            _bodyMedium = Style(family, 10.5f, 0.25f, 20);
-            _bodySmall = Style(family, 9f, 0.4f, 16);
-            _labelLarge = Medium(family, medium, 10.5f, 0.1f, 20);
-            _labelMedium = Medium(family, medium, 9f, 0.5f, 16);
-            _labelSmall = Medium(family, medium, 8.25f, 0.5f, 16);
-            _overline = Medium(family, medium, 8.25f, 1.5f, 16);
+            TextStyle displayLarge = Style(family, 42.75f, -0.25f, 64);
+            TextStyle displayMedium = Style(family, 33.75f, 0f, 52);
+            TextStyle displaySmall = Style(family, 27f, 0f, 44);
+            TextStyle headlineLarge = Style(family, 24f, 0f, 40);
+            TextStyle headlineMedium = Style(family, 21f, 0f, 36);
+            TextStyle headlineSmall = Style(family, 18f, 0f, 32);
+            TextStyle titleLarge = Style(family, 16.5f, 0f, 28);
+            TextStyle titleMedium = Medium(family, medium, 12f, 0.15f, 24);
+            TextStyle titleSmall = Medium(family, medium, 10.5f, 0.1f, 20);
+            TextStyle bodyLarge = Style(family, 12f, 0.5f, 24);
+            TextStyle bodyMedium = Style(family, 10.5f, 0.25f, 20);
+            TextStyle bodySmall = Style(family, 9f, 0.4f, 16);
+            TextStyle labelLarge = Medium(family, medium, 10.5f, 0.1f, 20);
+            TextStyle labelMedium = Medium(family, medium, 9f, 0.5f, 16);
+            TextStyle labelSmall = Medium(family, medium, 8.25f, 0.5f, 16);
+            TextStyle overline = Medium(family, medium, 8.25f, 1.5f, 16);
+            _displayLarge = displayLarge;
+            _displayMedium = displayMedium;
+            _displaySmall = displaySmall;
+            _headlineLarge = headlineLarge;
+            _headlineMedium = headlineMedium;
+            _headlineSmall = headlineSmall;
+            _titleLarge = titleLarge;
+            _titleMedium = titleMedium;
+            _titleSmall = titleSmall;
+            _bodyLarge = bodyLarge;
+            _bodyMedium = bodyMedium;
+            _bodySmall = bodySmall;
+            _labelLarge = labelLarge;
+            _labelMedium = labelMedium;
+            _labelSmall = labelSmall;
+            _overline = overline;
         }
 
         private static void Replace(ref TextStyle field, TextStyle value) {

@@ -65,14 +65,14 @@ namespace Material3.Wpf.Tests {
                 Key(grid, System.Windows.Input.Key.PageDown);
                 Click(d, "OK");
             });
-            DateTime? picked = DatePickerDialog.Show(w, new DatePickerOptions { Initial = new DateTime(2026, 1, 30), Culture = CultureInfo.GetCultureInfo("en-US") });
+            DateTime? picked = DatePickerDialog.Show(w, new DatePickerOptions { ConfirmText = "OK", CancelText = "Cancel", Initial = new DateTime(2026, 1, 30), Culture = CultureInfo.GetCultureInfo("en-US") });
             Assert.Equal(new DateTime(2026, 3, 7), picked);
         });
 
         [Fact]
         public void CancelReturnsNoDate() => Ui.InWindow(w => {
             Once(w, d => Click(d, "Cancel"));
-            Assert.Null(DatePickerDialog.Show(w, new DatePickerOptions()));
+            Assert.Null(DatePickerDialog.Show(w, new DatePickerOptions { ConfirmText = "OK", CancelText = "Cancel" }));
         });
 
         [Fact]
@@ -83,21 +83,36 @@ namespace Material3.Wpf.Tests {
                 Ui.Descendants<Button>(seen).First(b => b.Content is PathIcon { Glyph: "ChevronRight" }).RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
                 Click(d, "OK");
             });
-            DateTime? picked = DatePickerDialog.Show(w, new DatePickerOptions { Initial = new DateTime(2026, 5, 4) });
+            DateTime? picked = DatePickerDialog.Show(w, new DatePickerOptions { ConfirmText = "OK", CancelText = "Cancel", Initial = new DateTime(2026, 5, 4) });
             Assert.Equal(new DateTime(2026, 5, 4), picked);
             Assert.Equal(new DateTime(2026, 6, 1), seen!.ShownMonth);
         });
 
         [Fact]
         public void ATwelveHourTimeComesBackOnTheTwentyFourHourClock() => Ui.InWindow(w => {
+            bool hasMeridiem = false;
             Once(w, d => {
+                hasMeridiem = Ui.Descendants<FrameworkElement>(d).Any(e => e.Name == "period");
                 TimeInput input = Ui.Descendants<TimeInput>(d).Single();
                 input.Type(7, 45);
                 input.ChooseAfternoon(true);
                 Click(d, "OK");
             });
-            TimeSpan? picked = TimePickerDialog.Show(w, new TimePickerOptions { Initial = new TimeSpan(9, 0, 0), Is24Hour = false });
+            TimeSpan? picked = TimePickerDialog.Show(w, new TimePickerOptions { ConfirmText = "OK", CancelText = "Cancel", Initial = new TimeSpan(9, 0, 0), Is24Hour = false });
             Assert.Equal(new TimeSpan(19, 45, 0), picked);
+            Assert.True(hasMeridiem);
+        });
+
+        [Fact]
+        public void ADialogTakesItsWidthFromTheOwnersResources() => Ui.InWindow(w => {
+            w.Resources["DialogWidth"] = 300.0;
+            bool sized = false;
+            Once(w, d => {
+                sized = Ui.Descendants<StackPanel>(d).Any(p => p.Width == 300);
+                Click(d, "Cancel");
+            });
+            Dialog.Show(w, new DialogOptions { Title = "Sized", ConfirmText = "OK", CancelText = "Cancel" });
+            Assert.True(sized);
         });
 
         [Fact]
@@ -107,7 +122,7 @@ namespace Material3.Wpf.Tests {
                 hasMeridiem = Ui.Descendants<FrameworkElement>(d).Any(e => e.Name == "period");
                 Click(d, "Cancel");
             });
-            Assert.Null(TimePickerDialog.Show(w, new TimePickerOptions { Is24Hour = true }));
+            Assert.Null(TimePickerDialog.Show(w, new TimePickerOptions { ConfirmText = "OK", CancelText = "Cancel", Is24Hour = true }));
             Assert.False(hasMeridiem);
         });
     }
