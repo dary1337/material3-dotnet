@@ -3,7 +3,7 @@ using Material3.WinForms.Theming;
 using Xunit;
 
 namespace Material3.WinForms.Tests {
-    [Collection("ThemeManager")]
+    [Collection("GlobalStyle")]
     public class GdiAdapterTests {
         [Theory]
         [InlineData(255, 0, 128, 255)]

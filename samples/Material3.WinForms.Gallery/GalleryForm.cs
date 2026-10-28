@@ -52,8 +52,9 @@ namespace Material3.WinForms.Gallery {
         private static readonly Color BaselineSeed = Color.FromArgb(0x67, 0x50, 0xA4);
 
         public GalleryForm(string? startPage = null) : this() {
-            if (!string.IsNullOrEmpty(startPage)) {
-                _currentPage = startPage!;
+            string? known = Pages.FirstOrDefault(p => string.Equals(p, startPage, StringComparison.OrdinalIgnoreCase));
+            if (known != null) {
+                _currentPage = known;
             }
         }
 
@@ -224,8 +225,15 @@ namespace Material3.WinForms.Gallery {
             ShowPage(_currentPage);
         }
 
+        protected override void Dispose(bool disposing) {
+            if (disposing) {
+                ThemeManager.ThemeChanged -= OnThemeChanged;
+            }
+
+            base.Dispose(disposing);
+        }
+
         protected override void OnFormClosed(FormClosedEventArgs e) {
-            ThemeManager.ThemeChanged -= OnThemeChanged;
             _relayout.Stop();
             _relayout.Dispose();
             _navDebounce.Stop();
