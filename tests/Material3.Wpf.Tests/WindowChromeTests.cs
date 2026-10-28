@@ -194,6 +194,29 @@ namespace Material3.Wpf.Tests {
         });
 
         [Fact]
+        public void AWorkerThreadReportsThroughTheWindowsDispatcher() => Ui.InWindow(w => {
+            Exception? failure = null;
+            var done = new System.Windows.Threading.DispatcherFrame();
+            System.Threading.Tasks.Task.Run(() => {
+                try {
+                    TaskbarProgress.Session session = TaskbarProgress.Begin(w);
+                    session.SetNormal(60);
+                    Assert.True(session.IsShown);
+                }
+                catch (Exception ex) {
+                    failure = ex;
+                }
+                finally {
+                    done.Continue = false;
+                }
+            });
+            System.Windows.Threading.Dispatcher.PushFrame(done);
+            Ui.Pump(w);
+            Assert.Null(failure);
+            Assert.Equal(0.6, w.TaskbarItemInfo.ProgressValue, 3);
+        });
+
+        [Fact]
         public void ADisposedSessionNoLongerTouchesTheBar() => Ui.InWindow(w => {
             TaskbarProgress.Session session = TaskbarProgress.Begin(w);
             session.Dispose();
