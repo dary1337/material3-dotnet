@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <None Include="..\..\docs\nuget\Core.md" Pack="true" PackagePath="\README.md" />
+    <InternalsVisibleTo Include="Material3.WinForms.Tests" />
   </ItemGroup>
 
 </Project>
