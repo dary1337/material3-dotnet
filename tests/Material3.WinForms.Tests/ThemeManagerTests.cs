@@ -5,7 +5,7 @@ using Material3.WinForms.Theming;
 using Xunit;
 
 namespace Material3.WinForms.Tests {
-    [Collection("ThemeManager")]
+    [Collection("GlobalStyle")]
     public class ThemeManagerTests : IDisposable {
         public void Dispose() {
             ThemeManager.Apply(MaterialTheme.Platinum(), isDark: true);
