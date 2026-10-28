@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows;
 
 namespace Material3.Wpf {
@@ -44,9 +47,9 @@ namespace Material3.Wpf {
             }
 
             double width = Math.Max(bounds.Width, window.MinWidth), height = Math.Max(bounds.Height, window.MinHeight);
-            var screen = new Rect(SystemParameters.VirtualScreenLeft, SystemParameters.VirtualScreenTop,
-                SystemParameters.VirtualScreenWidth, SystemParameters.VirtualScreenHeight);
-            if (!IsReachable(new Rect(bounds.Left, bounds.Top, width, height), screen)) {
+            var target = new Rect(bounds.Left, bounds.Top, width, height);
+            // The bounding box of all monitors has dead corners, so each monitor is asked on its own.
+            if (!WorkAreas().Any(area => IsReachable(target, area))) {
                 return false;
             }
 
@@ -80,8 +83,59 @@ namespace Material3.Wpf {
             return true;
         }
 
-        internal static bool IsReachable(Rect window, Rect screen) =>
-            window.Right >= screen.Left + MinVisibleWidth && window.Left <= screen.Right - MinVisibleWidth
-            && window.Bottom >= screen.Top + MinVisibleHeight && window.Top <= screen.Bottom - MinVisibleHeight;
+        internal static bool IsReachable(Rect window, Rect screen) {
+            Rect overlap = Rect.Intersect(window, screen);
+            return !overlap.IsEmpty && overlap.Width > 0 && overlap.Height > 0
+                && overlap.Width >= Math.Min(MinVisibleWidth, Math.Min(window.Width, screen.Width))
+                && overlap.Height >= Math.Min(MinVisibleHeight, Math.Min(window.Height, screen.Height));
+        }
+
+        // Monitor rectangles come in device pixels; SystemParameters says how many of them make a DIP.
+        private static List<Rect> WorkAreas() {
+            double toDip = SystemParameters.VirtualScreenWidth / Math.Max(1, GetSystemMetrics(SM_CXVIRTUALSCREEN));
+            var areas = new List<Rect>();
+            MonitorEnumProc collect = (monitor, dc, rect, data) => {
+                var info = new MONITORINFO { cbSize = Marshal.SizeOf(typeof(MONITORINFO)) };
+                if (GetMonitorInfo(monitor, ref info)) {
+                    RECT w = info.rcWork;
+                    areas.Add(new Rect(w.Left * toDip, w.Top * toDip, (w.Right - w.Left) * toDip, (w.Bottom - w.Top) * toDip));
+                }
+
+                return true;
+            };
+            EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, collect, IntPtr.Zero);
+            GC.KeepAlive(collect);
+            if (areas.Count == 0) {
+                areas.Add(SystemParameters.WorkArea);
+            }
+
+            return areas;
+        }
+
+        private const int SM_CXVIRTUALSCREEN = 78;
+
+        private delegate bool MonitorEnumProc(IntPtr monitor, IntPtr dc, IntPtr rect, IntPtr data);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct RECT {
+            public int Left, Top, Right, Bottom;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MONITORINFO {
+            public int cbSize;
+            public RECT rcMonitor;
+            public RECT rcWork;
+            public uint dwFlags;
+        }
+
+        [DllImport("user32.dll")]
+        private static extern bool EnumDisplayMonitors(IntPtr hdc, IntPtr clip, MonitorEnumProc callback, IntPtr data);
+
+        [DllImport("user32.dll")]
+        private static extern bool GetMonitorInfo(IntPtr monitor, ref MONITORINFO info);
+
+        [DllImport("user32.dll")]
+        private static extern int GetSystemMetrics(int index);
     }
 }

@@ -138,6 +138,8 @@ namespace Material3.Wpf.Tests {
             Assert.False(WindowPlacement.IsReachable(new Rect(1900, 100, 800, 600), screen));
             Assert.False(WindowPlacement.IsReachable(new Rect(-790, 100, 800, 600), screen));
             Assert.False(WindowPlacement.IsReachable(new Rect(100, 1050, 800, 600), screen));
+            Assert.True(WindowPlacement.IsReachable(new Rect(0, 0, 50, 30), screen));
+            Assert.False(WindowPlacement.IsReachable(new Rect(1880, 1050, 50, 30), screen));
         }
 
         [Fact]
@@ -189,6 +191,29 @@ namespace Material3.Wpf.Tests {
             session.SetError();
             Assert.Equal(TaskbarItemProgressState.Error, w.TaskbarItemInfo.ProgressState);
             Assert.Equal(1.0, w.TaskbarItemInfo.ProgressValue);
+        });
+
+        [Fact]
+        public void AWorkerThreadReportsThroughTheWindowsDispatcher() => Ui.InWindow(w => {
+            Exception? failure = null;
+            var done = new System.Windows.Threading.DispatcherFrame();
+            System.Threading.Tasks.Task.Run(() => {
+                try {
+                    TaskbarProgress.Session session = TaskbarProgress.Begin(w);
+                    session.SetNormal(60);
+                    Assert.True(session.IsShown);
+                }
+                catch (Exception ex) {
+                    failure = ex;
+                }
+                finally {
+                    done.Continue = false;
+                }
+            });
+            System.Windows.Threading.Dispatcher.PushFrame(done);
+            Ui.Pump(w);
+            Assert.Null(failure);
+            Assert.Equal(0.6, w.TaskbarItemInfo.ProgressValue, 3);
         });
 
         [Fact]

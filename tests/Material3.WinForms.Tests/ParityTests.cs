@@ -223,6 +223,8 @@ namespace Material3.WinForms.Tests {
         [InlineData("#3a7", true, 0xFF33AA77u)]
         [InlineData("80FF0000", true, 0x80FF0000u)]
         [InlineData("#12345", false, 0xFF000000u)]
+        [InlineData("##fff", false, 0xFF000000u)]
+        [InlineData("# 1234F", false, 0xFF000000u)]
         public void TheSharedHexParserReadsEveryShortAndLongForm(string text, bool ok, uint argb) {
             Assert.Equal(ok, ColorMath.TryParseHex(text, out Argb parsed));
             Assert.Equal(argb, (uint)parsed.ToInt());
@@ -291,6 +293,7 @@ namespace Material3.WinForms.Tests {
             typeof(MaterialValueListEditor).GetMethod("MoveRow", BindingFlags.Instance | BindingFlags.NonPublic)!
                 .Invoke(list, new[] { RowAt(list, 1), (object)(-1) });
             Assert.Equal(new[] { "b", "a", "" }, list.Values);
+            Assert.True(list.EntryAt(0).TabIndex < list.EntryAt(1).TabIndex, "Tab does not follow the moved rows");
             typeof(MaterialValueListEditor).GetMethod("Remove", BindingFlags.Instance | BindingFlags.NonPublic)!
                 .Invoke(list, new[] { RowAt(list, 2) });
             Assert.Equal(new[] { "b", "a" }, list.Values);
@@ -330,6 +333,32 @@ namespace Material3.WinForms.Tests {
             Assert.Equal(3, table.RowCount);
             table.RemoveRow(0);
             Assert.Equal(2, table.RowCount);
+        }
+
+        [Fact]
+        public void ATaskbarSessionReportsFromAWorkerThread() {
+            using var form = new Form { ShowInTaskbar = true };
+            _ = form.Handle;
+            Exception? failure = null;
+            var worker = new System.Threading.Thread(() => {
+                try {
+                    using TaskbarProgress.Session session = TaskbarProgress.Begin(form);
+                    session.SetNormal(60);
+                    Assert.True(session.IsShown);
+                }
+                catch (Exception ex) {
+                    failure = ex;
+                }
+            });
+            worker.Start();
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+            while (!worker.Join(10) && clock.ElapsedMilliseconds < 5000) {
+                Application.DoEvents();
+            }
+
+            Application.DoEvents();
+            Assert.False(worker.IsAlive);
+            Assert.Null(failure);
         }
 
         [Fact]
@@ -421,6 +450,72 @@ namespace Material3.WinForms.Tests {
             System.Threading.Thread.Sleep(90);
             Method("OnTick").Invoke(hold, new object?[] { null, EventArgs.Empty });
             Assert.Equal(1, committed);
+        }
+
+        [Fact]
+        public void AHoldTakesEnterAsItsOwnAndEndsWhenFocusLeaves() {
+            using var hold = new Material3.WinForms.Forms.HoldButton("Reset", TimeSpan.FromMilliseconds(60), destructive: false);
+            int committed = 0;
+            hold.Committed += (s, e) => committed++;
+            MethodInfo Method(string name) => typeof(Material3.WinForms.Forms.HoldButton).GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic)!;
+            Assert.True((bool)Method("IsInputKey").Invoke(hold, new object[] { Keys.Enter })!);
+            Assert.True((bool)Method("IsInputKey").Invoke(hold, new object[] { Keys.Space })!);
+            Method("Begin").Invoke(hold, null);
+            Method("OnLostFocus").Invoke(hold, new object[] { EventArgs.Empty });
+            System.Threading.Thread.Sleep(90);
+            Method("OnTick").Invoke(hold, new object?[] { null, EventArgs.Empty });
+            Assert.Equal(0, committed);
+        }
+
+        [Fact]
+        public void AnIconOnlyButtonCentresItsIcon() {
+            using var button = new MaterialButton { Glyph = Material3.WinForms.Drawing.MaterialIcons.Add, Text = string.Empty };
+            Assert.Equal(button.Padding.Horizontal + Dpi.Scale(button, button.IconSize), button.GetPreferredSize(Size.Empty).Width);
+        }
+
+        [Fact]
+        public void ASearchBarSerializesOnlyAPlaceholderItWasGiven() {
+            using var bar = new MaterialSearchBar();
+            System.ComponentModel.PropertyDescriptor placeholder = System.ComponentModel.TypeDescriptor.GetProperties(bar)["Placeholder"]!;
+            Assert.False(placeholder.ShouldSerializeValue(bar));
+            bar.Placeholder = "Find a deck";
+            Assert.True(placeholder.ShouldSerializeValue(bar));
+            placeholder.ResetValue(bar);
+            Assert.False(placeholder.ShouldSerializeValue(bar));
+            Assert.Equal(LibraryText.Get(TextKey.Search), bar.Placeholder);
+        }
+
+        [Fact]
+        public void AnEditorCellIsSkippedByTabSoShiftTabCanLeaveIt() {
+            using var cell = new PlainEntry { Placeholder = "Name" };
+            Assert.False(cell.TabStop);
+            Assert.True(cell.Box.TabStop);
+            Assert.True(cell.Box.Visible);
+            Assert.Equal("Name", cell.Placeholder);
+        }
+
+        [Fact]
+        public void AnOpenSelectFollowsTheArrowsAndClosesOnEscape() {
+            using var select = new MaterialDropdownSelect();
+            select.AddItem("Day", "d");
+            select.AddItem("Week", "w");
+            MaterialMenu menu = (MaterialMenu)typeof(MaterialDropdownSelect).GetField("_menu", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(select)!;
+            void Key(Keys key) => typeof(MaterialDropdownSelect).GetMethod("OnKeyDown", BindingFlags.Instance | BindingFlags.NonPublic)!
+                .Invoke(select, new object[] { new KeyEventArgs(key) });
+            menu.AddChoice("Day", true, () => { });
+            menu.AddChoice("Week", false, () => { });
+            // An unshown popup stands in for the open menu, so no window appears on screen.
+            typeof(MaterialMenu).GetField("_popup", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(menu, new MaterialMenu.MenuPopup(menu, _ => { }));
+            Assert.True(menu.IsOpen);
+            Assert.True((bool)typeof(MaterialDropdownSelect).GetMethod("IsInputKey", BindingFlags.Instance | BindingFlags.NonPublic)!
+                .Invoke(select, new object[] { Keys.Escape })!);
+            Key(Keys.Down);
+            Assert.Equal(1, select.SelectedIndex);
+            var entries = (System.Collections.IList)typeof(MaterialMenu).GetField("_entries", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(menu)!;
+            Assert.True(((MaterialMenu.Entry)entries[1]!).Selected);
+            Assert.False(((MaterialMenu.Entry)entries[0]!).Selected);
+            Key(Keys.Escape);
+            Assert.False(menu.IsOpen);
         }
 
         [Fact]
@@ -581,11 +676,21 @@ namespace Material3.WinForms.Tests {
             Assert.False(Material3.WinForms.Forms.WindowPlacement.Apply(form, "not,a,placement"));
         }
 
+        [Fact]
+        public void AWindowIsReachableWhenEnoughOfItShowsOnOneScreen() {
+            var screen = new Rectangle(0, 0, 1920, 1080);
+            Assert.True(Material3.WinForms.Forms.WindowPlacement.IsReachable(new Rectangle(0, 0, 50, 30), screen));
+            Assert.True(Material3.WinForms.Forms.WindowPlacement.IsReachable(new Rectangle(1800, 100, 800, 600), screen));
+            Assert.False(Material3.WinForms.Forms.WindowPlacement.IsReachable(new Rectangle(1900, 100, 800, 600), screen));
+            Assert.False(Material3.WinForms.Forms.WindowPlacement.IsReachable(new Rectangle(1880, 1050, 50, 30), screen));
+        }
+
         [Theory]
         [InlineData("-", true)]
         [InlineData("1.", true)]
         [InlineData("1.2.3", false)]
         [InlineData("1-", false)]
+        [InlineData("1\n", false)]
         public void TheSharedNumberRuleAcceptsWhatIsStillBeingTyped(string text, bool accepted) =>
             Assert.Equal(accepted, TextInputRules.IsNumberPrefix(text));
     }

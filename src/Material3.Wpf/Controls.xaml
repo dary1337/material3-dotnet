@@ -380,6 +380,12 @@
                         <Trigger Property="m3:ButtonContent.LeadingGlyph" Value="{x:Null}">
                             <Setter TargetName="lead" Property="Visibility" Value="Collapsed" />
                         </Trigger>
+                        <Trigger Property="Content" Value="{x:Null}">
+                            <Setter TargetName="lead" Property="Margin" Value="0" />
+                        </Trigger>
+                        <Trigger Property="Content" Value="">
+                            <Setter TargetName="lead" Property="Margin" Value="0" />
+                        </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="b" Property="Background" Value="{DynamicResource SurfaceContainerHighest}" />
                             <Setter Property="Foreground" Value="{DynamicResource OnSurfaceMuted}" />
@@ -445,6 +451,12 @@
                         <Trigger Property="m3:ButtonContent.LeadingGlyph" Value="{x:Null}">
                             <Setter TargetName="lead" Property="Visibility" Value="Collapsed" />
                         </Trigger>
+                        <Trigger Property="Content" Value="{x:Null}">
+                            <Setter TargetName="lead" Property="Margin" Value="0" />
+                        </Trigger>
+                        <Trigger Property="Content" Value="">
+                            <Setter TargetName="lead" Property="Margin" Value="0" />
+                        </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="b" Property="Background" Value="{DynamicResource SurfaceContainerHighest}" />
                             <Setter TargetName="shadow" Property="Visibility" Value="Collapsed" />
@@ -505,6 +517,12 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="m3:ButtonContent.LeadingGlyph" Value="{x:Null}">
                             <Setter TargetName="lead" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="Content" Value="{x:Null}">
+                            <Setter TargetName="lead" Property="Margin" Value="0" />
+                        </Trigger>
+                        <Trigger Property="Content" Value="">
+                            <Setter TargetName="lead" Property="Margin" Value="0" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="b" Property="Background" Value="{DynamicResource SurfaceContainerHighest}" />
@@ -573,6 +591,12 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="m3:ButtonContent.LeadingGlyph" Value="{x:Null}">
                             <Setter TargetName="lead" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="Content" Value="{x:Null}">
+                            <Setter TargetName="lead" Property="Margin" Value="0" />
+                        </Trigger>
+                        <Trigger Property="Content" Value="">
+                            <Setter TargetName="lead" Property="Margin" Value="0" />
                         </Trigger>
                         <MultiDataTrigger>
                             <MultiDataTrigger.Conditions>
@@ -653,6 +677,12 @@
                         <Trigger Property="m3:ButtonContent.LeadingGlyph" Value="{x:Null}">
                             <Setter TargetName="lead" Property="Visibility" Value="Collapsed" />
                         </Trigger>
+                        <Trigger Property="Content" Value="{x:Null}">
+                            <Setter TargetName="lead" Property="Margin" Value="0" />
+                        </Trigger>
+                        <Trigger Property="Content" Value="">
+                            <Setter TargetName="lead" Property="Margin" Value="0" />
+                        </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="b" Property="Background" Value="{DynamicResource SurfaceContainerHighest}" />
                             <Setter Property="Foreground" Value="{DynamicResource OnSurfaceMuted}" />
@@ -709,6 +739,12 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="m3:ButtonContent.LeadingGlyph" Value="{x:Null}">
                             <Setter TargetName="lead" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="Content" Value="{x:Null}">
+                            <Setter TargetName="lead" Property="Margin" Value="0" />
+                        </Trigger>
+                        <Trigger Property="Content" Value="">
+                            <Setter TargetName="lead" Property="Margin" Value="0" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="b" Property="Background" Value="{DynamicResource SurfaceContainerHighest}" />
@@ -769,6 +805,12 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="m3:ButtonContent.LeadingGlyph" Value="{x:Null}">
                             <Setter TargetName="lead" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="Content" Value="{x:Null}">
+                            <Setter TargetName="lead" Property="Margin" Value="0" />
+                        </Trigger>
+                        <Trigger Property="Content" Value="">
+                            <Setter TargetName="lead" Property="Margin" Value="0" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="b" Property="Background" Value="{DynamicResource SurfaceContainerHighest}" />
@@ -831,6 +873,14 @@
                             <Setter TargetName="c" Property="Margin" Value="0" />
                             <Setter TargetName="lead" Property="Visibility" Value="Collapsed" />
                         </Trigger>
+                        <Trigger Property="Content" Value="{x:Null}">
+                            <Setter TargetName="lead" Property="Margin" Value="0" />
+                            <Setter TargetName="c" Property="Margin" Value="0" />
+                        </Trigger>
+                        <Trigger Property="Content" Value="">
+                            <Setter TargetName="lead" Property="Margin" Value="0" />
+                            <Setter TargetName="c" Property="Margin" Value="0" />
+                        </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Foreground" Value="{DynamicResource OnSurfaceMuted}" />
                         </Trigger>
@@ -890,6 +940,12 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="m3:ButtonContent.LeadingGlyph" Value="{x:Null}">
                             <Setter TargetName="lead" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="Content" Value="{x:Null}">
+                            <Setter TargetName="lead" Property="Margin" Value="0" />
+                        </Trigger>
+                        <Trigger Property="Content" Value="">
+                            <Setter TargetName="lead" Property="Margin" Value="0" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource OutlineVariant}" />

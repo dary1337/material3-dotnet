@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Globalization;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace Material3.WinForms.Forms {
@@ -45,7 +46,9 @@ namespace Material3.WinForms.Forms {
             }
 
             int width = Math.Max(bounds.Width, form.MinimumSize.Width), height = Math.Max(bounds.Height, form.MinimumSize.Height);
-            if (!IsReachable(new Rectangle(bounds.Left, bounds.Top, width, height), SystemInformation.VirtualScreen)) {
+            var target = new Rectangle(bounds.Left, bounds.Top, width, height);
+            // The bounding box of all monitors has dead corners, so each monitor is asked on its own.
+            if (!Screen.AllScreens.Any(s => IsReachable(target, s.WorkingArea))) {
                 return false;
             }
 
@@ -76,8 +79,11 @@ namespace Material3.WinForms.Forms {
             return true;
         }
 
-        internal static bool IsReachable(Rectangle window, Rectangle screen) =>
-            window.Right >= screen.Left + MinVisibleWidth && window.Left <= screen.Right - MinVisibleWidth
-            && window.Bottom >= screen.Top + MinVisibleHeight && window.Top <= screen.Bottom - MinVisibleHeight;
+        internal static bool IsReachable(Rectangle window, Rectangle screen) {
+            Rectangle overlap = Rectangle.Intersect(window, screen);
+            return overlap.Width > 0 && overlap.Height > 0
+                && overlap.Width >= Math.Min(MinVisibleWidth, Math.Min(window.Width, screen.Width))
+                && overlap.Height >= Math.Min(MinVisibleHeight, Math.Min(window.Height, screen.Height));
+        }
     }
 }

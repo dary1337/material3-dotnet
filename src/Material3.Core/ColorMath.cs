@@ -56,7 +56,11 @@ namespace Material3.Core {
                 return false;
             }
 
-            string s = text!.Trim().TrimStart('#');
+            string s = text!.Trim();
+            if (s.StartsWith("#", StringComparison.Ordinal)) {
+                s = s.Substring(1);
+            }
+
             if (s.Length == 3) {
                 s = string.Concat(s[0], s[0], s[1], s[1], s[2], s[2]);
             }
@@ -65,7 +69,7 @@ namespace Material3.Core {
                 return false;
             }
 
-            if (!uint.TryParse(s, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out uint v)) {
+            if (!uint.TryParse(s, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out uint v)) {
                 return false;
             }
 

@@ -34,6 +34,7 @@ namespace Material3.WinForms.Controls {
         private double _h, _s, _v;
         private ColorPopup? _popup;
         private bool _swatchHovered;
+        private bool _reopenGuard;
 
         /// <summary>Raised whenever <see cref="Color"/> changes, whether the user or the caller changed it.</summary>
         public event EventHandler? ColorChanged;
@@ -239,14 +240,28 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override void OnMouseUp(MouseEventArgs e) {
             base.OnMouseUp(e);
-            if (e.Button != MouseButtons.Left || Locked || !SwatchRect.Contains(e.Location)) {
+            bool closedByThisClick = _reopenGuard;
+            _reopenGuard = false;
+            if (e.Button != MouseButtons.Left || Locked || closedByThisClick || !SwatchRect.Contains(e.Location)) {
                 return;
             }
 
-            if (_popup != null) { _popup.Close(); return; }
+            if (_popup != null) {
+                _popup.Close();
+                return;
+            }
+
             _popup = new ColorPopup(this);
-            _popup.FormClosed += (s, a) => { _popup?.Dispose(); _popup = null; };
+            _popup.FormClosed += OnPopupClosed;
             _popup.ShowUnder(RectangleToScreen(ClientRectangle));
+        }
+
+        // The click-away press that closes the picker lands on the swatch too; its release must not reopen it.
+        private void OnPopupClosed(object? sender, FormClosedEventArgs e) {
+            _reopenGuard = IsHandleCreated && (MouseButtons & MouseButtons.Left) != 0
+                && SwatchRect.Contains(PointToClient(Cursor.Position));
+            _popup?.Dispose();
+            _popup = null;
         }
 
         /// <inheritdoc />
@@ -368,6 +383,14 @@ namespace Material3.WinForms.Controls {
             protected override void OnFormClosed(FormClosedEventArgs e) {
                 Application.RemoveMessageFilter(this);
                 base.OnFormClosed(e);
+            }
+
+            protected override void Dispose(bool disposing) {
+                if (disposing) {
+                    Application.RemoveMessageFilter(this);
+                }
+
+                base.Dispose(disposing);
             }
 
             public bool PreFilterMessage(ref Message m) {

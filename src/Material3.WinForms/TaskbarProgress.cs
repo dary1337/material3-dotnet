@@ -9,7 +9,7 @@ namespace Material3.WinForms {
     /// <summary>
     /// Mirrors long-running progress to the Windows taskbar button via ITaskbarList3 (Win7+), no-op where unavailable.
     /// Producers that may overlap open a <see cref="Session"/> each: the oldest open session of a form drives its bar,
-    /// the next one takes over when it ends, and the bar clears when the last one closes.
+    /// the next one takes over when it ends, and the bar clears when the last one closes. Any thread may report.
     /// </summary>
     public static class TaskbarProgress {
         /// <summary>The taskbar button's progress state.</summary>
@@ -89,31 +89,56 @@ namespace Material3.WinForms {
                 f.HandleCreated += (s, e) => Render(f);
                 return new List<Session>();
             });
-            var session = new Session(form);
-            queue.Add(session);
+            var session = new Session(form, queue);
+            lock (queue) {
+                queue.Add(session);
+            }
+
             Render(form);
             return session;
         }
 
+        // Producers report from worker threads; the taskbar and the form's handle are touched on the form's own.
         private static void Render(Form form) {
+            if (form.IsDisposed) {
+                return;
+            }
+
+            if (form.InvokeRequired) {
+                try {
+                    form.BeginInvoke(new Action(() => Render(form)));
+                }
+                catch (InvalidOperationException) { }
+                return;
+            }
+
             if (!Queues.TryGetValue(form, out List<Session>? queue)) {
                 return;
             }
 
-            Session? shown = queue.Count > 0 ? queue[0] : null;
-            State state = shown?.State ?? State.None;
+            State state;
+            double value;
+            lock (queue) {
+                Session? shown = queue.Count > 0 ? queue[0] : null;
+                state = shown?.State ?? State.None;
+                value = shown?.Value ?? 0;
+            }
             SetState(form, state);
-            if (shown != null && state != State.None && state != State.Indeterminate) {
-                SetValue(form, (int)Math.Round(shown.Value * 100));
+            if (state != State.None && state != State.Indeterminate) {
+                SetValue(form, (int)Math.Round(value * 100));
             }
         }
 
         /// <summary>One producer's claim on the bar. Only the oldest open session of the form is shown.</summary>
         public sealed class Session : IDisposable {
             private readonly Form _form;
+            private readonly List<Session> _queue;
             private bool _ended;
 
-            internal Session(Form form) => _form = form;
+            internal Session(Form form, List<Session> queue) {
+                _form = form;
+                _queue = queue;
+            }
 
             /// <summary>The state this session asks for.</summary>
             public State State { get; private set; } = State.Indeterminate;
@@ -122,7 +147,15 @@ namespace Material3.WinForms {
             public double Value { get; private set; }
 
             /// <summary>Whether this session is the one the bar shows.</summary>
-            public bool IsShown => !_ended && Queues.TryGetValue(_form, out List<Session>? queue) && queue.Count > 0 && ReferenceEquals(queue[0], this);
+            public bool IsShown {
+                get {
+                    lock (_queue) {
+                        return Heads;
+                    }
+                }
+            }
+
+            private bool Heads => !_ended && _queue.Count > 0 && ReferenceEquals(_queue[0], this);
 
             /// <summary>A green bar at <paramref name="percent"/>, clamped to 0–100.</summary>
             public void SetNormal(int percent) => Set(State.Normal, Math.Max(0, Math.Min(100, percent)) / 100.0);
@@ -140,29 +173,33 @@ namespace Material3.WinForms {
             public void SetComplete() => Set(State.Normal, 1.0);
 
             private void Set(State state, double value) {
-                if (_ended) {
-                    return;
-                }
+                bool shown;
+                lock (_queue) {
+                    if (_ended) {
+                        return;
+                    }
 
-                State = state;
-                Value = value;
-                if (IsShown) {
+                    State = state;
+                    Value = value;
+                    shown = Heads;
+                }
+                if (shown) {
                     Render(_form);
                 }
             }
 
             /// <summary>Gives the bar back: the next session takes it over, or it clears.</summary>
             public void Dispose() {
-                if (_ended) {
-                    return;
-                }
+                bool wasShown;
+                lock (_queue) {
+                    if (_ended) {
+                        return;
+                    }
 
-                bool wasShown = IsShown;
-                _ended = true;
-                if (Queues.TryGetValue(_form, out List<Session>? queue)) {
-                    queue.Remove(this);
+                    wasShown = Heads;
+                    _ended = true;
+                    _queue.Remove(this);
                 }
-
                 if (wasShown) {
                     Render(_form);
                 }

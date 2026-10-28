@@ -70,7 +70,7 @@ namespace Material3.WinForms.Controls {
             set { _descriptionMaxWidth = Math.Max(1, value); PerformLayout(); Invalidate(); }
         }
 
-        /// <summary>A control on the right, centred on the header — typically buttons. It is not disposed with the header.</summary>
+        /// <summary>A control on the right, centred on the header — typically buttons. It becomes a child and is disposed with the header.</summary>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Control? Actions {

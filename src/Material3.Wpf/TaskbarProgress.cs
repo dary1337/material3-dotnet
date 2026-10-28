@@ -8,7 +8,7 @@ namespace Material3.Wpf {
     /// <summary>
     /// The window's taskbar progress, shared by everything that reports work. Each producer opens a
     /// <see cref="Session"/>; the oldest open session of a window drives its bar, the next one takes over when it
-    /// ends, and the bar clears when the last one closes. UI thread only; without a taskbar (no shell) it does nothing.
+    /// ends, and the bar clears when the last one closes. Any thread may report; without a taskbar (no shell) it does nothing.
     /// </summary>
     public static class TaskbarProgress {
         private static readonly DependencyProperty QueueProperty = DependencyProperty.RegisterAttached(
@@ -20,9 +20,16 @@ namespace Material3.Wpf {
                 throw new ArgumentNullException(nameof(window));
             }
 
+            if (!window.Dispatcher.CheckAccess()) {
+                return window.Dispatcher.Invoke(() => Begin(window));
+            }
+
             List<Session> queue = QueueOf(window);
-            var session = new Session(window);
-            queue.Add(session);
+            var session = new Session(window, queue);
+            lock (queue) {
+                queue.Add(session);
+            }
+
             Render(window, queue);
             return session;
         }
@@ -37,9 +44,19 @@ namespace Material3.Wpf {
             return queue;
         }
 
+        // Producers report from worker threads; the window's taskbar info is touched on its own.
         private static void Render(Window window, List<Session> queue) {
-            TaskbarItemProgressState state = queue.Count == 0 ? TaskbarItemProgressState.None : queue[0].State;
-            double value = queue.Count == 0 ? 0 : queue[0].Value;
+            if (!window.Dispatcher.CheckAccess()) {
+                window.Dispatcher.BeginInvoke(new Action(() => Render(window, queue)));
+                return;
+            }
+
+            TaskbarItemProgressState state;
+            double value;
+            lock (queue) {
+                state = queue.Count == 0 ? TaskbarItemProgressState.None : queue[0].State;
+                value = queue.Count == 0 ? 0 : queue[0].Value;
+            }
             TaskbarItemInfo? info = window.TaskbarItemInfo;
             if (info == null) {
                 info = new TaskbarItemInfo();
@@ -58,9 +75,13 @@ namespace Material3.Wpf {
         /// <summary>One producer's claim on the bar. Only the oldest open session of the window is shown.</summary>
         public sealed class Session : IDisposable {
             private readonly Window _window;
+            private readonly List<Session> _queue;
             private bool _ended;
 
-            internal Session(Window window) => _window = window;
+            internal Session(Window window, List<Session> queue) {
+                _window = window;
+                _queue = queue;
+            }
 
             /// <summary>The state this session asks for.</summary>
             public TaskbarItemProgressState State { get; private set; } = TaskbarItemProgressState.Indeterminate;
@@ -69,7 +90,15 @@ namespace Material3.Wpf {
             public double Value { get; private set; }
 
             /// <summary>Whether this session is the one the bar shows.</summary>
-            public bool IsShown => !_ended && _window.GetValue(QueueProperty) is List<Session> queue && queue.Count > 0 && ReferenceEquals(queue[0], this);
+            public bool IsShown {
+                get {
+                    lock (_queue) {
+                        return Heads;
+                    }
+                }
+            }
+
+            private bool Heads => !_ended && _queue.Count > 0 && ReferenceEquals(_queue[0], this);
 
             /// <summary>A green bar at <paramref name="percent"/>, clamped to 0–100.</summary>
             public void SetNormal(int percent) => Set(TaskbarItemProgressState.Normal, Math.Max(0, Math.Min(100, percent)) / 100.0);
@@ -87,29 +116,35 @@ namespace Material3.Wpf {
             public void SetComplete() => Set(TaskbarItemProgressState.Normal, 1.0);
 
             private void Set(TaskbarItemProgressState state, double value) {
-                if (_ended) {
-                    return;
-                }
+                bool shown;
+                lock (_queue) {
+                    if (_ended) {
+                        return;
+                    }
 
-                State = state;
-                Value = value;
-                if (IsShown) {
-                    Render(_window, QueueOf(_window));
+                    State = state;
+                    Value = value;
+                    shown = Heads;
+                }
+                if (shown) {
+                    Render(_window, _queue);
                 }
             }
 
             /// <summary>Gives the bar back: the next session takes it over, or it clears.</summary>
             public void Dispose() {
-                if (_ended) {
-                    return;
-                }
+                bool wasShown;
+                lock (_queue) {
+                    if (_ended) {
+                        return;
+                    }
 
-                List<Session> queue = QueueOf(_window);
-                bool wasShown = IsShown;
-                _ended = true;
-                queue.Remove(this);
+                    wasShown = Heads;
+                    _ended = true;
+                    _queue.Remove(this);
+                }
                 if (wasShown) {
-                    Render(_window, queue);
+                    Render(_window, _queue);
                 }
             }
         }

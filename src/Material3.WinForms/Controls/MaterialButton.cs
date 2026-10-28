@@ -217,8 +217,8 @@ namespace Material3.WinForms.Controls {
         }
 
         // M3 pulls a leading icon 8 in from the start of a contained button, and gives a text button's label 4 more room at the end.
-        private (int lead, int trail) Sides(bool hasIcon) {
-            if (!hasIcon) {
+        private (int lead, int trail) Sides(bool hasIcon, bool hasText) {
+            if (!hasIcon || !hasText) {
                 return (Padding.Left, Padding.Right);
             }
 
@@ -356,7 +356,10 @@ namespace Material3.WinForms.Controls {
                     Positions = new[] { 0f, 0.5f, 1f },
                 };
                 g.TranslateTransform(Height * 0.32f, 0);
-                g.MultiplyTransform(new Matrix(1, 0, -0.32f, 1, 0, 0));
+                using (var shear = new Matrix(1, 0, -0.32f, 1, 0, 0)) {
+                    g.MultiplyTransform(shear);
+                }
+
                 g.FillRectangle(brush, x, 0, band, Height);
             }
             g.Restore(saved);
@@ -483,7 +486,7 @@ namespace Material3.WinForms.Controls {
                 : g.MeasureString(text, Font, int.MaxValue, StringFormat.GenericTypographic);
 
             float totalWidth = textSize.Width + (hasIcon ? iconPx + (string.IsNullOrEmpty(text) ? 0 : iconGap) : 0);
-            (int lead, int trail) = Sides(hasIcon);
+            (int lead, int trail) = Sides(hasIcon, text.Length > 0);
             float startX = rect.X + (rect.Width + lead - trail - totalWidth) / 2f - (Padding.Left - Padding.Right) / 2f;
             float midY = rect.Y + rect.Height / 2f;
 
@@ -528,7 +531,7 @@ namespace Material3.WinForms.Controls {
                 return _prefSize;
             }
 
-            (int lead, int trail) = Sides(hasIcon);
+            (int lead, int trail) = Sides(hasIcon, text.Length > 0);
             int horizontalPadding = lead + trail;
             int iconPx = Dpi.Scale(this, _iconSize);
             int iconGap = Dpi.Scale(this, _iconGap);
