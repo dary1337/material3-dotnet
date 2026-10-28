@@ -1,7 +1,6 @@
 using System;
-using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
-using System.Reflection;
 using Material3.Core;
 using Xunit;
 
@@ -15,14 +14,12 @@ namespace Material3.WinForms.Tests {
 
         [Fact]
         public void EveryBuiltInTableTranslatesEveryKey() {
-            Type tables = typeof(LibraryText).Assembly.GetType("Material3.Core.LibraryTextTables")!;
-            var byCulture = (IDictionary)tables.GetField("ByCulture", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
-            Assert.Equal(Cultures.Length, byCulture.Count);
+            Assert.Equal(Cultures.Length, LibraryTextTables.ByCulture.Count);
             foreach (string name in Cultures) {
-                var table = (IDictionary)byCulture[name]!;
+                Dictionary<TextKey, string> table = LibraryTextTables.ByCulture[name];
                 foreach (TextKey key in Enum.GetValues(typeof(TextKey))) {
-                    Assert.True(table.Contains(key), $"{name} lacks {key}");
-                    Assert.False(string.IsNullOrWhiteSpace((string?)table[key]), $"{name}/{key}");
+                    Assert.True(table.TryGetValue(key, out string? text), $"{name} lacks {key}");
+                    Assert.False(string.IsNullOrWhiteSpace(text), $"{name}/{key}");
                 }
             }
         }
