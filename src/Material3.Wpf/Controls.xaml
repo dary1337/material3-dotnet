@@ -330,9 +330,102 @@
         <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
     </Style>
 
-    <Style x:Key="TonalButton" TargetType="Button">
+    <!-- A contained button's state layer is its own content colour, so one template serves every fill. -->
+    <ControlTemplate x:Key="ContainedButtonTemplate" TargetType="Button">
+        <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="{m3:FitCornerRadius}">
+            <VisualStateManager.VisualStateGroups>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualStateGroup.Transitions>
+                        <VisualTransition GeneratedDuration="0:0:0.13">
+                            <VisualTransition.GeneratedEasingFunction><StaticResource ResourceKey="M3StandardDecelerate" /></VisualTransition.GeneratedEasingFunction>
+                        </VisualTransition>
+                    </VisualStateGroup.Transitions>
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="MouseOver"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.08" Duration="0" /></Storyboard></VisualState>
+                    <VisualState x:Name="Pressed"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.12" Duration="0" /></Storyboard></VisualState>
+                    <VisualState x:Name="Disabled"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0" Duration="0" /></Storyboard></VisualState>
+                </VisualStateGroup>
+            </VisualStateManager.VisualStateGroups>
+            <Grid>
+                <Border x:Name="state" Background="{TemplateBinding Foreground}" Opacity="0" CornerRadius="{m3:FitCornerRadius}" />
+                <StackPanel Orientation="Horizontal" Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <m3:PathIcon x:Name="lead" Width="{TemplateBinding m3:Metrics.GlyphSize}" Height="{TemplateBinding m3:Metrics.GlyphSize}" Margin="{TemplateBinding m3:Metrics.GlyphMargin}" VerticalAlignment="Center" Foreground="{TemplateBinding Foreground}"
+                                 Glyph="{TemplateBinding m3:ButtonContent.LeadingGlyph}" />
+                    <ContentPresenter x:Name="c" VerticalAlignment="Center"
+                                      TextElement.Foreground="{TemplateBinding Foreground}">
+                        <ContentPresenter.Resources>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource ButtonLabel}" />
+                        </ContentPresenter.Resources>
+                    </ContentPresenter>
+                </StackPanel>
+            </Grid>
+        </Border>
+        <ControlTemplate.Triggers>
+            <Trigger Property="m3:ButtonContent.LeadingGlyph" Value="{x:Null}">
+                <Setter TargetName="lead" Property="Visibility" Value="Collapsed" />
+            </Trigger>
+            <Trigger Property="Content" Value="{x:Null}">
+                <Setter TargetName="lead" Property="Margin" Value="0" />
+            </Trigger>
+            <Trigger Property="Content" Value="">
+                <Setter TargetName="lead" Property="Margin" Value="0" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="b" Property="Background" Value="{DynamicResource SurfaceContainerHighest}" />
+                <Setter Property="Foreground" Value="{DynamicResource OnSurfaceMuted}" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+    <!-- The inverted pairs put light content on a dark fill; their layer needs more to show. -->
+    <ControlTemplate x:Key="InvertedButtonTemplate" TargetType="Button">
+        <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="{m3:FitCornerRadius}">
+            <VisualStateManager.VisualStateGroups>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualStateGroup.Transitions>
+                        <VisualTransition GeneratedDuration="0:0:0.13">
+                            <VisualTransition.GeneratedEasingFunction><StaticResource ResourceKey="M3StandardDecelerate" /></VisualTransition.GeneratedEasingFunction>
+                        </VisualTransition>
+                    </VisualStateGroup.Transitions>
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="MouseOver"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.10" Duration="0" /></Storyboard></VisualState>
+                    <VisualState x:Name="Pressed"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.16" Duration="0" /></Storyboard></VisualState>
+                    <VisualState x:Name="Disabled"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0" Duration="0" /></Storyboard></VisualState>
+                </VisualStateGroup>
+            </VisualStateManager.VisualStateGroups>
+            <Grid>
+                <Border x:Name="state" Background="{TemplateBinding Foreground}" Opacity="0" CornerRadius="{m3:FitCornerRadius}" />
+                <StackPanel Orientation="Horizontal" Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <m3:PathIcon x:Name="lead" Width="{TemplateBinding m3:Metrics.GlyphSize}" Height="{TemplateBinding m3:Metrics.GlyphSize}" Margin="{TemplateBinding m3:Metrics.GlyphMargin}" VerticalAlignment="Center" Foreground="{TemplateBinding Foreground}"
+                                 Glyph="{TemplateBinding m3:ButtonContent.LeadingGlyph}" />
+                    <ContentPresenter x:Name="c" VerticalAlignment="Center"
+                                      TextElement.Foreground="{TemplateBinding Foreground}">
+                        <ContentPresenter.Resources>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource ButtonLabel}" />
+                        </ContentPresenter.Resources>
+                    </ContentPresenter>
+                </StackPanel>
+            </Grid>
+        </Border>
+        <ControlTemplate.Triggers>
+            <Trigger Property="m3:ButtonContent.LeadingGlyph" Value="{x:Null}">
+                <Setter TargetName="lead" Property="Visibility" Value="Collapsed" />
+            </Trigger>
+            <Trigger Property="Content" Value="{x:Null}">
+                <Setter TargetName="lead" Property="Margin" Value="0" />
+            </Trigger>
+            <Trigger Property="Content" Value="">
+                <Setter TargetName="lead" Property="Margin" Value="0" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="b" Property="Background" Value="{DynamicResource SurfaceContainerHighest}" />
+                <Setter Property="Foreground" Value="{DynamicResource OnSurfaceMuted}" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <Style x:Key="ContainedButtonBase" TargetType="Button">
         <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource M3FocusRingRound}" />
         <Setter Property="ToolTipService.InitialShowDelay" Value="0" />
         <Setter Property="ToolTipService.Placement" Value="Top" />
         <Setter Property="ToolTipService.ShowDuration" Value="60000" />
@@ -344,62 +437,18 @@
         <Setter Property="m3:Metrics.CornerRadius" Value="{DynamicResource RadiusPill}" />
         <Setter Property="m3:Metrics.GlyphSize" Value="18" />
         <Setter Property="m3:Metrics.GlyphMargin" Value="-8,0,8,0" />
+        <Setter Property="Template" Value="{StaticResource ContainedButtonTemplate}" />
+    </Style>
+
+    <Style x:Key="TonalButton" TargetType="Button" BasedOn="{StaticResource ContainedButtonBase}">
+        <Setter Property="Background" Value="{DynamicResource SecondaryContainer}" />
         <Setter Property="Foreground" Value="{DynamicResource OnSecondaryContainer}" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Button">
-                    <Border x:Name="b" Background="{DynamicResource SecondaryContainer}" CornerRadius="{m3:FitCornerRadius}">
-                        <VisualStateManager.VisualStateGroups>
-                            <VisualStateGroup x:Name="CommonStates">
-                                <VisualStateGroup.Transitions>
-                                    <VisualTransition GeneratedDuration="0:0:0.13">
-                                        <VisualTransition.GeneratedEasingFunction><StaticResource ResourceKey="M3StandardDecelerate" /></VisualTransition.GeneratedEasingFunction>
-                                    </VisualTransition>
-                                </VisualStateGroup.Transitions>
-                                <VisualState x:Name="Normal" />
-                                <VisualState x:Name="MouseOver"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.08" Duration="0" /></Storyboard></VisualState>
-                                <VisualState x:Name="Pressed"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.12" Duration="0" /></Storyboard></VisualState>
-                                <VisualState x:Name="Disabled"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0" Duration="0" /></Storyboard></VisualState>
-                            </VisualStateGroup>
-                        </VisualStateManager.VisualStateGroups>
-                        <Grid>
-                            <Border x:Name="state" Background="{DynamicResource OnSecondaryContainer}" Opacity="0" CornerRadius="{m3:FitCornerRadius}" />
-                            <StackPanel Orientation="Horizontal" Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <m3:PathIcon x:Name="lead" Width="{TemplateBinding m3:Metrics.GlyphSize}" Height="{TemplateBinding m3:Metrics.GlyphSize}" Margin="{TemplateBinding m3:Metrics.GlyphMargin}" VerticalAlignment="Center" Foreground="{TemplateBinding Foreground}"
-                                             Glyph="{TemplateBinding m3:ButtonContent.LeadingGlyph}" />
-                                <ContentPresenter x:Name="c" VerticalAlignment="Center"
-                                                  TextElement.Foreground="{TemplateBinding Foreground}">
-                                    <ContentPresenter.Resources>
-                                        <Style TargetType="TextBlock" BasedOn="{StaticResource ButtonLabel}" />
-                                    </ContentPresenter.Resources>
-                                </ContentPresenter>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="m3:ButtonContent.LeadingGlyph" Value="{x:Null}">
-                            <Setter TargetName="lead" Property="Visibility" Value="Collapsed" />
-                        </Trigger>
-                        <Trigger Property="Content" Value="{x:Null}">
-                            <Setter TargetName="lead" Property="Margin" Value="0" />
-                        </Trigger>
-                        <Trigger Property="Content" Value="">
-                            <Setter TargetName="lead" Property="Margin" Value="0" />
-                        </Trigger>
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="b" Property="Background" Value="{DynamicResource SurfaceContainerHighest}" />
-                            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceMuted}" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
     </Style>
 
     <!-- The shadow sits on a layer of its own: an Effect on the content's border would rasterize the label. -->
     <Style x:Key="ElevatedButton" TargetType="Button">
         <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource M3FocusRingRound}" />
         <Setter Property="ToolTipService.InitialShowDelay" Value="0" />
         <Setter Property="ToolTipService.Placement" Value="Top" />
         <Setter Property="ToolTipService.ShowDuration" Value="60000" />
@@ -468,77 +517,16 @@
         </Setter>
     </Style>
 
-    <Style x:Key="FilledButton" TargetType="Button">
-        <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-        <Setter Property="ToolTipService.InitialShowDelay" Value="0" />
-        <Setter Property="ToolTipService.Placement" Value="Top" />
-        <Setter Property="ToolTipService.ShowDuration" Value="60000" />
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="FontWeight" Value="{DynamicResource FontWeightMedium}" />
-        <Setter Property="MinHeight" Value="{DynamicResource ControlHeight}" />
-        <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
-        <Setter Property="Padding" Value="24,0" />
-        <Setter Property="m3:Metrics.CornerRadius" Value="{DynamicResource RadiusPill}" />
-        <Setter Property="m3:Metrics.GlyphSize" Value="18" />
-        <Setter Property="m3:Metrics.GlyphMargin" Value="-8,0,8,0" />
+    <Style x:Key="FilledButton" TargetType="Button" BasedOn="{StaticResource ContainedButtonBase}">
+        <Setter Property="Background" Value="{DynamicResource Primary}" />
         <Setter Property="Foreground" Value="{DynamicResource OnPrimary}" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Button">
-                    <Border x:Name="b" Background="{DynamicResource Primary}" CornerRadius="{m3:FitCornerRadius}">
-                        <VisualStateManager.VisualStateGroups>
-                            <VisualStateGroup x:Name="CommonStates">
-                                <VisualStateGroup.Transitions>
-                                    <VisualTransition GeneratedDuration="0:0:0.13">
-                                        <VisualTransition.GeneratedEasingFunction><StaticResource ResourceKey="M3StandardDecelerate" /></VisualTransition.GeneratedEasingFunction>
-                                    </VisualTransition>
-                                </VisualStateGroup.Transitions>
-                                <VisualState x:Name="Normal" />
-                                <VisualState x:Name="MouseOver"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.08" Duration="0" /></Storyboard></VisualState>
-                                <VisualState x:Name="Pressed"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.12" Duration="0" /></Storyboard></VisualState>
-                                <VisualState x:Name="Disabled"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0" Duration="0" /></Storyboard></VisualState>
-                            </VisualStateGroup>
-                        </VisualStateManager.VisualStateGroups>
-                        <Grid>
-                            <Border x:Name="state" Background="{DynamicResource OnPrimary}" Opacity="0" CornerRadius="{m3:FitCornerRadius}" />
-                            <StackPanel Orientation="Horizontal" Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <m3:PathIcon x:Name="lead" Width="{TemplateBinding m3:Metrics.GlyphSize}" Height="{TemplateBinding m3:Metrics.GlyphSize}" Margin="{TemplateBinding m3:Metrics.GlyphMargin}" VerticalAlignment="Center" Foreground="{TemplateBinding Foreground}"
-                                             Glyph="{TemplateBinding m3:ButtonContent.LeadingGlyph}" />
-                                <ContentPresenter x:Name="c" VerticalAlignment="Center"
-                                                  TextElement.Foreground="{TemplateBinding Foreground}">
-                                    <ContentPresenter.Resources>
-                                        <Style TargetType="TextBlock" BasedOn="{StaticResource ButtonLabel}" />
-                                    </ContentPresenter.Resources>
-                                </ContentPresenter>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="m3:ButtonContent.LeadingGlyph" Value="{x:Null}">
-                            <Setter TargetName="lead" Property="Visibility" Value="Collapsed" />
-                        </Trigger>
-                        <Trigger Property="Content" Value="{x:Null}">
-                            <Setter TargetName="lead" Property="Margin" Value="0" />
-                        </Trigger>
-                        <Trigger Property="Content" Value="">
-                            <Setter TargetName="lead" Property="Margin" Value="0" />
-                        </Trigger>
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="b" Property="Background" Value="{DynamicResource SurfaceContainerHighest}" />
-                            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceMuted}" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
     </Style>
 
     <Style x:Key="ShinyButton" TargetType="Button" BasedOn="{StaticResource FilledButton}">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="b" Background="{DynamicResource Primary}" CornerRadius="{m3:FitCornerRadius}">
+                    <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="{m3:FitCornerRadius}">
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroup x:Name="CommonStates">
                                 <VisualStateGroup.Transitions>
@@ -560,7 +548,7 @@
                                     <Binding Path="(m3:Metrics.CornerRadius)" RelativeSource="{RelativeSource TemplatedParent}" />
                                 </MultiBinding>
                             </Grid.Clip>
-                            <Border x:Name="state" Background="{DynamicResource OnPrimary}" Opacity="0" CornerRadius="{m3:FitCornerRadius}" />
+                            <Border x:Name="state" Background="{TemplateBinding Foreground}" Opacity="0" CornerRadius="{m3:FitCornerRadius}" />
                             <StackPanel Orientation="Horizontal" Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <m3:PathIcon x:Name="lead" Width="{TemplateBinding m3:Metrics.GlyphSize}" Height="{TemplateBinding m3:Metrics.GlyphSize}" Margin="{TemplateBinding m3:Metrics.GlyphMargin}" VerticalAlignment="Center" Foreground="{TemplateBinding Foreground}"
                                              Glyph="{TemplateBinding m3:ButtonContent.LeadingGlyph}" />
@@ -630,201 +618,26 @@
         </Setter>
     </Style>
 
-    <Style x:Key="WarningFilledButton" TargetType="Button">
-        <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="FontWeight" Value="{DynamicResource FontWeightMedium}" />
-        <Setter Property="MinHeight" Value="{DynamicResource ControlHeight}" />
-        <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
-        <Setter Property="Padding" Value="24,0" />
-        <Setter Property="m3:Metrics.CornerRadius" Value="{DynamicResource RadiusPill}" />
-        <Setter Property="m3:Metrics.GlyphSize" Value="18" />
-        <Setter Property="m3:Metrics.GlyphMargin" Value="-8,0,8,0" />
+    <Style x:Key="WarningFilledButton" TargetType="Button" BasedOn="{StaticResource ContainedButtonBase}">
+        <Setter Property="Background" Value="{DynamicResource OnWarningContainer}" />
         <Setter Property="Foreground" Value="{DynamicResource WarningContainer}" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Button">
-                    <Border x:Name="b" Background="{DynamicResource OnWarningContainer}" CornerRadius="{m3:FitCornerRadius}">
-                        <VisualStateManager.VisualStateGroups>
-                            <VisualStateGroup x:Name="CommonStates">
-                                <VisualStateGroup.Transitions>
-                                    <VisualTransition GeneratedDuration="0:0:0.13">
-                                        <VisualTransition.GeneratedEasingFunction><StaticResource ResourceKey="M3StandardDecelerate" /></VisualTransition.GeneratedEasingFunction>
-                                    </VisualTransition>
-                                </VisualStateGroup.Transitions>
-                                <VisualState x:Name="Normal" />
-                                <VisualState x:Name="MouseOver"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.10" Duration="0" /></Storyboard></VisualState>
-                                <VisualState x:Name="Pressed"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.16" Duration="0" /></Storyboard></VisualState>
-                                <VisualState x:Name="Disabled"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0" Duration="0" /></Storyboard></VisualState>
-                            </VisualStateGroup>
-                        </VisualStateManager.VisualStateGroups>
-                        <Grid>
-                            <Border x:Name="state" Background="{DynamicResource WarningContainer}" Opacity="0" CornerRadius="{m3:FitCornerRadius}" />
-                            <StackPanel Orientation="Horizontal" Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <m3:PathIcon x:Name="lead" Width="{TemplateBinding m3:Metrics.GlyphSize}" Height="{TemplateBinding m3:Metrics.GlyphSize}" Margin="{TemplateBinding m3:Metrics.GlyphMargin}" VerticalAlignment="Center" Foreground="{TemplateBinding Foreground}"
-                                             Glyph="{TemplateBinding m3:ButtonContent.LeadingGlyph}" />
-                                <ContentPresenter VerticalAlignment="Center"
-                                                  TextElement.Foreground="{TemplateBinding Foreground}">
-                                    <ContentPresenter.Resources>
-                                        <Style TargetType="TextBlock" BasedOn="{StaticResource ButtonLabel}" />
-                                    </ContentPresenter.Resources>
-                                </ContentPresenter>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="m3:ButtonContent.LeadingGlyph" Value="{x:Null}">
-                            <Setter TargetName="lead" Property="Visibility" Value="Collapsed" />
-                        </Trigger>
-                        <Trigger Property="Content" Value="{x:Null}">
-                            <Setter TargetName="lead" Property="Margin" Value="0" />
-                        </Trigger>
-                        <Trigger Property="Content" Value="">
-                            <Setter TargetName="lead" Property="Margin" Value="0" />
-                        </Trigger>
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="b" Property="Background" Value="{DynamicResource SurfaceContainerHighest}" />
-                            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceMuted}" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
+        <Setter Property="Template" Value="{StaticResource InvertedButtonTemplate}" />
     </Style>
 
-    <Style x:Key="ErrorFilledButton" TargetType="Button">
-        <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="FontWeight" Value="{DynamicResource FontWeightMedium}" />
-        <Setter Property="MinHeight" Value="{DynamicResource ControlHeight}" />
-        <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
-        <Setter Property="Padding" Value="24,0" />
-        <Setter Property="m3:Metrics.CornerRadius" Value="{DynamicResource RadiusPill}" />
-        <Setter Property="m3:Metrics.GlyphSize" Value="18" />
-        <Setter Property="m3:Metrics.GlyphMargin" Value="-8,0,8,0" />
+    <Style x:Key="ErrorFilledButton" TargetType="Button" BasedOn="{StaticResource ContainedButtonBase}">
+        <Setter Property="Background" Value="{DynamicResource OnErrorContainer}" />
         <Setter Property="Foreground" Value="{DynamicResource ErrorContainer}" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Button">
-                    <Border x:Name="b" Background="{DynamicResource OnErrorContainer}" CornerRadius="{m3:FitCornerRadius}">
-                        <VisualStateManager.VisualStateGroups>
-                            <VisualStateGroup x:Name="CommonStates">
-                                <VisualStateGroup.Transitions>
-                                    <VisualTransition GeneratedDuration="0:0:0.13">
-                                        <VisualTransition.GeneratedEasingFunction><StaticResource ResourceKey="M3StandardDecelerate" /></VisualTransition.GeneratedEasingFunction>
-                                    </VisualTransition>
-                                </VisualStateGroup.Transitions>
-                                <VisualState x:Name="Normal" />
-                                <VisualState x:Name="MouseOver"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.10" Duration="0" /></Storyboard></VisualState>
-                                <VisualState x:Name="Pressed"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.16" Duration="0" /></Storyboard></VisualState>
-                                <VisualState x:Name="Disabled"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0" Duration="0" /></Storyboard></VisualState>
-                            </VisualStateGroup>
-                        </VisualStateManager.VisualStateGroups>
-                        <Grid>
-                            <Border x:Name="state" Background="{DynamicResource ErrorContainer}" Opacity="0" CornerRadius="{m3:FitCornerRadius}" />
-                            <StackPanel Orientation="Horizontal" Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <m3:PathIcon x:Name="lead" Width="{TemplateBinding m3:Metrics.GlyphSize}" Height="{TemplateBinding m3:Metrics.GlyphSize}" Margin="{TemplateBinding m3:Metrics.GlyphMargin}" VerticalAlignment="Center" Foreground="{TemplateBinding Foreground}"
-                                             Glyph="{TemplateBinding m3:ButtonContent.LeadingGlyph}" />
-                                <ContentPresenter VerticalAlignment="Center"
-                                                  TextElement.Foreground="{TemplateBinding Foreground}">
-                                    <ContentPresenter.Resources>
-                                        <Style TargetType="TextBlock" BasedOn="{StaticResource ButtonLabel}" />
-                                    </ContentPresenter.Resources>
-                                </ContentPresenter>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="m3:ButtonContent.LeadingGlyph" Value="{x:Null}">
-                            <Setter TargetName="lead" Property="Visibility" Value="Collapsed" />
-                        </Trigger>
-                        <Trigger Property="Content" Value="{x:Null}">
-                            <Setter TargetName="lead" Property="Margin" Value="0" />
-                        </Trigger>
-                        <Trigger Property="Content" Value="">
-                            <Setter TargetName="lead" Property="Margin" Value="0" />
-                        </Trigger>
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="b" Property="Background" Value="{DynamicResource SurfaceContainerHighest}" />
-                            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceMuted}" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
+        <Setter Property="Template" Value="{StaticResource InvertedButtonTemplate}" />
     </Style>
 
-    <Style x:Key="ErrorTonalButton" TargetType="Button">
-        <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-        <Setter Property="ToolTipService.InitialShowDelay" Value="0" />
-        <Setter Property="ToolTipService.Placement" Value="Top" />
-        <Setter Property="ToolTipService.ShowDuration" Value="60000" />
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="FontWeight" Value="{DynamicResource FontWeightMedium}" />
-        <Setter Property="MinHeight" Value="{DynamicResource ControlHeight}" />
-        <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
-        <Setter Property="Padding" Value="24,0" />
-        <Setter Property="m3:Metrics.CornerRadius" Value="{DynamicResource RadiusPill}" />
-        <Setter Property="m3:Metrics.GlyphSize" Value="18" />
-        <Setter Property="m3:Metrics.GlyphMargin" Value="-8,0,8,0" />
+    <Style x:Key="ErrorTonalButton" TargetType="Button" BasedOn="{StaticResource ContainedButtonBase}">
+        <Setter Property="Background" Value="{DynamicResource ErrorContainer}" />
         <Setter Property="Foreground" Value="{DynamicResource OnErrorContainer}" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Button">
-                    <Border x:Name="b" Background="{DynamicResource ErrorContainer}" CornerRadius="{m3:FitCornerRadius}">
-                        <VisualStateManager.VisualStateGroups>
-                            <VisualStateGroup x:Name="CommonStates">
-                                <VisualStateGroup.Transitions>
-                                    <VisualTransition GeneratedDuration="0:0:0.13">
-                                        <VisualTransition.GeneratedEasingFunction><StaticResource ResourceKey="M3StandardDecelerate" /></VisualTransition.GeneratedEasingFunction>
-                                    </VisualTransition>
-                                </VisualStateGroup.Transitions>
-                                <VisualState x:Name="Normal" />
-                                <VisualState x:Name="MouseOver"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.08" Duration="0" /></Storyboard></VisualState>
-                                <VisualState x:Name="Pressed"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0.12" Duration="0" /></Storyboard></VisualState>
-                                <VisualState x:Name="Disabled"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0" Duration="0" /></Storyboard></VisualState>
-                            </VisualStateGroup>
-                        </VisualStateManager.VisualStateGroups>
-                        <Grid>
-                            <Border x:Name="state" Background="{DynamicResource OnErrorContainer}" Opacity="0" CornerRadius="{m3:FitCornerRadius}" />
-                            <StackPanel Orientation="Horizontal" Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <m3:PathIcon x:Name="lead" Width="{TemplateBinding m3:Metrics.GlyphSize}" Height="{TemplateBinding m3:Metrics.GlyphSize}" Margin="{TemplateBinding m3:Metrics.GlyphMargin}" VerticalAlignment="Center" Foreground="{TemplateBinding Foreground}"
-                                             Glyph="{TemplateBinding m3:ButtonContent.LeadingGlyph}" />
-                                <ContentPresenter VerticalAlignment="Center"
-                                                  TextElement.Foreground="{TemplateBinding Foreground}">
-                                    <ContentPresenter.Resources>
-                                        <Style TargetType="TextBlock" BasedOn="{StaticResource ButtonLabel}" />
-                                    </ContentPresenter.Resources>
-                                </ContentPresenter>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="m3:ButtonContent.LeadingGlyph" Value="{x:Null}">
-                            <Setter TargetName="lead" Property="Visibility" Value="Collapsed" />
-                        </Trigger>
-                        <Trigger Property="Content" Value="{x:Null}">
-                            <Setter TargetName="lead" Property="Margin" Value="0" />
-                        </Trigger>
-                        <Trigger Property="Content" Value="">
-                            <Setter TargetName="lead" Property="Margin" Value="0" />
-                        </Trigger>
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="b" Property="Background" Value="{DynamicResource SurfaceContainerHighest}" />
-                            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceMuted}" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
     </Style>
 
     <Style x:Key="TextButton" TargetType="Button">
         <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource M3FocusRingRound}" />
         <Setter Property="ToolTipService.InitialShowDelay" Value="0" />
         <Setter Property="ToolTipService.Placement" Value="Top" />
         <Setter Property="ToolTipService.ShowDuration" Value="60000" />
@@ -892,7 +705,7 @@
 
     <Style x:Key="OutlinedButton" TargetType="Button">
         <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource M3FocusRingRound}" />
         <Setter Property="ToolTipService.InitialShowDelay" Value="0" />
         <Setter Property="ToolTipService.Placement" Value="Top" />
         <Setter Property="ToolTipService.ShowDuration" Value="60000" />
@@ -1494,7 +1307,7 @@
         <Setter Property="Height" Value="{DynamicResource ControlHeight}" />
         <Setter Property="m3:Metrics.CornerRadius" Value="{DynamicResource RadiusPill}" />
         <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource M3FocusRingRound}" />
         <Setter Property="Foreground" Value="{DynamicResource OnSurfaceVariant}" />
         <Setter Property="ToolTipService.InitialShowDelay" Value="0" />
         <Setter Property="ToolTipService.Placement" Value="Top" />
@@ -1601,7 +1414,7 @@
         <Setter Property="Height" Value="{DynamicResource ControlHeight}" />
         <Setter Property="m3:Metrics.CornerRadius" Value="{DynamicResource RadiusPill}" />
         <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource M3FocusRingRound}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="Background" Value="Transparent" />
@@ -1677,7 +1490,7 @@
 
     <Style x:Key="IconToggle" TargetType="ToggleButton">
         <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource M3FocusRingRound}" />
         <Setter Property="Width" Value="{DynamicResource ControlHeight}" />
         <Setter Property="Height" Value="{DynamicResource ControlHeight}" />
         <Setter Property="m3:Metrics.CornerRadius" Value="{DynamicResource RadiusPill}" />
@@ -1742,7 +1555,7 @@
         <Setter Property="MinHeight" Value="{DynamicResource ControlHeight}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource M3FocusRing}" />
         <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
         <Setter Property="Padding" Value="0,0,14,0" />
         <Setter Property="m3:Metrics.IndicatorSize" Value="52,32" />
@@ -1825,7 +1638,7 @@
         <Setter Property="MinHeight" Value="{DynamicResource ControlHeight}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource M3FocusRing}" />
         <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
         <Setter Property="Padding" Value="10,0,0,0" />
         <Setter Property="m3:Metrics.IndicatorSize" Value="20,20" />
@@ -2150,7 +1963,7 @@
         <Setter Property="MinHeight" Value="{DynamicResource ControlHeight}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource M3FocusRing}" />
         <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
         <Setter Property="Padding" Value="10,0,0,0" />
         <Setter Property="m3:Metrics.IndicatorSize" Value="18,18" />
@@ -2248,7 +2061,7 @@
 
     <Style TargetType="{x:Type m3:Fab}">
         <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource M3FocusRingLg}" />
         <Setter Property="Foreground" Value="{DynamicResource OnPrimaryContainer}" />
         <Setter Property="Height" Value="56" />
         <Setter Property="MinWidth" Value="80" />
@@ -2448,7 +2261,7 @@
 
     <Style TargetType="{x:Type m3:SegmentedItem}">
         <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource M3FocusRing}" />
         <Setter Property="MinWidth" Value="72" />
         <Setter Property="Padding" Value="16,0" />
         <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
@@ -2505,7 +2318,7 @@
     <Style x:Key="M3Slider" TargetType="Slider">
         <Setter Property="MinHeight" Value="44" />
         <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource M3FocusRing}" />
         <Setter Property="m3:SliderMotion.IsAnimated" Value="True" />
         <Setter Property="m3:Metrics.IndicatorSize" Value="4,44" />
         <Setter Property="Template">
