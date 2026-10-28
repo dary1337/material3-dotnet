@@ -48,6 +48,16 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        // Another process can hold the clipboard open; an unreadable one pastes nothing rather than crash the window.
+        private bool PasteAllowed() {
+            try {
+                return !Clipboard.ContainsText() || Accepts(Clipboard.GetText());
+            }
+            catch (ExternalException) {
+                return false;
+            }
+        }
+
         protected override void OnKeyPress(KeyPressEventArgs e) {
             if (!char.IsControl(e.KeyChar) && !Accepts(e.KeyChar.ToString())) {
                 e.Handled = true;
@@ -57,7 +67,7 @@ namespace Material3.WinForms.Controls {
         }
 
         protected override void WndProc(ref Message m) {
-            if (m.Msg == WM_PASTE && Kind != MaterialInputKind.Text && Clipboard.ContainsText() && !Accepts(Clipboard.GetText())) {
+            if (m.Msg == WM_PASTE && Kind != MaterialInputKind.Text && !PasteAllowed()) {
                 return;
             }
             // The edit class erases with the system window brush, so a box created on screen flashes white once.

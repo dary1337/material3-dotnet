@@ -385,6 +385,14 @@ namespace Material3.WinForms.Controls {
                 base.OnFormClosed(e);
             }
 
+            protected override void Dispose(bool disposing) {
+                if (disposing) {
+                    Application.RemoveMessageFilter(this);
+                }
+
+                base.Dispose(disposing);
+            }
+
             public bool PreFilterMessage(ref Message m) {
                 const int WM_LBUTTONDOWN = 0x0201;
                 const int WM_RBUTTONDOWN = 0x0204;

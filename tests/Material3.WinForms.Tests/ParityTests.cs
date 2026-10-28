@@ -336,6 +336,32 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
+        public void ATaskbarSessionReportsFromAWorkerThread() {
+            using var form = new Form { ShowInTaskbar = true };
+            _ = form.Handle;
+            Exception? failure = null;
+            var worker = new System.Threading.Thread(() => {
+                try {
+                    using TaskbarProgress.Session session = TaskbarProgress.Begin(form);
+                    session.SetNormal(60);
+                    Assert.True(session.IsShown);
+                }
+                catch (Exception ex) {
+                    failure = ex;
+                }
+            });
+            worker.Start();
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+            while (!worker.Join(10) && clock.ElapsedMilliseconds < 5000) {
+                Application.DoEvents();
+            }
+
+            Application.DoEvents();
+            Assert.False(worker.IsAlive);
+            Assert.Null(failure);
+        }
+
+        [Fact]
         public void TheOldestTaskbarSessionDrivesTheBarAndHandsItOn() {
             using var form = new Form { ShowInTaskbar = true };
             form.CreateControl();

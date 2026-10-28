@@ -364,6 +364,12 @@ namespace Material3.WinForms.Controls {
         protected override void Dispose(bool disposing) {
             if (disposing) {
                 LibraryText.Changed -= OnLibraryTextChanged;
+                // A row's checkbox and remove button sit outside the content while their column is off.
+                foreach (Row row in _rows) {
+                    Dispose(row);
+                }
+
+                _rows.Clear();
             }
 
             base.Dispose(disposing);

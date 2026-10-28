@@ -356,7 +356,10 @@ namespace Material3.WinForms.Controls {
                     Positions = new[] { 0f, 0.5f, 1f },
                 };
                 g.TranslateTransform(Height * 0.32f, 0);
-                g.MultiplyTransform(new Matrix(1, 0, -0.32f, 1, 0, 0));
+                using (var shear = new Matrix(1, 0, -0.32f, 1, 0, 0)) {
+                    g.MultiplyTransform(shear);
+                }
+
                 g.FillRectangle(brush, x, 0, band, Height);
             }
             g.Restore(saved);
