@@ -16,6 +16,7 @@ namespace Material3.WinForms.Controls {
         private const int FrameMs = 16;
         private const float RotationPerFrame = 4.4f;
         private const int DefaultDiameter = 40;
+        private const float IndicatorTrackGap = 4f;
 
         private bool _indeterminate;
         private int _value;
@@ -209,7 +210,7 @@ namespace Material3.WinForms.Controls {
                 }
                 else if (fraction < 1f) {
                     // The 4 dp gap is between the visible ends, so each round cap's half-stroke counts toward it.
-                    float gap = (Dpi.Scale(this, 4f) + stroke) / (float)(Math.PI * rect.Width) * 360f;
+                    float gap = (Dpi.Scale(this, IndicatorTrackGap) + stroke) / (float)(Math.PI * rect.Width) * 360f;
                     float sweep = 360f * (1f - fraction) - gap * 2f;
                     if (sweep > 0) {
                         g.DrawArc(track, rect, -90f + 360f * fraction + gap, sweep);

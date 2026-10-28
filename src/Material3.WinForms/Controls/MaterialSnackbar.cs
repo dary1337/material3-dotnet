@@ -13,6 +13,7 @@ namespace Material3.WinForms.Controls {
     [System.ComponentModel.ToolboxItem(false)]
     public sealed class MaterialSnackbar : Control {
         private const int SlidePx = 14;
+        private const int MinWidth = 200;
 
         private static int _barHeight = 48;
         private static int _horizontalPadding = 16;
@@ -124,7 +125,7 @@ namespace Material3.WinForms.Controls {
 
         private void SizeToContent(Form host) {
             int padX = Dpi.Scale(this, _horizontalPadding);
-            Height = Math.Max(Dpi.Scale(this, _barHeight), Message.Height + Dpi.Scale(this, 16));
+            Height = Math.Max(Dpi.Scale(this, _barHeight), Message.Height + Dpi.Scale(this, Spacing.Space4));
             using (var bitmap = new Bitmap(1, 1)) {
                 bitmap.SetResolution(DeviceDpi, DeviceDpi);
                 using (Graphics g = Graphics.FromImage(bitmap)) {
@@ -135,8 +136,8 @@ namespace Material3.WinForms.Controls {
                         width += g.MeasureString(_actionText, ActionLabel, int.MaxValue, StringFormat.GenericTypographic).Width
                             + padX * 2;
                     }
-                    int available = host.ClientSize.Width - Dpi.Scale(this, 48);
-                    int minWidth = Math.Min(Dpi.Scale(this, 200), available);
+                    int available = host.ClientSize.Width - Dpi.Scale(this, Spacing.Space6 * 2);
+                    int minWidth = Math.Min(Dpi.Scale(this, MinWidth), available);
                     Width = Math.Min((int)Math.Ceiling(width), Math.Max(minWidth, available));
                 }
             }
@@ -227,8 +228,8 @@ namespace Material3.WinForms.Controls {
             float rightEdge = Width - padX;
             if (!string.IsNullOrEmpty(_actionText)) {
                 SizeF size = g.MeasureString(_actionText, ActionLabel, int.MaxValue, StringFormat.GenericTypographic);
-                int w = (int)Math.Ceiling(size.Width) + Dpi.Scale(this, 16);
-                int actionH = Math.Min(Height, Math.Max(Dpi.Scale(this, 32), ActionLabel.Height + Dpi.Scale(this, 8)));
+                int w = (int)Math.Ceiling(size.Width) + Dpi.Scale(this, Spacing.Space4);
+                int actionH = Math.Min(Height, Math.Max(Dpi.Scale(this, ComponentSizes.CompactControlHeight), ActionLabel.Height + Dpi.Scale(this, Spacing.Space2)));
                 _actionRect = new Rectangle((int)(rightEdge - w), (Height - actionH) / 2, w, actionH);
                 double actionLayer = _actionLayer.Resolve(_actionHovered, false);
                 if (actionLayer > 0) {
@@ -244,7 +245,7 @@ namespace Material3.WinForms.Controls {
                 }) {
                     g.DrawString(_actionText, ActionLabel, brush, _actionRect, fmt);
                 }
-                rightEdge = _actionRect.Left - Dpi.Scale(this, 8);
+                rightEdge = _actionRect.Left - Dpi.Scale(this, Spacing.Space2);
             }
             else {
                 _actionRect = Rectangle.Empty;

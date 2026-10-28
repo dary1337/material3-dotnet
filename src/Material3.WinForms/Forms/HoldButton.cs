@@ -13,6 +13,8 @@ namespace Material3.WinForms.Forms {
     // and an early release snaps it back with a shake.
     internal sealed class HoldButton : Control {
         private const double ShakeMs = 260;
+        private const int ShakeAmplitude = 7;
+        private const int MinWidth = 120;
         // The sweep is the same content colour as the label, faint enough to read through.
         private const double SweepOpacity = 0.3;
 
@@ -50,7 +52,7 @@ namespace Material3.WinForms.Forms {
 
         public override Size GetPreferredSize(Size proposedSize) {
             Size text = TextRenderer.MeasureText(Text, Font);
-            return new Size(Math.Max(Dpi.Scale(this, 120), text.Width + Dpi.Scale(this, 48)), Dpi.Scale(this, ComponentSizes.ControlHeight));
+            return new Size(Math.Max(Dpi.Scale(this, MinWidth), text.Width + Dpi.Scale(this, Spacing.Space6 * 2)), Dpi.Scale(this, ComponentSizes.ControlHeight));
         }
 
         private void Begin() {
@@ -137,7 +139,7 @@ namespace Material3.WinForms.Forms {
             float offset = 0;
             if (_shake.IsRunning && Motion.AnimationsEnabled) {
                 double t = Math.Min(1, _shake.Elapsed.TotalMilliseconds / ShakeMs);
-                offset = (float)(Math.Sin(t * Math.PI * 4) * (1 - t) * Dpi.Scale(this, 7));
+                offset = (float)(Math.Sin(t * Math.PI * 4) * (1 - t) * Dpi.Scale(this, ShakeAmplitude));
             }
             var rect = new RectangleF(offset, 0, Width - 1, Height - 1);
             Color fill = Enabled ? Fill : ArgbExtensions.Overlay(MaterialColors.SurfaceContainerHigh, MaterialColors.OnSurface, StateLayers.DisabledContainer);
@@ -158,7 +160,7 @@ namespace Material3.WinForms.Forms {
                 }
             }
             if (IsBusy) {
-                int s = Dpi.Scale(this, 18);
+                int s = Dpi.Scale(this, ComponentSizes.IconSmall);
                 _busy.Paint(g, new Rectangle((Width - s) / 2 + (int)offset, (Height - s) / 2, s, s), onFill);
                 return;
             }

@@ -56,6 +56,7 @@ namespace Material3.WinForms.Controls {
         private Form? _shineForm;
 
         private const double ShineSweepMs = 1000;
+        private const int ShineBand = 32;
         private const double ShineCycleMs = 3600;
 
         /// <summary>Initializes a new instance of the <see cref="MaterialButton"/> class.</summary>
@@ -232,7 +233,7 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override Padding DefaultPadding {
             get {
-                int side = _variant == MaterialButtonVariant.Text ? 12 : 24;
+                int side = _variant == MaterialButtonVariant.Text ? Spacing.Space3 : Spacing.Space6;
                 return new Padding(Dpi.Scale(this, side), 0, Dpi.Scale(this, side), 0);
             }
         }
@@ -244,8 +245,8 @@ namespace Material3.WinForms.Controls {
             }
 
             return _variant == MaterialButtonVariant.Text
-                ? (Padding.Left, Padding.Right + Dpi.Scale(this, 4))
-                : (Math.Max(0, Padding.Left - Dpi.Scale(this, 8)), Padding.Right);
+                ? (Padding.Left, Padding.Right + Dpi.Scale(this, Spacing.Space1))
+                : (Math.Max(0, Padding.Left - Dpi.Scale(this, Spacing.Space2)), Padding.Right);
         }
 
         private void InvalidateLayout() {
@@ -369,7 +370,7 @@ namespace Material3.WinForms.Controls {
                 return;
             }
 
-            int band = Dpi.Scale(this, 32);
+            int band = Dpi.Scale(this, ShineBand);
             float x = (float)(-band * 2 + (Width + band * 3) * (t / ShineSweepMs));
             GraphicsState saved = g.Save();
             g.SetClip(clip);
@@ -567,7 +568,7 @@ namespace Material3.WinForms.Controls {
                     ? 0
                     : iconPx + (text.Length == 0 ? 0 : iconGap);
                 int width = horizontalPadding + iconWidth + textWidth + SurfaceInset * 2;
-                int height = Math.Max(Dpi.Scale(this, _buttonHeight), Font.Height + Padding.Vertical + Dpi.Scale(this, 16)) + SurfaceInset * 2;
+                int height = Math.Max(Dpi.Scale(this, _buttonHeight), Font.Height + Padding.Vertical + Dpi.Scale(this, Spacing.Space4)) + SurfaceInset * 2;
                 _prefKey = key;
                 _prefSize = new Size(width, height);
                 _prefValid = true;

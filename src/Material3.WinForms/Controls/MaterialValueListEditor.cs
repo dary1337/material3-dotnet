@@ -21,6 +21,9 @@ namespace Material3.WinForms.Controls {
     public sealed class MaterialValueListEditor : Control {
         private const int RowGap = 6;
         private const int ButtonSize = 28;
+        private const int ButtonGap = 2;
+        private const int LabelGap = 3;
+        private const int LabelIndent = 2;
 
         private sealed class Row {
             public PlainEntry Entry = null!;
@@ -340,7 +343,7 @@ namespace Material3.WinForms.Controls {
 
         private string? LabelOf(int index) => _slotLabels != null && index < _slotLabels.Count ? _slotLabels[index] : null;
 
-        private int LabelHeight => TextRenderer.MeasureText("Ag", TypeScale.BodySmall).Height + Dpi.Scale(this, 3);
+        private int LabelHeight => TextRenderer.MeasureText("Ag", TypeScale.BodySmall).Height + Dpi.Scale(this, LabelGap);
 
         /// <inheritdoc />
         protected override void OnLayout(LayoutEventArgs levent) {
@@ -351,7 +354,7 @@ namespace Material3.WinForms.Controls {
             bool labels = _slotLabels != null && _slotLabels.Count > 0;
             int emptyHeight = 0;
             if (_rows.Count == 0 && _emptyText.Length > 0) {
-                emptyHeight = TextRenderer.MeasureText(_emptyText, TypeScale.BodySmall).Height + Dpi.Scale(this, 8);
+                emptyHeight = TextRenderer.MeasureText(_emptyText, TypeScale.BodySmall).Height + Dpi.Scale(this, Spacing.Space2);
             }
 
             int contentHeight;
@@ -381,9 +384,9 @@ namespace Material3.WinForms.Controls {
                         foreach (MaterialIconButton b in new[] { row.Remove, row.Down!, row.Up! }) {
                             right -= button;
                             b.SetBounds(right, top + (rowH - button) / 2, button, button);
-                            right -= Dpi.Scale(this, 2);
+                            right -= Dpi.Scale(this, ButtonGap);
                         }
-                        right -= Dpi.Scale(this, 4);
+                        right -= Dpi.Scale(this, Spacing.Space1);
                         row.Up!.Enabled = i > 0;
                         row.Down!.Enabled = i < _rows.Count - 1;
                     }
@@ -447,7 +450,7 @@ namespace Material3.WinForms.Controls {
                 }
 
                 Rectangle entry = _rows[i].Entry.Bounds;
-                var at = new Point(_host.Left + entry.Left + Dpi.Scale(this, 2), _host.Top + _host.ContentPanel.Top + entry.Top - LabelHeight);
+                var at = new Point(_host.Left + entry.Left + Dpi.Scale(this, LabelIndent), _host.Top + _host.ContentPanel.Top + entry.Top - LabelHeight);
                 TextRenderer.DrawText(pevent.Graphics, label, TypeScale.BodySmall, at, MaterialColors.OnSurfaceVariant, TextFormatFlags.NoPadding);
             }
         }

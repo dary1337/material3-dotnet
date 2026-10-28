@@ -348,7 +348,7 @@ namespace Material3.WinForms.Forms {
                     SizeMode = PictureBoxSizeMode.Normal,
                 };
                 Controls.Add(icon);
-                y += glyphPx + Dpi.Scale(this, 12);
+                y += glyphPx + Dpi.Scale(this, Spacing.Space3);
             }
 
             if (!string.IsNullOrEmpty(_titleText)) {
@@ -359,7 +359,7 @@ namespace Material3.WinForms.Forms {
                     Text = _titleText,
                     Location = new Point(Pad, y),
                     Width = innerWidth,
-                    Height = Headline.Height + Dpi.Scale(this, 4),
+                    Height = Headline.Height + Dpi.Scale(this, Spacing.Space1),
                     BackColor = Color.Transparent,
                 };
                 Controls.Add(title);
@@ -460,7 +460,7 @@ namespace Material3.WinForms.Forms {
         private int MeasureBodyHeight(string text, int width) {
             using (Graphics g = CreateGraphics()) {
                 SizeF size = g.MeasureString(text, Body, width);
-                return (int)Math.Ceiling(size.Height) + Dpi.Scale(this, 4);
+                return (int)Math.Ceiling(size.Height) + Dpi.Scale(this, Spacing.Space1);
             }
         }
 

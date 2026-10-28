@@ -36,6 +36,7 @@ namespace Material3.WinForms.Controls {
     public sealed class MaterialDataTableEditor : Control {
         private const int RowGap = 4;
         private const int PickWidth = 30;
+        private const int PickHeight = 24;
         private const int RemoveWidth = 28;
         private const int CellGap = 4;
 
@@ -314,7 +315,7 @@ namespace Material3.WinForms.Controls {
             for (int i = 0; i < _rows.Count; i++) {
                 Row row = _rows[i];
                 int top = i * (rowH + gap);
-                row.Pick?.SetBounds(0, top + (rowH - Dpi.Scale(this, 24)) / 2, Dpi.Scale(this, PickWidth), Dpi.Scale(this, 24));
+                row.Pick?.SetBounds(0, top + (rowH - Dpi.Scale(this, PickHeight)) / 2, Dpi.Scale(this, PickWidth), Dpi.Scale(this, PickHeight));
                 for (int c = 0; c < row.Cells.Count; c++) {
                     row.Cells[c].SetBounds(left + c * (cellWidth + cellGap), top, cellWidth, rowH);
                 }
@@ -342,7 +343,7 @@ namespace Material3.WinForms.Controls {
             (int left, int cellWidth, _) = Geometry(BodyWidth);
             int cellGap = Dpi.Scale(this, CellGap);
             for (int c = 0; c < _columns.Count; c++) {
-                var at = new Rectangle(left + c * (cellWidth + cellGap) + Dpi.Scale(this, 10), 0, Math.Max(1, cellWidth - Dpi.Scale(this, 16)), HeaderHeight);
+                var at = new Rectangle(left + c * (cellWidth + cellGap) + Dpi.Scale(this, PlainEntry.InsetX), 0, Math.Max(1, cellWidth - Dpi.Scale(this, PlainEntry.InsetX * 2)), HeaderHeight);
                 TextRenderer.DrawText(e.Graphics, _columns[c].Header, TypeScale.LabelMedium, at, MaterialColors.OnSurfaceVariant,
                     TextFormatFlags.NoPadding | TextFormatFlags.EndEllipsis);
             }

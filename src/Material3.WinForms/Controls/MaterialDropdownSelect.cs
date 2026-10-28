@@ -288,7 +288,7 @@ namespace Material3.WinForms.Controls {
                 }
             }
 
-            int padX = Dpi.Scale(this, 12);
+            int padX = Dpi.Scale(this, Spacing.Space3);
             int chevronPx = Dpi.Scale(this, ComponentSizes.IconMedium);
             Color content = Enabled ? MaterialColors.OnSurface : MaterialColors.OnSurfaceMuted;
             Bitmap chevron = MaterialIconRenderer.Render(MaterialIcons.ChevronDown, chevronPx,
@@ -303,7 +303,7 @@ namespace Material3.WinForms.Controls {
                     FormatFlags = StringFormatFlags.NoWrap,
                 }) {
                     g.DrawString(_items[_selectedIndex].DisplayText, Font, brush,
-                        new RectangleF(padX, 0, Math.Max(0, Width - padX * 2 - chevronPx - Dpi.Scale(this, 8)), Height), fmt);
+                        new RectangleF(padX, 0, Math.Max(0, Width - padX * 2 - chevronPx - Dpi.Scale(this, Spacing.Space2)), Height), fmt);
                 }
             }
         }
