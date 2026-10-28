@@ -165,25 +165,16 @@ namespace Material3.Wpf {
                 return;
             }
 
-            _label = new TextBlock { FontSize = 12, TextWrapping = TextWrapping.Wrap, MaxWidth = 320 };
-            _label.SetResourceReference(TextBlock.FontFamilyProperty, ResourceKeys.FontFamily);
-            _title = new TextBlock {
-                FontSize = 14,
-                TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0, 0, 0, 4),
-            };
-            _title.SetResourceReference(TextBlock.FontFamilyProperty, ResourceKeys.FontFamily);
-            _title.SetResourceReference(TextBlock.FontWeightProperty, ResourceKeys.FontWeightMedium);
+            _label = new TextBlock();
+            _title = new TextBlock();
             var stack = new StackPanel();
             stack.Children.Add(_title);
             stack.Children.Add(_label);
             _border = new Border {
-                BorderThickness = new Thickness(1),
                 IsHitTestVisible = false,
                 Child = stack,
             };
-            Themed(_title, TextBlock.ForegroundProperty, "OnSurface", Colors.White);
-            Themed(_border, Border.BorderBrushProperty, "OutlineVariant", Color.FromRgb(0x49, 0x45, 0x4F));
+            Undress();
             var room = new Border {
                 Padding = new Thickness(ShadowRoom),
                 Background = Brushes.Transparent,
@@ -208,12 +199,31 @@ namespace Material3.Wpf {
 
         internal static Popup? Current => _popup;
 
+        // The look without a theme's tip styles; a tip shown over a styled target first must come back to it.
+        private static void Undress() {
+            _border!.ClearValue(FrameworkElement.StyleProperty);
+            _label!.ClearValue(FrameworkElement.StyleProperty);
+            _title!.ClearValue(FrameworkElement.StyleProperty);
+            _label.TextWrapping = TextWrapping.Wrap;
+            _label.FontSize = TipLook.Plain.FontSize;
+            _label.MaxWidth = TipLook.Plain.MaxWidth;
+            _label.SetResourceReference(TextBlock.FontFamilyProperty, ResourceKeys.FontFamily);
+            _title.FontSize = TipLook.Rich.FontSize;
+            _title.TextWrapping = TextWrapping.Wrap;
+            _title.Margin = new Thickness(0, 0, 0, 4);
+            _title.SetResourceReference(TextBlock.FontFamilyProperty, ResourceKeys.FontFamily);
+            _title.SetResourceReference(TextBlock.FontWeightProperty, ResourceKeys.FontWeightMedium);
+            _border.BorderThickness = new Thickness(1);
+            Themed(_title, TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurface), Colors.White);
+            Themed(_border, Border.BorderBrushProperty, nameof(ColorScheme.OutlineVariant), Color.FromRgb(0x49, 0x45, 0x4F));
+        }
+
         private static void Dress(FrameworkElement target, string? title) {
             bool rich = !string.IsNullOrEmpty(title);
             _title!.Text = title ?? string.Empty;
             _title.Visibility = rich ? Visibility.Visible : Visibility.Collapsed;
-            if (target.TryFindResource(rich ? "RichTipCard" : "TipCard") is Style card
-                && target.TryFindResource(rich ? "RichTipText" : "TipText") is Style text
+            if (target.TryFindResource(rich ? ResourceKeys.RichTipCard : ResourceKeys.TipCard) is Style card
+                && target.TryFindResource(rich ? ResourceKeys.RichTipText : ResourceKeys.TipText) is Style text
                 && target.TryFindResource(ResourceKeys.TipTitle) is Style head) {
                 foreach (DependencyProperty p in new[] { Border.CornerRadiusProperty, Border.PaddingProperty, Border.BackgroundProperty, Border.BorderBrushProperty, Border.BorderThicknessProperty, UIElement.EffectProperty }) {
                     _border!.ClearValue(p);
@@ -229,6 +239,7 @@ namespace Material3.Wpf {
                 _label.TextAlignment = TextAlignment.Left;
                 return;
             }
+            Undress();
             TipLook look = rich ? TipLook.Rich : TipLook.Plain;
             _label!.FontSize = look.FontSize;
             _label.MaxWidth = look.MaxWidth;
@@ -237,7 +248,7 @@ namespace Material3.Wpf {
             _border.Padding = look.Padding;
             _border.BorderThickness = new Thickness(1);
             _border.Effect = rich ? TipLook.Shadow() : null;
-            Themed(_label, TextBlock.ForegroundProperty, rich ? "OnSurfaceVariant" : "OnSurface", Colors.White);
+            Themed(_label, TextBlock.ForegroundProperty, rich ? nameof(ColorScheme.OnSurfaceVariant) : nameof(ColorScheme.OnSurface), Colors.White);
             Themed(_border, Border.BackgroundProperty, rich ? nameof(ColorScheme.SurfaceContainer) : nameof(ColorScheme.SurfaceContainerHighest), Color.FromRgb(0x2D, 0x2C, 0x2E));
         }
 
@@ -257,7 +268,9 @@ namespace Material3.Wpf {
                 el.SetResourceReference(prop, key);
             }
             else {
-                el.SetValue(prop, new SolidColorBrush(fallback));
+                var brush = new SolidColorBrush(fallback);
+                brush.Freeze();
+                el.SetValue(prop, brush);
             }
         }
 
@@ -278,12 +291,18 @@ namespace Material3.Wpf {
                 MaxWidth = maxWidth;
             }
 
-            public static DropShadowEffect Shadow() =>
-                new DropShadowEffect { BlurRadius = 12, ShadowDepth = 2, Direction = 270, Opacity = 0.24 };
+            private static readonly DropShadowEffect SharedShadow = Frozen(new DropShadowEffect { BlurRadius = 12, ShadowDepth = 2, Direction = 270, Opacity = 0.24 });
+
+            public static DropShadowEffect Shadow() => SharedShadow;
+
+            private static DropShadowEffect Frozen(DropShadowEffect effect) {
+                effect.Freeze();
+                return effect;
+            }
         }
 
         private static CustomPopupPlacement[] Place(Size reported, Size target, Point offset) {
-            Size popup = _popup != null ? CenterPopup.Unscaled(_popup, reported, target) : reported;
+            Size popup = _popup != null ? CenterPopup.Unscaled(_popup, reported) : reported;
             return PlaceCentred(popup, target);
         }
 

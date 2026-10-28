@@ -114,7 +114,7 @@ namespace Material3.Wpf {
 
         /// <summary>Identifies the <see cref="MaxVisibleRows"/> property.</summary>
         public static readonly DependencyProperty MaxVisibleRowsProperty = DependencyProperty.Register(
-            nameof(MaxVisibleRows), typeof(int), typeof(ValueListEditor), new PropertyMetadata(0, OnShapeChanged));
+            nameof(MaxVisibleRows), typeof(int), typeof(ValueListEditor), new PropertyMetadata(0, OnMetricsChanged));
 
         /// <summary>Past this many entries the list scrolls and virtualizes inside the control. Zero never caps it.</summary>
         public int MaxVisibleRows { get => (int)GetValue(MaxVisibleRowsProperty); set => SetValue(MaxVisibleRowsProperty, value); }
@@ -144,7 +144,7 @@ namespace Material3.Wpf {
 
         /// <summary>Identifies the <see cref="RowHeight"/> property.</summary>
         public static readonly DependencyProperty RowHeightProperty = DependencyProperty.Register(
-            nameof(RowHeight), typeof(double), typeof(ValueListEditor), new PropertyMetadata(40.0, OnShapeChanged));
+            nameof(RowHeight), typeof(double), typeof(ValueListEditor), new PropertyMetadata(40.0, OnMetricsChanged));
 
         /// <summary>The height of one entry. <c>m3:Metrics.CornerRadius</c> rounds it.</summary>
         public double RowHeight { get => (double)GetValue(RowHeightProperty); set => SetValue(RowHeightProperty, value); }
@@ -271,6 +271,9 @@ namespace Material3.Wpf {
             editor.Refresh();
         }
 
+        // A size changes how the rows look, not what they hold, so nothing is reported.
+        private static void OnMetricsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((ValueListEditor)d).RefreshHeight();
+
         private void ApplyLabels() {
             IList<string>? labels = SlotLabels;
             for (int i = 0; i < Rows.Count; i++) {
@@ -308,13 +311,17 @@ namespace Material3.Wpf {
         private const double RowGap = 6;
         private const double LabelHeight = 18;
 
-        private void Refresh() {
+        private void RefreshHeight() {
             SetValue(IsEmptyKey, Rows.Count == 0);
             int cap = MaxVisibleRows;
             bool capped = cap > 0 && Orientation == Orientation.Vertical && Rows.Count > cap;
             SetValue(RowsScrollHeightKey, capped
                 ? cap * (RowHeight + RowGap + (SlotLabels != null ? LabelHeight : 0))
                 : double.PositiveInfinity);
+        }
+
+        private void Refresh() {
+            RefreshHeight();
             if (!_loading) {
                 ValuesChanged?.Invoke(this, EventArgs.Empty);
             }

@@ -182,7 +182,6 @@ namespace Material3.Wpf {
                 _root.Children.Add(_scrim);
                 _root.Children.Add(_card);
                 Content = _root;
-                _card.Child = BuildContent();
                 PreviewKeyDown += (_, e) => { if (e.Key == Key.Escape) { e.Handled = true; Dismiss(); } };
                 Loaded += (_, __) => Motion.OpenModal(_root, _card);
             }
@@ -438,7 +437,7 @@ namespace Material3.Wpf {
                 var timer = new DispatcherTimer { Interval = _options.HoldToConfirm };
                 timer.Tick += async (_, __) => {
                     timer.Stop();
-                    if (committed) {
+                    if (committed || _closing) {
                         return;
                     }
 
@@ -513,6 +512,8 @@ namespace Material3.Wpf {
                         _scrim.CornerRadius = new CornerRadius(DwmWindow.RoundRadiusDip);
                     }
                 }
+                // Built only now, so an owner's DialogWidth override is in reach.
+                _card.Child = BuildContent();
                 ShowDialog();
                 if (Owner != null && Owner.IsLoaded) {
                     Owner.Activate();

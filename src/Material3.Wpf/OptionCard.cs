@@ -50,8 +50,12 @@ namespace Material3.Wpf {
         public static readonly DependencyProperty GroupNameProperty = DependencyProperty.Register(
             nameof(GroupName), typeof(string), typeof(OptionCard), new PropertyMetadata(string.Empty, OnGroupNameChanged));
 
-        private static readonly Dictionary<string, List<WeakReference<OptionCard>>> Groups =
-            new Dictionary<string, List<WeakReference<OptionCard>>>(StringComparer.Ordinal);
+        // A card lives on one UI thread, so each thread keeps its own groups and never touches another's cards.
+        [ThreadStatic]
+        private static Dictionary<string, List<WeakReference<OptionCard>>>? _groups;
+
+        private static Dictionary<string, List<WeakReference<OptionCard>>> Groups =>
+            _groups ??= new Dictionary<string, List<WeakReference<OptionCard>>>(StringComparer.Ordinal);
 
         private static void OnGroupNameChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             var card = (OptionCard)d;

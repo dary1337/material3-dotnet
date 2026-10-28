@@ -15,13 +15,14 @@ namespace Material3.Wpf {
     }
 
     /// <summary>
-    /// Refuses a keystroke or a paste that would leave a <see cref="TextBox"/> holding something its
-    /// <see cref="InputKind"/> cannot become. Attach with <c>m3:InputFilter.Kind="Number"</c>.
+    /// Refuses a keystroke or a paste that would leave a <see cref="TextBox"/> or a <see cref="PasswordBox"/> holding
+    /// something its <see cref="InputKind"/> cannot become. Attach with <c>m3:InputFilter.Kind="Number"</c>.
     /// </summary>
     /// <remarks>
     /// It judges the text as it would read after the edit, not the typed character alone, so a minus sign is
     /// taken only at the start and a second separator is refused. An empty or half-typed value (<c>-</c>, <c>1.</c>)
-    /// passes: the field is mid-edit, and only the caller knows whether it may stay that way.
+    /// passes: the field is mid-edit, and only the caller knows whether it may stay that way. A password box hides its
+    /// selection, so there an edit is judged as if it were typed at the end.
     /// </remarks>
     public static class InputFilter {
         /// <summary>Identifies the <c>Kind</c> attached property.</summary>
@@ -44,10 +45,11 @@ namespace Material3.Wpf {
         }
 
         private static void OnKindChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-            if (!(d is TextBox box)) {
+            if (!(d is TextBox) && !(d is PasswordBox)) {
                 return;
             }
 
+            var box = (UIElement)d;
             box.PreviewTextInput -= OnPreviewTextInput;
             DataObject.RemovePastingHandler(box, OnPasting);
             if ((InputKind)e.NewValue == InputKind.Text) {
@@ -59,12 +61,12 @@ namespace Material3.Wpf {
         }
 
         private static void OnPreviewTextInput(object sender, TextCompositionEventArgs e) {
-            var box = (TextBox)sender;
+            var box = (DependencyObject)sender;
             e.Handled = !Accepts(GetKind(box), Proposed(box, e.Text));
         }
 
         private static void OnPasting(object sender, DataObjectPastingEventArgs e) {
-            var box = (TextBox)sender;
+            var box = (DependencyObject)sender;
             string pasted = e.DataObject.GetDataPresent(DataFormats.UnicodeText)
                 ? e.DataObject.GetData(DataFormats.UnicodeText) as string ?? string.Empty
                 : string.Empty;
@@ -73,7 +75,10 @@ namespace Material3.Wpf {
             }
         }
 
-        internal static string Proposed(TextBox box, string insert) =>
-            box.Text.Remove(box.SelectionStart, box.SelectionLength).Insert(box.SelectionStart, insert);
+        internal static string Proposed(DependencyObject box, string insert) => box switch {
+            TextBox text => text.Text.Remove(text.SelectionStart, text.SelectionLength).Insert(text.SelectionStart, insert),
+            PasswordBox password => password.Password + insert,
+            _ => insert,
+        };
     }
 }

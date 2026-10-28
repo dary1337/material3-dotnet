@@ -141,10 +141,12 @@ namespace Material3.Wpf {
         /// <summary>What the field accepts, enforced as the user types and pastes — see <see cref="InputFilter"/>.</summary>
         public InputKind InputKind { get => (InputKind)GetValue(InputKindProperty); set => SetValue(InputKindProperty, value); }
 
-        private static void OnInputKindChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-            if (((TextField)d)._editor is TextBox editor) {
-                InputFilter.SetKind(editor, (InputKind)e.NewValue);
-            }
+        private static void OnInputKindChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((TextField)d).ApplyInputKind();
+
+        // The password box is filtered too: a PIN is a password that only takes digits.
+        private void ApplyInputKind() {
+            _editor?.SetCurrentValue(InputFilter.KindProperty, InputKind);
+            _password?.SetCurrentValue(InputFilter.KindProperty, InputKind);
         }
 
         private static readonly DependencyPropertyKey IsFloatingKey = DependencyProperty.RegisterReadOnly(
@@ -197,11 +199,8 @@ namespace Material3.Wpf {
             }
 
             _editor = GetTemplateChild(PartEditor) as TextBox;
-            if (_editor != null) {
-                InputFilter.SetKind(_editor, InputKind);
-            }
-
             _password = GetTemplateChild(PartPassword) as PasswordBox;
+            ApplyInputKind();
             _label = GetTemplateChild(PartLabel) as FrameworkElement;
             _outline = GetTemplateChild(PartOutline) as NotchedOutline;
             _trailing = GetTemplateChild(PartTrailing) as ButtonBase;

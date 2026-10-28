@@ -78,6 +78,7 @@ namespace Material3.Wpf {
             slider.PreviewMouseLeftButtonDown -= OnPress;
             slider.PreviewMouseMove -= OnDrag;
             slider.PreviewMouseLeftButtonUp -= OnRelease;
+            slider.LostMouseCapture -= OnLostCapture;
             slider.Unloaded -= OnUnloaded;
             slider.ValueChanged += OnValueChanged;
             slider.SizeChanged += OnSizeChanged;
@@ -85,6 +86,7 @@ namespace Material3.Wpf {
             slider.PreviewMouseLeftButtonDown += OnPress;
             slider.PreviewMouseMove += OnDrag;
             slider.PreviewMouseLeftButtonUp += OnRelease;
+            slider.LostMouseCapture += OnLostCapture;
             slider.Unloaded += OnUnloaded;
             if (slider.IsLoaded) {
                 Snap(slider);
@@ -92,6 +94,9 @@ namespace Material3.Wpf {
         }
 
         private static void OnLoaded(object sender, RoutedEventArgs e) => Snap((Slider)sender);
+
+        // A drag that ends elsewhere (Alt+Tab, a modal) never sees the release, so the handle widens back here.
+        private static void OnLostCapture(object sender, MouseEventArgs e) => Place((Slider)sender);
 
         private static void OnSizeChanged(object sender, SizeChangedEventArgs e) => Place((Slider)sender);
 
@@ -182,21 +187,21 @@ namespace Material3.Wpf {
             double outer = GetTrackThickness(slider) / 2;
             double inner = Math.Min(InnerCorner, outer);
 
-            active.Width = Math.Max(0, centre - handle / 2 - gap);
-            active.CornerRadius = new CornerRadius(outer, inner, inner, outer);
+            active.SetCurrentValue(FrameworkElement.WidthProperty, Math.Max(0, centre - handle / 2 - gap));
+            active.SetCurrentValue(Border.CornerRadiusProperty, new CornerRadius(outer, inner, inner, outer));
             double start = centre + handle / 2 + gap;
             double rest = Math.Max(0, width - start);
             if (slider.Template.FindName(PartInactive, slider) is Border inactive) {
-                inactive.Margin = new Thickness(Math.Min(start, width), 0, 0, 0);
-                inactive.Width = rest;
-                inactive.CornerRadius = new CornerRadius(inner, outer, outer, inner);
+                inactive.SetCurrentValue(FrameworkElement.MarginProperty, new Thickness(Math.Min(start, width), 0, 0, 0));
+                inactive.SetCurrentValue(FrameworkElement.WidthProperty, rest);
+                inactive.SetCurrentValue(Border.CornerRadiusProperty, new CornerRadius(inner, outer, outer, inner));
             }
             if (slider.Template.FindName(PartStop, slider) is FrameworkElement stop) {
-                stop.Margin = new Thickness(0, 0, Math.Max(0, outer - stop.Width / 2), 0);
-                stop.Visibility = rest >= outer * 2 ? Visibility.Visible : Visibility.Hidden;
+                stop.SetCurrentValue(FrameworkElement.MarginProperty, new Thickness(0, 0, Math.Max(0, outer - stop.Width / 2), 0));
+                stop.SetCurrentValue(UIElement.VisibilityProperty, rest >= outer * 2 ? Visibility.Visible : Visibility.Hidden);
             }
-            thumb.Width = handle;
-            thumb.CornerRadius = new CornerRadius(handle / 2);
+            thumb.SetCurrentValue(FrameworkElement.WidthProperty, handle);
+            thumb.SetCurrentValue(Border.CornerRadiusProperty, new CornerRadius(handle / 2));
             double thumbH = Sized(thumb.Height, thumb.ActualHeight);
             Canvas.SetLeft(thumb, centre - handle / 2);
             Canvas.SetTop(thumb, (area.ActualHeight - thumbH) / 2);
