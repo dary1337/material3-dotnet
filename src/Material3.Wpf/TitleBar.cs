@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -26,10 +25,9 @@ namespace Material3.Wpf {
         private const string PartMaximize = "PART_Maximize";
         private const string PartClose = "PART_Close";
 
-        private const int GwlStyle = -16;
-        private const int WsCaption = 0x00C00000;
-        private const int WsMinimizeBox = 0x00020000;
-        private const int WsMaximizeBox = 0x00010000;
+        private const long WsCaption = 0x00C00000;
+        private const long WsMinimizeBox = 0x00020000;
+        private const long WsMaximizeBox = 0x00010000;
 
         static TitleBar() {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(TitleBar), new FrameworkPropertyMetadata(typeof(TitleBar)));
@@ -233,10 +231,10 @@ namespace Material3.Wpf {
                 return;
             }
 
-            int style = GetWindowLong(hwnd, GwlStyle);
-            int boxes = (window.ResizeMode == ResizeMode.CanResize || window.ResizeMode == ResizeMode.CanResizeWithGrip ? WsMaximizeBox : 0)
+            long style = WindowLongs.Get(hwnd, WindowLongs.Style);
+            long boxes = (window.ResizeMode == ResizeMode.CanResize || window.ResizeMode == ResizeMode.CanResizeWithGrip ? WsMaximizeBox : 0)
                 | (window.ResizeMode == ResizeMode.NoResize ? 0 : WsMinimizeBox);
-            SetWindowLong(hwnd, GwlStyle, style | WsCaption | boxes);
+            WindowLongs.Set(hwnd, WindowLongs.Style, style | WsCaption | boxes);
             DwmWindow.TrySetCornerPreference(window, WindowCornerPreference.Round);
         }
 
@@ -251,11 +249,5 @@ namespace Material3.Wpf {
             SetValue(IsMaximizedKey, maximized);
             _window.BorderThickness = maximized ? SystemParameters.WindowResizeBorderThickness : _restoredBorder;
         }
-
-        [DllImport("user32.dll", EntryPoint = "GetWindowLongW")]
-        private static extern int GetWindowLong(IntPtr hwnd, int index);
-
-        [DllImport("user32.dll", EntryPoint = "SetWindowLongW")]
-        private static extern int SetWindowLong(IntPtr hwnd, int index, int value);
     }
 }
