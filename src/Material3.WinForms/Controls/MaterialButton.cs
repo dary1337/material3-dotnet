@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -11,7 +12,7 @@ using Material3.WinForms.Tokens;
 using Material3.WinForms.Typography;
 
 namespace Material3.WinForms.Controls {
-    /// <summary>The five M3 button styles, the semantic fills and the attention-seeking shiny one.</summary>
+    /// <summary>The five M3 button styles. <see cref="MaterialButton.Tone"/> and <see cref="MaterialButton.IsShiny"/> go on top.</summary>
     public enum MaterialButtonVariant {
         /// <summary>A tinted surface lifted by a shadow.</summary>
         Elevated,
@@ -23,14 +24,6 @@ namespace Material3.WinForms.Controls {
         Outlined,
         /// <summary>A label with no container, for the lowest emphasis.</summary>
         Text,
-        /// <summary>The warning container pair inverted, so it reads as THE action of a warning banner.</summary>
-        WarningFilled,
-        /// <summary>The error container pair inverted, so it reads as THE action of an error banner.</summary>
-        ErrorFilled,
-        /// <summary>The error container fill, for a destructive choice in a dialog.</summary>
-        ErrorTonal,
-        /// <summary>A filled button that a light sweep crosses every few seconds, for an action the screen waits on.</summary>
-        Shiny,
     }
 
     /// <summary>Pill-shaped owner-drawn M3 button; inherits <see cref="Button"/> so DialogResult / AcceptButton work.</summary>
@@ -42,6 +35,8 @@ namespace Material3.WinForms.Controls {
 #endif
     public sealed class MaterialButton : Button {
         private MaterialButtonVariant _variant = MaterialButtonVariant.Filled;
+        private MaterialTone _tone = MaterialTone.Neutral;
+        private bool _isShiny;
         private string _iconGlyph = string.Empty;
         private Image? _iconImage;
         private Func<Color>? _accent;
@@ -53,15 +48,16 @@ namespace Material3.WinForms.Controls {
         private int _cornerRadius = Shape.Full;
         private int _iconSize = ComponentSizes.IconSmall;
         private int _iconGap = Spacing.Space2;
-        private int _buttonHeight = ComponentSizes.ButtonHeight;
+        private int _buttonHeight = ComponentSizes.ControlHeight;
 
         private Bitmap? _buffer;
         private readonly BusySpinner _busy;
         private Timer? _shine;
-        private readonly System.Diagnostics.Stopwatch _shineClock = new System.Diagnostics.Stopwatch();
+        private readonly Stopwatch _shineClock = new Stopwatch();
         private Form? _shineForm;
 
         private const double ShineSweepMs = 1000;
+        private const int ShineBand = 32;
         private const double ShineCycleMs = 3600;
 
         /// <summary>Initializes a new instance of the <see cref="MaterialButton"/> class.</summary>
@@ -82,23 +78,50 @@ namespace Material3.WinForms.Controls {
             MaterialCursors.Apply(this, MaterialCursors.Pointer);
             TypeRole.Follow(this, () => TypeScale.LabelLarge);
             AutoSize = false;
-            Height = ComponentSizes.ButtonHeight;
+            Height = ComponentSizes.ControlHeight;
             BackColor = Color.Transparent;
             ApplyVariantColors();
             ThemeHook.Attach(this, () => { ApplyVariantColors(); Invalidate(); });
         }
 
-        /// <summary>The button style: an M3 variant, a semantic fill or the shiny one.</summary>
+        /// <summary>The M3 button style.</summary>
         [Category("Material Design")]
-        [Description("The button style: an M3 variant, a semantic fill or the shiny one.")]
+        [Description("The M3 button style.")]
         [DefaultValue(MaterialButtonVariant.Filled)]
         public MaterialButtonVariant Variant {
             get => _variant;
             set {
                 _variant = value;
                 ApplyVariantColors();
-                SyncShine();
                 InvalidateLayout();
+            }
+        }
+
+        /// <summary>
+        /// The meaning the button carries. A filled button inverts the tone's container pair, so it reads as THE action
+        /// of a matching banner; a tonal one fills with the container; the others take its content colour.
+        /// </summary>
+        [Category("Material Design")]
+        [Description("The meaning the button carries: filled inverts the tone's container pair, tonal fills with it, the others take its colour.")]
+        [DefaultValue(MaterialTone.Neutral)]
+        public MaterialTone Tone {
+            get => _tone;
+            set {
+                _tone = value;
+                ApplyVariantColors();
+                Invalidate();
+            }
+        }
+
+        /// <summary>A light sweep crosses the button every few seconds, for an action the screen waits on.</summary>
+        [Category("Material Design")]
+        [Description("A light sweep crosses the button every few seconds, for an action the screen waits on.")]
+        [DefaultValue(false)]
+        public bool IsShiny {
+            get => _isShiny;
+            set {
+                _isShiny = value;
+                SyncShine();
             }
         }
 
@@ -202,7 +225,7 @@ namespace Material3.WinForms.Controls {
         /// <summary>The height <see cref="Control.AutoSize"/> grows the button to, in 96-DPI px; a taller font still wins.</summary>
         [Category("Material Design")]
         [Description("The height AutoSize grows the button to, in 96-DPI px; a taller font still wins.")]
-        [DefaultValue(ComponentSizes.ButtonHeight)]
+        [DefaultValue(ComponentSizes.ControlHeight)]
         public int ButtonHeight {
             get => _buttonHeight;
             set { _buttonHeight = Math.Max(0, value); InvalidateLayout(); }
@@ -211,7 +234,7 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override Padding DefaultPadding {
             get {
-                int side = _variant == MaterialButtonVariant.Text ? 12 : 24;
+                int side = _variant == MaterialButtonVariant.Text ? Spacing.Space3 : Spacing.Space6;
                 return new Padding(Dpi.Scale(this, side), 0, Dpi.Scale(this, side), 0);
             }
         }
@@ -223,8 +246,8 @@ namespace Material3.WinForms.Controls {
             }
 
             return _variant == MaterialButtonVariant.Text
-                ? (Padding.Left, Padding.Right + Dpi.Scale(this, 4))
-                : (Math.Max(0, Padding.Left - Dpi.Scale(this, 8)), Padding.Right);
+                ? (Padding.Left, Padding.Right + Dpi.Scale(this, Spacing.Space1))
+                : (Math.Max(0, Padding.Left - Dpi.Scale(this, Spacing.Space2)), Padding.Right);
         }
 
         private void InvalidateLayout() {
@@ -253,15 +276,17 @@ namespace Material3.WinForms.Controls {
         private Color Accent => _accent?.Invoke() ?? MaterialColors.Primary;
         private Color OnAccent => _onAccent?.Invoke() ?? MaterialColors.OnPrimary;
 
+        private bool Toned => _tone != MaterialTone.Neutral;
+
         private Color FillColor {
             get {
+                if (Toned && (_variant == MaterialButtonVariant.Filled || _variant == MaterialButtonVariant.Tonal)) {
+                    (Color container, Color content) = ToneColors.Of(_tone);
+                    return _variant == MaterialButtonVariant.Filled ? content : container;
+                }
                 switch (_variant) {
-                    case MaterialButtonVariant.Filled:
-                    case MaterialButtonVariant.Shiny: return Accent;
+                    case MaterialButtonVariant.Filled: return Accent;
                     case MaterialButtonVariant.Tonal: return MaterialColors.SecondaryContainer;
-                    case MaterialButtonVariant.WarningFilled: return MaterialColors.OnWarningContainer;
-                    case MaterialButtonVariant.ErrorFilled: return MaterialColors.OnErrorContainer;
-                    case MaterialButtonVariant.ErrorTonal: return MaterialColors.ErrorContainer;
                     case MaterialButtonVariant.Elevated: return Elevation.TintedSurface(MaterialColors.SurfaceContainerLow, 1);
                     default: return Color.Transparent;
                 }
@@ -270,13 +295,13 @@ namespace Material3.WinForms.Controls {
 
         private Color ContentColor {
             get {
+                if (Toned) {
+                    (Color container, Color content) = ToneColors.Of(_tone);
+                    return _variant == MaterialButtonVariant.Filled ? container : content;
+                }
                 switch (_variant) {
-                    case MaterialButtonVariant.Filled:
-                    case MaterialButtonVariant.Shiny: return OnAccent;
+                    case MaterialButtonVariant.Filled: return OnAccent;
                     case MaterialButtonVariant.Tonal: return MaterialColors.OnSecondaryContainer;
-                    case MaterialButtonVariant.WarningFilled: return MaterialColors.WarningContainer;
-                    case MaterialButtonVariant.ErrorFilled: return MaterialColors.ErrorContainer;
-                    case MaterialButtonVariant.ErrorTonal: return MaterialColors.OnErrorContainer;
                     default: return Accent;
                 }
             }
@@ -303,11 +328,11 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override void OnParentChanged(EventArgs e) { base.OnParentChanged(e); SyncShine(); }
 
-        private bool InvertedSemantic => _variant == MaterialButtonVariant.WarningFilled || _variant == MaterialButtonVariant.ErrorFilled;
+        private bool Inverted => Toned && _variant == MaterialButtonVariant.Filled;
 
         // The sweep runs only where someone can see it: a visible, enabled button in the active window.
         private void SyncShine() {
-            Form? form = _variant == MaterialButtonVariant.Shiny ? FindForm() : null;
+            Form? form = _isShiny ? FindForm() : null;
             if (!ReferenceEquals(form, _shineForm)) {
                 if (_shineForm != null) {
                     _shineForm.Activated -= OnShineFormActivation;
@@ -321,7 +346,7 @@ namespace Material3.WinForms.Controls {
             }
             bool run = form != null && Visible && Enabled && Motion.AnimationsEnabled && ReferenceEquals(Form.ActiveForm, form);
             if (run && _shine == null) {
-                _shine = new Timer { Interval = 16 };
+                _shine = new Timer { Interval = Motion.FrameIntervalMs };
                 _shine.Tick += (s, e) => Invalidate();
                 _shineClock.Restart();
                 _shine.Start();
@@ -346,7 +371,7 @@ namespace Material3.WinForms.Controls {
                 return;
             }
 
-            int band = Dpi.Scale(this, 32);
+            int band = Dpi.Scale(this, ShineBand);
             float x = (float)(-band * 2 + (Width + band * 3) * (t / ShineSweepMs));
             GraphicsState saved = g.Save();
             g.SetClip(clip);
@@ -417,8 +442,8 @@ namespace Material3.WinForms.Controls {
                         }
                     }
 
-                    double layerOpacity = InvertedSemantic
-                        ? _layer.Resolve(_hovered, _pressed, Enabled, 0.10, 0.16)
+                    double layerOpacity = Inverted
+                        ? _layer.Resolve(_hovered, _pressed, Enabled, StateLayers.InvertedHover, StateLayers.InvertedPressed)
                         : _layer.Resolve(_hovered, _pressed, Enabled);
                     if (layerOpacity > 0) {
                         Color layerBase = fill.A > 0 ? fill : parent;
@@ -544,7 +569,7 @@ namespace Material3.WinForms.Controls {
                     ? 0
                     : iconPx + (text.Length == 0 ? 0 : iconGap);
                 int width = horizontalPadding + iconWidth + textWidth + SurfaceInset * 2;
-                int height = Math.Max(Dpi.Scale(this, _buttonHeight), Font.Height + Padding.Vertical + Dpi.Scale(this, 16)) + SurfaceInset * 2;
+                int height = Math.Max(Dpi.Scale(this, _buttonHeight), Font.Height + Padding.Vertical + Dpi.Scale(this, Spacing.Space4)) + SurfaceInset * 2;
                 _prefKey = key;
                 _prefSize = new Size(width, height);
                 _prefValid = true;

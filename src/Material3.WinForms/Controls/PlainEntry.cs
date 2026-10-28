@@ -4,11 +4,12 @@ using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using Material3.WinForms.Drawing;
 using Material3.WinForms.Theming;
+using Material3.WinForms.Tokens;
 
 namespace Material3.WinForms.Controls {
     // One editable cell of the list and table editors: an outlined box around a borderless text box, or plain text.
     internal sealed class PlainEntry : Control {
-        private const int InsetX = 10;
+        internal const int InsetX = 10;
 
         private readonly FilteredTextBox _box = new FilteredTextBox { BorderStyle = BorderStyle.None };
         private bool _readOnly;
@@ -29,7 +30,7 @@ namespace Material3.WinForms.Controls {
             ApplyTheme();
         }
 
-        public int CornerRadius { get; set; } = 8;
+        public int CornerRadius { get; set; } = Shape.Small;
 
         public MaterialInputKind Kind {
             get => _box.Kind;

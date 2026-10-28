@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using Material3.Core;
 using Material3.WinForms.Drawing;
 using Material3.WinForms.Forms;
 using Material3.WinForms.Theming;
@@ -19,7 +20,7 @@ namespace Material3.WinForms.Controls {
 
         private int _barHeight = ComponentSizes.TitleBarHeight;
         private int _captionButtonWidth = 44;
-        private int _captionButtonHeight = ComponentSizes.ButtonHeightSmall;
+        private int _captionButtonHeight = ComponentSizes.CompactControlHeight;
         private int _iconSize = ComponentSizes.IconMedium;
         private int _leftPadding = 12;
         private int _iconTextGap = 8;
@@ -140,7 +141,7 @@ namespace Material3.WinForms.Controls {
         /// <summary>A caption button's height, in 96-DPI px.</summary>
         [Category("Material Design")]
         [Description("A caption button's height, in 96-DPI px.")]
-        [DefaultValue(ComponentSizes.ButtonHeightSmall)]
+        [DefaultValue(ComponentSizes.CompactControlHeight)]
         public int CaptionButtonHeight {
             get => _captionButtonHeight;
             set { _captionButtonHeight = Math.Max(1, value); OnResize(EventArgs.Empty); Invalidate(); }
@@ -183,8 +184,8 @@ namespace Material3.WinForms.Controls {
         }
 
         private void NameCaptionButtons() {
-            _minimize.AccessibleName = Material3.Core.LibraryText.Get(Material3.Core.TextKey.Minimize);
-            _close.AccessibleName = Material3.Core.LibraryText.Get(Material3.Core.TextKey.Close);
+            _minimize.AccessibleName = LibraryText.Get(TextKey.Minimize);
+            _close.AccessibleName = LibraryText.Get(TextKey.Close);
             UpdateMaximizeGlyph();
         }
 
@@ -234,7 +235,7 @@ namespace Material3.WinForms.Controls {
             AutoSize = true;
             TypeRole.Follow(this, () => TypeScale.LabelLarge);
             NameCaptionButtons();
-            Material3.Core.LibraryText.Changed += OnLibraryTextChanged;
+            LibraryText.Changed += OnLibraryTextChanged;
 
             ThemeHook.Attach(this, () => {
                 ApplyThemeColors();
@@ -304,7 +305,7 @@ namespace Material3.WinForms.Controls {
         private void UpdateMaximizeGlyph() {
             bool maximized = _hookedForm != null && _hookedForm.WindowState == FormWindowState.Maximized;
             _maximize.Glyph = maximized ? MaterialIcons.Restore : MaterialIcons.Maximize;
-            _maximize.AccessibleName = Material3.Core.LibraryText.Get(maximized ? Material3.Core.TextKey.Restore : Material3.Core.TextKey.Maximize);
+            _maximize.AccessibleName = LibraryText.Get(maximized ? TextKey.Restore : TextKey.Maximize);
         }
 
         private void OnCloseClick(object? sender, EventArgs e) {
@@ -419,7 +420,7 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override void Dispose(bool disposing) {
             if (disposing) {
-                Material3.Core.LibraryText.Changed -= OnLibraryTextChanged;
+                LibraryText.Changed -= OnLibraryTextChanged;
                 if (_hookedForm != null) {
                     _hookedForm.SizeChanged -= OnFormSizeChanged;
                     _hookedForm = null;

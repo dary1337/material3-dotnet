@@ -89,11 +89,12 @@ namespace Material3.Core {
             }
 
             for (CultureInfo c = culture; !string.IsNullOrEmpty(c.Name); c = c.Parent) {
-                if (LibraryTextTables.ByCulture.TryGetValue(c.Name, out string[]? table)) {
-                    return table[(int)key];
+                if (LibraryTextTables.ByCulture.TryGetValue(c.Name, out Dictionary<TextKey, string>? table)
+                    && table.TryGetValue(key, out string? text)) {
+                    return text;
                 }
             }
-            return LibraryTextTables.English[(int)key];
+            return LibraryTextTables.English[key];
         }
 
         /// <summary>Replaces one text whatever the culture; null hands it back to the resolver and the tables.</summary>
@@ -114,17 +115,44 @@ namespace Material3.Core {
     }
 
     internal static class LibraryTextTables {
-        internal static readonly string[] English = {
-            "OK", "Cancel", "Add", "Clear", "Search", "Dismiss", "Minimize", "Maximize", "Restore", "Close",
-            "Select date", "Enter time", "Hour", "Minute",
+        internal static readonly Dictionary<TextKey, string> English = new Dictionary<TextKey, string> {
+            [TextKey.Ok] = "OK",
+            [TextKey.Cancel] = "Cancel",
+            [TextKey.Add] = "Add",
+            [TextKey.Clear] = "Clear",
+            [TextKey.Search] = "Search",
+            [TextKey.Dismiss] = "Dismiss",
+            [TextKey.Minimize] = "Minimize",
+            [TextKey.Maximize] = "Maximize",
+            [TextKey.Restore] = "Restore",
+            [TextKey.Close] = "Close",
+            [TextKey.SelectDate] = "Select date",
+            [TextKey.EnterTime] = "Enter time",
+            [TextKey.Hour] = "Hour",
+            [TextKey.Minute] = "Minute",
         };
 
-        internal static readonly Dictionary<string, string[]> ByCulture = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase) {
-            ["en"] = English,
-            ["ru"] = new[] {
-                "ОК", "Отмена", "Добавить", "Очистить", "Поиск", "Закрыть", "Свернуть", "Развернуть", "Восстановить", "Закрыть",
-                "Выберите дату", "Введите время", "Часы", "Минуты",
-            },
+        internal static readonly Dictionary<TextKey, string> Russian = new Dictionary<TextKey, string> {
+            [TextKey.Ok] = "ОК",
+            [TextKey.Cancel] = "Отмена",
+            [TextKey.Add] = "Добавить",
+            [TextKey.Clear] = "Очистить",
+            [TextKey.Search] = "Поиск",
+            [TextKey.Dismiss] = "Закрыть",
+            [TextKey.Minimize] = "Свернуть",
+            [TextKey.Maximize] = "Развернуть",
+            [TextKey.Restore] = "Восстановить",
+            [TextKey.Close] = "Закрыть",
+            [TextKey.SelectDate] = "Выберите дату",
+            [TextKey.EnterTime] = "Введите время",
+            [TextKey.Hour] = "Часы",
+            [TextKey.Minute] = "Минуты",
         };
+
+        internal static readonly Dictionary<string, Dictionary<TextKey, string>> ByCulture =
+            new Dictionary<string, Dictionary<TextKey, string>>(StringComparer.OrdinalIgnoreCase) {
+                ["en"] = English,
+                ["ru"] = Russian,
+            };
     }
 }

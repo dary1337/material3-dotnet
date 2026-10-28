@@ -72,6 +72,10 @@ namespace Material3.WinForms.Controls {
     /// <summary>Shared selection/hover plumbing for the three navigation containers; subclasses supply geometry and painting.</summary>
     [ToolboxItem(false)]
     public abstract class MaterialNavigationBase : Control {
+        private const int BusyBadge = 12;
+        private const int DotBadge = 7;
+        private const int LargeBadgeHeight = 16;
+
         private Font? _badgeFont;
         private protected readonly List<NavigationItem> Items = new List<NavigationItem>();
         private protected int HotIndex = -1;
@@ -276,7 +280,7 @@ namespace Material3.WinForms.Controls {
 
         private protected void PaintBadge(Graphics g, Rectangle iconRect, NavigationItem item) {
             if (item.IsBusy) {
-                int s = Dpi.Scale(this, 12);
+                int s = Dpi.Scale(this, BusyBadge);
                 _spinner.Paint(g, new Rectangle(iconRect.Right - s / 2, iconRect.Y - s / 2, s, s), MaterialColors.Primary);
                 return;
             }
@@ -291,14 +295,14 @@ namespace Material3.WinForms.Controls {
             }
             if (count < 0) {
                 using (var brush = new SolidBrush(badgeFill)) {
-                    g.FillEllipse(brush, iconRect.Right - Dpi.Scale(this, 5), iconRect.Y - Dpi.Scale(this, 2), Dpi.Scale(this, 7), Dpi.Scale(this, 7));
+                    g.FillEllipse(brush, iconRect.Right - Dpi.Scale(this, 5), iconRect.Y - Dpi.Scale(this, 2), Dpi.Scale(this, DotBadge), Dpi.Scale(this, DotBadge));
                 }
                 return;
             }
             string text = count > 999 ? "999+" : count.ToString();
             SizeF size = g.MeasureString(text, badgeFont, int.MaxValue, StringFormat.GenericTypographic);
-            int w = Math.Max(Dpi.Scale(this, 16), (int)Math.Ceiling(size.Width) + Dpi.Scale(this, 8));
-            var rect = new Rectangle(iconRect.Right - w / 2 - Dpi.Scale(this, 2), iconRect.Y - Dpi.Scale(this, 7), w, Dpi.Scale(this, 16));
+            int w = Math.Max(Dpi.Scale(this, LargeBadgeHeight), (int)Math.Ceiling(size.Width) + Dpi.Scale(this, Spacing.Space2));
+            var rect = new Rectangle(iconRect.Right - w / 2 - Dpi.Scale(this, 2), iconRect.Y - Dpi.Scale(this, 7), w, Dpi.Scale(this, LargeBadgeHeight));
             using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(rect, Shape.Full))
             using (var fill = new SolidBrush(badgeFill)) {
                 g.FillPath(fill, path);
@@ -404,7 +408,7 @@ namespace Material3.WinForms.Controls {
                 int pillWidth = Dpi.Scale(this, _pillWidth);
                 int pillHeight = Dpi.Scale(this, _pillHeight);
                 int iconPx = Dpi.Scale(this, _iconSize);
-                var pill = new Rectangle(iconCx - pillWidth / 2, Dpi.Scale(this, 8), pillWidth, pillHeight);
+                var pill = new Rectangle(iconCx - pillWidth / 2, Dpi.Scale(this, Spacing.Space2), pillWidth, pillHeight);
                 if (active) {
                     pill = GrowFromCentre(pill);
                     using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(pill, Shape.Full))
@@ -430,7 +434,7 @@ namespace Material3.WinForms.Controls {
                 using (var brush = new SolidBrush(labelColor))
                 using (var fmt = new StringFormat(StringFormat.GenericTypographic) { Alignment = StringAlignment.Center }) {
                     g.DrawString(item.Label, Font, brush,
-                        new RectangleF(rect.X, pill.Bottom + Dpi.Scale(this, 4), rect.Width, Dpi.Scale(this, 16)), fmt);
+                        new RectangleF(rect.X, pill.Bottom + Dpi.Scale(this, Spacing.Space1), rect.Width, Dpi.Scale(this, Spacing.Space4)), fmt);
                 }
             }
         }
@@ -537,7 +541,7 @@ namespace Material3.WinForms.Controls {
                 int pillWidth = Dpi.Scale(this, _pillWidth);
                 int pillHeight = Dpi.Scale(this, _pillHeight);
                 int iconPx = Dpi.Scale(this, _iconSize);
-                var pill = new Rectangle(iconCx - pillWidth / 2, rect.Y + Dpi.Scale(this, 4), pillWidth, pillHeight);
+                var pill = new Rectangle(iconCx - pillWidth / 2, rect.Y + Dpi.Scale(this, Spacing.Space1), pillWidth, pillHeight);
                 if (active) {
                     pill = GrowFromCentre(pill);
                     using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(pill, Shape.Full))
@@ -563,7 +567,7 @@ namespace Material3.WinForms.Controls {
                 using (var brush = new SolidBrush(labelColor))
                 using (var fmt = new StringFormat(StringFormat.GenericTypographic) { Alignment = StringAlignment.Center }) {
                     g.DrawString(item.Label, Font, brush,
-                        new RectangleF(rect.X, pill.Bottom + Dpi.Scale(this, 4), rect.Width, Dpi.Scale(this, 16)), fmt);
+                        new RectangleF(rect.X, pill.Bottom + Dpi.Scale(this, Spacing.Space1), rect.Width, Dpi.Scale(this, Spacing.Space4)), fmt);
                 }
             }
         }
@@ -661,11 +665,11 @@ namespace Material3.WinForms.Controls {
             BackColor = MaterialColors.SurfaceContainerLow;
         }
 
-        private int ListTop => Padding.Top + (string.IsNullOrEmpty(_headline) ? 0 : (_headlineFont ?? TypeScale.TitleSmall).Height + Dpi.Scale(this, 16));
+        private int ListTop => Padding.Top + (string.IsNullOrEmpty(_headline) ? 0 : (_headlineFont ?? TypeScale.TitleSmall).Height + Dpi.Scale(this, Spacing.Space4));
 
         private protected override Rectangle ItemRect(int index) {
             int itemHeight = Dpi.Scale(this, _itemHeight);
-            return new Rectangle(Padding.Left, ListTop + index * (itemHeight + Dpi.Scale(this, 4)), Width - Padding.Horizontal, itemHeight);
+            return new Rectangle(Padding.Left, ListTop + index * (itemHeight + Dpi.Scale(this, Spacing.Space1)), Width - Padding.Horizontal, itemHeight);
         }
 
         /// <inheritdoc />
@@ -677,7 +681,7 @@ namespace Material3.WinForms.Controls {
 
             if (!string.IsNullOrEmpty(_headline)) {
                 using (var brush = new SolidBrush(MaterialColors.OnSurfaceVariant)) {
-                    g.DrawString(_headline, _headlineFont ?? TypeScale.TitleSmall, brush, Padding.Left + Dpi.Scale(this, 8), Padding.Top + Dpi.Scale(this, 6));
+                    g.DrawString(_headline, _headlineFont ?? TypeScale.TitleSmall, brush, Padding.Left + Dpi.Scale(this, Spacing.Space2), Padding.Top + Dpi.Scale(this, 6));
                 }
             }
 
@@ -703,7 +707,7 @@ namespace Material3.WinForms.Controls {
                 Color content = active ? MaterialColors.OnSecondaryContainer : MaterialColors.OnSurfaceVariant;
                 int iconPx = Dpi.Scale(this, _iconSize);
                 int iconGap = Dpi.Scale(this, _iconGap);
-                var iconRect = new Rectangle(rect.X + Dpi.Scale(this, 16), rect.Y + (rect.Height - iconPx) / 2, iconPx, iconPx);
+                var iconRect = new Rectangle(rect.X + Dpi.Scale(this, Spacing.Space4), rect.Y + (rect.Height - iconPx) / 2, iconPx, iconPx);
                 Bitmap icon = MaterialIconRenderer.Render(item.GlyphFor(active), iconPx, content);
                 g.DrawImageUnscaled(icon, iconRect.X, iconRect.Y);
                 PaintBadge(g, iconRect, item);
@@ -712,7 +716,7 @@ namespace Material3.WinForms.Controls {
                 using (var brush = new SolidBrush(label))
                 using (var fmt = new StringFormat(StringFormat.GenericTypographic) { LineAlignment = StringAlignment.Center }) {
                     g.DrawString(item.Label, Font, brush,
-                        new RectangleF(iconRect.Right + iconGap, rect.Y, rect.Right - iconRect.Right - iconGap - Dpi.Scale(this, 12), rect.Height), fmt);
+                        new RectangleF(iconRect.Right + iconGap, rect.Y, rect.Right - iconRect.Right - iconGap - Dpi.Scale(this, Spacing.Space3), rect.Height), fmt);
                 }
             }
         }

@@ -45,6 +45,12 @@ namespace Material3.WinForms.Controls {
 
         private const int RadioArea = 44;
         private const int DefaultCardHeight = 68;
+        private const int DetailGap = 10;
+        private const int TitleMinHeight = 22;
+        private const int BadgeHeight = 20;
+        private const int BadgeIcon = 13;
+        private const int BadgeGap = 6;
+        private const int BadgeMaxWidth = 200;
 
         private int _iconBoxSize = 40;
         private int _horizontalPadding = 14;
@@ -405,7 +411,7 @@ namespace Material3.WinForms.Controls {
             }
 
             int textLeft = pad + iconBox + Dpi.Scale(this, _horizontalPadding);
-            int textRight = Width - Dpi.Scale(this, RadioArea) - Dpi.Scale(this, 8);
+            int textRight = Width - Dpi.Scale(this, RadioArea) - Dpi.Scale(this, Spacing.Space2);
             using (var nearFmt = new StringFormat(StringFormat.GenericTypographic) {
                 Alignment = StringAlignment.Near,
                 LineAlignment = StringAlignment.Center,
@@ -413,7 +419,7 @@ namespace Material3.WinForms.Controls {
                 int detailWidth = 0;
                 if (!string.IsNullOrEmpty(_detailText)) {
                     SizeF measured = g.MeasureString(_detailText, detailFont, int.MaxValue, StringFormat.GenericTypographic);
-                    detailWidth = (int)Math.Ceiling(measured.Width) + Dpi.Scale(this, 10);
+                    detailWidth = (int)Math.Ceiling(measured.Width) + Dpi.Scale(this, DetailGap);
                     using (var brush = new SolidBrush(MaterialColors.OnSurfaceVariant))
                     using (var rightFmt = new StringFormat(StringFormat.GenericTypographic) {
                         Alignment = StringAlignment.Far,
@@ -425,7 +431,7 @@ namespace Material3.WinForms.Controls {
                 }
 
                 int lineGap = Dpi.Scale(this, 2);
-                int titleHeight = Math.Max(Font.Height, Dpi.Scale(this, 22));
+                int titleHeight = Math.Max(Font.Height, Dpi.Scale(this, TitleMinHeight));
                 float titleY = (Height - titleHeight - descriptionFont.Height - lineGap) / 2f;
                 SizeF titleSize = g.MeasureString(_title, Font, int.MaxValue, StringFormat.GenericTypographic);
                 using (var brush = new SolidBrush(MaterialColors.OnSurface)) {
@@ -436,22 +442,22 @@ namespace Material3.WinForms.Controls {
                     var chipStyle = ChipRenderer.ResolveAccent(
                         _accentContainer(), _accentContent(), _accentOutline?.Invoke(), Enabled);
                     var chipMetrics = new ChipRenderer.Metrics {
-                        Height = Dpi.Scale(this, 20),
-                        PadX = Dpi.Scale(this, 8),
-                        IconPx = Dpi.Scale(this, 13),
-                        IconGap = Dpi.Scale(this, 4),
+                        Height = Dpi.Scale(this, BadgeHeight),
+                        PadX = Dpi.Scale(this, Spacing.Space2),
+                        IconPx = Dpi.Scale(this, BadgeIcon),
+                        IconGap = Dpi.Scale(this, Spacing.Space1),
                         OutlineWidth = Dpi.Scale(this, 1f),
                         Font = _accentFont ?? TypeScale.LabelMedium,
                     };
                     int chipWidth = ChipRenderer.Measure(g, _accentChipText, _accentChipGlyph != null, chipMetrics);
-                    int chipX = (int)(textLeft + titleSize.Width) + Dpi.Scale(this, 6);
+                    int chipX = (int)(textLeft + titleSize.Width) + Dpi.Scale(this, BadgeGap);
                     int chipY = (int)titleY + (titleHeight - chipMetrics.Height) / 2;
                     ChipRenderer.Draw(g, _accentChipText, _accentChipGlyph, null, chipStyle, chipMetrics, chipX, chipY, chipWidth);
                 }
                 else if (!string.IsNullOrEmpty(_accentSuffix)) {
                     using (var brush = new SolidBrush(MaterialColors.Primary)) {
                         g.DrawString(" · " + _accentSuffix, _accentFont ?? TypeScale.LabelMedium, brush,
-                            new RectangleF(textLeft + titleSize.Width, titleY + Dpi.Scale(this, 1f), Dpi.Scale(this, 200), Dpi.Scale(this, 20)), nearFmt);
+                            new RectangleF(textLeft + titleSize.Width, titleY + Dpi.Scale(this, 1f), Dpi.Scale(this, BadgeMaxWidth), Dpi.Scale(this, BadgeHeight)), nearFmt);
                     }
                 }
 

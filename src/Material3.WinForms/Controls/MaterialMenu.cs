@@ -181,6 +181,7 @@ namespace Material3.WinForms.Controls {
 
         internal sealed class MenuPopup : PopupWindow, IMessageFilter {
             private const int RowInset = 4;
+            private const int AnchorGap = 2;
             private readonly List<Entry> _entries;
             private readonly int _itemHeight;
             private readonly int _separatorHeight;
@@ -230,13 +231,13 @@ namespace Material3.WinForms.Controls {
                 Rectangle screen = Screen.FromPoint(screenLocation).WorkingArea;
                 int x = Math.Max(screen.Left, Math.Min(screenLocation.X, screen.Right - Width));
                 bool below = screenLocation.Y + Height <= screen.Bottom;
-                int y = below ? screenLocation.Y : Math.Max(screen.Top, screenLocation.Y - Height - Dpi.Scale(this, 4));
+                int y = below ? screenLocation.Y : Math.Max(screen.Top, screenLocation.Y - Height - Dpi.Scale(this, Spacing.Space1));
                 Open(new Point(x, y), below);
             }
 
             public void ShowBelow(Rectangle anchor) {
                 MeasureAndSize(anchor.Width);
-                Point location = PlaceBelow(anchor, Size, Screen.FromRectangle(anchor).WorkingArea, Dpi.Scale(this, 2));
+                Point location = PlaceBelow(anchor, Size, Screen.FromRectangle(anchor).WorkingArea, Dpi.Scale(this, AnchorGap));
                 Open(location, location.Y >= anchor.Bottom);
             }
 
@@ -270,7 +271,7 @@ namespace Material3.WinForms.Controls {
             }
 
             private void MeasureAndSize(int anchorWidth) {
-                int height = Dpi.Scale(this, 8);
+                int height = Dpi.Scale(this, RowInset * 2);
                 int width = Math.Max(anchorWidth, Dpi.Scale(this, _minWidth));
                 using (var bitmap = new Bitmap(1, 1)) {
                     bitmap.SetResolution(DeviceDpi, DeviceDpi);
@@ -286,7 +287,7 @@ namespace Material3.WinForms.Controls {
                                 w += Dpi.Scale(this, _iconSize) + Dpi.Scale(this, _iconGap);
                             }
                             if (!string.IsNullOrEmpty(entry.Shortcut)) {
-                                w += Dpi.Scale(this, 24) + g.MeasureString(entry.Shortcut, _hintFont, int.MaxValue, StringFormat.GenericTypographic).Width;
+                                w += Dpi.Scale(this, Spacing.Space6) + g.MeasureString(entry.Shortcut, _hintFont, int.MaxValue, StringFormat.GenericTypographic).Width;
                             }
                             width = Math.Max(width, (int)Math.Ceiling(w));
                         }

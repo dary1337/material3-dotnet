@@ -56,6 +56,11 @@ namespace Material3.WinForms.Gallery {
             return tag;
         }
 
+        private static MaterialButton Toned(MaterialButton button, MaterialTone tone) {
+            button.Tone = tone;
+            return button;
+        }
+
         private static MaterialButton Button(MaterialButtonVariant variant, string text, string? glyph = null, bool enabled = true) {
             var button = new MaterialButton { Variant = variant, Text = text, AutoSize = true, Enabled = enabled, Margin = Gap };
             if (glyph != null) {
@@ -127,17 +132,19 @@ namespace Material3.WinForms.Gallery {
                 }
             }),
             ["buttons.semantic"] = b => b.Flow(flow => {
-                flow.Controls.Add(Button(MaterialButtonVariant.WarningFilled, "Warning"));
-                flow.Controls.Add(Button(MaterialButtonVariant.ErrorFilled, "Error filled"));
-                flow.Controls.Add(Button(MaterialButtonVariant.ErrorTonal, "Error tonal"));
-                flow.Controls.Add(Button(MaterialButtonVariant.Shiny, "Shiny"));
+                flow.Controls.Add(Toned(Button(MaterialButtonVariant.Filled, "Warning"), MaterialTone.Warning));
+                flow.Controls.Add(Toned(Button(MaterialButtonVariant.Filled, "Error filled"), MaterialTone.Error));
+                flow.Controls.Add(Toned(Button(MaterialButtonVariant.Tonal, "Error tonal"), MaterialTone.Error));
+                MaterialButton shiny = Button(MaterialButtonVariant.Filled, "Shiny");
+                shiny.IsShiny = true;
+                flow.Controls.Add(shiny);
             }),
             ["buttons.icon"] = b => b.Flow(flow => {
                 flow.Controls.Add(Button(MaterialButtonVariant.Filled, "Save", MaterialIcons.CheckFilled));
                 flow.Controls.Add(Button(MaterialButtonVariant.Tonal, "Sync", "Refresh"));
                 flow.Controls.Add(Button(MaterialButtonVariant.Outlined, "Details", MaterialIcons.InfoFilled));
                 flow.Controls.Add(Button(MaterialButtonVariant.Text, "Add", MaterialIcons.Add));
-                flow.Controls.Add(Button(MaterialButtonVariant.ErrorTonal, "Delete", MaterialIcons.Close));
+                flow.Controls.Add(Toned(Button(MaterialButtonVariant.Tonal, "Delete", MaterialIcons.Close), MaterialTone.Error));
             }),
             ["buttons.disabled"] = b => b.Flow(flow => {
                 foreach (MaterialButtonVariant v in new[] {
@@ -323,7 +330,7 @@ namespace Material3.WinForms.Gallery {
                 }) {
                     var banner = new MaterialNoticeBanner { Tone = tone, Glyph = glyph, Text = text, Width = 520 };
                     if (tone == MaterialTone.Error) {
-                        banner.Actions = new MaterialButton { Variant = MaterialButtonVariant.ErrorTonal, Text = "Show log", AutoSize = true, ButtonHeight = 32 };
+                        banner.Actions = new MaterialButton { Variant = MaterialButtonVariant.Tonal, Tone = MaterialTone.Error, Text = "Show log", AutoSize = true, ButtonHeight = 32 };
                     }
 
                     banner.Dismissed += (s, e) => restore.Visible = true;
@@ -606,7 +613,7 @@ namespace Material3.WinForms.Gallery {
                     work.Click += (s, e) => {
                         var d = new MaterialDialog { Tone = MaterialTone.Error, TitleText = "Delete “Aurora”?", BodyText = "The project and everything in it is removed." };
                         d.AddAction("Cancel", DialogResult.Cancel, MaterialButtonVariant.Text);
-                        d.AddAction("Delete", DialogResult.OK, MaterialButtonVariant.ErrorTonal, () => Task.Delay(1500));
+                        d.AddAction("Delete", DialogResult.OK, MaterialButtonVariant.Tonal, () => Task.Delay(1500), MaterialTone.Error);
                         Show(d);
                     };
                     var links = Button(MaterialButtonVariant.Tonal, "Error with links");

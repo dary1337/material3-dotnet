@@ -72,7 +72,7 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
-        public void ChildrenLeaveTheOnePixelFrameUncovered_UnlessMaximized() {
+        public void ChildrenLeaveTheOnePixelFrameUncoveredUnlessMaximized() {
             using BorderlessForm form = MakeForm();
             Rectangle client = form.ClientRectangle;
             Assert.Equal(Rectangle.Inflate(client, -1, -1), form.DisplayRectangle);

@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Globalization;
+using System.Reflection;
 using Material3.Core;
 using Xunit;
 
@@ -12,11 +14,15 @@ namespace Material3.WinForms.Tests {
         private static readonly string[] Cultures = { "en", "ru" };
 
         [Fact]
-        public void EveryCultureTranslatesEveryKey() {
+        public void EveryBuiltInTableTranslatesEveryKey() {
+            Type tables = typeof(LibraryText).Assembly.GetType("Material3.Core.LibraryTextTables")!;
+            var byCulture = (IDictionary)tables.GetField("ByCulture", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+            Assert.Equal(Cultures.Length, byCulture.Count);
             foreach (string name in Cultures) {
-                var culture = CultureInfo.GetCultureInfo(name);
+                var table = (IDictionary)byCulture[name]!;
                 foreach (TextKey key in Enum.GetValues(typeof(TextKey))) {
-                    Assert.False(string.IsNullOrWhiteSpace(LibraryText.Get(key, culture)), $"{name}/{key}");
+                    Assert.True(table.Contains(key), $"{name} lacks {key}");
+                    Assert.False(string.IsNullOrWhiteSpace((string?)table[key]), $"{name}/{key}");
                 }
             }
         }

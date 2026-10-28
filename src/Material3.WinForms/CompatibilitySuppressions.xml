@@ -3,6 +3,27 @@
 <Suppressions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Suppression>
     <DiagnosticId>CP0002</DiagnosticId>
+    <Target>F:Material3.WinForms.Tokens.ComponentSizes.ButtonHeight</Target>
+    <Left>lib/net472/Material3.WinForms.dll</Left>
+    <Right>lib/net472/Material3.WinForms.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>F:Material3.WinForms.Tokens.ComponentSizes.ButtonHeightSmall</Target>
+    <Left>lib/net472/Material3.WinForms.dll</Left>
+    <Right>lib/net472/Material3.WinForms.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>F:Material3.WinForms.Tokens.ComponentSizes.DropdownHeight</Target>
+    <Left>lib/net472/Material3.WinForms.dll</Left>
+    <Right>lib/net472/Material3.WinForms.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
     <Target>F:Material3.WinForms.Tokens.Elevation.TintOpacity</Target>
     <Left>lib/net472/Material3.WinForms.dll</Left>
     <Right>lib/net472/Material3.WinForms.dll</Right>
@@ -48,6 +69,27 @@
     <Target>M:Material3.WinForms.TaskbarProgress.SetValue(System.Windows.Forms.IWin32Window,System.Int32)</Target>
     <Left>lib/net472/Material3.WinForms.dll</Left>
     <Right>lib/net472/Material3.WinForms.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>F:Material3.WinForms.Tokens.ComponentSizes.ButtonHeight</Target>
+    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
+    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>F:Material3.WinForms.Tokens.ComponentSizes.ButtonHeightSmall</Target>
+    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
+    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>F:Material3.WinForms.Tokens.ComponentSizes.DropdownHeight</Target>
+    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
+    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
   </Suppression>
   <Suppression>

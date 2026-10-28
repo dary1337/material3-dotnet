@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
 using System.Windows.Forms;
+using Material3.Core;
 using Material3.WinForms.Drawing;
 using Material3.WinForms.Theming;
 using Material3.WinForms.Tokens;
@@ -67,7 +68,7 @@ namespace Material3.WinForms.Controls {
 
             Click += (s, e) => _editor.Focus();
             TypeRole.Follow(this, () => TypeScale.BodyMedium);
-            Material3.Core.LibraryText.Changed += OnLibraryTextChanged;
+            LibraryText.Changed += OnLibraryTextChanged;
             ThemeHook.Attach(this, ApplyTheme);
             ApplyTheme();
             LayoutEditor();
@@ -178,19 +179,19 @@ namespace Material3.WinForms.Controls {
         protected override void Dispose(bool disposing) {
             if (disposing) {
                 _layer.Dispose();
-                Material3.Core.LibraryText.Changed -= OnLibraryTextChanged;
+                LibraryText.Changed -= OnLibraryTextChanged;
             }
             base.Dispose(disposing);
         }
 
         private void ApplyPlaceholder() => _editor.Cue = Placeholder;
 
-        /// <summary>Hint text shown while the query is empty. Null shows the library's own, <see cref="Material3.Core.TextKey.Search"/>.</summary>
+        /// <summary>Hint text shown while the query is empty. Null shows the library's own, <see cref="TextKey.Search"/>.</summary>
         [Category("Material Design")]
         [Description("Hint text shown while the query is empty. Null shows the library's own.")]
         [AllowNull]
         public string Placeholder {
-            get => _placeholder ?? Material3.Core.LibraryText.Get(Material3.Core.TextKey.Search);
+            get => _placeholder ?? LibraryText.Get(TextKey.Search);
             set {
                 _placeholder = value;
                 ApplyPlaceholder();

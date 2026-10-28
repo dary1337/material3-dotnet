@@ -14,6 +14,9 @@ namespace Material3.WinForms.Tokens {
     /// has no compositor, so shadows are drawn as concentric translucent rounded strokes).
     /// </summary>
     public static class Elevation {
+        /// <summary>Raised after <see cref="TintOpacity"/> changed, so tinted surfaces repaint.</summary>
+        public static event EventHandler? Changed;
+
         private static IReadOnlyList<double> _tintOpacity = Array.AsReadOnly(new[] { 0.0, 0.05, 0.08, 0.11, 0.12, 0.14 });
 
         /// <summary>Surface-tint opacity per level (0–5), per the M3 spec. Assign six values in 0–1 to retune every elevated surface.</summary>
@@ -25,6 +28,7 @@ namespace Material3.WinForms.Tokens {
                     throw new ArgumentException("Six opacities in 0-1 are required, one per level.", nameof(value));
                 }
                 _tintOpacity = Array.AsReadOnly(value.ToArray());
+                Changed?.Invoke(null, EventArgs.Empty);
             }
         }
 

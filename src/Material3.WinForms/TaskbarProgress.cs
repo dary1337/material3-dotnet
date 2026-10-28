@@ -1,9 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Material3.Shared;
 
 namespace Material3.WinForms {
     /// <summary>
@@ -34,50 +34,35 @@ namespace Material3.WinForms {
             AppDomain.CurrentDomain.ProcessExit += (_, __) => ReleaseInstance();
         }
 
-        private static void SetValue(IWin32Window owner, int percent) {
-            if (!IsOwnerUsable(owner)) {
-                return;
-            }
-
-            if (percent < 0) {
-                percent = 0;
-            }
-
-            if (percent > 100) {
-                percent = 100;
-            }
-
-            ITaskbarList3? tb = TryGetInstance();
+        private static void SetValue(Form form, int percent) {
+            ITaskbarList3? tb = Usable(form) ? TryGetInstance() : null;
             if (tb == null) {
                 return;
             }
 
             try {
-                tb.SetProgressValue(owner.Handle, (ulong)percent, 100UL);
-            }
-            catch (COMException) {
-            }
-            catch (ObjectDisposedException) { }
-        }
-
-        private static void SetState(IWin32Window owner, State state) {
-            if (!IsOwnerUsable(owner)) {
-                return;
-            }
-
-            ITaskbarList3? tb = TryGetInstance();
-            if (tb == null) {
-                return;
-            }
-
-            try {
-                tb.SetProgressState(owner.Handle, (uint)state);
+                tb.SetProgressValue(form.Handle, (ulong)Math.Max(0, Math.Min(100, percent)), 100UL);
             }
             catch (COMException) { }
             catch (ObjectDisposedException) { }
         }
 
-        private static readonly ConditionalWeakTable<Form, List<Session>> Queues = new ConditionalWeakTable<Form, List<Session>>();
+        private static void SetState(Form form, State state) {
+            ITaskbarList3? tb = Usable(form) ? TryGetInstance() : null;
+            if (tb == null) {
+                return;
+            }
+
+            try {
+                tb.SetProgressState(form.Handle, (uint)state);
+            }
+            catch (COMException) { }
+            catch (ObjectDisposedException) { }
+        }
+
+        private static bool Usable(Form form) => !form.IsDisposed && form.IsHandleCreated;
+
+        private static readonly ConditionalWeakTable<Form, ProgressQueue<State>> Queues = new ConditionalWeakTable<Form, ProgressQueue<State>>();
 
         /// <summary>Opens a session on <paramref name="form"/>'s taskbar button, starting indeterminate. Dispose it when the work ends.</summary>
         public static Session Begin(Form form) {
@@ -85,15 +70,11 @@ namespace Material3.WinForms {
                 throw new ArgumentNullException(nameof(form));
             }
 
-            List<Session> queue = Queues.GetValue(form, f => {
+            ProgressQueue<State> queue = Queues.GetValue(form, f => {
                 f.HandleCreated += (s, e) => Render(f);
-                return new List<Session>();
+                return new ProgressQueue<State>();
             });
             var session = new Session(form, queue);
-            lock (queue) {
-                queue.Add(session);
-            }
-
             Render(form);
             return session;
         }
@@ -112,17 +93,11 @@ namespace Material3.WinForms {
                 return;
             }
 
-            if (!Queues.TryGetValue(form, out List<Session>? queue)) {
+            if (!Queues.TryGetValue(form, out ProgressQueue<State>? queue)) {
                 return;
             }
 
-            State state;
-            double value;
-            lock (queue) {
-                Session? shown = queue.Count > 0 ? queue[0] : null;
-                state = shown?.State ?? State.None;
-                value = shown?.Value ?? 0;
-            }
+            (State state, double value) = queue.Shown(State.None);
             SetState(form, state);
             if (state != State.None && state != State.Indeterminate) {
                 SetValue(form, (int)Math.Round(value * 100));
@@ -132,30 +107,23 @@ namespace Material3.WinForms {
         /// <summary>One producer's claim on the bar. Only the oldest open session of the form is shown.</summary>
         public sealed class Session : IDisposable {
             private readonly Form _form;
-            private readonly List<Session> _queue;
-            private bool _ended;
+            private readonly ProgressQueue<State> _queue;
+            private readonly ProgressQueue<State>.Claim _claim;
 
-            internal Session(Form form, List<Session> queue) {
+            internal Session(Form form, ProgressQueue<State> queue) {
                 _form = form;
                 _queue = queue;
+                _claim = queue.Open(State.Indeterminate);
             }
 
             /// <summary>The state this session asks for.</summary>
-            public State State { get; private set; } = State.Indeterminate;
+            public State State => _claim.State;
 
             /// <summary>The fraction this session asks for, 0 to 1.</summary>
-            public double Value { get; private set; }
+            public double Value => _claim.Value;
 
             /// <summary>Whether this session is the one the bar shows.</summary>
-            public bool IsShown {
-                get {
-                    lock (_queue) {
-                        return Heads;
-                    }
-                }
-            }
-
-            private bool Heads => !_ended && _queue.Count > 0 && ReferenceEquals(_queue[0], this);
+            public bool IsShown => _queue.IsShown(_claim);
 
             /// <summary>A green bar at <paramref name="percent"/>, clamped to 0–100.</summary>
             public void SetNormal(int percent) => Set(State.Normal, Math.Max(0, Math.Min(100, percent)) / 100.0);
@@ -173,41 +141,17 @@ namespace Material3.WinForms {
             public void SetComplete() => Set(State.Normal, 1.0);
 
             private void Set(State state, double value) {
-                bool shown;
-                lock (_queue) {
-                    if (_ended) {
-                        return;
-                    }
-
-                    State = state;
-                    Value = value;
-                    shown = Heads;
-                }
-                if (shown) {
+                if (_queue.Set(_claim, state, value)) {
                     Render(_form);
                 }
             }
 
             /// <summary>Gives the bar back: the next session takes it over, or it clears.</summary>
             public void Dispose() {
-                bool wasShown;
-                lock (_queue) {
-                    if (_ended) {
-                        return;
-                    }
-
-                    wasShown = Heads;
-                    _ended = true;
-                    _queue.Remove(this);
-                }
-                if (wasShown) {
+                if (_queue.End(_claim)) {
                     Render(_form);
                 }
             }
-        }
-
-        private static bool IsOwnerUsable(IWin32Window owner) {
-            return !(owner is Control control) || (!control.IsDisposed && control.IsHandleCreated);
         }
 
         private static ITaskbarList3? TryGetInstance() {

@@ -557,7 +557,7 @@ namespace Material3.WinForms.Controls {
             float x = ContentLeft;
 
             if (_variant == MaterialTextFieldVariant.Outlined && t > 0.01f) {
-                var gap = new RectangleF(x - Dpi.Scale(this, 4f), labelRise, floatSize.Width + Dpi.Scale(this, 8f), Dpi.Scale(this, 2.5f));
+                var gap = new RectangleF(x - Dpi.Scale(this, (float)Spacing.Space1), labelRise, floatSize.Width + Dpi.Scale(this, (float)Spacing.Space2), Dpi.Scale(this, 2.5f));
                 using (var brush = new SolidBrush(parent)) {
                     g.FillRectangle(brush, gap.X, gap.Y, gap.Width * t, gap.Height);
                 }
@@ -602,7 +602,7 @@ namespace Material3.WinForms.Controls {
                 : _isError ? MaterialColors.Error : MaterialColors.OnSurfaceVariant;
             using (var brush = new SolidBrush(color)) {
                 g.DrawString(text, LineFont, brush,
-                    new PointF(Dpi.Scale(this, _horizontalPadding), Dpi.Scale(this, LabelRise) + Dpi.Scale(this, _fieldHeight) + Dpi.Scale(this, 4)), StringFormat.GenericTypographic);
+                    new PointF(Dpi.Scale(this, _horizontalPadding), Dpi.Scale(this, LabelRise) + Dpi.Scale(this, _fieldHeight) + Dpi.Scale(this, Spacing.Space1)), StringFormat.GenericTypographic);
             }
         }
 

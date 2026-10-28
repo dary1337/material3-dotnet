@@ -16,6 +16,8 @@ namespace Material3.WinForms.Controls {
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialNoticeBanner : Control {
+        private const int DismissSize = 24;
+        private const int ActionGap = 6;
         private const TextFormatFlags Wrapped = TextFormatFlags.NoPadding | TextFormatFlags.WordBreak | TextFormatFlags.VerticalCenter;
 
         private MaterialTone _tone = MaterialTone.Warning;
@@ -25,6 +27,7 @@ namespace Material3.WinForms.Controls {
         private int _glyphSize = ComponentSizes.IconExtraSmall;
         private Control? _actions;
         private bool _dismissHovered;
+        private readonly StateLayerFade _dismissLayer;
         private Rectangle _glyphRect, _textRect, _dismissRect;
 
         /// <summary>Raised when the user dismisses the banner, after it starts to collapse.</summary>
@@ -34,6 +37,7 @@ namespace Material3.WinForms.Controls {
         public MaterialNoticeBanner() {
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer
                 | ControlStyles.ResizeRedraw | ControlStyles.SupportsTransparentBackColor, true);
+            _dismissLayer = new StateLayerFade(this);
             Padding = new Padding(12, 8, 12, 8);
             Width = 480;
             ThemeHook.Attach(this, ApplyTone);
@@ -156,22 +160,22 @@ namespace Material3.WinForms.Controls {
         private int NaturalHeight(int width) {
             int textWidth = Math.Max(1, TextWidth(width));
             int text = TextRenderer.MeasureText(Text.Length > 0 ? Text : " ", Font, new Size(textWidth, int.MaxValue), Wrapped).Height;
-            int row = Math.Max(text, Math.Max(Dpi.Scale(this, 24), _actions?.Height ?? 0));
+            int row = Math.Max(text, Math.Max(Dpi.Scale(this, DismissSize), _actions?.Height ?? 0));
             return row + Padding.Vertical;
         }
 
         private int TextWidth(int width) {
             int used = Padding.Horizontal;
             if (_glyph.Length > 0) {
-                used += Dpi.Scale(this, _glyphSize) + Dpi.Scale(this, 8);
+                used += Dpi.Scale(this, _glyphSize) + Dpi.Scale(this, Spacing.Space2);
             }
 
             if (_actions != null) {
-                used += _actions.Width + Dpi.Scale(this, 6);
+                used += _actions.Width + Dpi.Scale(this, ActionGap);
             }
 
             if (_canDismiss) {
-                used += Dpi.Scale(this, 24) + Dpi.Scale(this, 6);
+                used += Dpi.Scale(this, DismissSize) + Dpi.Scale(this, ActionGap);
             }
 
             return width - used;
@@ -187,7 +191,7 @@ namespace Material3.WinForms.Controls {
             if (_glyph.Length > 0) {
                 int g = Dpi.Scale(this, _glyphSize);
                 _glyphRect = new Rectangle(x, top + (row - g) / 2, g, g);
-                x += g + Dpi.Scale(this, 8);
+                x += g + Dpi.Scale(this, Spacing.Space2);
             }
             else {
                 _glyphRect = Rectangle.Empty;
@@ -195,9 +199,9 @@ namespace Material3.WinForms.Controls {
 
             int right = Width - Padding.Right;
             if (_canDismiss) {
-                int d = Dpi.Scale(this, 24);
+                int d = Dpi.Scale(this, DismissSize);
                 _dismissRect = new Rectangle(right - d, top + (row - d) / 2, d, d);
-                right -= d + Dpi.Scale(this, 6);
+                right -= d + Dpi.Scale(this, ActionGap);
             }
             else {
                 _dismissRect = Rectangle.Empty;
@@ -205,7 +209,7 @@ namespace Material3.WinForms.Controls {
 
             if (_actions != null) {
                 _actions.Location = new Point(right - _actions.Width, top + (row - _actions.Height) / 2);
-                right -= _actions.Width + Dpi.Scale(this, 6);
+                right -= _actions.Width + Dpi.Scale(this, ActionGap);
             }
             _textRect = new Rectangle(x, top, Math.Max(1, right - x), row);
             if (Height != natural) {
@@ -290,8 +294,9 @@ namespace Material3.WinForms.Controls {
 
             TextRenderer.DrawText(g, Text, Font, _textRect, content, Wrapped);
             if (_dismissRect.Width > 0) {
-                if (_dismissHovered) {
-                    using (var brush = new SolidBrush(Color.FromArgb((int)(255 * 0.12), content))) {
+                double layer = _dismissLayer.Resolve(_dismissHovered, false);
+                if (layer > 0) {
+                    using (var brush = new SolidBrush(Color.FromArgb((int)(255 * layer), content))) {
                         g.FillEllipse(brush, _dismissRect);
                     }
                 }
@@ -305,6 +310,7 @@ namespace Material3.WinForms.Controls {
         protected override void Dispose(bool disposing) {
             if (disposing) {
                 TypeScale.Changed -= OnTypeScaleChanged;
+                _dismissLayer.Dispose();
             }
             base.Dispose(disposing);
         }

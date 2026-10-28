@@ -293,6 +293,8 @@ namespace Material3.WinForms.Controls {
         }
 
         internal static class Swatch {
+            private const int CheckerCell = 6;
+
             public static void Paint(Graphics g, Control owner, Rectangle r, Color color, int radius, bool hovered) {
                 using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(r, radius)) {
                     GraphicsState saved = g.Save();
@@ -315,7 +317,7 @@ namespace Material3.WinForms.Controls {
             }
 
             public static void Checkerboard(Graphics g, Control owner, Rectangle r) {
-                int cell = Math.Max(2, Dpi.Scale(owner, 6));
+                int cell = Math.Max(2, Dpi.Scale(owner, CheckerCell));
                 using (var light = new SolidBrush(Color.FromArgb(0xE0, 0xE0, 0xE0)))
                 using (var dark = new SolidBrush(Color.FromArgb(0xB0, 0xB0, 0xB0))) {
                     for (int y = r.Top; y < r.Bottom; y += cell) {

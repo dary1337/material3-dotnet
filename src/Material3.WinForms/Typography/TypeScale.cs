@@ -40,82 +40,84 @@ namespace Material3.WinForms.Typography {
         /// <summary>Raised after a style or the family changed. Controls that draw with a scale role re-read it.</summary>
         public static event EventHandler? Changed;
 
-        private static TextStyle _displayLarge = Style(DefaultFamily, 42.75f, -0.25f, 64);
+        static TypeScale() => Build(DefaultFamily, DefaultFamilyMedium);
+
+        private static TextStyle _displayLarge = null!;
 
         /// <summary>The largest display text, for a hero number or a short headline. With its letter spacing and line height.</summary>
         public static TextStyle DisplayLargeStyle { get => _displayLarge; set => Replace(ref _displayLarge, value); }
 
-        private static TextStyle _displayMedium = Style(DefaultFamily, 33.75f, 0f, 52);
+        private static TextStyle _displayMedium = null!;
 
         /// <summary>Medium display text. With its letter spacing and line height.</summary>
         public static TextStyle DisplayMediumStyle { get => _displayMedium; set => Replace(ref _displayMedium, value); }
 
-        private static TextStyle _displaySmall = Style(DefaultFamily, 27f, 0f, 44);
+        private static TextStyle _displaySmall = null!;
 
         /// <summary>Small display text. With its letter spacing and line height.</summary>
         public static TextStyle DisplaySmallStyle { get => _displaySmall; set => Replace(ref _displaySmall, value); }
 
-        private static TextStyle _headlineLarge = Style(DefaultFamily, 24f, 0f, 40);
+        private static TextStyle _headlineLarge = null!;
 
         /// <summary>The largest headline. With its letter spacing and line height.</summary>
         public static TextStyle HeadlineLargeStyle { get => _headlineLarge; set => Replace(ref _headlineLarge, value); }
 
-        private static TextStyle _headlineMedium = Style(DefaultFamily, 21f, 0f, 36);
+        private static TextStyle _headlineMedium = null!;
 
         /// <summary>A medium headline. With its letter spacing and line height.</summary>
         public static TextStyle HeadlineMediumStyle { get => _headlineMedium; set => Replace(ref _headlineMedium, value); }
 
-        private static TextStyle _headlineSmall = Style(DefaultFamily, 18f, 0f, 32);
+        private static TextStyle _headlineSmall = null!;
 
         /// <summary>A small headline. With its letter spacing and line height.</summary>
         public static TextStyle HeadlineSmallStyle { get => _headlineSmall; set => Replace(ref _headlineSmall, value); }
 
-        private static TextStyle _titleLarge = Style(DefaultFamily, 16.5f, 0f, 28);
+        private static TextStyle _titleLarge = null!;
 
         /// <summary>A large title, such as a page or dialog title. With its letter spacing and line height.</summary>
         public static TextStyle TitleLargeStyle { get => _titleLarge; set => Replace(ref _titleLarge, value); }
 
-        private static TextStyle _titleMedium = Style(DefaultFamilyMedium, 12f, 0.15f, 24);
+        private static TextStyle _titleMedium = null!;
 
         /// <summary>A medium title, such as a card title. With its letter spacing and line height.</summary>
         public static TextStyle TitleMediumStyle { get => _titleMedium; set => Replace(ref _titleMedium, value); }
 
-        private static TextStyle _titleSmall = Style(DefaultFamilyMedium, 10.5f, 0.1f, 20);
+        private static TextStyle _titleSmall = null!;
 
         /// <summary>A small title, such as a section label. With its letter spacing and line height.</summary>
         public static TextStyle TitleSmallStyle { get => _titleSmall; set => Replace(ref _titleSmall, value); }
 
-        private static TextStyle _bodyLarge = Style(DefaultFamily, 12f, 0.5f, 24);
+        private static TextStyle _bodyLarge = null!;
 
         /// <summary>Large body text. With its letter spacing and line height.</summary>
         public static TextStyle BodyLargeStyle { get => _bodyLarge; set => Replace(ref _bodyLarge, value); }
 
-        private static TextStyle _bodyMedium = Style(DefaultFamily, 10.5f, 0.25f, 20);
+        private static TextStyle _bodyMedium = null!;
 
         /// <summary>The default body text. With its letter spacing and line height.</summary>
         public static TextStyle BodyMediumStyle { get => _bodyMedium; set => Replace(ref _bodyMedium, value); }
 
-        private static TextStyle _bodySmall = Style(DefaultFamily, 9f, 0.4f, 16);
+        private static TextStyle _bodySmall = null!;
 
         /// <summary>Small body text, such as a caption. With its letter spacing and line height.</summary>
         public static TextStyle BodySmallStyle { get => _bodySmall; set => Replace(ref _bodySmall, value); }
 
-        private static TextStyle _labelLarge = Style(DefaultFamilyMedium, 10.5f, 0.1f, 20);
+        private static TextStyle _labelLarge = null!;
 
         /// <summary>Button and tab labels. With its letter spacing and line height.</summary>
         public static TextStyle LabelLargeStyle { get => _labelLarge; set => Replace(ref _labelLarge, value); }
 
-        private static TextStyle _labelMedium = Style(DefaultFamilyMedium, 9f, 0.5f, 16);
+        private static TextStyle _labelMedium = null!;
 
         /// <summary>Medium labels. With its letter spacing and line height.</summary>
         public static TextStyle LabelMediumStyle { get => _labelMedium; set => Replace(ref _labelMedium, value); }
 
-        private static TextStyle _labelSmall = Style(DefaultFamilyMedium, 8.25f, 0.5f, 16);
+        private static TextStyle _labelSmall = null!;
 
         /// <summary>Small labels, such as a badge. With its letter spacing and line height.</summary>
         public static TextStyle LabelSmallStyle { get => _labelSmall; set => Replace(ref _labelSmall, value); }
 
-        private static TextStyle _overline = Style(DefaultFamilyMedium, 8.25f, 1.5f, 16);
+        private static TextStyle _overline = null!;
 
         /// <summary>An all-caps eyebrow above a title. A library extension. With its letter spacing and line height.</summary>
         public static TextStyle OverlineStyle { get => _overline; set => Replace(ref _overline, value); }
@@ -162,30 +164,29 @@ namespace Material3.WinForms.Typography {
                 throw new ArgumentException("A family is required.", nameof(family));
             }
 
-            _suspend = true;
-            try {
-                DisplayLargeStyle = Style(family, 42.75f, -0.25f, 64);
-                DisplayMediumStyle = Style(family, 33.75f, 0f, 52);
-                DisplaySmallStyle = Style(family, 27f, 0f, 44);
-                HeadlineLargeStyle = Style(family, 24f, 0f, 40);
-                HeadlineMediumStyle = Style(family, 21f, 0f, 36);
-                HeadlineSmallStyle = Style(family, 18f, 0f, 32);
-                TitleLargeStyle = Style(family, 16.5f, 0f, 28);
-                TitleMediumStyle = Medium(family, mediumFamily, 12f, 0.15f, 24);
-                TitleSmallStyle = Medium(family, mediumFamily, 10.5f, 0.1f, 20);
-                BodyLargeStyle = Style(family, 12f, 0.5f, 24);
-                BodyMediumStyle = Style(family, 10.5f, 0.25f, 20);
-                BodySmallStyle = Style(family, 9f, 0.4f, 16);
-                LabelLargeStyle = Medium(family, mediumFamily, 10.5f, 0.1f, 20);
-                LabelMediumStyle = Medium(family, mediumFamily, 9f, 0.5f, 16);
-                LabelSmallStyle = Medium(family, mediumFamily, 8.25f, 0.5f, 16);
-                OverlineStyle = Medium(family, mediumFamily, 8.25f, 1.5f, 16);
-            }
-            finally { _suspend = false; }
+            Build(family, mediumFamily);
             Changed?.Invoke(null, EventArgs.Empty);
         }
 
-        private static bool _suspend;
+        // The one place the M3 sizes live: (pt, tracking px, line height px).
+        private static void Build(string family, string? medium) {
+            _displayLarge = Style(family, 42.75f, -0.25f, 64);
+            _displayMedium = Style(family, 33.75f, 0f, 52);
+            _displaySmall = Style(family, 27f, 0f, 44);
+            _headlineLarge = Style(family, 24f, 0f, 40);
+            _headlineMedium = Style(family, 21f, 0f, 36);
+            _headlineSmall = Style(family, 18f, 0f, 32);
+            _titleLarge = Style(family, 16.5f, 0f, 28);
+            _titleMedium = Medium(family, medium, 12f, 0.15f, 24);
+            _titleSmall = Medium(family, medium, 10.5f, 0.1f, 20);
+            _bodyLarge = Style(family, 12f, 0.5f, 24);
+            _bodyMedium = Style(family, 10.5f, 0.25f, 20);
+            _bodySmall = Style(family, 9f, 0.4f, 16);
+            _labelLarge = Medium(family, medium, 10.5f, 0.1f, 20);
+            _labelMedium = Medium(family, medium, 9f, 0.5f, 16);
+            _labelSmall = Medium(family, medium, 8.25f, 0.5f, 16);
+            _overline = Medium(family, medium, 8.25f, 1.5f, 16);
+        }
 
         private static void Replace(ref TextStyle field, TextStyle value) {
             if (value == null) {
@@ -197,9 +198,7 @@ namespace Material3.WinForms.Typography {
             }
 
             field = value;
-            if (!_suspend) {
-                Changed?.Invoke(null, EventArgs.Empty);
-            }
+            Changed?.Invoke(null, EventArgs.Empty);
         }
 
         private static TextStyle Style(string family, float sizePt, float letterSpacing, int lineHeight) =>
