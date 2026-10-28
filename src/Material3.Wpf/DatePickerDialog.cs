@@ -39,7 +39,7 @@ namespace Material3.Wpf {
                 throw new ArgumentNullException(nameof(options));
             }
 
-            double cell = Resource(owner, ResourceKeys.DatePickerCellSize, 40.0);
+            double cell = Resource(owner, ResourceKeys.DatePickerCellSize, DateGrid.DefaultCell);
             var calendar = new DateGrid(options.Initial.Date, options.Culture ?? CultureInfo.CurrentCulture, options.Title, cell);
             DialogChoice choice = Dialog.Show(owner, new DialogOptions {
                 Content = calendar,
@@ -76,7 +76,10 @@ namespace Material3.Wpf {
         private readonly UniformGrid _days = new UniformGrid { Rows = 6, Columns = 7 };
         private DateTime _shown;
 
-        internal DateGrid(DateTime initial, CultureInfo culture, string title, double cell = 40) {
+        // Tokens.xaml's DatePickerCellSize is the real default; this one is for an app without the library's dictionaries.
+        internal const double DefaultCell = 40;
+
+        internal DateGrid(DateTime initial, CultureInfo culture, string title, double cell = DefaultCell) {
             _cell = cell;
             _culture = culture;
             _firstDay = culture.DateTimeFormat.FirstDayOfWeek;

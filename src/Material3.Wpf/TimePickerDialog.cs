@@ -51,10 +51,10 @@ namespace Material3.Wpf {
             CultureInfo culture = options.Culture ?? CultureInfo.CurrentCulture;
             bool is24 = options.Is24Hour ?? !culture.DateTimeFormat.ShortTimePattern.Contains("h");
             var input = new TimeInput(options, culture, is24,
-                DatePickerDialog.Resource(owner, ResourceKeys.TimePickerFieldSize, new Size(96, 72)),
-                DatePickerDialog.Resource(owner, ResourceKeys.TimePickerFieldFontSize, 45.0),
-                DatePickerDialog.Resource(owner, ResourceKeys.TimePickerPeriodWidth, 52.0),
-                DatePickerDialog.Resource(owner, ResourceKeys.RadiusSm, new CornerRadius(8)));
+                DatePickerDialog.Resource(owner, ResourceKeys.TimePickerFieldSize, TimeInput.DefaultField),
+                DatePickerDialog.Resource(owner, ResourceKeys.TimePickerFieldFontSize, TimeInput.DefaultFontSize),
+                DatePickerDialog.Resource(owner, ResourceKeys.TimePickerPeriodWidth, TimeInput.DefaultPeriodWidth),
+                DatePickerDialog.Resource(owner, ResourceKeys.RadiusSm, TimeInput.DefaultPeriodRadius));
             DialogChoice choice = Dialog.Show(owner, new DialogOptions {
                 Content = input,
                 ConfirmText = options.ConfirmText,
@@ -80,16 +80,21 @@ namespace Material3.Wpf {
         private Border? _am, _pmRow;
         private RadioButton? _amChoice, _pmChoice;
 
-        private static readonly ControlTemplate PresenterOnly = new ControlTemplate(typeof(RadioButton)) {
-            VisualTree = new FrameworkElementFactory(typeof(ContentPresenter)),
-        };
 
-        internal TimeInput(TimePickerOptions options, CultureInfo culture, bool is24, Size field = default, double fontSize = 45,
-            double periodWidth = 52, CornerRadius periodRadius = default) {
+        // Tokens.xaml holds the real defaults; these are only for an app without the library's dictionaries, and a test
+        // keeps the two equal.
+        internal static readonly Size DefaultField = new Size(96, 72);
+        internal const double DefaultFontSize = 45;
+        internal const double DefaultPeriodWidth = 52;
+        internal static readonly CornerRadius DefaultPeriodRadius = new CornerRadius(8);
+
+        internal TimeInput(TimePickerOptions options, CultureInfo culture, bool is24)
+            : this(options, culture, is24, DefaultField, DefaultFontSize, DefaultPeriodWidth, DefaultPeriodRadius) {
+        }
+
+        internal TimeInput(TimePickerOptions options, CultureInfo culture, bool is24, Size field, double fontSize,
+            double periodWidth, CornerRadius periodRadius) {
             _is24 = is24;
-            if (field.Width <= 0) {
-                field = new Size(96, 72);
-            }
 
             var overline = new TextBlock { Text = options.Title, Margin = new Thickness(0, 0, 0, HeadlineGap) };
             overline.SetResourceReference(StyleProperty, ResourceKeys.LabelMedium);
@@ -116,7 +121,7 @@ namespace Material3.Wpf {
             row.Children.Add(minuteColumn);
             if (!is24) {
                 _hasPeriod = true;
-                row.Children.Add(PeriodSelector(culture, field.Height, periodWidth, periodRadius.TopLeft > 0 ? periodRadius : new CornerRadius(8)));
+                row.Children.Add(PeriodSelector(culture, field.Height, periodWidth, periodRadius));
                 ChooseAfternoon(pm);
             }
             Children.Add(row);
@@ -136,7 +141,7 @@ namespace Material3.Wpf {
 
         internal TimeSpan Value => TimeMath.Normalize(Read(_hour), Read(_minute), _hasPeriod && _pm, _is24).value;
 
-        // The M3 period selector: AM over PM in one outlined 52-wide column beside the fields, the chosen half tertiary.
+        // The M3 period selector: AM over PM in one outlined column beside the fields, the chosen half tertiary.
         private FrameworkElement PeriodSelector(CultureInfo culture, double height, double width, CornerRadius radius) {
             Border Half(string text, CornerRadius corners, bool afternoon) {
                 var label = new TextBlock { Text = text, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
@@ -146,13 +151,16 @@ namespace Material3.Wpf {
                 return half;
             }
 
+            // A template belongs to the thread that sealed it, so each picker builds its own.
+            var presenterOnly = new ControlTemplate(typeof(RadioButton)) { VisualTree = new FrameworkElementFactory(typeof(ContentPresenter)) };
+
             // Each half is a radio button to UI Automation: named by its designator and selectable.
             RadioButton Choice(Border half, string text, bool afternoon) {
                 var choice = new RadioButton {
                     Content = half,
                     GroupName = "period",
                     Focusable = false,
-                    Template = PresenterOnly,
+                    Template = presenterOnly,
                 };
                 AutomationProperties.SetName(choice, text);
                 choice.Checked += (_, __) => ChooseAfternoon(afternoon);
