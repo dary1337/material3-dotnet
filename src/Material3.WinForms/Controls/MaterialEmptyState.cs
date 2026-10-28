@@ -86,7 +86,7 @@ namespace Material3.WinForms.Controls {
             set { _glyphGap = Math.Max(0, value); PerformLayout(); Invalidate(); }
         }
 
-        /// <summary>A control under the text, such as a button that fixes the emptiness. It is not disposed with this control.</summary>
+        /// <summary>A control under the text, such as a button that fixes the emptiness. It becomes a child and is disposed with this control.</summary>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Control? Action {
