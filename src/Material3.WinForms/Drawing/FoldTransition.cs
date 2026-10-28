@@ -46,20 +46,37 @@ namespace Material3.WinForms.Drawing {
             overlay.Show(form);
             overlay.Update();
 
-            applyLayout();
-            RedrawWindow(form.Handle, IntPtr.Zero, IntPtr.Zero, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
-            Rectangle bandScreen = folding ? bandBefore : (band.Visible ? band.RectangleToScreen(band.ClientRectangle) : Rectangle.Empty);
-            Bitmap? after = Snapshot(form, viewport);
-            int top = Math.Max(0, bandScreen.Top - viewport.Top);
-            int bottom = Math.Min(viewport.Height, bandScreen.Bottom - viewport.Top);
-            if (after == null || bandScreen.IsEmpty || bottom <= top) {
-                after?.Dispose();
-                overlay.Finish();
-                return;
+            Bitmap? after = null;
+            try {
+                applyLayout();
+                RedrawWindow(form.Handle, IntPtr.Zero, IntPtr.Zero, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
+                Rectangle bandScreen = folding ? bandBefore : (band.Visible ? band.RectangleToScreen(band.ClientRectangle) : Rectangle.Empty);
+                after = Snapshot(form, viewport);
+                int top = Math.Max(0, bandScreen.Top - viewport.Top);
+                int bottom = Math.Min(viewport.Height, bandScreen.Bottom - viewport.Top);
+                if (after == null || bandScreen.IsEmpty || bottom <= top) {
+                    after?.Dispose();
+                    overlay.Finish();
+                    return;
+                }
+                Running[form] = overlay;
+                overlay.FormClosed += (s, e) => Forget(form, overlay);
+                Bitmap played = after;
+                after = null;
+                overlay.Play(played, top, bottom - top, folding);
             }
-            Running[form] = overlay;
-            overlay.FormClosed += (s, e) => { if (Running.TryGetValue(form, out Overlay? current) && current == overlay) { Running.Remove(form); } };
-            overlay.Play(after, top, bottom - top, folding);
+            catch {
+                after?.Dispose();
+                Forget(form, overlay);
+                overlay.Finish();
+                throw;
+            }
+        }
+
+        private static void Forget(Form form, Overlay overlay) {
+            if (Running.TryGetValue(form, out Overlay? current) && current == overlay) {
+                Running.Remove(form);
+            }
         }
 
         private static Rectangle VisibleArea(Control control) {

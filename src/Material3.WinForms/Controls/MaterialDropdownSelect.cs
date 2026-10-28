@@ -185,17 +185,24 @@ namespace Material3.WinForms.Controls {
 
         /// <inheritdoc />
         protected override bool IsInputKey(Keys keyData) =>
-            keyData == Keys.Down || keyData == Keys.Up || base.IsInputKey(keyData);
+            keyData == Keys.Down || keyData == Keys.Up
+            || (_menu.IsOpen && (keyData == Keys.Escape || keyData == Keys.Enter))
+            || base.IsInputKey(keyData);
 
         /// <inheritdoc />
         protected override void OnKeyDown(KeyEventArgs e) {
             base.OnKeyDown(e);
-            if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space || (e.Alt && e.KeyCode == Keys.Down)) {
+            if (_menu.IsOpen && (e.KeyCode == Keys.Escape || e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space)) {
+                _menu.Close();
+                e.Handled = true;
+            }
+            else if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space || (e.Alt && e.KeyCode == Keys.Down)) {
                 Open();
                 e.Handled = true;
             }
             else if (e.KeyCode == Keys.Down || e.KeyCode == Keys.Up) {
                 SelectIndex(_selectedIndex + (e.KeyCode == Keys.Down ? 1 : -1));
+                _menu.MarkSelected(_selectedIndex);
                 e.Handled = true;
             }
         }
@@ -204,7 +211,11 @@ namespace Material3.WinForms.Controls {
         protected override void OnGotFocus(EventArgs e) { base.OnGotFocus(e); Invalidate(); }
 
         /// <inheritdoc />
-        protected override void OnLostFocus(EventArgs e) { base.OnLostFocus(e); Invalidate(); }
+        protected override void OnLostFocus(EventArgs e) {
+            base.OnLostFocus(e);
+            _menu.Close();
+            Invalidate();
+        }
 
         private void Open() {
             if (_items.Count == 0 || _menu.IsOpen) {

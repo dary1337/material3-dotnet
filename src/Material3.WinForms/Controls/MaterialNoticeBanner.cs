@@ -95,7 +95,7 @@ namespace Material3.WinForms.Controls {
             set { _glyphSize = Math.Max(1, value); PerformLayout(); Invalidate(); }
         }
 
-        /// <summary>A control before the dismiss button, typically a text button. It is not disposed with the banner.</summary>
+        /// <summary>A control before the dismiss button, typically a text button. It becomes a child and is disposed with the banner.</summary>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Control? Actions {

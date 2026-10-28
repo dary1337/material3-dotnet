@@ -188,7 +188,8 @@ namespace Material3.WinForms.Controls {
                 return true;
             }
 
-            return _inputKind == MaterialInputKind.Integer ? long.TryParse(t, out _)
+            return _inputKind == MaterialInputKind.Integer
+                ? long.TryParse(t, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out _)
                 : double.TryParse(t, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _);
         });
 
@@ -260,6 +261,7 @@ namespace Material3.WinForms.Controls {
 
             _rows.RemoveAt(from);
             _rows.Insert(to, row);
+            Renumber();
             PerformLayout();
             Changed();
         }
@@ -303,9 +305,22 @@ namespace Material3.WinForms.Controls {
             finally {
                 _host.EndContentUpdate();
             }
+            Renumber();
             _add.Visible = IsGrowable;
             PerformLayout();
             Invalidate();
+        }
+
+        // A re-added control keeps the TabIndex it was first given, so Tab follows the rows only once renumbered.
+        private void Renumber() {
+            int tab = 0;
+            foreach (Row row in _rows) {
+                foreach (Control? c in new Control?[] { row.Entry, row.Up, row.Down, row.Remove }) {
+                    if (c != null) {
+                        c.TabIndex = tab++;
+                    }
+                }
+            }
         }
 
         private void ApplyAddText() => _add.Text = _addText ?? LibraryText.Get(TextKey.Add);

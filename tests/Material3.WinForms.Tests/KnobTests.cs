@@ -67,6 +67,7 @@ namespace Material3.WinForms.Tests {
                 Assert.Equal(0.5, Elevation.TintOpacity[5]);
                 Assert.Throws<ArgumentException>(() => Elevation.TintOpacity = new[] { 0.0, 0.1 });
                 Assert.Throws<ArgumentException>(() => Elevation.TintOpacity = new[] { 0.0, 0.1, 0.2, 0.3, 0.4, 2.0 });
+                Assert.Throws<ArgumentException>(() => Elevation.TintOpacity = new[] { 0.0, 0.1, 0.2, 0.3, 0.4, double.NaN });
             }
             finally {
                 Elevation.TintOpacity = original;

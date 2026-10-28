@@ -11,7 +11,6 @@ namespace Material3.WinForms.Controls {
         private const int InsetX = 10;
 
         private readonly FilteredTextBox _box = new FilteredTextBox { BorderStyle = BorderStyle.None };
-        private string _placeholder = string.Empty;
         private bool _readOnly;
 
         public event EventHandler? Edited;
@@ -20,6 +19,8 @@ namespace Material3.WinForms.Controls {
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer
                 | ControlStyles.ResizeRedraw | ControlStyles.SupportsTransparentBackColor, true);
             BackColor = Color.Transparent;
+            SetStyle(ControlStyles.Selectable, false);
+            TabStop = false;
             _box.TextChanged += (s, e) => { Invalidate(); Edited?.Invoke(this, EventArgs.Empty); };
             _box.GotFocus += (s, e) => Invalidate();
             _box.LostFocus += (s, e) => Invalidate();
@@ -36,8 +37,8 @@ namespace Material3.WinForms.Controls {
         }
 
         public string Placeholder {
-            get => _placeholder;
-            set { _placeholder = value ?? string.Empty; Invalidate(); }
+            get => _box.Cue;
+            set => _box.Cue = value;
         }
 
         public bool IsReadOnly {
@@ -80,14 +81,10 @@ namespace Material3.WinForms.Controls {
             FocusBox();
         }
 
-        // The placeholder is painted in the box's place, so the box comes back before it takes the caret.
         private void FocusBox() {
-            if (_readOnly) {
-                return;
+            if (!_readOnly) {
+                _box.Focus();
             }
-
-            _box.Visible = true;
-            _box.Focus();
         }
 
         protected override void OnPaint(PaintEventArgs e) {
@@ -111,13 +108,6 @@ namespace Material3.WinForms.Controls {
                 using (var pen = new Pen(outline, Dpi.Scale(this, 1f))) {
                     g.DrawPath(pen, path);
                 }
-            }
-            if (_box.TextLength == 0 && _placeholder.Length > 0 && !_box.Focused) {
-                _box.Visible = false;
-                TextRenderer.DrawText(g, _placeholder, Font, text, MaterialColors.OnSurfaceMuted, flags);
-            }
-            else if (!_box.Visible) {
-                _box.Visible = true;
             }
         }
     }

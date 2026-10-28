@@ -21,7 +21,7 @@ namespace Material3.WinForms.Tokens {
         public static IReadOnlyList<double> TintOpacity {
             get => _tintOpacity;
             set {
-                if (value == null || value.Count != 6 || value.Any(v => v < 0 || v > 1)) {
+                if (value == null || value.Count != 6 || value.Any(v => !(v >= 0 && v <= 1))) {
                     throw new ArgumentException("Six opacities in 0-1 are required, one per level.", nameof(value));
                 }
                 _tintOpacity = Array.AsReadOnly(value.ToArray());

@@ -53,7 +53,14 @@ namespace Material3.WinForms.Tests {
             form.Controls.Add(host);
             System.Windows.Forms.Control control = factory();
             host.Controls.Add(control);
-            form.CreateControl();
+            // CreateControl skips a form that was never shown, so the handles are forced one by one.
+            _ = form.Handle;
+            _ = host.Handle;
+            _ = control.Handle;
+            if (control.Width > 0 && control.Height > 0) {
+                using var bitmap = new System.Drawing.Bitmap(control.Width, control.Height);
+                control.DrawToBitmap(bitmap, new System.Drawing.Rectangle(0, 0, control.Width, control.Height));
+            }
         }
     }
 }

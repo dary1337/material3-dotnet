@@ -12,9 +12,8 @@ namespace Material3.WinForms.Tests {
             protected override bool ShowWithoutActivation => true;
         }
 
-        [Fact]
-        public void ABannerFoldsAwayBehindAnOverlayThatLeavesNothingBehind() {
-            using var form = new QuietForm {
+        private static (QuietForm form, MaterialNoticeBanner banner, Panel below) Shown() {
+            var form = new QuietForm {
                 FormBorderStyle = FormBorderStyle.None,
                 ShowInTaskbar = false,
                 StartPosition = FormStartPosition.Manual,
@@ -28,23 +27,52 @@ namespace Material3.WinForms.Tests {
             form.Controls.Add(stack);
             form.Show();
             Application.DoEvents();
-            int before = below.Top;
+            return (form, banner, below);
+        }
 
-            banner.Hide();
+        private static bool AnOverlayIsOpen() => Application.OpenForms.Cast<Form>().Any(f => f.GetType().Name == "Overlay");
 
-            Assert.False(banner.Visible);
-            Assert.True(below.Top < before, "the layout did not close up when the fold started");
-            Assert.Contains(Application.OpenForms.Cast<Form>(), f => f.GetType().Name == "Overlay");
-            var clock = Stopwatch.StartNew();
-            while (Application.OpenForms.Cast<Form>().Any(f => f.GetType().Name == "Overlay") && clock.ElapsedMilliseconds < 3000) {
-                Application.DoEvents();
+        [Fact]
+        public void TheLayoutClosesUpAtOnceAndReopensWhenTheBannerReturns() {
+            (QuietForm form, MaterialNoticeBanner banner, Panel below) = Shown();
+            using (form) {
+                int before = below.Top;
+
+                banner.Hide();
+                Assert.False(banner.Visible);
+                Assert.True(below.Top < before, "the layout did not close up when the fold started");
+
+                banner.Show();
+                Assert.True(banner.Visible);
+                Assert.Equal(before, below.Top);
+                form.Close();
             }
-            Assert.DoesNotContain(Application.OpenForms.Cast<Form>(), f => f.GetType().Name == "Overlay");
+        }
 
-            banner.Show();
-            Assert.True(banner.Visible);
-            Assert.Equal(before, below.Top);
-            form.Close();
+        [Fact]
+        public void TheFoldOverlayClosesWhenItsAnimationEnds() {
+            (QuietForm form, MaterialNoticeBanner banner, _) = Shown();
+            using (form) {
+                banner.Hide();
+                var clock = Stopwatch.StartNew();
+                while (AnOverlayIsOpen() && clock.ElapsedMilliseconds < 3000) {
+                    Application.DoEvents();
+                }
+
+                Assert.False(AnOverlayIsOpen(), "the fold overlay outlived its animation");
+                form.Close();
+            }
+        }
+
+        [Fact]
+        public void ALayoutThatThrowsLeavesNoOverlayBehind() {
+            (QuietForm form, MaterialNoticeBanner banner, _) = Shown();
+            using (form) {
+                Assert.Throws<InvalidOperationException>(() =>
+                    Material3.WinForms.Drawing.FoldTransition.Run(banner, true, () => throw new InvalidOperationException()));
+                Assert.False(AnOverlayIsOpen());
+                form.Close();
+            }
         }
     }
 }

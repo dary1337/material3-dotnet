@@ -105,6 +105,15 @@ namespace Material3.WinForms.Forms {
             Release();
         }
 
+        // Enter would otherwise reach the dialog's accept button instead of starting the hold.
+        protected override bool IsInputKey(Keys keyData) =>
+            keyData == Keys.Enter || keyData == Keys.Space || base.IsInputKey(keyData);
+
+        protected override void OnLostFocus(EventArgs e) {
+            base.OnLostFocus(e);
+            Release();
+        }
+
         protected override void OnKeyDown(KeyEventArgs e) {
             base.OnKeyDown(e);
             if (e.KeyCode == Keys.Space || e.KeyCode == Keys.Enter) {
