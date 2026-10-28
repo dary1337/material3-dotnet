@@ -48,13 +48,13 @@ namespace Material3.Wpf {
                 _itemSize = new Size(ItemWidth, ItemHeight);
             }
 
-            ItemsControl? owner = ItemsControl.GetItemsOwner(this);
+            var owner = ItemsControl.GetItemsOwner(this);
             int count = owner?.Items.Count ?? 0;
             UpdateScrollInfo(availableSize, count);
 
             (int first, int last) = VisibleRange(_offset.Y, _viewport.Height, _viewport.Width, _itemSize.Width, _itemSize.Height, count);
 
-            var generator = ItemContainerGenerator;
+            IItemContainerGenerator generator = ItemContainerGenerator;
             if (generator == null) {
                 return availableSize;
             }
@@ -63,7 +63,7 @@ namespace Material3.Wpf {
             int childIndex = startPos.Offset == 0 ? startPos.Index : startPos.Index + 1;
             using (generator.StartAt(startPos, GeneratorDirection.Forward, true)) {
                 for (int i = first; i <= last && i < count; i++, childIndex++) {
-                    UIElement child = (UIElement)generator.GenerateNext(out bool newlyRealized);
+                    var child = (UIElement)generator.GenerateNext(out bool newlyRealized);
                     if (newlyRealized) {
                         if (childIndex >= InternalChildren.Count) {
                             AddInternalChild(child);
@@ -90,7 +90,7 @@ namespace Material3.Wpf {
         /// <inheritdoc />
         protected override Size ArrangeOverride(Size finalSize) {
             int cols = Columns;
-            var generator = ItemContainerGenerator;
+            IItemContainerGenerator generator = ItemContainerGenerator;
             for (int vi = 0; vi < InternalChildren.Count; vi++) {
                 UIElement child = InternalChildren[vi];
                 int itemIndex = generator.IndexFromGeneratorPosition(new GeneratorPosition(vi, 0));
@@ -123,7 +123,7 @@ namespace Material3.Wpf {
         }
 
         private void CleanUpChildren(int first, int last) {
-            var generator = ItemContainerGenerator;
+            IItemContainerGenerator generator = ItemContainerGenerator;
             for (int i = InternalChildren.Count - 1; i >= 0; i--) {
                 var pos = new GeneratorPosition(i, 0);
                 int itemIndex = generator.IndexFromGeneratorPosition(pos);

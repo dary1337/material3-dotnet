@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using Material3.WinForms.Drawing;
 using Material3.WinForms.Theming;
@@ -110,7 +111,7 @@ namespace Material3.WinForms.Controls {
                 return;
             }
             _regionSize = Size;
-            using (var path = RoundedControlRenderer.GetFigurePath(new System.Drawing.Rectangle(0, 0, Width, Height), Dpi.Scale(this, _cornerRadius))) {
+            using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(new System.Drawing.Rectangle(0, 0, Width, Height), Dpi.Scale(this, _cornerRadius))) {
                 Region?.Dispose();
                 Region = new System.Drawing.Region(path);
             }

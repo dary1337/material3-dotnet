@@ -42,7 +42,7 @@ namespace Material3.Wpf.Gallery {
 
         private void Swatches(int group) {
             var wrap = new WrapPanel();
-            foreach (var (fill, content) in ColorGroups[group].roles) {
+            foreach ((string? fill, string? content) in ColorGroups[group].roles) {
                 wrap.Children.Add(Swatch(fill, content));
             }
 
@@ -104,7 +104,7 @@ namespace Material3.Wpf.Gallery {
             },
             ["shape.scale"] = () => {
                 var row = new WrapPanel();
-                foreach (var (label, radius) in new[] { ("Xs 4", "RadiusXs"), ("Sm 8", "RadiusSm"), ("Md 12", "RadiusMd"), ("Lg 16", "RadiusLg"), ("Pill 20", "RadiusPill"), ("Xl 28", "RadiusXl"), ("Full", null) }) {
+                foreach ((string? label, string? radius) in new[] { ("Xs 4", "RadiusXs"), ("Sm 8", "RadiusSm"), ("Md 12", "RadiusMd"), ("Lg 16", "RadiusLg"), ("Pill 20", "RadiusPill"), ("Xl 28", "RadiusXl"), ("Full", null) }) {
                     var box = new Border { Width = 120, Height = 72, Margin = new Thickness(0, 0, 12, 12) };
                     box.SetResourceReference(Border.BackgroundProperty, nameof(ColorScheme.SecondaryContainer));
                     if (radius == null) {
@@ -128,8 +128,8 @@ namespace Material3.Wpf.Gallery {
                 StyledButton("WarningFilledButton", "Warning"), StyledButton("ErrorFilledButton", "Error filled"),
                 StyledButton("ErrorTonalButton", "Error tonal"), StyledButton("ShinyButton", "Shiny")),
             ["buttons.icon"] = () => {
-                var row = Row();
-                foreach (var (style, glyph, label) in new[] {
+                WrapPanel row = Row();
+                foreach ((string? style, string? glyph, string? label) in new[] {
                     ("FilledButton", "Check", "Save"), ("TonalButton", "Refresh", "Sync"), ("OutlinedButton", "Information", "Details"),
                     ("TextButton", "Plus", "Add"), ("ErrorTonalButton", "Close", "Delete"),
                 }) {
@@ -147,7 +147,7 @@ namespace Material3.Wpf.Gallery {
                 GlyphButton("TonalIconButton", "Cog", "Tonal"), GlyphButton("OutlinedIconButton", "Cog", "Outlined"),
                 GlyphButton("ErrorIconButton", "Close", "Error")),
             ["buttons.icontoggles"] = () => {
-                var row = Row();
+                WrapPanel row = Row();
                 foreach (string style in new[] { "StandardIconToggle", "FilledIconToggle", "TonalIconToggle", "OutlinedIconToggle" }) {
                     foreach (bool on in new[] { false, true }) {
                         row.Children.Add(new ToggleButton {
@@ -160,8 +160,8 @@ namespace Material3.Wpf.Gallery {
                 }
             },
             ["buttons.fab"] = () => {
-                var fabs = Row();
-                foreach (var (size, glyph, tip) in new[] { (FabSize.Small, "Check", "Small — 40"), (FabSize.Standard, "Refresh", "Standard — 56"), (FabSize.Large, "Cog", "Large — 96") }) {
+                WrapPanel fabs = Row();
+                foreach ((FabSize size, string? glyph, string? tip) in new[] { (FabSize.Small, "Check", "Small — 40"), (FabSize.Standard, "Refresh", "Standard — 56"), (FabSize.Large, "Cog", "Large — 96") }) {
                     var fab = new Fab { Size = size, Glyph = glyph, Margin = new Thickness(0, 4, 20, 20), VerticalAlignment = VerticalAlignment.Bottom };
                     Tip.SetText(fab, tip);
                     fabs.Children.Add(fab);
@@ -245,21 +245,21 @@ namespace Material3.Wpf.Gallery {
             },
             ["selection.switch"] = () => {
                 var switches = new StackPanel { HorizontalAlignment = HorizontalAlignment.Left, Width = 300 };
-                foreach (var (label, on) in new[] { ("Follow the system theme", true), ("Send crash reports", false) }) {
+                foreach ((string? label, bool on) in new[] { ("Follow the system theme", true), ("Send crash reports", false) }) {
                     switches.Children.Add(new CheckBox { Style = (Style)FindResource("M3Switch"), Content = label, IsChecked = on, Margin = new Thickness(0, 0, 0, 10) });
                 }
                 PageHost.Children.Add(switches);
             },
             ["selection.checkbox"] = () => {
                 var boxes = new StackPanel { HorizontalAlignment = HorizontalAlignment.Left };
-                foreach (var (label, state) in new (string, bool?)[] { ("Include hidden files", true), ("Follow symlinks", false), ("Some of the folders below", null) }) {
+                foreach ((string? label, bool? state) in new (string, bool?)[] { ("Include hidden files", true), ("Follow symlinks", false), ("Some of the folders below", null) }) {
                     boxes.Children.Add(new CheckBox { Style = (Style)FindResource("M3CheckBox"), IsThreeState = true, Content = label, IsChecked = state, Margin = new Thickness(0, 0, 0, 10) });
                 }
                 PageHost.Children.Add(boxes);
             },
             ["selection.radio"] = () => {
                 var radios = new StackPanel { HorizontalAlignment = HorizontalAlignment.Left };
-                foreach (var (label, on) in new[] { ("Keep every build", true), ("Keep the last three", false), ("Keep none", false) }) {
+                foreach ((string? label, bool on) in new[] { ("Keep every build", true), ("Keep the last three", false), ("Keep none", false) }) {
                     radios.Children.Add(new RadioButton { Style = (Style)FindResource("M3Radio"), GroupName = "retention", Content = label, IsChecked = on, Margin = new Thickness(0, 0, 0, 10) });
                 }
                 PageHost.Children.Add(radios);
@@ -282,7 +282,7 @@ namespace Material3.Wpf.Gallery {
                 PageHost.Children.Add(kinds);
             },
             ["selection.chipcolors"] = () => {
-                var row = Row();
+                WrapPanel row = Row();
                 Chip Accent(string text, string? glyph, string container, string content, Brush? outline = null) {
                     var chip = new Chip { Kind = ChipKind.Suggestion, Text = text, Glyph = glyph, Margin = new Thickness(0, 0, 8, 8) };
                     chip.AccentContainer = (Brush)FindResource(container);
@@ -305,15 +305,15 @@ namespace Material3.Wpf.Gallery {
                 });
             },
             ["selection.status"] = () => {
-                var chips = Row();
-                foreach (var (text, tone, glyph) in new[] {
+                WrapPanel chips = Row();
+                foreach ((string? text, Tone tone, string? glyph) in new[] {
                     ("Neutral", Tone.Neutral, "Information"), ("Installed", Tone.Accent, "Check"),
                     ("Update", Tone.Warning, "AlertCircle"), ("Error", Tone.Error, "AlertCircle"), ("Done", Tone.Success, "CheckCircle"),
                 }) {
                     chips.Children.Add(new Chip { Text = text, Tone = tone, Glyph = glyph, Margin = new Thickness(0, 0, 8, 8) });
                 }
 
-                var sizes = Row();
+                WrapPanel sizes = Row();
                 foreach (ChipSize size in new[] { ChipSize.Dense, ChipSize.Large }) {
                     sizes.Children.Add(new Chip { Text = size.ToString(), Size = size, Tone = Tone.Accent, Glyph = "Check", Margin = new Thickness(0, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center });
                 }
@@ -363,7 +363,7 @@ namespace Material3.Wpf.Gallery {
                 Content = new TextBlock { Text = "Content revealed below the header.", Style = (Style)FindResource("BodySmall"), Margin = new Thickness(28, 4, 0, 0) },
             }),
             ["cards.cards"] = () => {
-                var variants = Row();
+                WrapPanel variants = Row();
                 foreach ((string key, string note) in new[] { ("ElevatedCard", "Elevated"), ("FilledCard", "Filled"), ("OutlinedCard", "Outlined") }) {
                     var body = new TextBlock { Text = note, Style = (Style)FindResource("TitleMedium") };
                     variants.Children.Add(new Border { Style = (Style)FindResource(key), Width = 180, Height = 84, Margin = new Thickness(2, 4, 16, 12), Child = body });
@@ -456,7 +456,7 @@ namespace Material3.Wpf.Gallery {
                 }
             },
             ["nav.badge"] = () => {
-                var badges = Row();
+                WrapPanel badges = Row();
                 foreach (Badge badge in new[] { new Badge { IsDot = true }, new Badge { Count = 3 }, new Badge { Count = 1200 } }) {
                     badge.Margin = new Thickness(0, 4, 16, 0);
                     badge.VerticalAlignment = VerticalAlignment.Top;
@@ -464,7 +464,7 @@ namespace Material3.Wpf.Gallery {
                 }
             },
             ["nav.destinations"] = () => {
-                var demos = Row();
+                WrapPanel demos = Row();
                 var rail = new NavigationRail { Height = 300, Margin = new Thickness(0, 0, 24, 16) };
                 rail.Items.Add(new NavigationItem { Content = "Mail", Glyph = "Email", BadgeCount = 3 });
                 rail.Items.Add(new NavigationItem { Content = "Calendar", Glyph = "Calendar" });
@@ -483,20 +483,20 @@ namespace Material3.Wpf.Gallery {
                 PageHost.Children.Add(bar);
             },
             ["overlays.tooltip"] = () => {
-                var hover = StyledButton("OutlinedButton", "Hover me");
+                Button hover = StyledButton("OutlinedButton", "Hover me");
                 hover.HorizontalAlignment = HorizontalAlignment.Left;
                 Tip.SetText(hover, "Centred above the target; it wraps long text.");
                 PageHost.Children.Add(hover);
             },
             ["overlays.richtooltip"] = () => {
-                var rich = StyledButton("OutlinedButton", "Hover for details");
+                Button rich = StyledButton("OutlinedButton", "Hover for details");
                 rich.HorizontalAlignment = HorizontalAlignment.Left;
                 Tip.SetTitle(rich, "Sync paused");
                 Tip.SetText(rich, "Changes stay on this device and sync once you are back online.");
                 PageHost.Children.Add(rich);
             },
             ["overlays.menu"] = () => {
-                var context = StyledButton("TonalButton", "Right-click me");
+                Button context = StyledButton("TonalButton", "Right-click me");
                 var menu = new ContextMenu();
                 menu.Items.Add(new MenuItem { Header = "Rename", Icon = new PathIcon { Glyph = "Pencil" } });
                 menu.Items.Add(new MenuItem { Header = "Duplicate", Icon = new PathIcon { Glyph = "ContentCopy" } });
@@ -511,15 +511,15 @@ namespace Material3.Wpf.Gallery {
             },
             ["overlays.dialog"] = () => PageHost.Children.Add(BuildDialogDemo()),
             ["overlays.modal"] = () => {
-                var open = StyledButton("FilledButton", "Show a modal card");
+                Button open = StyledButton("FilledButton", "Show a modal card");
                 open.VerticalAlignment = VerticalAlignment.Top;
                 open.Click += (_, __) => ShowDemoDialog();
                 Row(open, BuildAsyncConfirmDemo());
             },
             ["overlays.snackbar"] = () => {
-                var plain = StyledButton("TonalButton", "Show a message");
+                Button plain = StyledButton("TonalButton", "Show a message");
                 plain.Click += (_, __) => Snackbar.Show(this, "Your changes were saved");
-                var withAction = StyledButton("TonalButton", "Show one with an action");
+                Button withAction = StyledButton("TonalButton", "Show one with an action");
                 withAction.Click += (_, __) => Snackbar.Show(this, "Item moved to Trash", "Undo", () => Snackbar.Show(this, "Item restored"));
                 Row(plain, withAction);
             },
@@ -539,8 +539,8 @@ namespace Material3.Wpf.Gallery {
                 PageHost.Children.Add(picked);
             },
             ["sizes.percontrol"] = () => {
-                var row = Row(StyledButton("FilledButton", "Default"));
-                var tuned = StyledButton("FilledButton", "Taller, larger");
+                WrapPanel row = Row(StyledButton("FilledButton", "Default"));
+                Button tuned = StyledButton("FilledButton", "Taller, larger");
                 ButtonContent.SetLeadingGlyph(tuned, "Check");
                 tuned.Padding = new Thickness(28, 0, 28, 0);
                 tuned.FontSize = 16;
@@ -558,7 +558,7 @@ namespace Material3.Wpf.Gallery {
             },
             ["sizes.appwide"] = () => {
                 bool tahoma = ThemeResources.Contains("FontFamily") && ThemeResources["FontFamily"] is FontFamily own && own.Source == "Tahoma";
-                var toggle = StyledButton("TonalButton", tahoma ? "Switch to Segoe UI" : "Switch to Tahoma");
+                Button toggle = StyledButton("TonalButton", tahoma ? "Switch to Segoe UI" : "Switch to Tahoma");
                 toggle.HorizontalAlignment = HorizontalAlignment.Left;
                 toggle.Click += (_, __) => {
                     if (tahoma) {
@@ -593,14 +593,14 @@ namespace Material3.Wpf.Gallery {
                     LibraryText.Refresh();
                 };
                 PageHost.Children.Add(language);
-                var texts = Row();
+                WrapPanel texts = Row();
                 foreach (TextKey key in new[] { TextKey.Ok, TextKey.Cancel, TextKey.Add, TextKey.Clear, TextKey.Search }) {
-                    var button = StyledButton("OutlinedButton", null!);
+                    Button button = StyledButton("OutlinedButton", null!);
                     button.SetBinding(ContentControl.ContentProperty, (System.Windows.Data.BindingBase)new TextExtension(key).ProvideValue(null!));
                     texts.Children.Add(button);
                 }
                 PageHost.Children.Add(new SearchBar { Width = 420, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 0, 0, 12) });
-                var pick = StyledButton("TonalButton", "Open the date picker");
+                Button pick = StyledButton("TonalButton", "Open the date picker");
                 pick.HorizontalAlignment = HorizontalAlignment.Left;
                 pick.Click += (_, __) => DatePickerDialog.Show(this, new DatePickerOptions());
                 PageHost.Children.Add(pick);

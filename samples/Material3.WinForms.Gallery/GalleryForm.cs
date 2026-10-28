@@ -381,7 +381,7 @@ namespace Material3.WinForms.Gallery {
         private static Icon BuildAppIcon() {
             const int s = 256;
             using (var bmp = new Bitmap(s, s, PixelFormat.Format32bppArgb)) {
-                using (Graphics g = Graphics.FromImage(bmp)) {
+                using (var g = Graphics.FromImage(bmp)) {
                     g.SmoothingMode = SmoothingMode.AntiAlias;
                     g.PixelOffsetMode = PixelOffsetMode.HighQuality;
                     using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(new Rectangle(0, 0, s - 1, s - 1), s / 4))
@@ -398,7 +398,7 @@ namespace Material3.WinForms.Gallery {
                 }
                 IntPtr hicon = bmp.GetHicon();
                 try {
-                    using (Icon temp = Icon.FromHandle(hicon)) {
+                    using (var temp = Icon.FromHandle(hicon)) {
                         return (Icon)temp.Clone();
                     }
                 }

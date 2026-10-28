@@ -31,7 +31,7 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         public override Size GetPreferredSize(Size proposedSize) {
             string text = Text ?? string.Empty;
-            var key = (text, Font, DeviceDpi, proposedSize.Width, AutoEllipsis, Padding);
+            (string text, Font Font, int DeviceDpi, int Width, bool AutoEllipsis, Padding Padding) key = (text, Font, DeviceDpi, proposedSize.Width, AutoEllipsis, Padding);
             if (_prefValid && _prefKey.Equals(key)) {
                 return _prefSize;
             }
@@ -42,8 +42,8 @@ namespace Material3.WinForms.Controls {
             }
             else {
                 using (var bitmap = new Bitmap(1, 1))
-                using (Graphics g = Graphics.FromImage(bitmap))
-                using (var format = BuildFormat()) {
+                using (var g = Graphics.FromImage(bitmap))
+                using (StringFormat format = BuildFormat()) {
                     g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
                     SizeF layout = proposedSize.Width > 0 && proposedSize.Width < int.MaxValue
                         ? new SizeF(Math.Max(1, proposedSize.Width - Padding.Horizontal), int.MaxValue)
@@ -72,10 +72,10 @@ namespace Material3.WinForms.Controls {
                 return;
             }
 
-            using (var format = BuildFormat())
+            using (StringFormat format = BuildFormat())
             using (var brush = new SolidBrush(Enabled ? ForeColor : MaterialColors.OnSurfaceMuted)) {
                 Rectangle client = ClientRectangle;
-                RectangleF rect = new RectangleF(client.X + Padding.Left, client.Y + Padding.Top,
+                var rect = new RectangleF(client.X + Padding.Left, client.Y + Padding.Top,
                     Math.Max(0, client.Width - Padding.Horizontal), Math.Max(0, client.Height - Padding.Vertical));
                 g.DrawString(Text, Font, brush, rect, format);
             }

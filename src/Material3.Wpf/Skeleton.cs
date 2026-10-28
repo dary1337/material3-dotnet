@@ -62,8 +62,8 @@ namespace Material3.Wpf {
             }
 
             Color on = (TryFindResource(nameof(ColorScheme.OnSurface)) as SolidColorBrush)?.Color ?? Colors.White;
-            Color highlight = Color.FromArgb(28, on.R, on.G, on.B);
-            Color clear = Color.FromArgb(0, on.R, on.G, on.B);
+            var highlight = Color.FromArgb(28, on.R, on.G, on.B);
+            var clear = Color.FromArgb(0, on.R, on.G, on.B);
 
             var brush = new LinearGradientBrush {
                 StartPoint = new Point(0, 0),

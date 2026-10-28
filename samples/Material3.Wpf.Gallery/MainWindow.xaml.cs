@@ -52,11 +52,11 @@ namespace Material3.Wpf.Gallery {
             }
 
             InitializeComponent();
-            foreach (var s in Seeds) {
+            foreach ((string label, byte r, byte g, byte b) s in Seeds) {
                 SeedCombo.Items.Add(new ComboBoxItem { Content = s.label, Tag = Color.FromRgb(s.r, s.g, s.b) });
             }
 
-            foreach (var v in Variants) {
+            foreach ((string label, SchemeVariant v) v in Variants) {
                 VariantCombo.Items.Add(new ComboBoxItem { Content = v.label, Tag = v.v });
             }
 
@@ -174,7 +174,7 @@ namespace Material3.Wpf.Gallery {
         }
 
         private void RefreshHex() {
-            foreach (var (role, hex) in _swatches) {
+            foreach ((string? role, TextBlock? hex) in _swatches) {
                 if (ThemeResources[role] is SolidColorBrush b) {
                     Color c = b.Color;
                     hex.Text = $"#{c.R:X2}{c.G:X2}{c.B:X2}";
@@ -219,13 +219,13 @@ namespace Material3.Wpf.Gallery {
 
         private FrameworkElement BuildNoticeDemo() {
             var host = new StackPanel { Width = 520, HorizontalAlignment = HorizontalAlignment.Left };
-            var restore = StyledButton("TextButton", "Bring them back");
+            Button restore = StyledButton("TextButton", "Bring them back");
             restore.HorizontalAlignment = HorizontalAlignment.Left;
             restore.Margin = new Thickness(0, 4, 0, 0);
             restore.Visibility = Visibility.Collapsed;
 
             var banners = new List<NoticeBanner>();
-            foreach (var (tone, icon, text) in new[] {
+            foreach ((Tone tone, string? icon, string? text) in new[] {
                 (Tone.Neutral, "Information", "A newer version is available. Nothing breaks if you stay on this one."),
                 (Tone.Accent, "CheckCircle", "Settings changed in another window — this one has caught up."),
                 (Tone.Warning, "AlertOutline", "Two items point at a file that is no longer there. They are marked in the list."),
@@ -298,8 +298,8 @@ namespace Material3.Wpf.Gallery {
         private FrameworkElement BuildChecklistDemo() {
             string[] steps = { "Download the package", "Verify the signature", "Unpack the files", "Register the app" };
             var list = new StepChecklist { Steps = steps, Margin = new Thickness(0, 0, 0, 10) };
-            var run = StyledButton("TonalButton", "Run");
-            var fail = StyledButton("TextButton", "Run and fail at step 3");
+            Button run = StyledButton("TonalButton", "Run");
+            Button fail = StyledButton("TextButton", "Run and fail at step 3");
 
             async System.Threading.Tasks.Task RunAsync(int failAt) {
                 run.IsEnabled = fail.IsEnabled = false;
@@ -332,7 +332,7 @@ namespace Material3.Wpf.Gallery {
             var row = new WrapPanel();
 
             void Add(string label, Func<DialogOptions> options) {
-                var button = StyledButton("TonalButton", label);
+                Button button = StyledButton("TonalButton", label);
                 button.Click += (_, __) => {
                     try { answer.Text = "Answered: " + Dialog.Show(this, options()); }
                     catch (InvalidOperationException ex) { answer.Text = "The work failed: " + ex.Message; }
@@ -387,7 +387,7 @@ namespace Material3.Wpf.Gallery {
 
         private FrameworkElement BuildAsyncConfirmDemo() {
             var status = new TextBlock { Style = (Style)FindResource("BodySmall"), Margin = new Thickness(2, 8, 0, 0) };
-            var open = StyledButton("ErrorTonalButton", "Delete project…");
+            Button open = StyledButton("ErrorTonalButton", "Delete project…");
             open.Click += (_, __) => ShowAsyncConfirmDialog(status);
             var host = new StackPanel { HorizontalAlignment = HorizontalAlignment.Left };
             host.Children.Add(open);
@@ -447,8 +447,8 @@ namespace Material3.Wpf.Gallery {
             stack.Children.Add(errorBanner);
 
             var row = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 18, 0, 0) };
-            var cancel = StyledButton("TextButton", "Cancel");
-            var confirm = StyledButton("ErrorTonalButton", "Delete");
+            Button cancel = StyledButton("TextButton", "Cancel");
+            Button confirm = StyledButton("ErrorTonalButton", "Delete");
             cancel.Height = confirm.Height = 40;
             cancel.MinWidth = 104;
             confirm.MinWidth = 140;              // fits the busy label too, so the row never reflows mid-run
@@ -581,8 +581,8 @@ namespace Material3.Wpf.Gallery {
                 Margin = new Thickness(0, 8, 0, 18),
             });
             var row = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
-            var cancel = StyledButton("TextButton", "Cancel");
-            var ok = StyledButton("FilledButton", "Reset");
+            Button cancel = StyledButton("TextButton", "Cancel");
+            Button ok = StyledButton("FilledButton", "Reset");
             cancel.Height = ok.Height = 40;
             cancel.MinWidth = ok.MinWidth = 104;
             cancel.Margin = new Thickness(0);

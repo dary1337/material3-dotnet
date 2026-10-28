@@ -76,7 +76,7 @@ namespace Material3.WinForms.Controls {
 
             EnsureRoundedRegion();
 
-            using (SolidBrush brush = new SolidBrush(BackColor)) {
+            using (var brush = new SolidBrush(BackColor)) {
                 pevent.Graphics.FillRectangle(brush, ClientRectangle);
             }
         }

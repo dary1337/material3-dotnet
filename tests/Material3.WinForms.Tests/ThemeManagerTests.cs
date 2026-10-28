@@ -42,7 +42,7 @@ namespace Material3.WinForms.Tests {
 
         [Fact]
         public void Theme_PrebuildsBothSchemes() {
-            MaterialTheme theme = MaterialTheme.FromSeed(Argb.FromArgb(0x2E, 0x7D, 0x32));
+            var theme = MaterialTheme.FromSeed(Argb.FromArgb(0x2E, 0x7D, 0x32));
             Assert.False(theme.LightScheme.IsDark);
             Assert.True(theme.DarkScheme.IsDark);
             Assert.NotEqual(theme.LightScheme.Surface, theme.DarkScheme.Surface);

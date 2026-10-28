@@ -539,11 +539,11 @@ namespace Material3.WinForms.Controls {
                 return;
             }
             Color baseColor = MaterialColors.OnSurfaceVariant;
-            Color thumbColor = Color.FromArgb(alpha, baseColor.R, baseColor.G, baseColor.B);
+            var thumbColor = Color.FromArgb(alpha, baseColor.R, baseColor.G, baseColor.B);
 
             int radius = thumb.Width / 2;
             using (var brush = new SolidBrush(thumbColor))
-            using (var path = Drawing.RoundedControlRenderer.GetFigurePath(thumb, radius)) {
+            using (GraphicsPath path = Drawing.RoundedControlRenderer.GetFigurePath(thumb, radius)) {
                 e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
                 e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
                 e.Graphics.FillPath(brush, path);
@@ -577,7 +577,7 @@ namespace Material3.WinForms.Controls {
                     return false;
                 }
                 long lParam = m.LParam.ToInt64();
-                Point screenPoint = new Point(
+                var screenPoint = new Point(
                     (short)(lParam & 0xFFFF),
                     (short)((lParam >> 16) & 0xFFFF)
                 );

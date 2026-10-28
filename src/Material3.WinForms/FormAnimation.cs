@@ -37,7 +37,7 @@ namespace Material3.WinForms {
             }
             int epoch = BeginEpoch(form);
             Point target = form.Location;
-            Point start = new Point(target.X, target.Y - SlideOffsetPx);
+            var start = new Point(target.X, target.Y - SlideOffsetPx);
             form.Opacity = 0d;
             form.Location = start;
             form.Refresh();
@@ -72,7 +72,7 @@ namespace Material3.WinForms {
             }
             int epoch = BeginEpoch(form);
             Point start = form.Location;
-            Point target = new Point(start.X, start.Y + SlideOffsetPx);
+            var target = new Point(start.X, start.Y + SlideOffsetPx);
             double startOpacity = form.Opacity;
 
             var sw = Stopwatch.StartNew();

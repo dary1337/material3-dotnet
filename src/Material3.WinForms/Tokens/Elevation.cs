@@ -77,7 +77,7 @@ namespace Material3.WinForms.Tokens {
                 if (alpha <= 0) {
                     continue;
                 }
-                Rectangle ring = new Rectangle(
+                var ring = new Rectangle(
                     surfaceRect.X - i,
                     surfaceRect.Y - i + offsetY,
                     surfaceRect.Width + i * 2,

@@ -42,7 +42,7 @@ namespace Material3.Wpf.Tests {
             w.Content = expander;
             Ui.Settle(w);
 
-            var header = FindFirst<ContentPresenter>(expander);
+            ContentPresenter? header = FindFirst<ContentPresenter>(expander);
             Assert.NotNull(header);
             Assert.Equal(w.FindResource("OnSurface"), TextElement.GetForeground(header!));
         });

@@ -275,7 +275,7 @@ namespace Material3.WinForms.Controls {
                 int width = Math.Max(anchorWidth, Dpi.Scale(this, _minWidth));
                 using (var bitmap = new Bitmap(1, 1)) {
                     bitmap.SetResolution(DeviceDpi, DeviceDpi);
-                    using (Graphics g = Graphics.FromImage(bitmap)) {
+                    using (var g = Graphics.FromImage(bitmap)) {
                         foreach (Entry entry in _entries) {
                             height += RowHeight(entry);
                             if (entry.IsSeparator) {
@@ -381,7 +381,7 @@ namespace Material3.WinForms.Controls {
                     Color content = !entry.Enabled ? MaterialColors.OnSurfaceMuted
                         : entry.Selected ? MaterialColors.OnSecondaryContainer : MaterialColors.OnSurface;
                     // The hover layer tints the row's own fill, so a selected row darkens instead of losing its colour.
-                    var hover = entry.Enabled ? _hover.Opacity(i) : 0;
+                    double hover = entry.Enabled ? _hover.Opacity(i) : 0;
                     if (entry.Selected || hover > 0) {
                         Color fill = entry.Selected ? MaterialColors.SecondaryContainer : MaterialColors.SurfaceContainer;
                         if (hover > 0) {

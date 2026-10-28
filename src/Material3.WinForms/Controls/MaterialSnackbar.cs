@@ -128,7 +128,7 @@ namespace Material3.WinForms.Controls {
             Height = Math.Max(Dpi.Scale(this, _barHeight), Message.Height + Dpi.Scale(this, Spacing.Space4));
             using (var bitmap = new Bitmap(1, 1)) {
                 bitmap.SetResolution(DeviceDpi, DeviceDpi);
-                using (Graphics g = Graphics.FromImage(bitmap)) {
+                using (var g = Graphics.FromImage(bitmap)) {
                     float width = padX
                         + g.MeasureString(_message, Message, int.MaxValue, StringFormat.GenericTypographic).Width
                         + padX;

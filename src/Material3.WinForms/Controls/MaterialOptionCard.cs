@@ -439,7 +439,7 @@ namespace Material3.WinForms.Controls {
                         new RectangleF(textLeft, titleY, textRight - detailWidth - textLeft, titleHeight), nearFmt);
                 }
                 if (_accentContainer != null && _accentContent != null && !string.IsNullOrEmpty(_accentChipText)) {
-                    var chipStyle = ChipRenderer.ResolveAccent(
+                    ChipRenderer.Style chipStyle = ChipRenderer.ResolveAccent(
                         _accentContainer(), _accentContent(), _accentOutline?.Invoke(), Enabled);
                     var chipMetrics = new ChipRenderer.Metrics {
                         Height = Dpi.Scale(this, BadgeHeight),

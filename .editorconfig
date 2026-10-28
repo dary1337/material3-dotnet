@@ -20,8 +20,15 @@ csharp_new_line_before_else = true
 csharp_new_line_before_catch = true
 csharp_new_line_before_finally = true
 csharp_prefer_braces = true:warning
-csharp_style_namespace_declarations = block_scoped:suggestion
-csharp_style_var_for_built_in_types = false:suggestion
-csharp_style_var_when_type_is_apparent = true:suggestion
-dotnet_style_qualification_for_field = false:suggestion
+csharp_style_namespace_declarations = block_scoped:warning
+csharp_style_var_for_built_in_types = false:warning
+csharp_style_var_when_type_is_apparent = true:warning
+dotnet_style_qualification_for_field = false:warning
 dotnet_sort_system_directives_first = true
+
+# The option suffix alone does not raise these in a build; the diagnostics do.
+dotnet_diagnostic.IDE0003.severity = warning
+dotnet_diagnostic.IDE0007.severity = warning
+dotnet_diagnostic.IDE0008.severity = warning
+dotnet_diagnostic.IDE0011.severity = warning
+dotnet_diagnostic.IDE0161.severity = warning

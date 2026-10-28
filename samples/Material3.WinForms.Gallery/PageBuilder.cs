@@ -237,7 +237,7 @@ namespace Material3.WinForms.Gallery {
                 Color fill = _fill();
                 Color content = _content();
                 var rect = new Rectangle(0, 0, Width - 1, Height - 1);
-                using (var path = RoundedControlRenderer.GetFigurePath(rect, Shape.Medium)) {
+                using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(rect, Shape.Medium)) {
                     using (var brush = new SolidBrush(fill)) {
                         g.FillPath(brush, path);
                     }
@@ -324,7 +324,7 @@ namespace Material3.WinForms.Gallery {
                     var rect = new Rectangle(level * step, Dpi.Scale(this, 4), w, h);
                     int radius = Dpi.Scale(this, Shape.Medium);
                     Elevation.PaintShadow(g, rect, radius, level);
-                    using (var path = RoundedControlRenderer.GetFigurePath(rect, radius))
+                    using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(rect, radius))
                     using (var brush = new SolidBrush(Elevation.TintedSurface(MaterialColors.Surface, level))) {
                         g.FillPath(brush, path);
                     }
@@ -358,7 +358,7 @@ namespace Material3.WinForms.Gallery {
                 int w = Dpi.Scale(this, 120), h = Dpi.Scale(this, 72), step = w + Dpi.Scale(this, 12);
                 for (int i = 0; i < shapes.Length; i++) {
                     var rect = new Rectangle(i * step, 0, w, h);
-                    using (var path = RoundedControlRenderer.GetFigurePath(rect, Math.Min(Dpi.Scale(this, shapes[i].radius), h / 2)))
+                    using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(rect, Math.Min(Dpi.Scale(this, shapes[i].radius), h / 2)))
                     using (var brush = new SolidBrush(MaterialColors.SecondaryContainer)) {
                         g.FillPath(brush, path);
                     }

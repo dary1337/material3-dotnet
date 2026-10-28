@@ -385,7 +385,7 @@ namespace Material3.WinForms.Controls {
 
             Rectangle glyph = TrailingIconRect;
             int grow = Math.Max(0, (Dpi.Scale(this, ComponentSizes.ControlHeight) - glyph.Width) / 2);
-            Rectangle target = Rectangle.Inflate(glyph, grow, grow);
+            var target = Rectangle.Inflate(glyph, grow, grow);
             return target.Contains(point) && point.X >= _editor.Right;
         }
 
@@ -525,7 +525,7 @@ namespace Material3.WinForms.Controls {
                     : _hovered ? MaterialColors.OnSurface : MaterialColors.Outline;
             float strokeWidth = Dpi.Scale(this, focused || _isError ? 2f : 1f);
 
-            Rectangle rect = Rectangle.Inflate(field, -1, -1);
+            var rect = Rectangle.Inflate(field, -1, -1);
             using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(rect, Dpi.Scale(this, _cornerRadius)))
             using (var pen = new Pen(outline, strokeWidth)) {
                 g.DrawPath(pen, path);

@@ -67,7 +67,7 @@ namespace Material3.Wpf.Tests {
 
         [Fact]
         public void AChipAccentPaintsEveryStateAndClearsBackToTheTheme() => Ui.InWindow(w => {
-            var chip = Shown(w, new Chip { Kind = ChipKind.Suggestion, Text = "Up to date", Glyph = "Check" });
+            Chip chip = Shown(w, new Chip { Kind = ChipKind.Suggestion, Text = "Up to date", Glyph = "Check" });
             TextBlock label = Ui.Descendants<TextBlock>(chip).First(t => t.Name == "tx");
             Brush themed = label.Foreground;
 

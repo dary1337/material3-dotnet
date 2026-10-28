@@ -235,7 +235,7 @@ namespace Material3.Wpf {
         /// (which actually closes the popup). Shorter than the open, per M3 (exit is quicker than enter).</summary>
         public static void AnimatePopupClose(System.Windows.Controls.Primitives.Popup? popup, Action after) {
             if (!(popup?.Child is FrameworkElement c)) { after(); return; }
-            var st = c.RenderTransform as ScaleTransform ?? new ScaleTransform(1, 1);
+            ScaleTransform st = c.RenderTransform as ScaleTransform ?? new ScaleTransform(1, 1);
             if (GetScaleOnOpen(popup)) {
                 c.RenderTransformOrigin = new Point(0.5, 0.5);
                 c.RenderTransform = st;

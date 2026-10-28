@@ -282,7 +282,7 @@ namespace Material3.WinForms.Forms {
             switch (m.Msg) {
                 case WM_WINDOWPOSCHANGING:
                     if (_wasMinimized && _haveNormalSize) {
-                        var wp = Marshal.PtrToStructure<WINDOWPOS>(m.LParam);
+                        WINDOWPOS wp = Marshal.PtrToStructure<WINDOWPOS>(m.LParam);
                         int dw = wp.cx - _normalSize.Width;
                         int dh = wp.cy - _normalSize.Height;
                         if ((wp.flags & SWP_NOSIZE) == 0 && (dw != 0 || dh != 0)
@@ -337,7 +337,7 @@ namespace Material3.WinForms.Forms {
                 case WM_NCCALCSIZE:
                     if (m.WParam != IntPtr.Zero) {
                         if (IsZoomed(Handle)) {
-                            var p = Marshal.PtrToStructure<NCCALCSIZE_PARAMS>(m.LParam);
+                            NCCALCSIZE_PARAMS p = Marshal.PtrToStructure<NCCALCSIZE_PARAMS>(m.LParam);
                             IntPtr hmon = MonitorFromWindow(Handle, MONITOR_DEFAULTTONEAREST);
                             if (hmon != IntPtr.Zero) {
                                 var mi = new MONITORINFO { cbSize = Marshal.SizeOf<MONITORINFO>() };

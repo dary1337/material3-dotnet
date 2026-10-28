@@ -111,7 +111,7 @@ namespace Material3.Wpf.Tests {
             w.Content = new Grid { Children = { button } };
             Ui.Settle(w);
             CenteredToolTip.Prepare(button);
-            var tip = Assert.IsType<ToolTip>(button.ToolTip);
+            ToolTip tip = Assert.IsType<ToolTip>(button.ToolTip);
             Assert.Equal(PlacementMode.Custom, tip.Placement);
             tip.Opacity = 0;
             // The tooltip service links the tooltip to its owner; the owner's ToolTipService values then win.
@@ -159,7 +159,7 @@ namespace Material3.Wpf.Tests {
                 Assert.Null(card.Effect);
                 return;
             }
-            var styled = Assert.IsType<DropShadowEffect>(card.Effect);
+            DropShadowEffect styled = Assert.IsType<DropShadowEffect>(card.Effect);
             DropShadowEffect fallback = Tip.TipLook.Shadow();
             Assert.Equal((styled.BlurRadius, styled.ShadowDepth, styled.Direction, styled.Opacity),
                 (fallback.BlurRadius, fallback.ShadowDepth, fallback.Direction, fallback.Opacity));
@@ -190,7 +190,7 @@ namespace Material3.Wpf.Tests {
             w.Content = button;
             Ui.Settle(w);
             CenteredToolTip.Prepare(button);
-            var tip = Assert.IsType<ToolTip>(button.ToolTip);
+            ToolTip tip = Assert.IsType<ToolTip>(button.ToolTip);
             Assert.NotNull(System.Windows.Data.BindingOperations.GetBindingBase(tip, ContentControl.ContentProperty));
         });
 

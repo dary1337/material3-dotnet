@@ -79,8 +79,8 @@ namespace Material3.WinForms {
                 long lp = m.LParam.ToInt64();
                 short x = unchecked((short)(lp & 0xFFFF));
                 short y = unchecked((short)((lp >> 16) & 0xFFFF));
-                Point inTarget = new Point(x, y);
-                Control? target = Control.FromHandle(m.HWnd);
+                var inTarget = new Point(x, y);
+                var target = Control.FromHandle(m.HWnd);
                 return target != null ? target.PointToScreen(inTarget) : Cursor.Position;
             }
 

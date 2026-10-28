@@ -72,7 +72,7 @@ namespace Material3.WinForms.Controls {
             }
             // The edit class erases with the system window brush, so a box created on screen flashes white once.
             if (m.Msg == WM_ERASEBKGND) {
-                using (Graphics g = Graphics.FromHdc(m.WParam))
+                using (var g = Graphics.FromHdc(m.WParam))
                 using (var brush = new SolidBrush(BackColor)) {
                     g.FillRectangle(brush, ClientRectangle);
                 }

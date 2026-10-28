@@ -27,7 +27,7 @@ namespace Material3.Wpf.Tests {
         [Fact]
         public void ItTurnsTheWindowIntoOneWithACaptionItDraws() => Ui.InWindow(w => {
             Hosted(w);
-            WindowChrome chrome = WindowChrome.GetWindowChrome(w);
+            var chrome = WindowChrome.GetWindowChrome(w);
             Assert.NotNull(chrome);
             Assert.Equal(40, chrome.CaptionHeight);
             Assert.False(chrome.UseAeroCaptionButtons);

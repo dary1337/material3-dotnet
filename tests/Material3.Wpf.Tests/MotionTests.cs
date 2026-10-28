@@ -60,7 +60,7 @@ namespace Material3.Wpf.Tests {
 
         [Fact]
         public void SwapContent_OnAContentSizedControl_GrowsFromItsLeadingEdge_AndHandsWidthBack() => Ui.InWindow(w => {
-            var button = NewButton("Show banner");
+            Button button = NewButton("Show banner");
             button.HorizontalAlignment = HorizontalAlignment.Left;
             var host = new Grid { Width = 400, HorizontalAlignment = HorizontalAlignment.Left, Children = { button } };
             w.Content = host;
@@ -74,7 +74,7 @@ namespace Material3.Wpf.Tests {
 
             Assert.Equal(LongLabel, button.Content);
             Assert.True(button.ActualWidth > before, "the button did not grow into the longer label");
-            var probe = NewButton(LongLabel);
+            Button probe = NewButton(LongLabel);
             probe.HorizontalAlignment = HorizontalAlignment.Left;
             host.Children.Add(probe);
             Ui.Settle(w);
@@ -83,7 +83,7 @@ namespace Material3.Wpf.Tests {
 
         [Fact]
         public void SwapContent_OnAStretchedControl_LeavesWidthAlone() => Ui.InWindow(w => {
-            var button = NewButton("Show banner");
+            Button button = NewButton("Show banner");
             var sibling = new Border { Width = 400, Height = 10, Visibility = Visibility.Collapsed };
             var host = new StackPanel { HorizontalAlignment = HorizontalAlignment.Left, Children = { sibling, button } };
             w.Content = host;
@@ -107,7 +107,7 @@ namespace Material3.Wpf.Tests {
 
         [Fact]
         public void SwapContent_CalledMidFlight_RetargetsInsteadOfFinishingTheOldRun() => Ui.InWindow(w => {
-            var button = NewButton("Show banner");
+            Button button = NewButton("Show banner");
             button.HorizontalAlignment = HorizontalAlignment.Left;
             var host = new Grid { Width = 400, HorizontalAlignment = HorizontalAlignment.Left, Children = { button } };
             w.Content = host;

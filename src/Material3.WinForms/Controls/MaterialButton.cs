@@ -411,7 +411,7 @@ namespace Material3.WinForms.Controls {
                 return;
             }
 
-            using (Graphics g = Graphics.FromImage(_buffer)) {
+            using (var g = Graphics.FromImage(_buffer)) {
                 g.SmoothingMode = SmoothingMode.AntiAlias;
                 g.PixelOffsetMode = PixelOffsetMode.HighQuality;
                 g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
@@ -420,7 +420,7 @@ namespace Material3.WinForms.Controls {
                 g.Clear(parent);
 
                 int inset = SurfaceInset;
-                Rectangle rect = new Rectangle(
+                var rect = new Rectangle(
                     inset,
                     inset,
                     Math.Max(0, Width - 1 - inset * 2),
@@ -456,7 +456,7 @@ namespace Material3.WinForms.Controls {
                     if (_variant == MaterialButtonVariant.Outlined) {
                         GraphicsState saved = g.Save();
                         g.TranslateTransform(0.5f, 0.5f);
-                        Rectangle outlineRect = new Rectangle(
+                        var outlineRect = new Rectangle(
                             0, 0,
                             Math.Max(0, Width - 2),
                             Math.Max(0, Height - 2)
@@ -551,7 +551,7 @@ namespace Material3.WinForms.Controls {
         public override Size GetPreferredSize(Size proposedSize) {
             string text = Text ?? string.Empty;
             bool hasIcon = _busy.IsRunning || _iconImage != null || !string.IsNullOrEmpty(_iconGlyph);
-            var key = (text, Font, DeviceDpi, _variant, hasIcon, Padding, _iconSize, _iconGap, _buttonHeight);
+            (string text, Font Font, int DeviceDpi, MaterialButtonVariant _variant, bool hasIcon, Padding Padding, int _iconSize, int _iconGap, int _buttonHeight) key = (text, Font, DeviceDpi, _variant, hasIcon, Padding, _iconSize, _iconGap, _buttonHeight);
             if (_prefValid && _prefKey.Equals(key)) {
                 return _prefSize;
             }

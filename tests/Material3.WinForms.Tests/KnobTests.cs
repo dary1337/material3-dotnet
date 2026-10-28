@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
+using System.Reflection;
 using System.Windows.Forms;
 using Material3.Core;
 using Material3.WinForms.Controls;
@@ -61,7 +63,7 @@ namespace Material3.WinForms.Tests {
 
         [Fact]
         public void TheElevationTintIsReplaceableAndValidated() {
-            var original = Elevation.TintOpacity;
+            IReadOnlyList<double> original = Elevation.TintOpacity;
             int changes = 0;
             void Count(object? s, EventArgs e) => changes++;
             Elevation.Changed += Count;
@@ -287,7 +289,7 @@ namespace Material3.WinForms.Tests {
             select.AddItem("Tonal spot", 1);
             int raised = 0;
             select.SelectedIndexChanged += (s, e) => raised++;
-            var onKeyDown = typeof(Control).GetMethod("OnKeyDown", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+            MethodInfo onKeyDown = typeof(Control).GetMethod("OnKeyDown", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
             onKeyDown.Invoke(select, new object[] { new KeyEventArgs(Keys.Down) });
             Assert.Equal(1, select.SelectedTag);
             onKeyDown.Invoke(select, new object[] { new KeyEventArgs(Keys.Down) });

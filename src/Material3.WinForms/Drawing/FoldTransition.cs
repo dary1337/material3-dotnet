@@ -94,7 +94,7 @@ namespace Material3.WinForms.Drawing {
             }
 
             using (var whole = new Bitmap(window.Right - window.Left, window.Bottom - window.Top, PixelFormat.Format32bppArgb)) {
-                using (Graphics g = Graphics.FromImage(whole)) {
+                using (var g = Graphics.FromImage(whole)) {
                     IntPtr hdc = g.GetHdc();
                     bool ok = PrintWindow(form.Handle, hdc, PW_RENDERFULLCONTENT);
                     g.ReleaseHdc(hdc);

@@ -369,8 +369,8 @@ namespace Material3.WinForms.Tests {
         public void TheOldestTaskbarSessionDrivesTheBarAndHandsItOn() {
             using var form = new Form { ShowInTaskbar = true };
             form.CreateControl();
-            using var first = TaskbarProgress.Begin(form);
-            using var second = TaskbarProgress.Begin(form);
+            using TaskbarProgress.Session first = TaskbarProgress.Begin(form);
+            using TaskbarProgress.Session second = TaskbarProgress.Begin(form);
             first.SetNormal(40);
             second.SetError();
             Assert.True(first.IsShown);
@@ -387,7 +387,7 @@ namespace Material3.WinForms.Tests {
         public async System.Threading.Tasks.Task AWorkingActionClosesWithItsResultAndKeepsTheFailure() {
             using var dialog = new Material3.WinForms.Forms.MaterialDialog { TitleText = "Delete?" };
             dialog.AddAction("Delete", DialogResult.OK, MaterialButtonVariant.Tonal, () => throw new InvalidOperationException("locked"), MaterialTone.Error);
-            var run = typeof(Material3.WinForms.Forms.MaterialDialog).GetMethod("RunAsync", BindingFlags.Instance | BindingFlags.NonPublic)!;
+            MethodInfo run = typeof(Material3.WinForms.Forms.MaterialDialog).GetMethod("RunAsync", BindingFlags.Instance | BindingFlags.NonPublic)!;
             var task = (System.Threading.Tasks.Task)run.Invoke(dialog, new object[] {
                 DialogResult.OK, new Func<System.Threading.Tasks.Task>(() => throw new InvalidOperationException("locked")),
                 new Action<bool>(_ => { }), dialog })!;
@@ -429,7 +429,7 @@ namespace Material3.WinForms.Tests {
         [Fact]
         public void AScrollPanelBringsAChildIntoViewByTheLeastDistance() {
             using var panel = new MaterialScrollPanel { Size = new Size(200, 100) };
-            var rows = Enumerable.Range(0, 10).Select(i => new Panel { Bounds = new Rectangle(0, i * 40, 180, 40) }).ToArray();
+            Panel[] rows = Enumerable.Range(0, 10).Select(i => new Panel { Bounds = new Rectangle(0, i * 40, 180, 40) }).ToArray();
             panel.ContentPanel.Controls.AddRange(rows);
             panel.ScrollIntoView(rows[5]);
             Assert.Equal(-(240 - 100), panel.ContentPanel.Top);
@@ -503,7 +503,7 @@ namespace Material3.WinForms.Tests {
             using var select = new MaterialDropdownSelect();
             select.AddItem("Day", "d");
             select.AddItem("Week", "w");
-            MaterialMenu menu = (MaterialMenu)typeof(MaterialDropdownSelect).GetField("_menu", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(select)!;
+            var menu = (MaterialMenu)typeof(MaterialDropdownSelect).GetField("_menu", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(select)!;
             void Key(Keys key) => typeof(MaterialDropdownSelect).GetMethod("OnKeyDown", BindingFlags.Instance | BindingFlags.NonPublic)!
                 .Invoke(select, new object[] { new KeyEventArgs(key) });
             menu.AddChoice("Day", true, () => { });

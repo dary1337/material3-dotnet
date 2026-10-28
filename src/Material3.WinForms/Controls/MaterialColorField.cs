@@ -525,7 +525,7 @@ namespace Material3.WinForms.Controls {
 
             private void PaintAlphaRail(Graphics g) {
                 Rectangle t = Track(AlphaRect);
-                Color opaque = Color.FromArgb(255, _field.Color);
+                var opaque = Color.FromArgb(255, _field.Color);
                 using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(t, t.Height / 2)) {
                     GraphicsState saved = g.Save();
                     g.SetClip(path);

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using Material3.Wpf;
@@ -80,7 +81,7 @@ namespace Material3.Wpf.Tests {
         [Fact]
         public void CompletingWaitsBeforeHandingBack() => Ui.InWindow(w => {
             StepChecklist list = Shown(w, "Download");
-            var task = list.CompleteAsync(TimeSpan.FromMilliseconds(150));
+            Task task = list.CompleteAsync(TimeSpan.FromMilliseconds(150));
             Assert.Equal(1, list.ActiveIndex);
             Assert.False(task.IsCompleted);
             Ui.SpinUntil(w, () => task.IsCompleted, "the hold never ended");

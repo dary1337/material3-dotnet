@@ -39,7 +39,7 @@ namespace Material3.Wpf.Tests {
                 Assert.NotEqual(dark, Surface());
                 Assert.Equal(ThemeManager.Scheme.Surface.ToMedia(), Surface());
 
-                MaterialTheme seeded = MaterialTheme.FromSeed(Argb.FromArgb(0x67, 0x50, 0xA4));
+                var seeded = MaterialTheme.FromSeed(Argb.FromArgb(0x67, 0x50, 0xA4));
                 ThemeManager.Theme = seeded;
                 Assert.Same(seeded, ThemeManager.Theme);
                 Assert.Equal(seeded.LightScheme.Primary.ToMedia(), ((SolidColorBrush)target["Primary"]).Color);

@@ -48,7 +48,7 @@ namespace Material3.Wpf.Tests {
 
         private static void RunRemoval() {
             var items = new System.Collections.ObjectModel.ObservableCollection<int>(Enumerable.Range(0, 200));
-            var lb = BuildListBox(items);
+            ListBox lb = BuildListBox(items);
             var win = new Window {
                 Width = 820,
                 Height = 440,
@@ -94,7 +94,7 @@ namespace Material3.Wpf.Tests {
         }
 
         private static int RunLayout() {
-            var lb = BuildListBox(Enumerable.Range(0, 1000).ToList());
+            ListBox lb = BuildListBox(Enumerable.Range(0, 1000).ToList());
 
             var win = new Window {
                 Width = 820,

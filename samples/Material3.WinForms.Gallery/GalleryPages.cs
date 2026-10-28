@@ -280,7 +280,7 @@ namespace Material3.WinForms.Gallery {
                 Accent("Needs attention", MaterialIcons.WarningFilled).SetAccent(() => MaterialColors.WarningContainer, () => MaterialColors.OnWarningContainer);
                 Accent("Not supported", MaterialIcons.ErrorFilled).SetAccent(() => MaterialColors.ErrorContainer, () => MaterialColors.OnErrorContainer);
                 Accent("Up to date", MaterialIcons.CheckFilled).SetAccent(() => MaterialColors.SuccessContainer, () => MaterialColors.OnSuccessContainer);
-                Color brand = Color.FromArgb(0x66, 0xC0, 0xF4);
+                var brand = Color.FromArgb(0x66, 0xC0, 0xF4);
                 Accent("Cloud", "CloudOutline").SetAccent(Color.Transparent, brand, brand);
             }),
             ["selection.segmented"] = b => {
@@ -320,7 +320,7 @@ namespace Material3.WinForms.Gallery {
             },
             ["cards.banner"] = b => {
                 var banners = new List<MaterialNoticeBanner>();
-                var restore = Button(MaterialButtonVariant.Text, "Bring them back");
+                MaterialButton restore = Button(MaterialButtonVariant.Text, "Bring them back");
                 restore.Visible = false;
                 foreach ((MaterialTone tone, string glyph, string text) in new[] {
                     (MaterialTone.Neutral, MaterialIcons.InfoFilled, "A newer version is available. Nothing breaks if you stay on this one."),
@@ -445,7 +445,7 @@ namespace Material3.WinForms.Gallery {
                 b.Add(sketch);
             },
             ["progress.busy"] = b => b.Flow(flow => {
-                var reload = Button(MaterialButtonVariant.Tonal, "Reload for two seconds", "Refresh");
+                MaterialButton reload = Button(MaterialButtonVariant.Tonal, "Reload for two seconds", "Refresh");
                 reload.Click += async (s, e) => {
                     reload.IsBusy = true;
                     await Task.Delay(2000);
@@ -461,7 +461,7 @@ namespace Material3.WinForms.Gallery {
                 flow.Controls.Add(icon);
             }),
             ["progress.taskbar"] = b => {
-                var run = Button(MaterialButtonVariant.Tonal, "Run a 3 s task");
+                MaterialButton run = Button(MaterialButtonVariant.Tonal, "Run a 3 s task");
                 run.Click += async (s, e) => {
                     run.Enabled = false;
                     using (TaskbarProgress.Session session = TaskbarProgress.Begin(this)) {
@@ -480,8 +480,8 @@ namespace Material3.WinForms.Gallery {
                 string[] steps = { "Download the package", "Verify the signature", "Unpack the files", "Register the app" };
                 var list = new MaterialStepChecklist { Width = 460 };
                 list.Steps = steps;
-                var runOk = Button(MaterialButtonVariant.Tonal, "Run");
-                var runFail = Button(MaterialButtonVariant.Text, "Run and fail at step 3");
+                MaterialButton runOk = Button(MaterialButtonVariant.Tonal, "Run");
+                MaterialButton runFail = Button(MaterialButtonVariant.Text, "Run and fail at step 3");
                 async Task RunAsync(int failAt) {
                     runOk.Enabled = runFail.Enabled = false;
                     list.Steps = steps;
@@ -542,17 +542,17 @@ namespace Material3.WinForms.Gallery {
                 b.Add(bar);
             },
             ["overlays.tooltip"] = b => {
-                var hover = Button(MaterialButtonVariant.Outlined, "Hover me");
+                MaterialButton hover = Button(MaterialButtonVariant.Outlined, "Hover me");
                 MaterialTooltip.SetTooltip(hover, "Centred above the target; it wraps long text.");
                 b.Add(hover);
             },
             ["overlays.richtooltip"] = b => {
-                var rich = Button(MaterialButtonVariant.Outlined, "Hover for details");
+                MaterialButton rich = Button(MaterialButtonVariant.Outlined, "Hover for details");
                 MaterialTooltip.SetTooltip(rich, "Sync paused", "Changes stay on this device and sync once you are back online.");
                 b.Add(rich);
             },
             ["overlays.menu"] = b => b.Flow(flow => {
-                var open = Button(MaterialButtonVariant.Tonal, "Open menu", MaterialIcons.ChevronDown);
+                MaterialButton open = Button(MaterialButtonVariant.Tonal, "Open menu", MaterialIcons.ChevronDown);
                 var menu = new MaterialMenu();
                 menu.AddItem("Refresh", "Refresh", shortcut: "F5");
                 menu.AddItem("Open in browser", MaterialIcons.OpenInNew);
@@ -562,7 +562,7 @@ namespace Material3.WinForms.Gallery {
                 open.Click += (s, e) => menu.Show(open);
                 flow.Controls.Add(open);
 
-                var context = Button(MaterialButtonVariant.Tonal, "Right-click me");
+                MaterialButton context = Button(MaterialButtonVariant.Tonal, "Right-click me");
                 var contextMenu = new MaterialMenu();
                 contextMenu.AddItem("Rename", "Pencil");
                 contextMenu.AddItem("Duplicate", "ContentCopy");
@@ -588,13 +588,13 @@ namespace Material3.WinForms.Gallery {
                     }
                 }
                 b.Flow(flow => {
-                    var notice = Button(MaterialButtonVariant.Tonal, "Notice");
+                    MaterialButton notice = Button(MaterialButtonVariant.Tonal, "Notice");
                     notice.Click += (s, e) => {
                         var d = new MaterialDialog { Tone = MaterialTone.Success, TitleText = "Export finished", BodyText = "12 files were written to the output folder." };
                         d.AddAction(LibraryText.Get(TextKey.Ok), DialogResult.OK, MaterialButtonVariant.Filled);
                         Show(d);
                     };
-                    var three = Button(MaterialButtonVariant.Tonal, "Three-way choice");
+                    MaterialButton three = Button(MaterialButtonVariant.Tonal, "Three-way choice");
                     three.Click += (s, e) => {
                         var d = new MaterialDialog { Tone = MaterialTone.Accent, TitleText = "Save changes to “Aurora”?", BodyText = "Your changes are lost if you close without saving." };
                         d.AddAction("Cancel", DialogResult.Cancel, MaterialButtonVariant.Text);
@@ -602,21 +602,21 @@ namespace Material3.WinForms.Gallery {
                         d.AddAction("Save", DialogResult.Yes, MaterialButtonVariant.Filled);
                         Show(d);
                     };
-                    var hold = Button(MaterialButtonVariant.Tonal, "Hold to confirm");
+                    MaterialButton hold = Button(MaterialButtonVariant.Tonal, "Hold to confirm");
                     hold.Click += (s, e) => {
                         var d = new MaterialDialog { Tone = MaterialTone.Warning, TitleText = "Reset every setting?", BodyText = "Hold the button to confirm — a click alone is not enough." };
                         d.AddAction("Cancel", DialogResult.Cancel, MaterialButtonVariant.Text);
                         d.AddHoldAction("Hold to reset", DialogResult.OK, TimeSpan.FromSeconds(1));
                         Show(d);
                     };
-                    var work = Button(MaterialButtonVariant.Tonal, "Confirm owns the work");
+                    MaterialButton work = Button(MaterialButtonVariant.Tonal, "Confirm owns the work");
                     work.Click += (s, e) => {
                         var d = new MaterialDialog { Tone = MaterialTone.Error, TitleText = "Delete “Aurora”?", BodyText = "The project and everything in it is removed." };
                         d.AddAction("Cancel", DialogResult.Cancel, MaterialButtonVariant.Text);
                         d.AddAction("Delete", DialogResult.OK, MaterialButtonVariant.Tonal, () => Task.Delay(1500), MaterialTone.Error);
                         Show(d);
                     };
-                    var links = Button(MaterialButtonVariant.Tonal, "Error with links");
+                    MaterialButton links = Button(MaterialButtonVariant.Tonal, "Error with links");
                     links.Click += (s, e) => {
                         var d = new MaterialDialog { Tone = MaterialTone.Error, TitleText = "Could not open the project", BodyText = "The file is locked by another program." };
                         d.AddLink("Show the log", MaterialIcons.OpenInNew, () => answer.Text = "Link: Show the log");
@@ -631,9 +631,9 @@ namespace Material3.WinForms.Gallery {
                 b.Add(answer);
             },
             ["overlays.snackbar"] = b => b.Flow(flow => {
-                var plain = Button(MaterialButtonVariant.Tonal, "Show a message");
+                MaterialButton plain = Button(MaterialButtonVariant.Tonal, "Show a message");
                 plain.Click += (s, e) => MaterialSnackbar.Show(this, "Your changes were saved");
-                var withAction = Button(MaterialButtonVariant.Tonal, "Show one with an action");
+                MaterialButton withAction = Button(MaterialButtonVariant.Tonal, "Show one with an action");
                 withAction.Click += (s, e) => MaterialSnackbar.Show(this, "Item moved to Trash", "Undo", () => MaterialSnackbar.Show(this, "Item restored"));
                 flow.Controls.Add(plain);
                 flow.Controls.Add(withAction);
@@ -641,13 +641,13 @@ namespace Material3.WinForms.Gallery {
             ["overlays.pickers"] = b => {
                 var picked = new MaterialLabel { Font = TypeScale.BodySmall, ForeColor = MaterialColors.OnSurfaceVariant, AutoSize = true };
                 b.Flow(flow => {
-                    var date = Button(MaterialButtonVariant.Tonal, "Pick a date");
+                    MaterialButton date = Button(MaterialButtonVariant.Tonal, "Pick a date");
                     date.Click += (s, e) => {
                         using (var picker = new MaterialDatePickerDialog(DateTime.Today)) {
                             picked.Text = picker.ShowDialog(this) == DialogResult.OK ? picker.Value.ToLongDateString() : "Cancelled";
                         }
                     };
-                    var time = Button(MaterialButtonVariant.Tonal, "Pick a time");
+                    MaterialButton time = Button(MaterialButtonVariant.Tonal, "Pick a time");
                     time.Click += (s, e) => {
                         using (var picker = new MaterialTimePickerDialog(DateTime.Now.TimeOfDay)) {
                             picked.Text = picker.ShowDialog(this) == DialogResult.OK ? picker.Value.ToString(@"hh\:mm") : "Cancelled";
@@ -677,7 +677,7 @@ namespace Material3.WinForms.Gallery {
             }),
             ["sizes.appwide"] = b => {
                 bool tahoma = TypeScale.BodyMedium.FontFamily.Name != TypeScale.DefaultFamily;
-                var family = Button(MaterialButtonVariant.Tonal, tahoma ? "Switch to Segoe UI" : "Switch to Tahoma");
+                MaterialButton family = Button(MaterialButtonVariant.Tonal, tahoma ? "Switch to Segoe UI" : "Switch to Tahoma");
                 family.Click += (s, e) => {
                     if (tahoma) {
                         TypeScale.SetFontFamily(TypeScale.DefaultFamily, TypeScale.DefaultFamilyMedium);
@@ -692,7 +692,7 @@ namespace Material3.WinForms.Gallery {
             },
             ["sizes.text"] = b => {
                 var language = new MaterialSegmentedButton { Width = 240 };
-                foreach (var (label, _) in Languages) {
+                foreach ((string? label, string _) in Languages) {
                     language.AddSegment(label);
                 }
 
@@ -718,7 +718,7 @@ namespace Material3.WinForms.Gallery {
                     }
                 });
                 b.Add(new MaterialSearchBar { Width = 420 });
-                var pick = Button(MaterialButtonVariant.Tonal, "Open the date picker");
+                MaterialButton pick = Button(MaterialButtonVariant.Tonal, "Open the date picker");
                 pick.Click += (s, e) => {
                     using (var picker = new MaterialDatePickerDialog(DateTime.Today)) {
                         picker.ShowDialog(this);

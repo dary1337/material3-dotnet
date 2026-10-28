@@ -183,7 +183,7 @@ namespace Material3.WinForms.Controls {
                 int padY = Dpi.Scale(this, _verticalPadding);
                 using (var bitmap = new Bitmap(1, 1)) {
                     bitmap.SetResolution(DeviceDpi, DeviceDpi);
-                    using (Graphics g = Graphics.FromImage(bitmap)) {
+                    using (var g = Graphics.FromImage(bitmap)) {
                         var layout = new SizeF(Dpi.Scale(this, _maxWidth) - padX * 2, float.MaxValue);
                         SizeF bodySize = g.MeasureString(_body, Body, layout);
                         float width = bodySize.Width;

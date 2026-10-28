@@ -84,7 +84,7 @@ namespace Material3.WinForms.Controls {
             int height = Math.Max(Dpi.Scale(this, _pillHeight), Font.Height);
             using (var bitmap = new Bitmap(1, 1)) {
                 bitmap.SetResolution(DeviceDpi, DeviceDpi);
-                using (Graphics g = Graphics.FromImage(bitmap)) {
+                using (var g = Graphics.FromImage(bitmap)) {
                     SizeF size = g.MeasureString(CountText, Font, int.MaxValue, StringFormat.GenericTypographic);
                     return new Size(Math.Max(height, (int)Math.Ceiling(size.Width) + Dpi.Scale(this, _horizontalPadding) * 2), height);
                 }
