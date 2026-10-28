@@ -117,9 +117,9 @@ Resolution order: `Set` override, then `Resolver`, then the built-in table for t
 
 ## Control coverage
 
-The shared engine (dynamic color, type/shape scale, icons, motion) and the control suite are the same on both stacks;
-the rows marked – are WPF infrastructure with no WinForms counterpart to build.
-Legend: **✓ shipped · – not yet**.
+The shared engine (dynamic color, type/shape scale, icons, motion) is the same on both stacks, and so is most of the
+control suite; a row marked – has no WinForms counterpart in this release.
+Legend: **✓ shipped · – not in this release**.
 
 | Category | Component | WPF | WinForms |
 |---|---|:---:|:---:|

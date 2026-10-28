@@ -22,7 +22,7 @@ This project targets the current spec: HCT tonal palettes, color roles, surface 
 the 2023+ component look.
 
 **WinForms** ships the full component catalog with Visual Studio designer support. **WPF** ships the same
-engine and live theming plus the same catalog ([coverage](docs/wpf.md#control-coverage)).
+engine and live theming plus largely the same catalog ([coverage](docs/wpf.md#control-coverage)).
 
 ## Packages
 
