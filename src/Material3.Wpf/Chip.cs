@@ -168,7 +168,7 @@ namespace Material3.Wpf {
         private void UpdateLeading(bool animate) {
             double to = Kind != ChipKind.Filter || IsSelected || Glyph != null ? 1 : 0;
             var grow = new DoubleAnimation(to, animate ? Motion.Ms(200) : Motion.Ms(0)) {
-                EasingFunction = TryFindResource("M3EmphasizedDecelerate") as IEasingFunction,
+                EasingFunction = TryFindResource(ResourceKeys.M3EmphasizedDecelerate) as IEasingFunction,
             };
             _leadingScale.BeginAnimation(ScaleTransform.ScaleXProperty, grow);
             _leading?.BeginAnimation(OpacityProperty, new DoubleAnimation(to, animate ? Motion.Ms(150) : Motion.Ms(0)));

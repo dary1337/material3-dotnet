@@ -37,7 +37,7 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
-        public void SetFontFamily_RebuildsEveryRoleAndRaisesChangedOnce() {
+        public void ANewFontFamilyRebuildsEveryRoleAndRaisesChangedOnce() {
             TextStyle[] originals = Snapshot();
             int raised = 0;
             void OnChanged(object? s, EventArgs e) => raised++;
@@ -60,16 +60,21 @@ namespace Material3.WinForms.Tests {
             Assert.Throws<ArgumentNullException>(() => TypeScale.BodyMediumStyle = null!);
 
         [Fact]
-        public void TintOpacity_IsReplaceableAndValidated() {
+        public void TheElevationTintIsReplaceableAndValidated() {
             var original = Elevation.TintOpacity;
+            int changes = 0;
+            void Count(object? s, EventArgs e) => changes++;
+            Elevation.Changed += Count;
             try {
                 Elevation.TintOpacity = new[] { 0.0, 0.1, 0.2, 0.3, 0.4, 0.5 };
                 Assert.Equal(0.5, Elevation.TintOpacity[5]);
+                Assert.Equal(1, changes);
                 Assert.Throws<ArgumentException>(() => Elevation.TintOpacity = new[] { 0.0, 0.1 });
                 Assert.Throws<ArgumentException>(() => Elevation.TintOpacity = new[] { 0.0, 0.1, 0.2, 0.3, 0.4, 2.0 });
                 Assert.Throws<ArgumentException>(() => Elevation.TintOpacity = new[] { 0.0, 0.1, 0.2, 0.3, 0.4, double.NaN });
             }
             finally {
+                Elevation.Changed -= Count;
                 Elevation.TintOpacity = original;
             }
         }
@@ -105,7 +110,7 @@ namespace Material3.WinForms.Tests {
 
     public class GeometryKnobTests {
         [Fact]
-        public void TitleBar_AutoSizeFollowsBarHeight_AndYieldsWhenOff() {
+        public void ATitleBarSizesToItsBarHeightUntilAutoSizeIsOff() {
             using var bar = new MaterialTitleBar { BarHeight = 60 };
             Assert.Equal(Dpi.Scale(bar, 60), bar.Height);
 
@@ -116,13 +121,13 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
-        public void SegmentedButton_HeightFollowsSegmentHeight() {
+        public void ASegmentedButtonIsAsTallAsItsSegments() {
             using var segmented = new MaterialSegmentedButton { SegmentHeight = 52 };
             Assert.Equal(Dpi.Scale(segmented, 52), segmented.Height);
         }
 
         [Fact]
-        public void Badge_SizesToPillHeightAndDot() {
+        public void ABadgeSizesToItsPillOrDot() {
             using var badge = new MaterialBadge { PillHeight = 24, Count = 3 };
             Assert.Equal(Math.Max(Dpi.Scale(badge, 24), badge.Font.Height), badge.Height);
 
@@ -132,14 +137,14 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
-        public void Switch_TallerTrackGrowsThePreferredHeight() {
+        public void ATallerSwitchTrackGrowsThePreferredHeight() {
             using var small = new MaterialSwitch();
             using var large = new MaterialSwitch { TrackHeight = 64 };
             Assert.True(large.GetPreferredSize(Size.Empty).Height > small.GetPreferredSize(Size.Empty).Height);
         }
 
         [Fact]
-        public void Switch_AutoSizeFollowsTheTrackAndLabel_AndYieldsWhenOff() {
+        public void ASwitchSizesToItsTrackAndLabelUntilAutoSizeIsOff() {
             using var host = new Form();
             var toggle = new MaterialSwitch { Text = "Wi-Fi" };
             host.Controls.Add(toggle);
@@ -157,7 +162,7 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
-        public void CheckBox_LargerBoxGrowsThePreferredHeight() {
+        public void ALargerCheckBoxGrowsThePreferredHeight() {
             using var check = new MaterialCheckBox { Text = "x" };
             int before = check.GetPreferredSize(Size.Empty).Height;
             check.BoxSize = 40;
@@ -165,7 +170,7 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
-        public void RoundedPanel_SerializesOnlyARadiusOffItsOwnDefault() {
+        public void ARoundedPanelSerializesOnlyARadiusOffItsOwnDefault() {
             using var card = new MaterialSkeletonCard();
             PropertyDescriptor radius = TypeDescriptor.GetProperties(card)[nameof(MaterialRoundedPanel.CornerRadius)]!;
             Assert.Equal(Shape.Medium, card.CornerRadius);
@@ -178,14 +183,14 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
-        public void RoundedButton_RadiusAndBorderAreSettable() {
+        public void ARoundedButtonTakesARadiusAndABorder() {
             using var button = new MaterialRoundedButton { CornerRadius = 14, BorderColor = Color.Red };
             Assert.Equal(14, button.CornerRadius);
             Assert.Equal(Color.Red, button.BorderColor);
         }
 
         [Fact]
-        public void BorderlessForm_ResizeZoneFollowsThickness() {
+        public void ABorderlessFormResizesFromAZoneAsThickAsItsSetting() {
             using var form = new BorderlessForm { ClientSize = new Size(200, 150), ResizeBorderThickness = 10 };
             int inside = Dpi.Scale(form, 10) - 1;
             Assert.Equal(BorderlessForm.HTLEFT, form.ResolveHit(inside, 75));
@@ -195,14 +200,14 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
-        public void ScrollPanel_TrackWidthIsAnInstanceSetting() {
+        public void EachScrollPanelKeepsItsOwnTrackWidth() {
             using var panel = new MaterialScrollPanel { TrackWidth = 20, ThumbHoverWidth = 12 };
             Assert.Equal(20, panel.TrackWidth);
             Assert.Equal(12, panel.ThumbHoverWidth);
         }
 
         [Fact]
-        public void Menu_OpensCentredUnderItsAnchor_AndFlipsAboveAtTheScreenEdge() {
+        public void AMenuOpensCentredUnderItsAnchorAndFlipsAboveAtTheScreenEdge() {
             var screen = new Rectangle(0, 0, 1000, 800);
             Point below = MaterialMenu.MenuPopup.PlaceBelow(new Rectangle(100, 100, 240, 40), new Size(200, 120), screen, 2);
             Assert.Equal(new Point(120, 142), below);
@@ -222,7 +227,7 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
-        public void StateLayer_TargetsHoverThenPressThenNothing() {
+        public void AStateLayerTargetsHoverThenPressThenNothing() {
             using var owner = new Control();
             using var layer = new Material3.WinForms.Drawing.StateLayerFade(owner);
             Assert.Equal(StateLayers.Hover, layer.Resolve(hovered: true, pressed: false), 3);
@@ -231,7 +236,7 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
-        public void OptionCard_HoverReachesTheFill() {
+        public void AnOptionCardsHoverReachesItsFill() {
             using var card = new MaterialOptionCard();
             Color idle = card.BackColor;
             typeof(Control).GetMethod("OnMouseEnter", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
@@ -244,7 +249,7 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
-        public void ItemHover_MovesFromOneItemToTheNext() {
+        public void AnItemHoverMovesFromOneItemToTheNext() {
             using var owner = new Control();
             using var hover = new Material3.WinForms.Drawing.ItemHoverFade(owner);
             hover.SetHot(1);
@@ -269,14 +274,14 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
-        public void Tooltip_SitsCentredAboveItsControl_OrBelowWithoutRoom() {
+        public void ATooltipSitsCentredAboveItsControlOrBelowWithoutRoom() {
             var screen = new Rectangle(0, 0, 1000, 800);
             Assert.Equal(new Point(120, 64), MaterialTooltip.TipPopup.PlaceAbove(new Rectangle(100, 100, 240, 30), new Size(200, 30), screen, 6));
             Assert.Equal(new Point(120, 36), MaterialTooltip.TipPopup.PlaceAbove(new Rectangle(100, 0, 240, 30), new Size(200, 30), screen, 6));
         }
 
         [Fact]
-        public void Dropdown_ArrowKeysStepThroughTheOptions() {
+        public void TheArrowKeysStepASelectThroughItsOptions() {
             using var select = new MaterialDropdownSelect();
             select.AddItem("Neutral", 0);
             select.AddItem("Tonal spot", 1);
@@ -293,7 +298,7 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
-        public void Menu_ClampsItsMetrics() {
+        public void AMenuClampsItsMetrics() {
             using var menu = new MaterialMenu { ItemHeight = -5, IconSize = 0 };
             Assert.Equal(1, menu.ItemHeight);
             Assert.Equal(1, menu.IconSize);
@@ -303,7 +308,7 @@ namespace Material3.WinForms.Tests {
     [Collection("LibraryText")]
     public class PickerTextTests {
         [Fact]
-        public void DatePicker_ButtonsUseLibraryTextUnlessOverridden() {
+        public void ADatePickersButtonsUseLibraryTextUnlessOverridden() {
             try {
                 LibraryText.Set(TextKey.Ok, "Go");
                 using (var picker = new MaterialDatePickerDialog(new DateTime(2026, 10, 21))) {
@@ -318,7 +323,7 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
-        public void TimePicker_ButtonsUseLibraryText() {
+        public void ATimePickersButtonsUseLibraryText() {
             using var picker = new MaterialTimePickerDialog(new TimeSpan(9, 30, 0));
             string[] texts = picker.Controls.OfType<MaterialButton>().Select(b => b.Text).ToArray();
             Assert.Contains(LibraryText.Get(TextKey.Ok), texts);
@@ -326,7 +331,7 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
-        public void TitleBar_CaptionButtonsAreNamedFromLibraryText() {
+        public void ATitleBarsCaptionButtonsAreNamedFromLibraryText() {
             using var bar = new MaterialTitleBar();
             string?[] names = bar.Controls.OfType<MaterialButton>().Select(b => b.AccessibleName).ToArray();
             Assert.Contains(LibraryText.Get(TextKey.Minimize), names);

@@ -5,8 +5,10 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Material3.WinForms.Theming;
+using Material3.WinForms.Tokens;
 using Material3.WinForms.Typography;
 
 namespace Material3.WinForms.Controls {
@@ -40,7 +42,7 @@ namespace Material3.WinForms.Controls {
             BackColor = Color.Transparent;
             _spinner = new Timer { Interval = 40 };
             _spinner.Tick += (s, e) => { _spinnerAngle = (_spinnerAngle + 18) % 360; Invalidate(); };
-            _morphTimer = new Timer { Interval = 16 };
+            _morphTimer = new Timer { Interval = Motion.FrameIntervalMs };
             _morphTimer.Tick += OnMorphTick;
             AutoSize = true;
             TypeRole.Follow(this, () => TypeScale.BodyMedium);
@@ -158,9 +160,9 @@ namespace Material3.WinForms.Controls {
         /// Marks every step done, then waits <paramref name="hold"/> so the finished list is seen before whatever
         /// comes next replaces it.
         /// </summary>
-        public System.Threading.Tasks.Task CompleteAsync(TimeSpan hold) {
+        public Task CompleteAsync(TimeSpan hold) {
             Complete();
-            return System.Threading.Tasks.Task.Delay(hold);
+            return Task.Delay(hold);
         }
 
         /// <summary>Index of the in-progress step; earlier steps render as completed.</summary>

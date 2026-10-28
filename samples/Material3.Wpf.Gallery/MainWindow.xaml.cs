@@ -169,7 +169,7 @@ namespace Material3.Wpf.Gallery {
                 Child = grid,
             };
             border.SetResourceReference(Border.BackgroundProperty, fill);
-            border.SetResourceReference(Border.BorderBrushProperty, "OutlineVariant");
+            border.SetResourceReference(Border.BorderBrushProperty, nameof(ColorScheme.OutlineVariant));
             return border;
         }
 
@@ -191,7 +191,7 @@ namespace Material3.Wpf.Gallery {
 
         private OptionCard OptionDemo(string title, string detail, string glyph, OptionIndicator indicator, Tone tone, bool chosen) {
             var tile = new Border { Width = 36, Height = 36, CornerRadius = new CornerRadius(8) };
-            tile.SetResourceReference(Border.BackgroundProperty, "SurfaceContainerHighest");
+            tile.SetResourceReference(Border.BackgroundProperty, nameof(ColorScheme.SurfaceContainerHighest));
             tile.Child = new PathIcon { Glyph = glyph, Width = 20, Height = 20 }.Themed(PathIcon.ForegroundProperty, "OnSurfaceVariant");
             var body = new StackPanel();
             body.Children.Add(new TextBlock { Text = title, FontSize = 16 });
@@ -273,7 +273,7 @@ namespace Material3.Wpf.Gallery {
             text.SetBinding(TextBlock.TextProperty, new System.Windows.Data.Binding());
             text.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Center);
             text.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
-            text.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+            text.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurfaceVariant));
             tile.AppendChild(text);
 
             var list = new ListBox {
@@ -423,7 +423,7 @@ namespace Material3.Wpf.Gallery {
                 Padding = new Thickness(24),
                 Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 28, ShadowDepth = 0, Opacity = 0.5 },
             };
-            card.SetResourceReference(Border.BackgroundProperty, "SurfaceContainerHigh");
+            card.SetResourceReference(Border.BackgroundProperty, nameof(ColorScheme.SurfaceContainerHigh));
 
             var stack = new StackPanel();
             stack.Children.Add(new TextBlock { Text = "Delete “Aurora”?", Style = (Style)FindResource("TitleMedium") });
@@ -435,14 +435,14 @@ namespace Material3.Wpf.Gallery {
             });
 
             var errorText = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 12 };
-            errorText.SetResourceReference(TextBlock.ForegroundProperty, "OnErrorContainer");
+            errorText.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnErrorContainer));
             var errorBanner = new Border {
                 Padding = new Thickness(12, 10, 12, 10),
                 Margin = new Thickness(0, 14, 0, 0),
                 Visibility = Visibility.Collapsed,
                 Child = errorText,
             };
-            errorBanner.SetResourceReference(Border.BackgroundProperty, "ErrorContainer");
+            errorBanner.SetResourceReference(Border.BackgroundProperty, nameof(ColorScheme.ErrorContainer));
             errorBanner.SetResourceReference(Border.CornerRadiusProperty, "RadiusSm");
             stack.Children.Add(errorBanner);
 
@@ -537,12 +537,12 @@ namespace Material3.Wpf.Gallery {
             void Add(string text, string glyph, string? shortcut = null, bool enabled = true) {
                 var row = new DockPanel();
                 var icon = new PathIcon { Glyph = glyph, Width = 18, Height = 18, Margin = new Thickness(0, 0, 12, 0), VerticalAlignment = VerticalAlignment.Center };
-                icon.SetResourceReference(PathIcon.ForegroundProperty, "OnSurfaceVariant");
+                icon.SetResourceReference(PathIcon.ForegroundProperty, nameof(ColorScheme.OnSurfaceVariant));
                 DockPanel.SetDock(icon, Dock.Left);
                 row.Children.Add(icon);
                 if (shortcut != null) {
                     var keys = new TextBlock { Text = shortcut, FontSize = 12, Margin = new Thickness(24, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
-                    keys.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+                    keys.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurfaceVariant));
                     DockPanel.SetDock(keys, Dock.Right);
                     row.Children.Add(keys);
                 }
@@ -571,7 +571,7 @@ namespace Material3.Wpf.Gallery {
                 Padding = new Thickness(24),
                 Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 28, ShadowDepth = 0, Opacity = 0.5 },
             };
-            card.SetResourceReference(Border.BackgroundProperty, "SurfaceContainerHigh");
+            card.SetResourceReference(Border.BackgroundProperty, nameof(ColorScheme.SurfaceContainerHigh));
             var stack = new StackPanel();
             stack.Children.Add(new TextBlock { Text = "Reset the gallery?", Style = (Style)FindResource("TitleMedium") });
             stack.Children.Add(new TextBlock {

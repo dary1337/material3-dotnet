@@ -112,7 +112,7 @@ namespace Material3.WinForms.Drawing {
             private const int WS_EX_TRANSPARENT = 0x20, WS_EX_TOOLWINDOW = 0x80, WS_EX_NOACTIVATE = 0x08000000;
 
             private readonly Bitmap _before;
-            private readonly Timer _timer = new Timer { Interval = 15 };
+            private readonly Timer _timer = new Timer { Interval = Motion.FrameIntervalMs };
             private readonly Stopwatch _clock = new Stopwatch();
             private Bitmap? _after;
             private int _bandTop, _bandHeight;

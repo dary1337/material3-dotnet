@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 using Material3.WinForms.Theming;
+using Material3.WinForms.Tokens;
 using Material3.WinForms.Typography;
 
 namespace Material3.WinForms.Controls {
@@ -13,6 +14,10 @@ namespace Material3.WinForms.Controls {
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialPageHeader : Control {
+        private const int ActionsGap = 14;
+        private const int OverlineGap = 3;
+        private const int OverlineTrailingGap = 10;
+        private const int DescriptionGap = 6;
         private const TextFormatFlags Line = TextFormatFlags.NoPadding | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis;
         // EndEllipsis with no proposed size measures the clipped string, so measuring leaves it out.
         private const TextFormatFlags Natural = TextFormatFlags.NoPadding | TextFormatFlags.SingleLine;
@@ -114,17 +119,17 @@ namespace Material3.WinForms.Controls {
         }
 
         private (int height, int textWidth) Measure(int width) {
-            int actionsWidth = _actions != null ? _actions.Width + Dpi.Scale(this, 14) : 0;
+            int actionsWidth = _actions != null ? _actions.Width + Dpi.Scale(this, ActionsGap) : 0;
             int textWidth = Math.Max(1, width - actionsWidth);
             int height = 0;
             if (_overline.Length > 0) {
-                height += Math.Max(TextRenderer.MeasureText(_overline, TypeScale.Overline, Size.Empty, Natural).Height, _overlineTrailing?.Height ?? 0) + Dpi.Scale(this, 3);
+                height += Math.Max(TextRenderer.MeasureText(_overline, TypeScale.Overline, Size.Empty, Natural).Height, _overlineTrailing?.Height ?? 0) + Dpi.Scale(this, OverlineGap);
             }
 
             height += Math.Max(TextRenderer.MeasureText(Text.Length > 0 ? Text : " ", TypeScale.TitleLarge, Size.Empty, Natural).Height, _titleTrailing?.Height ?? 0);
             if (_description.Length > 0) {
                 int wrap = Math.Min(textWidth, Dpi.Scale(this, _descriptionMaxWidth));
-                height += Dpi.Scale(this, 6) + TextRenderer.MeasureText(_description, TypeScale.BodySmall, new Size(wrap, int.MaxValue), Wrapped).Height;
+                height += Dpi.Scale(this, DescriptionGap) + TextRenderer.MeasureText(_description, TypeScale.BodySmall, new Size(wrap, int.MaxValue), Wrapped).Height;
             }
             return (Math.Max(height, _actions?.Height ?? 0), textWidth);
         }
@@ -144,22 +149,22 @@ namespace Material3.WinForms.Controls {
                 int overlineRow = Math.Max(size.Height, _overlineTrailing?.Height ?? 0);
                 _overlineRect = new Rectangle(0, y + (overlineRow - size.Height) / 2, textWidth, size.Height);
                 if (_overlineTrailing != null) {
-                    _overlineTrailing.Location = new Point(Math.Min(size.Width, textWidth) + Dpi.Scale(this, 10), y + (overlineRow - _overlineTrailing.Height) / 2);
+                    _overlineTrailing.Location = new Point(Math.Min(size.Width, textWidth) + Dpi.Scale(this, OverlineTrailingGap), y + (overlineRow - _overlineTrailing.Height) / 2);
                 }
-                y += overlineRow + Dpi.Scale(this, 3);
+                y += overlineRow + Dpi.Scale(this, OverlineGap);
             }
             Size title = TextRenderer.MeasureText(Text.Length > 0 ? Text : " ", TypeScale.TitleLarge, Size.Empty, Natural);
             int titleRow = Math.Max(title.Height, _titleTrailing?.Height ?? 0);
             _titleRect = new Rectangle(0, y + (titleRow - title.Height) / 2, textWidth, title.Height);
             if (_titleTrailing != null) {
-                _titleTrailing.Location = new Point(Math.Min(title.Width, textWidth) + Dpi.Scale(this, 12), y + (titleRow - _titleTrailing.Height) / 2);
+                _titleTrailing.Location = new Point(Math.Min(title.Width, textWidth) + Dpi.Scale(this, Spacing.Space3), y + (titleRow - _titleTrailing.Height) / 2);
             }
             y += titleRow;
             _descriptionRect = Rectangle.Empty;
             if (_description.Length > 0) {
                 int wrap = Math.Min(textWidth, Dpi.Scale(this, _descriptionMaxWidth));
                 Size size = TextRenderer.MeasureText(_description, TypeScale.BodySmall, new Size(wrap, int.MaxValue), Wrapped);
-                _descriptionRect = new Rectangle(0, y + Dpi.Scale(this, 6), wrap, size.Height);
+                _descriptionRect = new Rectangle(0, y + Dpi.Scale(this, DescriptionGap), wrap, size.Height);
             }
             if (_actions != null) {
                 _actions.Location = new Point(Width - _actions.Width, (Height - _actions.Height) / 2);

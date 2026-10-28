@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -46,7 +48,23 @@ namespace Material3.Wpf {
 
         /// <summary>Identifies the <see cref="GroupName"/> property.</summary>
         public static readonly DependencyProperty GroupNameProperty = DependencyProperty.Register(
-            nameof(GroupName), typeof(string), typeof(OptionCard), new PropertyMetadata(string.Empty));
+            nameof(GroupName), typeof(string), typeof(OptionCard), new PropertyMetadata(string.Empty, OnGroupNameChanged));
+
+        private static readonly Dictionary<string, List<WeakReference<OptionCard>>> Groups =
+            new Dictionary<string, List<WeakReference<OptionCard>>>(StringComparer.Ordinal);
+
+        private static void OnGroupNameChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+            var card = (OptionCard)d;
+            if (e.OldValue is string old && old.Length > 0 && Groups.TryGetValue(old, out List<WeakReference<OptionCard>>? before)) {
+                before.RemoveAll(r => !r.TryGetTarget(out OptionCard? c) || ReferenceEquals(c, card));
+            }
+            if (e.NewValue is string name && name.Length > 0) {
+                if (!Groups.TryGetValue(name, out List<WeakReference<OptionCard>>? members)) {
+                    Groups[name] = members = new List<WeakReference<OptionCard>>();
+                }
+                members.Add(new WeakReference<OptionCard>(card));
+            }
+        }
 
         /// <summary>Radio cards with the same name, anywhere in the window, are one group. Empty groups the siblings of one panel.</summary>
         public string GroupName { get => (string)GetValue(GroupNameProperty); set => SetValue(GroupNameProperty, value); }
@@ -94,10 +112,10 @@ namespace Material3.Wpf {
         /// <inheritdoc />
         protected override void OnToggle() {
             if (Indicator == OptionIndicator.Check) {
-                IsChecked = IsChecked != true;
+                SetCurrentValue(IsCheckedProperty, IsChecked != true);
             }
             else if (IsChecked != true) {
-                IsChecked = true;
+                SetCurrentValue(IsCheckedProperty, true);
             }
         }
 
@@ -125,27 +143,30 @@ namespace Material3.Wpf {
                 }
                 return;
             }
-            DependencyObject root = this;
-            while (VisualTreeHelper.GetParent(root) is DependencyObject up) {
-                root = up;
+            // A group spans one visual tree, as RadioButton's does: two windows may reuse a name.
+            if (!Groups.TryGetValue(GroupName, out List<WeakReference<OptionCard>>? members)) {
+                return;
             }
 
-            Visit(root);
+            DependencyObject root = RootOf(this);
+            members.RemoveAll(r => !r.TryGetTarget(out _));
+            foreach (WeakReference<OptionCard> member in members.ToArray()) {
+                if (member.TryGetTarget(out OptionCard? card) && ReferenceEquals(RootOf(card), root)) {
+                    Uncheck(card);
+                }
+            }
         }
 
-        private void Visit(DependencyObject node) {
-            if (node is OptionCard card && card.GroupName == GroupName) {
-                Uncheck(card);
+        private static DependencyObject RootOf(DependencyObject node) {
+            while (VisualTreeHelper.GetParent(node) is DependencyObject up) {
+                node = up;
             }
-
-            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(node); i++) {
-                Visit(VisualTreeHelper.GetChild(node, i));
-            }
+            return node;
         }
 
         private void Uncheck(OptionCard other) {
             if (!ReferenceEquals(other, this) && other.Indicator == OptionIndicator.Radio && other.IsChecked == true) {
-                other.IsChecked = false;
+                other.SetCurrentValue(IsCheckedProperty, false);
             }
         }
 

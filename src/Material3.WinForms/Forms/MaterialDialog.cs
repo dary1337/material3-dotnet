@@ -154,16 +154,26 @@ namespace Material3.WinForms.Forms {
             }
         }
 
+        /// <summary>Appends an action that closes the dialog with <paramref name="result"/>, tinted with <paramref name="tone"/> — an error tone for a destructive choice.</summary>
+        public void AddAction(string text, DialogResult result, MaterialButtonVariant variant, MaterialTone tone) {
+            MaterialButton button = BuildAction(text, variant, default, default, tone);
+            button.Click += (s, e) => { DialogResult = result; Close(); };
+            _actions.Add(button);
+            if (variant == MaterialButtonVariant.Filled) {
+                _defaultButton = button;
+            }
+        }
+
         /// <summary>
         /// Appends an action that runs <paramref name="work"/> before it closes with <paramref name="result"/>: its button
         /// spins, the other actions and Esc are blocked, and a throw lands in <see cref="WorkFailure"/>.
         /// </summary>
-        public void AddAction(string text, DialogResult result, MaterialButtonVariant variant, Func<Task> work) {
+        public void AddAction(string text, DialogResult result, MaterialButtonVariant variant, Func<Task> work, MaterialTone tone = MaterialTone.Neutral) {
             if (work == null) {
                 throw new ArgumentNullException(nameof(work));
             }
 
-            MaterialButton button = BuildAction(text, variant, default, default);
+            MaterialButton button = BuildAction(text, variant, default, default, tone);
             button.Click += async (s, e) => await RunAsync(result, work, busy => button.IsBusy = busy, button);
             _actions.Add(button);
             if (variant == MaterialButtonVariant.Filled) {
@@ -174,7 +184,7 @@ namespace Material3.WinForms.Forms {
         /// <summary>
         /// Appends a confirm that commits only after it is held for <paramref name="hold"/> — for a choice too costly
         /// for a click. <paramref name="destructive"/> fills it with the error colour; <paramref name="work"/>, when
-        /// given, runs before the dialog closes, as with the working <see cref="AddAction(string, DialogResult, MaterialButtonVariant, Func{Task})"/>.
+        /// given, runs before the dialog closes, as with the working <see cref="AddAction(string, DialogResult, MaterialButtonVariant, Func{Task}, MaterialTone)"/>.
         /// </summary>
         public void AddHoldAction(string text, DialogResult result, TimeSpan hold, bool destructive = false, Func<Task>? work = null) {
             var button = new HoldButton(text, hold, destructive);
@@ -219,10 +229,11 @@ namespace Material3.WinForms.Forms {
             }
         }
 
-        private MaterialButton BuildAction(string text, MaterialButtonVariant variant, Color accent, Color onAccent) {
+        private MaterialButton BuildAction(string text, MaterialButtonVariant variant, Color accent, Color onAccent, MaterialTone tone = MaterialTone.Neutral) {
             var button = new MaterialButton {
                 Text = text,
                 Variant = variant,
+                Tone = tone,
                 AutoSize = false,
             };
             if (accent.A > 0) {
@@ -337,7 +348,7 @@ namespace Material3.WinForms.Forms {
                     SizeMode = PictureBoxSizeMode.Normal,
                 };
                 Controls.Add(icon);
-                y += glyphPx + Dpi.Scale(this, 12);
+                y += glyphPx + Dpi.Scale(this, Spacing.Space3);
             }
 
             if (!string.IsNullOrEmpty(_titleText)) {
@@ -348,7 +359,7 @@ namespace Material3.WinForms.Forms {
                     Text = _titleText,
                     Location = new Point(Pad, y),
                     Width = innerWidth,
-                    Height = Headline.Height + Dpi.Scale(this, 4),
+                    Height = Headline.Height + Dpi.Scale(this, Spacing.Space1),
                     BackColor = Color.Transparent,
                 };
                 Controls.Add(title);
@@ -449,7 +460,7 @@ namespace Material3.WinForms.Forms {
         private int MeasureBodyHeight(string text, int width) {
             using (Graphics g = CreateGraphics()) {
                 SizeF size = g.MeasureString(text, Body, width);
-                return (int)Math.Ceiling(size.Height) + Dpi.Scale(this, 4);
+                return (int)Math.Ceiling(size.Height) + Dpi.Scale(this, Spacing.Space1);
             }
         }
 

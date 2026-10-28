@@ -26,6 +26,11 @@ namespace Material3.WinForms.Design {
                 set => Set(_button, nameof(MaterialButton.Variant), value);
             }
 
+            public MaterialTone Tone {
+                get => _button.Tone;
+                set => Set(_button, nameof(MaterialButton.Tone), value);
+            }
+
             [Editor(typeof(GlyphEditor), typeof(UITypeEditor))]
             public string Glyph {
                 get => _button.Glyph;
@@ -37,6 +42,8 @@ namespace Material3.WinForms.Design {
                 new DesignerActionHeaderItem("Material 3"),
                 new DesignerActionPropertyItem(nameof(Variant), "Variant", "Material 3",
                     "Elevated, Filled, Tonal, Outlined or Text."),
+                new DesignerActionPropertyItem(nameof(Tone), "Tone", "Material 3",
+                    "The meaning the button carries, such as Error for a destructive action."),
                 new DesignerActionPropertyItem(nameof(Glyph), "Glyph", "Material 3",
                     "Leading Material Symbols glyph."),
             };

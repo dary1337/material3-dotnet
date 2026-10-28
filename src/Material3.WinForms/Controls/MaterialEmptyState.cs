@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using Material3.WinForms.Drawing;
 using Material3.WinForms.Theming;
+using Material3.WinForms.Tokens;
 using Material3.WinForms.Typography;
 
 namespace Material3.WinForms.Controls {
@@ -14,6 +15,7 @@ namespace Material3.WinForms.Controls {
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialEmptyState : Control {
+        private const int TitleGap = 6;
         private const TextFormatFlags Centred = TextFormatFlags.NoPadding | TextFormatFlags.WordBreak | TextFormatFlags.HorizontalCenter;
 
         private string _glyph = string.Empty;
@@ -115,8 +117,8 @@ namespace Material3.WinForms.Controls {
             Size title = _title.Length > 0 ? TextRenderer.MeasureText(_title, TypeScale.TitleMedium, new Size(wrap, int.MaxValue), Centred) : Size.Empty;
             Size text = Text.Length > 0 ? TextRenderer.MeasureText(Text, TypeScale.BodyMedium, new Size(wrap, int.MaxValue), Centred) : Size.Empty;
             int total = glyph + (glyph > 0 ? Dpi.Scale(this, _glyphGap) : 0)
-                + title.Height + (title.Height > 0 && text.Height > 0 ? Dpi.Scale(this, 6) : 0) + text.Height
-                + (_action != null ? Dpi.Scale(this, 16) + _action.Height : 0);
+                + title.Height + (title.Height > 0 && text.Height > 0 ? Dpi.Scale(this, TitleGap) : 0) + text.Height
+                + (_action != null ? Dpi.Scale(this, Spacing.Space4) + _action.Height : 0);
             int y = Math.Max(0, (Height - total) / 2);
             int cx = Width / 2;
             _glyphRect = new Rectangle(cx - glyph / 2, y, glyph, glyph);
@@ -125,11 +127,11 @@ namespace Material3.WinForms.Controls {
             }
 
             _titleRect = new Rectangle(cx - wrap / 2, y, wrap, title.Height);
-            y += title.Height + (title.Height > 0 && text.Height > 0 ? Dpi.Scale(this, 6) : 0);
+            y += title.Height + (title.Height > 0 && text.Height > 0 ? Dpi.Scale(this, TitleGap) : 0);
             _textRect = new Rectangle(cx - wrap / 2, y, wrap, text.Height);
             y += text.Height;
             if (_action != null) {
-                _action.Location = new Point(cx - _action.Width / 2, y + Dpi.Scale(this, 16));
+                _action.Location = new Point(cx - _action.Width / 2, y + Dpi.Scale(this, Spacing.Space4));
             }
         }
 

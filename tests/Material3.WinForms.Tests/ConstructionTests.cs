@@ -47,7 +47,7 @@ namespace Material3.WinForms.Tests {
 
         [Theory]
         [MemberData(nameof(Factories))]
-        public void AddToATransparentParent_DoesNotThrow(Func<System.Windows.Forms.Control> factory) {
+        public void AControlRendersOnATransparentParent(Func<System.Windows.Forms.Control> factory) {
             using var form = new System.Windows.Forms.Form();
             var host = new System.Windows.Forms.Panel { BackColor = System.Drawing.Color.Transparent };
             form.Controls.Add(host);

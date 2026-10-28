@@ -129,7 +129,7 @@ namespace Material3.Wpf.Tests {
         [InlineData("10,20,0,600,0", false)]
         [InlineData("a,20,800,600,0", false)]
         [InlineData(null, false)]
-        public void OnlyAWholePlacementParses(string? text, bool parses) => Assert.Equal(parses, WindowPlacement.TryParse(text, out _, out _));
+        public void OnlyAWholePlacementParses(string? text, bool parses) => Assert.Equal(parses, Material3.Shared.PlacementText.TryParse(text, out _, out _));
 
         [Fact]
         public void APlacementOffEveryScreenIsRefused() {

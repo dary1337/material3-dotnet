@@ -172,8 +172,8 @@ namespace Material3.Wpf {
                 SizeToContent = SizeToContent.WidthAndHeight;
                 WindowStartupLocation = WindowStartupLocation.CenterScreen;
 
-                _scrim.SetResourceReference(Border.BackgroundProperty, "Scrim");
-                _card.SetResourceReference(StyleProperty, "DialogCard");
+                _scrim.SetResourceReference(Border.BackgroundProperty, nameof(ColorScheme.Scrim));
+                _card.SetResourceReference(StyleProperty, ResourceKeys.DialogCard);
                 _card.HorizontalAlignment = HorizontalAlignment.Center;
                 _card.VerticalAlignment = VerticalAlignment.Center;
                 _card.MouseLeftButtonDown += (_, e) => e.Handled = true;
@@ -189,7 +189,7 @@ namespace Material3.Wpf {
 
             private UIElement BuildContent() {
                 var content = new StackPanel();
-                double width = _options.CardWidth ?? (TryFindResource("DialogWidth") is double w ? w : 420);
+                double width = _options.CardWidth ?? (TryFindResource(ResourceKeys.DialogWidth) is double w ? w : 420);
                 double wide = _options.Content is FrameworkElement fe ? fe.MaxWidth : 0;
                 if (wide > width && !double.IsInfinity(wide)) {
                     content.MaxWidth = wide;
@@ -219,7 +219,7 @@ namespace Material3.Wpf {
                 icon.SetBinding(MarginProperty, new Binding { Path = new PropertyPath(Metrics.GlyphMarginProperty), Source = _card });
                 icon.SetResourceReference(PathIcon.ForegroundProperty, role);
                 var title = new TextBlock { Text = _options.Title, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
-                title.SetResourceReference(StyleProperty, "HeadlineSmall");
+                title.SetResourceReference(StyleProperty, ResourceKeys.HeadlineSmall);
                 var header = new DockPanel { LastChildFill = true };
                 DockPanel.SetDock(icon, Dock.Left);
                 header.Children.Add(icon);
@@ -227,41 +227,65 @@ namespace Material3.Wpf {
                 return header;
             }
 
+            private const double BodyGap = 8;
+
+            private const double BodyLineHeight = 20;
+
+            private const double LinksGap = 16;
+
+            private const double LinkGap = 18;
+
+            private const double LinkGlyph = 14;
+
+            private const double LinkGlyphGap = 4;
+
+            private const double ActionGap = 8;
+
+            private const double ActionsGap = 24;
+
+            private const double SpinnerSize = 18;
+
+            private const double HoldMinWidth = 120;
+
+            private const double HoldPadding = 24;
+
+            private const double HoldSweepOpacity = 0.3;
+
+
             private static UIElement BuildBody(string body) {
                 var text = new TextBlock {
                     Text = body,
                     TextWrapping = TextWrapping.Wrap,
-                    Margin = new Thickness(0, 8, 0, 0),
-                    LineHeight = 20,
+                    Margin = new Thickness(0, BodyGap, 0, 0),
+                    LineHeight = BodyLineHeight,
                 };
-                text.SetResourceReference(StyleProperty, "Body");
-                text.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+                text.SetResourceReference(StyleProperty, ResourceKeys.Body);
+                text.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurfaceVariant));
                 return text;
             }
 
             private static UIElement BuildLinks(IList<DialogAction> links) {
-                var row = new WrapPanel { Margin = new Thickness(0, 16, 0, 0) };
+                var row = new WrapPanel { Margin = new Thickness(0, LinksGap, 0, 0) };
                 for (int i = 0; i < links.Count; i++) {
                     DialogAction link = links[i];
                     var inner = new StackPanel {
                         Orientation = Orientation.Horizontal,
-                        Margin = new Thickness(0, 0, i == links.Count - 1 ? 0 : 18, 0),
+                        Margin = new Thickness(0, 0, i == links.Count - 1 ? 0 : LinkGap, 0),
                     };
                     var glyph = new PathIcon {
                         Glyph = "OpenInNew",
-                        Width = 14,
-                        Height = 14,
+                        Width = LinkGlyph,
+                        Height = LinkGlyph,
                         VerticalAlignment = VerticalAlignment.Center,
-                        Margin = new Thickness(0, 0, 4, 0),
+                        Margin = new Thickness(0, 0, LinkGlyphGap, 0),
                     };
-                    glyph.SetResourceReference(PathIcon.ForegroundProperty, "Primary");
+                    glyph.SetResourceReference(PathIcon.ForegroundProperty, nameof(ColorScheme.Primary));
                     var label = new TextBlock {
                         Text = link.Text,
-                        FontSize = 13,
                         VerticalAlignment = VerticalAlignment.Center,
                     };
-                    label.SetResourceReference(TextBlock.ForegroundProperty, "Primary");
-                    label.SetResourceReference(TextBlock.FontWeightProperty, "FontWeightMedium");
+                    label.SetResourceReference(StyleProperty, ResourceKeys.LabelLarge);
+                    label.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.Primary));
                     inner.Children.Add(glyph);
                     inner.Children.Add(label);
                     var hit = new Border { Background = Brushes.Transparent, Cursor = Cursors.Hand, Child = inner };
@@ -276,18 +300,18 @@ namespace Material3.Wpf {
             private UIElement BuildActions() {
                 var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
                 if (_options.CancelText != null) {
-                    Button cancel = MakeButton(_options.CancelText, _options.SecondaryText != null ? "TextButton" : "TonalButton");
-                    cancel.Margin = new Thickness(0, 0, 8, 0);
+                    Button cancel = MakeButton(_options.CancelText, _options.SecondaryText != null ? ResourceKeys.TextButton : ResourceKeys.TonalButton);
+                    cancel.Margin = new Thickness(0, 0, ActionGap, 0);
                     cancel.Click += (_, __) => Dismiss();
                     buttons.Children.Add(cancel);
                 }
                 if (_options.SecondaryText != null) {
-                    Button secondary = MakeButton(_options.SecondaryText, "TonalButton");
-                    secondary.Margin = new Thickness(0, 0, 8, 0);
+                    Button secondary = MakeButton(_options.SecondaryText, ResourceKeys.TonalButton);
+                    secondary.Margin = new Thickness(0, 0, ActionGap, 0);
                     secondary.Click += (_, __) => Answer(DialogChoice.Secondary);
                     buttons.Children.Add(secondary);
                 }
-                _confirm = MakeButton(_options.ConfirmText, _options.Destructive ? "ErrorTonalButton" : "FilledButton");
+                _confirm = MakeButton(_options.ConfirmText, _options.Destructive ? ResourceKeys.ErrorTonalButton : ResourceKeys.FilledButton);
                 if (_options.HoldToConfirm > TimeSpan.Zero) {
                     ArmHold(_confirm);
                 }
@@ -297,9 +321,9 @@ namespace Material3.Wpf {
                 }
                 buttons.Children.Add(_confirm);
 
-                var row = new DockPanel { LastChildFill = true, Margin = new Thickness(0, 24, 0, 0) };
+                var row = new DockPanel { LastChildFill = true, Margin = new Thickness(0, ActionsGap, 0, 0) };
                 if (_options.SupportingAction is DialogAction extra) {
-                    Button supporting = MakeButton(extra.Text, "TextButton");
+                    Button supporting = MakeButton(extra.Text, ResourceKeys.TextButton);
                     supporting.VerticalAlignment = VerticalAlignment.Center;
                     supporting.Click += (_, __) => { if (!_working) { extra.Run(); } };
                     DockPanel.SetDock(supporting, Dock.Left);
@@ -341,8 +365,8 @@ namespace Material3.Wpf {
                 _confirm.IsHitTestVisible = false;
                 var spinner = new PathIcon {
                     Glyph = Busy.SpinnerGlyph,
-                    Width = 18,
-                    Height = 18,
+                    Width = SpinnerSize,
+                    Height = SpinnerSize,
                     HorizontalAlignment = HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Center,
                 };
@@ -371,34 +395,33 @@ namespace Material3.Wpf {
             private void ArmHold(Button button) {
                 var fillScale = new ScaleTransform(0, 1);
                 var shake = new TranslateTransform();
-                string fillRole = _options.Destructive ? "Error" : "Primary";
-                string onFillRole = _options.Destructive ? "OnError" : "OnPrimary";
+                string fillRole = _options.Destructive ? nameof(ColorScheme.Error) : nameof(ColorScheme.Primary);
+                string onFillRole = _options.Destructive ? nameof(ColorScheme.OnError) : nameof(ColorScheme.OnPrimary);
 
                 var face = new Border {
-                    CornerRadius = new CornerRadius(20),
-                    MinHeight = 40,
-                    MinWidth = 120,
+                    MinWidth = HoldMinWidth,
                     ClipToBounds = true,
                     RenderTransform = shake,
                     RenderTransformOrigin = new Point(0.5, 0.5),
                 };
+                face.SetResourceReference(Border.CornerRadiusProperty, ResourceKeys.RadiusPill);
+                face.SetResourceReference(MinHeightProperty, ResourceKeys.ControlHeight);
                 face.SetResourceReference(Border.BackgroundProperty, fillRole);
                 var fill = new Border {
-                    Opacity = 0.3,
-                    CornerRadius = new CornerRadius(20),
+                    Opacity = HoldSweepOpacity,
                     RenderTransform = fillScale,
                     RenderTransformOrigin = new Point(0, 0.5),
                 };
+                fill.SetResourceReference(Border.CornerRadiusProperty, ResourceKeys.RadiusPill);
                 fill.SetResourceReference(Border.BackgroundProperty, onFillRole);
                 var label = new TextBlock {
                     Text = _options.ConfirmText,
-                    FontSize = 14,
                     HorizontalAlignment = HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Center,
-                    Margin = new Thickness(24, 0, 24, 0),
+                    Margin = new Thickness(HoldPadding, 0, HoldPadding, 0),
                 };
+                label.SetResourceReference(StyleProperty, ResourceKeys.LabelLarge);
                 label.SetResourceReference(TextBlock.ForegroundProperty, onFillRole);
-                label.SetResourceReference(TextBlock.FontWeightProperty, "FontWeightMedium");
                 _holdRole = onFillRole;
                 _holdLabel = label;
                 var layers = new Grid();

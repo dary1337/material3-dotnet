@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using Material3.Core;
+using Material3.Shared;
 
 namespace Material3.Wpf {
     /// <summary>What a <see cref="DatePickerDialog"/> opens on and says.</summary>
@@ -38,7 +39,7 @@ namespace Material3.Wpf {
                 throw new ArgumentNullException(nameof(options));
             }
 
-            double cell = Resource(owner, "DatePickerCellSize", 40.0);
+            double cell = Resource(owner, ResourceKeys.DatePickerCellSize, 40.0);
             var calendar = new DateGrid(options.Initial.Date, options.Culture ?? CultureInfo.CurrentCulture, options.Title, cell);
             DialogChoice choice = Dialog.Show(owner, new DialogOptions {
                 Content = calendar,
@@ -57,13 +58,21 @@ namespace Material3.Wpf {
     internal sealed class DateGrid : StackPanel {
         // A day is a circle of the cell size centred in a cell this much wider and taller, as M3 lays the month out.
         internal const double CellRoom = 8;
+        private const double HeadlineRise = 4;
+        private const double DividerAbove = 12;
+        private const double DividerBelow = 8;
+        private const double NavHeight = 48;
+        private const double MonthIndent = 12;
+        private const double NavGlyph = 20;
+        private const double NavButtonSize = 40;
+        private const double HoverLayer = 0.08;
 
         private readonly double _cell;
 
         private readonly CultureInfo _culture;
         private readonly DayOfWeek _firstDay;
-        private readonly TextBlock _headline = new TextBlock { FontSize = 32, Margin = new Thickness(0, 4, 0, 0) };
-        private readonly TextBlock _month = new TextBlock { FontSize = 14, VerticalAlignment = VerticalAlignment.Center };
+        private readonly TextBlock _headline = new TextBlock { Margin = new Thickness(0, HeadlineRise, 0, 0) };
+        private readonly TextBlock _month = new TextBlock { VerticalAlignment = VerticalAlignment.Center };
         private readonly UniformGrid _days = new UniformGrid { Rows = 6, Columns = 7 };
         private DateTime _shown;
 
@@ -76,33 +85,35 @@ namespace Material3.Wpf {
             Focusable = true;
             FocusVisualStyle = null;
 
-            var overline = new TextBlock { Text = title, FontSize = 14 };
-            overline.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
-            overline.SetResourceReference(TextBlock.FontWeightProperty, "FontWeightMedium");
-            _month.SetResourceReference(TextBlock.FontWeightProperty, "FontWeightMedium");
-            _headline.SetResourceReference(TextBlock.ForegroundProperty, "OnSurface");
+            var overline = new TextBlock { Text = title };
+            overline.SetResourceReference(StyleProperty, ResourceKeys.LabelLarge);
+            overline.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurfaceVariant));
+            _month.SetResourceReference(StyleProperty, ResourceKeys.LabelLarge);
+            _headline.SetResourceReference(StyleProperty, ResourceKeys.HeadlineLarge);
+            _headline.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurface));
             Children.Add(overline);
             Children.Add(_headline);
-            var divider = new Border { Height = 1, Margin = new Thickness(0, 12, 0, 8) };
-            divider.SetResourceReference(Border.BackgroundProperty, "OutlineVariant");
+            var divider = new Border { Height = 1, Margin = new Thickness(0, DividerAbove, 0, DividerBelow) };
+            divider.SetResourceReference(Border.BackgroundProperty, nameof(ColorScheme.OutlineVariant));
             Children.Add(divider);
 
-            var nav = new DockPanel { Height = 48 };
+            var nav = new DockPanel { Height = NavHeight };
             Button next = NavButton("ChevronRight", 1);
             DockPanel.SetDock(next, Dock.Right);
             Button previous = NavButton("ChevronLeft", -1);
             DockPanel.SetDock(previous, Dock.Right);
-            _month.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
-            _month.Margin = new Thickness(12, 0, 0, 0);
+            _month.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurfaceVariant));
+            _month.Margin = new Thickness(MonthIndent, 0, 0, 0);
             nav.Children.Add(next);
             nav.Children.Add(previous);
             nav.Children.Add(_month);
             Children.Add(nav);
 
             var weekdays = new UniformGrid { Rows = 1, Columns = 7, Height = _cell + CellRoom };
-            foreach (string letter in WeekdayLetters(_firstDay, culture)) {
-                var head = new TextBlock { Text = letter, FontSize = 16, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
-                head.SetResourceReference(TextBlock.ForegroundProperty, "OnSurface");
+            foreach (string letter in CalendarMath.WeekdayHeaders(_firstDay, culture)) {
+                var head = new TextBlock { Text = letter, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+                head.SetResourceReference(StyleProperty, ResourceKeys.BodyLarge);
+                head.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurface));
                 weekdays.Children.Add(head);
             }
             Children.Add(weekdays);
@@ -115,18 +126,6 @@ namespace Material3.Wpf {
         internal DateTime Selected { get; private set; }
 
         internal DateTime ShownMonth => _shown;
-
-        internal static int FirstDayOffset(DateTime month, DayOfWeek firstDay) => ((int)month.DayOfWeek - (int)firstDay + 7) % 7;
-
-        internal static string[] WeekdayLetters(DayOfWeek firstDay, CultureInfo culture) {
-            string[] names = culture.DateTimeFormat.AbbreviatedDayNames;
-            var letters = new string[7];
-            for (int i = 0; i < 7; i++) {
-                string name = names[((int)firstDay + i) % 7];
-                letters[i] = name.Length > 0 ? name.Substring(0, 1).ToUpper(culture) : string.Empty;
-            }
-            return letters;
-        }
 
         internal void Select(DateTime date) {
             Selected = date.Date;
@@ -155,9 +154,9 @@ namespace Material3.Wpf {
         }
 
         private Button NavButton(string glyph, int delta) {
-            var icon = new PathIcon { Glyph = glyph, Width = 20, Height = 20 };
-            var button = new Button { Content = icon, Width = 40, Height = 40 };
-            button.SetResourceReference(StyleProperty, "RowIconButton");
+            var icon = new PathIcon { Glyph = glyph, Width = NavGlyph, Height = NavGlyph };
+            var button = new Button { Content = icon, Width = NavButtonSize, Height = NavButtonSize };
+            button.SetResourceReference(StyleProperty, ResourceKeys.RowIconButton);
             button.Click += (_, __) => ShowMonth(delta);
             return button;
         }
@@ -166,7 +165,7 @@ namespace Material3.Wpf {
             _headline.Text = Selected.ToString("ddd, MMM d", _culture);
             _month.Text = _shown.ToString("Y", _culture);
             _days.Children.Clear();
-            int offset = FirstDayOffset(_shown, _firstDay);
+            int offset = CalendarMath.FirstDayOffset(_shown.Year, _shown.Month, _firstDay);
             int length = DateTime.DaysInMonth(_shown.Year, _shown.Month);
             for (int cell = 0; cell < 42; cell++) {
                 int day = cell - offset + 1;
@@ -180,28 +179,28 @@ namespace Material3.Wpf {
             var state = new Ellipse { Width = _cell, Height = _cell, Opacity = 0 };
             var label = new TextBlock {
                 Text = date.Day.ToString(_culture),
-                FontSize = 16,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
             };
+            label.SetResourceReference(StyleProperty, ResourceKeys.BodyLarge);
             if (selected) {
-                fill.SetResourceReference(Shape.FillProperty, "Primary");
-                label.SetResourceReference(TextBlock.ForegroundProperty, "OnPrimary");
-                state.SetResourceReference(Shape.FillProperty, "OnPrimary");
+                fill.SetResourceReference(Shape.FillProperty, nameof(ColorScheme.Primary));
+                label.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnPrimary));
+                state.SetResourceReference(Shape.FillProperty, nameof(ColorScheme.OnPrimary));
             }
             else {
                 if (today) {
                     fill.StrokeThickness = 1;
-                    fill.SetResourceReference(Shape.StrokeProperty, "Primary");
+                    fill.SetResourceReference(Shape.StrokeProperty, nameof(ColorScheme.Primary));
                 }
-                label.SetResourceReference(TextBlock.ForegroundProperty, today ? "Primary" : "OnSurface");
-                state.SetResourceReference(Shape.FillProperty, "OnSurface");
+                label.SetResourceReference(TextBlock.ForegroundProperty, today ? nameof(ColorScheme.Primary) : nameof(ColorScheme.OnSurface));
+                state.SetResourceReference(Shape.FillProperty, nameof(ColorScheme.OnSurface));
             }
             var root = new Grid { Width = _cell + CellRoom, Height = _cell + CellRoom, Background = Brushes.Transparent, Cursor = Cursors.Hand, Tag = date };
             root.Children.Add(fill);
             root.Children.Add(state);
             root.Children.Add(label);
-            root.MouseEnter += (_, __) => state.Opacity = 0.08;
+            root.MouseEnter += (_, __) => state.Opacity = HoverLayer;
             root.MouseLeave += (_, __) => state.Opacity = 0;
             root.MouseLeftButtonUp += (_, e) => { e.Handled = true; Select(date); };
             return root;

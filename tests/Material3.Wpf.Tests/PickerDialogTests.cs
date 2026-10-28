@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Threading;
+using Material3.Shared;
 using Xunit;
 
 namespace Material3.Wpf.Tests {
@@ -15,12 +16,12 @@ namespace Material3.Wpf.Tests {
         [InlineData(2026, 10, DayOfWeek.Sunday, 4)]
         [InlineData(2026, 2, DayOfWeek.Sunday, 0)]
         public void TheMonthStartsInItsWeekdayColumn(int year, int month, DayOfWeek firstDay, int column) =>
-            Assert.Equal(column, DateGrid.FirstDayOffset(new DateTime(year, month, 1), firstDay));
+            Assert.Equal(column, CalendarMath.FirstDayOffset(year, month, firstDay));
 
         [Fact]
         public void WeekdayHeadersStartOnTheCulturesFirstDay() {
-            Assert.Equal(new[] { "S", "M", "T", "W", "T", "F", "S" }, DateGrid.WeekdayLetters(DayOfWeek.Sunday, CultureInfo.GetCultureInfo("en-US")));
-            Assert.Equal("M", DateGrid.WeekdayLetters(DayOfWeek.Monday, CultureInfo.GetCultureInfo("en-US"))[0]);
+            Assert.Equal(new[] { "S", "M", "T", "W", "T", "F", "S" }, CalendarMath.WeekdayHeaders(DayOfWeek.Sunday, CultureInfo.GetCultureInfo("en-US")));
+            Assert.Equal("M", CalendarMath.WeekdayHeaders(DayOfWeek.Monday, CultureInfo.GetCultureInfo("en-US"))[0]);
         }
 
         [Theory]
@@ -31,7 +32,7 @@ namespace Material3.Wpf.Tests {
         [InlineData(31, 99, false, true, 23, 59)]
         [InlineData(0, -4, false, false, 1, 0)]
         public void TypedTimesClampAndResolveTheMeridiem(int hour, int minute, bool pm, bool is24, int expectHour, int expectMinute) =>
-            Assert.Equal(new TimeSpan(expectHour, expectMinute, 0), TimeInput.Normalize(hour, minute, pm, is24));
+            Assert.Equal(new TimeSpan(expectHour, expectMinute, 0), TimeMath.Normalize(hour, minute, pm, is24).value);
     }
 
     [Trait("Category", "Ui")]

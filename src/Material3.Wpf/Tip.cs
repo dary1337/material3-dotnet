@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -8,6 +7,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
+using Material3.Core;
 
 namespace Material3.Wpf {
     /// <summary>A themed M3 tooltip that the native <see cref="ToolTip"/> can't be: one reused <see cref="Popup"/>
@@ -166,14 +166,14 @@ namespace Material3.Wpf {
             }
 
             _label = new TextBlock { FontSize = 12, TextWrapping = TextWrapping.Wrap, MaxWidth = 320 };
-            _label.SetResourceReference(TextBlock.FontFamilyProperty, "FontFamily");
+            _label.SetResourceReference(TextBlock.FontFamilyProperty, ResourceKeys.FontFamily);
             _title = new TextBlock {
                 FontSize = 14,
                 TextWrapping = TextWrapping.Wrap,
                 Margin = new Thickness(0, 0, 0, 4),
             };
-            _title.SetResourceReference(TextBlock.FontFamilyProperty, "FontFamily");
-            _title.SetResourceReference(TextBlock.FontWeightProperty, "FontWeightMedium");
+            _title.SetResourceReference(TextBlock.FontFamilyProperty, ResourceKeys.FontFamily);
+            _title.SetResourceReference(TextBlock.FontWeightProperty, ResourceKeys.FontWeightMedium);
             var stack = new StackPanel();
             stack.Children.Add(_title);
             stack.Children.Add(_label);
@@ -214,7 +214,7 @@ namespace Material3.Wpf {
             _title.Visibility = rich ? Visibility.Visible : Visibility.Collapsed;
             if (target.TryFindResource(rich ? "RichTipCard" : "TipCard") is Style card
                 && target.TryFindResource(rich ? "RichTipText" : "TipText") is Style text
-                && target.TryFindResource("TipTitle") is Style head) {
+                && target.TryFindResource(ResourceKeys.TipTitle) is Style head) {
                 foreach (DependencyProperty p in new[] { Border.CornerRadiusProperty, Border.PaddingProperty, Border.BackgroundProperty, Border.BorderBrushProperty, Border.BorderThicknessProperty, UIElement.EffectProperty }) {
                     _border!.ClearValue(p);
                 }
@@ -238,7 +238,7 @@ namespace Material3.Wpf {
             _border.BorderThickness = new Thickness(1);
             _border.Effect = rich ? TipLook.Shadow() : null;
             Themed(_label, TextBlock.ForegroundProperty, rich ? "OnSurfaceVariant" : "OnSurface", Colors.White);
-            Themed(_border, Border.BackgroundProperty, rich ? "SurfaceContainer" : "SurfaceContainerHighest", Color.FromRgb(0x2D, 0x2C, 0x2E));
+            Themed(_border, Border.BackgroundProperty, rich ? nameof(ColorScheme.SurfaceContainer) : nameof(ColorScheme.SurfaceContainerHighest), Color.FromRgb(0x2D, 0x2C, 0x2E));
         }
 
         private static void LetTheMouseThrough(Popup popup) {
@@ -246,33 +246,11 @@ namespace Material3.Wpf {
                 return;
             }
 
-            IntPtr style = GetWindowLongPtr(source.Handle, GwlExStyle);
-            SetWindowLongPtr(source.Handle, GwlExStyle, new IntPtr(style.ToInt64() | WsExTransparent | WsExNoActivate));
+            long style = WindowLongs.Get(source.Handle, WindowLongs.ExStyle);
+            WindowLongs.Set(source.Handle, WindowLongs.ExStyle, style | WsExTransparent | WsExNoActivate);
         }
 
-        private const int GwlExStyle = -20;
         private const long WsExTransparent = 0x20, WsExNoActivate = 0x08000000;
-
-        [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
-        private static extern IntPtr GetWindowLongPtr64(IntPtr hWnd, int index);
-        [DllImport("user32.dll", EntryPoint = "GetWindowLongW")]
-        private static extern int GetWindowLong32(IntPtr hWnd, int index);
-        [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW")]
-        private static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int index, IntPtr value);
-        [DllImport("user32.dll", EntryPoint = "SetWindowLongW")]
-        private static extern int SetWindowLong32(IntPtr hWnd, int index, int value);
-
-        private static IntPtr GetWindowLongPtr(IntPtr h, int index) =>
-            IntPtr.Size == 8 ? GetWindowLongPtr64(h, index) : new IntPtr(GetWindowLong32(h, index));
-
-        private static void SetWindowLongPtr(IntPtr h, int index, IntPtr value) {
-            if (IntPtr.Size == 8) {
-                SetWindowLongPtr64(h, index, value);
-            }
-            else {
-                SetWindowLong32(h, index, value.ToInt32());
-            }
-        }
 
         private static void Themed(FrameworkElement el, DependencyProperty prop, string key, Color fallback) {
             if (Application.Current?.TryFindResource(key) is SolidColorBrush) {

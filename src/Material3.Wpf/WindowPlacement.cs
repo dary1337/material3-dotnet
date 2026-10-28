@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
+using Material3.Shared;
 
 namespace Material3.Wpf {
     /// <summary>
@@ -11,9 +11,6 @@ namespace Material3.Wpf {
     /// the next start.
     /// </summary>
     public static class WindowPlacement {
-        private const double MinVisibleWidth = 80;
-        private const double MinVisibleHeight = 40;
-
         /// <summary>
         /// The window's restored bounds and whether it is maximized, as <c>left,top,width,height,maximized</c>.
         /// A maximized window reports the bounds it restores to. Empty when the window has no size yet.
@@ -28,8 +25,7 @@ namespace Material3.Wpf {
                 return string.Empty;
             }
 
-            return string.Format(CultureInfo.InvariantCulture, "{0},{1},{2},{3},{4}",
-                (int)r.Left, (int)r.Top, (int)r.Width, (int)r.Height, window.WindowState == WindowState.Maximized ? 1 : 0);
+            return PlacementText.Format(r.Left, r.Top, r.Width, r.Height, window.WindowState == WindowState.Maximized);
         }
 
         /// <summary>
@@ -42,7 +38,7 @@ namespace Material3.Wpf {
                 throw new ArgumentNullException(nameof(window));
             }
 
-            if (!TryParse(placement, out Rect bounds, out bool maximized)) {
+            if (!PlacementText.TryParse(placement, out (int Left, int Top, int Width, int Height) bounds, out bool maximized)) {
                 return false;
             }
 
@@ -65,30 +61,8 @@ namespace Material3.Wpf {
             return true;
         }
 
-        internal static bool TryParse(string? placement, out Rect bounds, out bool maximized) {
-            bounds = Rect.Empty;
-            maximized = false;
-            string[] p = (placement ?? string.Empty).Split(',');
-            if (p.Length != 5
-                || !int.TryParse(p[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out int left)
-                || !int.TryParse(p[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int top)
-                || !int.TryParse(p[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out int width)
-                || !int.TryParse(p[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out int height)
-                || width <= 0 || height <= 0) {
-                return false;
-            }
-
-            bounds = new Rect(left, top, width, height);
-            maximized = p[4] == "1";
-            return true;
-        }
-
-        internal static bool IsReachable(Rect window, Rect screen) {
-            Rect overlap = Rect.Intersect(window, screen);
-            return !overlap.IsEmpty && overlap.Width > 0 && overlap.Height > 0
-                && overlap.Width >= Math.Min(MinVisibleWidth, Math.Min(window.Width, screen.Width))
-                && overlap.Height >= Math.Min(MinVisibleHeight, Math.Min(window.Height, screen.Height));
-        }
+        internal static bool IsReachable(Rect window, Rect screen) =>
+            PlacementText.IsReachable((window.Left, window.Top, window.Width, window.Height), (screen.Left, screen.Top, screen.Width, screen.Height));
 
         // Monitor rectangles come in device pixels; SystemParameters says how many of them make a DIP.
         private static List<Rect> WorkAreas() {

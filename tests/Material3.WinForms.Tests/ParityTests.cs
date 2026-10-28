@@ -20,28 +20,32 @@ namespace Material3.WinForms.Tests {
             typeof(Control).GetMethod("OnClick", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(control, new object[] { EventArgs.Empty });
 
         [Theory]
-        [InlineData(MaterialButtonVariant.WarningFilled)]
-        [InlineData(MaterialButtonVariant.ErrorFilled)]
-        [InlineData(MaterialButtonVariant.ErrorTonal)]
-        [InlineData(MaterialButtonVariant.Shiny)]
-        public void ASemanticButtonFillsWithItsRole(MaterialButtonVariant variant) {
+        [InlineData(MaterialButtonVariant.Filled, MaterialTone.Warning)]
+        [InlineData(MaterialButtonVariant.Filled, MaterialTone.Error)]
+        [InlineData(MaterialButtonVariant.Tonal, MaterialTone.Error)]
+        [InlineData(MaterialButtonVariant.Tonal, MaterialTone.Success)]
+        [InlineData(MaterialButtonVariant.Filled, MaterialTone.Neutral)]
+        public void ATonedButtonFillsWithItsRole(MaterialButtonVariant variant, MaterialTone tone) {
             using var form = new Form { BackColor = MaterialColors.Surface };
-            using var button = new MaterialButton { Variant = variant, Text = string.Empty, Width = 120, Height = 40 };
+            using var button = new MaterialButton { Variant = variant, Tone = tone, Text = string.Empty, Width = 120, Height = 40 };
             form.Controls.Add(button);
             form.CreateControl();
-            Color expected = variant switch {
-                MaterialButtonVariant.WarningFilled => MaterialColors.OnWarningContainer,
-                MaterialButtonVariant.ErrorFilled => MaterialColors.OnErrorContainer,
-                MaterialButtonVariant.ErrorTonal => MaterialColors.ErrorContainer,
-                _ => MaterialColors.Primary,
-            };
+            Color expected = tone == MaterialTone.Neutral ? MaterialColors.Primary
+                : variant == MaterialButtonVariant.Filled ? ToneColors.Of(tone).content
+                : ToneColors.Of(tone).container;
             Assert.Equal(expected.ToArgb(), Sample(button, 60, 20).ToArgb());
+        }
+
+        [Fact]
+        public void AnOutlinedButtonTakesItsTonesColourForTheLabel() {
+            using var button = new MaterialButton { Variant = MaterialButtonVariant.Outlined, Tone = MaterialTone.Error };
+            Assert.Equal(MaterialColors.OnErrorContainer, button.ForeColor);
         }
 
         [Fact]
         public void AShinyButtonDoesNotAnimateWhereNobodySeesIt() {
             using var form = new Form();
-            using var button = new MaterialButton { Variant = MaterialButtonVariant.Shiny, Text = "Go" };
+            using var button = new MaterialButton { IsShiny = true, Text = "Go" };
             form.Controls.Add(button);
             form.CreateControl();
             object? timer = typeof(MaterialButton).GetField("_shine", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(button);
@@ -382,7 +386,7 @@ namespace Material3.WinForms.Tests {
         [Fact]
         public async System.Threading.Tasks.Task AWorkingActionClosesWithItsResultAndKeepsTheFailure() {
             using var dialog = new Material3.WinForms.Forms.MaterialDialog { TitleText = "Delete?" };
-            dialog.AddAction("Delete", DialogResult.OK, MaterialButtonVariant.ErrorTonal, () => throw new InvalidOperationException("locked"));
+            dialog.AddAction("Delete", DialogResult.OK, MaterialButtonVariant.Tonal, () => throw new InvalidOperationException("locked"), MaterialTone.Error);
             var run = typeof(Material3.WinForms.Forms.MaterialDialog).GetMethod("RunAsync", BindingFlags.Instance | BindingFlags.NonPublic)!;
             var task = (System.Threading.Tasks.Task)run.Invoke(dialog, new object[] {
                 DialogResult.OK, new Func<System.Threading.Tasks.Task>(() => throw new InvalidOperationException("locked")),

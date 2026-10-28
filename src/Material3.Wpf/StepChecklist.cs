@@ -8,6 +8,7 @@ using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
+using Material3.Core;
 
 namespace Material3.Wpf {
     /// <summary>
@@ -185,7 +186,7 @@ namespace Material3.Wpf {
                 RenderTransformOrigin = new Point(0.5, 0.5),
                 RenderTransform = checkScale,
             };
-            check.SetResourceReference(PathIcon.ForegroundProperty, "OnSuccess");
+            check.SetResourceReference(PathIcon.ForegroundProperty, nameof(ColorScheme.OnSuccess));
             var crossScale = new ScaleTransform(1, 1);
             var cross = new PathIcon {
                 Glyph = "Close",
@@ -197,7 +198,7 @@ namespace Material3.Wpf {
                 RenderTransformOrigin = new Point(0.5, 0.5),
                 RenderTransform = crossScale,
             };
-            cross.SetResourceReference(PathIcon.ForegroundProperty, "OnError");
+            cross.SetResourceReference(PathIcon.ForegroundProperty, nameof(ColorScheme.OnError));
 
             var indicator = new Grid { Width = IndicatorSize, Height = IndicatorSize };
             indicator.Children.Add(ring);
@@ -260,15 +261,15 @@ namespace Material3.Wpf {
             r.Done = false;
             r.Ring.Visibility = Visibility.Visible;
             r.Ring.StrokeThickness = ArcThickness;
-            r.Ring.SetResourceReference(Shape.StrokeProperty, "SurfaceContainerHighest");
+            r.Ring.SetResourceReference(Shape.StrokeProperty, nameof(ColorScheme.SurfaceContainerHighest));
             r.Fill.Visibility = Visibility.Collapsed;
             r.Arc.Visibility = Visibility.Visible;
             r.Arc.StrokeThickness = ArcThickness;
-            r.Arc.SetResourceReference(Shape.StrokeProperty, "Primary");
+            r.Arc.SetResourceReference(Shape.StrokeProperty, nameof(ColorScheme.Primary));
             r.Arc.StrokeDashArray = new DoubleCollection { ArcDash, ArcGap };
             r.Check.Visibility = Visibility.Collapsed;
             r.Cross.Visibility = Visibility.Collapsed;
-            r.Text.SetResourceReference(TextBlock.ForegroundProperty, "OnSurface");
+            r.Text.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurface));
         }
 
         private static void ShowPending(Row r) {
@@ -278,12 +279,12 @@ namespace Material3.Wpf {
             r.Done = false;
             r.Ring.Visibility = Visibility.Visible;
             r.Ring.StrokeThickness = 2;
-            r.Ring.SetResourceReference(Shape.StrokeProperty, "OutlineVariant");
+            r.Ring.SetResourceReference(Shape.StrokeProperty, nameof(ColorScheme.OutlineVariant));
             r.Fill.Visibility = Visibility.Collapsed;
             r.Arc.Visibility = Visibility.Collapsed;
             r.Check.Visibility = Visibility.Collapsed;
             r.Cross.Visibility = Visibility.Collapsed;
-            r.Text.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceMuted");
+            r.Text.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurfaceMuted));
         }
 
         private static void ShowDone(Row r) {
@@ -295,11 +296,11 @@ namespace Material3.Wpf {
             r.Arc.Visibility = Visibility.Collapsed;
             r.Fill.Visibility = Visibility.Visible;
             r.Fill.Opacity = 1;
-            r.Fill.SetResourceReference(Shape.FillProperty, "Success");
+            r.Fill.SetResourceReference(Shape.FillProperty, nameof(ColorScheme.Success));
             r.Check.Visibility = Visibility.Visible;
             r.CheckScale.ScaleX = r.CheckScale.ScaleY = 1;
             r.Cross.Visibility = Visibility.Collapsed;
-            r.Text.SetResourceReference(TextBlock.ForegroundProperty, "OnSurface");
+            r.Text.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurface));
         }
 
         private static void ShowError(Row r, bool morph) {
@@ -312,10 +313,10 @@ namespace Material3.Wpf {
             r.Check.Visibility = Visibility.Collapsed;
             r.Fill.Visibility = Visibility.Visible;
             r.Fill.Opacity = 1;
-            r.Fill.SetResourceReference(Shape.FillProperty, "Error");
+            r.Fill.SetResourceReference(Shape.FillProperty, nameof(ColorScheme.Error));
             r.Cross.Visibility = Visibility.Visible;
             r.CrossScale.ScaleX = r.CrossScale.ScaleY = 1;
-            r.Text.SetResourceReference(TextBlock.ForegroundProperty, "Error");
+            r.Text.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.Error));
             if (!morph) {
                 return;
             }
@@ -357,15 +358,15 @@ namespace Material3.Wpf {
             r.Done = true;
             r.Ring.Visibility = Visibility.Collapsed;
             r.Cross.Visibility = Visibility.Collapsed;
-            r.Text.SetResourceReference(TextBlock.ForegroundProperty, "OnSurface");
+            r.Text.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurface));
 
             r.Arc.Visibility = Visibility.Visible;
             r.Arc.StrokeThickness = ArcThickness;
-            r.Arc.SetResourceReference(Shape.StrokeProperty, "Success");
+            r.Arc.SetResourceReference(Shape.StrokeProperty, nameof(ColorScheme.Success));
             r.Arc.StrokeDashArray = new DoubleCollection { FullRingDash, 0 };
 
             r.Fill.Visibility = Visibility.Visible;
-            r.Fill.SetResourceReference(Shape.FillProperty, "Success");
+            r.Fill.SetResourceReference(Shape.FillProperty, nameof(ColorScheme.Success));
             r.Fill.Opacity = 0;
             r.Check.Visibility = Visibility.Visible;
             r.CheckScale.ScaleX = r.CheckScale.ScaleY = 0;

@@ -105,7 +105,7 @@ namespace Material3.Wpf {
                 _indicator.SetValue(property, to);
                 return;
             }
-            var ease = TryFindResource("M3EmphasizedDecelerate") as IEasingFunction;
+            var ease = TryFindResource(ResourceKeys.M3EmphasizedDecelerate) as IEasingFunction;
             _indicator!.BeginAnimation(property, new DoubleAnimation(to, Motion.Ms(250)) {
                 EasingFunction = ease,
             });

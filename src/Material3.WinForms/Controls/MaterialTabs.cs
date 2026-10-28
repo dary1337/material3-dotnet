@@ -61,7 +61,7 @@ namespace Material3.WinForms.Controls {
             Height = DefaultBarHeight;
             AutoSize = true;
             TypeRole.Follow(this, () => TypeScale.LabelLarge);
-            _slide = new Timer { Interval = 16 };
+            _slide = new Timer { Interval = Motion.FrameIntervalMs };
             _slide.Tick += OnSlideTick;
             ThemeHook.Attach(this, Invalidate);
         }
@@ -230,7 +230,7 @@ namespace Material3.WinForms.Controls {
             Rectangle rect = TabRect(_selectedIndex);
             _targetPos = rect.X + rect.Width / 2f;
             _targetWidth = _style == MaterialTabVariant.Primary
-                ? Math.Min(rect.Width - Dpi.Scale(this, _tabPadding) * 2 + Dpi.Scale(this, 8), Dpi.Scale(this, _indicatorMaxWidth))
+                ? Math.Min(rect.Width - Dpi.Scale(this, _tabPadding) * 2 + Dpi.Scale(this, Spacing.Space2), Dpi.Scale(this, _indicatorMaxWidth))
                 : rect.Width;
         }
 
