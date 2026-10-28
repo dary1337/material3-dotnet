@@ -159,5 +159,6 @@
     <s:Double x:Key="DatePickerCellSize">40</s:Double>
     <Size x:Key="TimePickerFieldSize">96,72</Size>
     <s:Double x:Key="TimePickerFieldFontSize">45</s:Double>
+    <s:Double x:Key="TimePickerPeriodWidth">52</s:Double>
 
 </ResourceDictionary>

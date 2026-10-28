@@ -50,7 +50,9 @@ namespace Material3.Wpf {
             bool is24 = options.Is24Hour ?? !culture.DateTimeFormat.ShortTimePattern.Contains("h");
             var input = new TimeInput(options, culture, is24,
                 DatePickerDialog.Resource(owner, ResourceKeys.TimePickerFieldSize, new Size(96, 72)),
-                DatePickerDialog.Resource(owner, ResourceKeys.TimePickerFieldFontSize, 45.0));
+                DatePickerDialog.Resource(owner, ResourceKeys.TimePickerFieldFontSize, 45.0),
+                DatePickerDialog.Resource(owner, ResourceKeys.TimePickerPeriodWidth, 52.0),
+                DatePickerDialog.Resource(owner, ResourceKeys.RadiusSm, new CornerRadius(8)));
             DialogChoice choice = Dialog.Show(owner, new DialogOptions {
                 Content = input,
                 ConfirmText = options.ConfirmText,
@@ -63,6 +65,11 @@ namespace Material3.Wpf {
     }
 
     internal sealed class TimeInput : StackPanel {
+        private const double HeadlineGap = 20;
+        private const double PeriodGap = 12;
+        private const double CaptionGap = 7;
+        private const double ColonRise = 6;
+
         private readonly bool _is24;
         private readonly TextBox _hour;
         private readonly TextBox _minute;
@@ -70,15 +77,16 @@ namespace Material3.Wpf {
         private bool _pm;
         private Border? _am, _pmRow;
 
-        internal TimeInput(TimePickerOptions options, CultureInfo culture, bool is24, Size field = default, double fontSize = 45) {
+        internal TimeInput(TimePickerOptions options, CultureInfo culture, bool is24, Size field = default, double fontSize = 45,
+            double periodWidth = 52, CornerRadius periodRadius = default) {
             _is24 = is24;
             if (field.Width <= 0) {
                 field = new Size(96, 72);
             }
 
-            var overline = new TextBlock { Text = options.Title, FontSize = 12, Margin = new Thickness(0, 0, 0, 20) };
+            var overline = new TextBlock { Text = options.Title, Margin = new Thickness(0, 0, 0, HeadlineGap) };
+            overline.SetResourceReference(StyleProperty, ResourceKeys.LabelMedium);
             overline.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurfaceVariant));
-            overline.SetResourceReference(TextBlock.FontWeightProperty, ResourceKeys.FontWeightMedium);
             Children.Add(overline);
 
             int hour = options.Initial.Hours, minute = options.Initial.Minutes;
@@ -93,7 +101,7 @@ namespace Material3.Wpf {
                 FontSize = fontSize * 57 / 45,
                 Width = field.Width / 4,
                 TextAlignment = TextAlignment.Center,
-                Margin = new Thickness(0, -6, 0, 0),
+                Margin = new Thickness(0, -ColonRise, 0, 0),
             };
             colon.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurface));
             row.Children.Add(hourColumn);
@@ -101,7 +109,7 @@ namespace Material3.Wpf {
             row.Children.Add(minuteColumn);
             if (!is24) {
                 _hasPeriod = true;
-                row.Children.Add(PeriodSelector(culture, field.Height));
+                row.Children.Add(PeriodSelector(culture, field.Height, periodWidth, periodRadius.TopLeft > 0 ? periodRadius : new CornerRadius(8)));
                 ChooseAfternoon(pm);
             }
             Children.Add(row);
@@ -111,16 +119,18 @@ namespace Material3.Wpf {
         internal TimeSpan Value => TimeMath.Normalize(Read(_hour), Read(_minute), _hasPeriod && _pm, _is24).value;
 
         // The M3 period selector: AM over PM in one outlined 52-wide column beside the fields, the chosen half tertiary.
-        private FrameworkElement PeriodSelector(CultureInfo culture, double height) {
+        private FrameworkElement PeriodSelector(CultureInfo culture, double height, double width, CornerRadius radius) {
             Border Half(string text, CornerRadius corners, bool afternoon) {
-                var label = new TextBlock { Text = text, FontSize = 16, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
-                label.SetResourceReference(TextBlock.FontWeightProperty, ResourceKeys.FontWeightMedium);
+                var label = new TextBlock { Text = text, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+                label.SetResourceReference(StyleProperty, ResourceKeys.TitleMedium);
                 var half = new Border { CornerRadius = corners, Background = Brushes.Transparent, Cursor = Cursors.Hand, Child = label };
                 half.MouseLeftButtonUp += (_, e) => { e.Handled = true; ChooseAfternoon(afternoon); };
                 return half;
             }
-            _am = Half(culture.DateTimeFormat.AMDesignator, new CornerRadius(7, 7, 0, 0), false);
-            _pmRow = Half(culture.DateTimeFormat.PMDesignator, new CornerRadius(0, 0, 7, 7), true);
+            // The halves sit inside the 1 px outline, so they round by one less.
+            double inner = Math.Max(0, radius.TopLeft - 1);
+            _am = Half(culture.DateTimeFormat.AMDesignator, new CornerRadius(inner, inner, 0, 0), false);
+            _pmRow = Half(culture.DateTimeFormat.PMDesignator, new CornerRadius(0, 0, inner, inner), true);
             var divider = new Border { Height = 1 };
             divider.SetResourceReference(Border.BackgroundProperty, nameof(ColorScheme.Outline));
             var halves = new Grid();
@@ -134,11 +144,11 @@ namespace Material3.Wpf {
             halves.Children.Add(_pmRow);
             var column = new Border {
                 Name = "period",
-                Width = 52,
+                Width = width,
                 Height = height,
-                Margin = new Thickness(12, 0, 0, 0),
+                Margin = new Thickness(PeriodGap, 0, 0, 0),
                 VerticalAlignment = VerticalAlignment.Top,
-                CornerRadius = new CornerRadius(8),
+                CornerRadius = radius,
                 BorderThickness = new Thickness(1),
                 Child = halves,
             };
@@ -165,7 +175,7 @@ namespace Material3.Wpf {
                     half.Background = Brushes.Transparent;
                 }
 
-                ((TextBlock)half.Child).SetResourceReference(TextBlock.ForegroundProperty, chosen ? "OnTertiaryContainer" : "OnSurfaceVariant");
+                ((TextBlock)half.Child).SetResourceReference(TextBlock.ForegroundProperty, chosen ? nameof(ColorScheme.OnTertiaryContainer) : nameof(ColorScheme.OnSurfaceVariant));
             }
         }
 
@@ -214,7 +224,8 @@ namespace Material3.Wpf {
                     overwrite = false;
                 }
             };
-            var label = new TextBlock { Text = caption, FontSize = 12, Margin = new Thickness(0, 7, 0, 0) };
+            var label = new TextBlock { Text = caption, Margin = new Thickness(0, CaptionGap, 0, 0) };
+            label.SetResourceReference(StyleProperty, ResourceKeys.BodySmall);
             label.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurfaceVariant));
             var stack = new StackPanel();
             stack.Children.Add(box);
