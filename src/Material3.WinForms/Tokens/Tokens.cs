@@ -104,6 +104,11 @@ namespace Material3.WinForms.Tokens {
         /// <summary>State-layer opacity while dragged.</summary>
         public const double Dragged = 0.16;
 
+        /// <summary>Hover layer over a filled button that inverts a tone's container pair: its light content needs more to show.</summary>
+        public const double InvertedHover = 0.10;
+        /// <summary>Pressed layer over a filled button that inverts a tone's container pair.</summary>
+        public const double InvertedPressed = 0.16;
+
         /// <summary>Container opacity for disabled fills (12% of OnSurface over the parent).</summary>
         public const double DisabledContainer = 0.12;
 

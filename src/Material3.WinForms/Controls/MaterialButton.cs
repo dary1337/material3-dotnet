@@ -11,7 +11,7 @@ using Material3.WinForms.Tokens;
 using Material3.WinForms.Typography;
 
 namespace Material3.WinForms.Controls {
-    /// <summary>The five M3 button styles, the semantic fills and the attention-seeking shiny one.</summary>
+    /// <summary>The five M3 button styles. <see cref="MaterialButton.Tone"/> and <see cref="MaterialButton.IsShiny"/> go on top.</summary>
     public enum MaterialButtonVariant {
         /// <summary>A tinted surface lifted by a shadow.</summary>
         Elevated,
@@ -23,14 +23,6 @@ namespace Material3.WinForms.Controls {
         Outlined,
         /// <summary>A label with no container, for the lowest emphasis.</summary>
         Text,
-        /// <summary>The warning container pair inverted, so it reads as THE action of a warning banner.</summary>
-        WarningFilled,
-        /// <summary>The error container pair inverted, so it reads as THE action of an error banner.</summary>
-        ErrorFilled,
-        /// <summary>The error container fill, for a destructive choice in a dialog.</summary>
-        ErrorTonal,
-        /// <summary>A filled button that a light sweep crosses every few seconds, for an action the screen waits on.</summary>
-        Shiny,
     }
 
     /// <summary>Pill-shaped owner-drawn M3 button; inherits <see cref="Button"/> so DialogResult / AcceptButton work.</summary>
@@ -42,6 +34,8 @@ namespace Material3.WinForms.Controls {
 #endif
     public sealed class MaterialButton : Button {
         private MaterialButtonVariant _variant = MaterialButtonVariant.Filled;
+        private MaterialTone _tone = MaterialTone.Neutral;
+        private bool _isShiny;
         private string _iconGlyph = string.Empty;
         private Image? _iconImage;
         private Func<Color>? _accent;
@@ -88,17 +82,44 @@ namespace Material3.WinForms.Controls {
             ThemeHook.Attach(this, () => { ApplyVariantColors(); Invalidate(); });
         }
 
-        /// <summary>The button style: an M3 variant, a semantic fill or the shiny one.</summary>
+        /// <summary>The M3 button style.</summary>
         [Category("Material Design")]
-        [Description("The button style: an M3 variant, a semantic fill or the shiny one.")]
+        [Description("The M3 button style.")]
         [DefaultValue(MaterialButtonVariant.Filled)]
         public MaterialButtonVariant Variant {
             get => _variant;
             set {
                 _variant = value;
                 ApplyVariantColors();
-                SyncShine();
                 InvalidateLayout();
+            }
+        }
+
+        /// <summary>
+        /// The meaning the button carries. A filled button inverts the tone's container pair, so it reads as THE action
+        /// of a matching banner; a tonal one fills with the container; the others take its content colour.
+        /// </summary>
+        [Category("Material Design")]
+        [Description("The meaning the button carries: filled inverts the tone's container pair, tonal fills with it, the others take its colour.")]
+        [DefaultValue(MaterialTone.Neutral)]
+        public MaterialTone Tone {
+            get => _tone;
+            set {
+                _tone = value;
+                ApplyVariantColors();
+                Invalidate();
+            }
+        }
+
+        /// <summary>A light sweep crosses the button every few seconds, for an action the screen waits on.</summary>
+        [Category("Material Design")]
+        [Description("A light sweep crosses the button every few seconds, for an action the screen waits on.")]
+        [DefaultValue(false)]
+        public bool IsShiny {
+            get => _isShiny;
+            set {
+                _isShiny = value;
+                SyncShine();
             }
         }
 
@@ -253,15 +274,17 @@ namespace Material3.WinForms.Controls {
         private Color Accent => _accent?.Invoke() ?? MaterialColors.Primary;
         private Color OnAccent => _onAccent?.Invoke() ?? MaterialColors.OnPrimary;
 
+        private bool Toned => _tone != MaterialTone.Neutral;
+
         private Color FillColor {
             get {
+                if (Toned && (_variant == MaterialButtonVariant.Filled || _variant == MaterialButtonVariant.Tonal)) {
+                    (Color container, Color content) = ToneColors.Of(_tone);
+                    return _variant == MaterialButtonVariant.Filled ? content : container;
+                }
                 switch (_variant) {
-                    case MaterialButtonVariant.Filled:
-                    case MaterialButtonVariant.Shiny: return Accent;
+                    case MaterialButtonVariant.Filled: return Accent;
                     case MaterialButtonVariant.Tonal: return MaterialColors.SecondaryContainer;
-                    case MaterialButtonVariant.WarningFilled: return MaterialColors.OnWarningContainer;
-                    case MaterialButtonVariant.ErrorFilled: return MaterialColors.OnErrorContainer;
-                    case MaterialButtonVariant.ErrorTonal: return MaterialColors.ErrorContainer;
                     case MaterialButtonVariant.Elevated: return Elevation.TintedSurface(MaterialColors.SurfaceContainerLow, 1);
                     default: return Color.Transparent;
                 }
@@ -270,13 +293,13 @@ namespace Material3.WinForms.Controls {
 
         private Color ContentColor {
             get {
+                if (Toned) {
+                    (Color container, Color content) = ToneColors.Of(_tone);
+                    return _variant == MaterialButtonVariant.Filled ? container : content;
+                }
                 switch (_variant) {
-                    case MaterialButtonVariant.Filled:
-                    case MaterialButtonVariant.Shiny: return OnAccent;
+                    case MaterialButtonVariant.Filled: return OnAccent;
                     case MaterialButtonVariant.Tonal: return MaterialColors.OnSecondaryContainer;
-                    case MaterialButtonVariant.WarningFilled: return MaterialColors.WarningContainer;
-                    case MaterialButtonVariant.ErrorFilled: return MaterialColors.ErrorContainer;
-                    case MaterialButtonVariant.ErrorTonal: return MaterialColors.OnErrorContainer;
                     default: return Accent;
                 }
             }
@@ -303,11 +326,11 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override void OnParentChanged(EventArgs e) { base.OnParentChanged(e); SyncShine(); }
 
-        private bool InvertedSemantic => _variant == MaterialButtonVariant.WarningFilled || _variant == MaterialButtonVariant.ErrorFilled;
+        private bool Inverted => Toned && _variant == MaterialButtonVariant.Filled;
 
         // The sweep runs only where someone can see it: a visible, enabled button in the active window.
         private void SyncShine() {
-            Form? form = _variant == MaterialButtonVariant.Shiny ? FindForm() : null;
+            Form? form = _isShiny ? FindForm() : null;
             if (!ReferenceEquals(form, _shineForm)) {
                 if (_shineForm != null) {
                     _shineForm.Activated -= OnShineFormActivation;
@@ -417,8 +440,8 @@ namespace Material3.WinForms.Controls {
                         }
                     }
 
-                    double layerOpacity = InvertedSemantic
-                        ? _layer.Resolve(_hovered, _pressed, Enabled, 0.10, 0.16)
+                    double layerOpacity = Inverted
+                        ? _layer.Resolve(_hovered, _pressed, Enabled, StateLayers.InvertedHover, StateLayers.InvertedPressed)
                         : _layer.Resolve(_hovered, _pressed, Enabled);
                     if (layerOpacity > 0) {
                         Color layerBase = fill.A > 0 ? fill : parent;
