@@ -161,4 +161,10 @@
     <s:Double x:Key="TimePickerFieldFontSize">45</s:Double>
     <s:Double x:Key="TimePickerPeriodWidth">52</s:Double>
 
+    <!-- M3 state-layer opacities; the inverted pair is for light content on a dark tone fill. -->
+    <s:Double x:Key="StateLayerHover">0.08</s:Double>
+    <s:Double x:Key="StateLayerPressed">0.12</s:Double>
+    <s:Double x:Key="StateLayerInvertedHover">0.10</s:Double>
+    <s:Double x:Key="StateLayerInvertedPressed">0.16</s:Double>
+
 </ResourceDictionary>

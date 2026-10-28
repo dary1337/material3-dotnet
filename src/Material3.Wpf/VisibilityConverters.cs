@@ -14,7 +14,7 @@ namespace Material3.Wpf {
 
         /// <inheritdoc />
         public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
-            value == null != IsInverted ? Visibility.Visible : Visibility.Collapsed;
+            (value == null) != IsInverted ? Visibility.Visible : Visibility.Collapsed;
 
         /// <inheritdoc />
         public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
