@@ -21,8 +21,20 @@ namespace Material3.WinForms.Theming {
     /// colors via <see cref="Scheme"/> at paint time, so a switch only needs to trigger a repaint.
     /// </summary>
     public static class ThemeManager {
-        private static MaterialTheme _theme = MaterialTheme.Platinum();
-        private static bool _isDark = true;
+        // One immutable pair, so a paint on the UI thread never reads a new theme with the old mode.
+        private sealed class Snapshot {
+            public Snapshot(MaterialTheme theme, bool isDark) {
+                Theme = theme;
+                IsDark = isDark;
+            }
+
+            public MaterialTheme Theme { get; }
+
+            public bool IsDark { get; }
+        }
+
+        private static readonly object Gate = new object();
+        private static volatile Snapshot _state = new Snapshot(MaterialTheme.Platinum(), true);
 
         /// <summary>Raised after the theme or mode changes; controls repaint with the new scheme.</summary>
         public static event EventHandler? ThemeChanged;
@@ -30,34 +42,41 @@ namespace Material3.WinForms.Theming {
         /// <summary>The active theme (both schemes).</summary>
         /// <exception cref="ArgumentNullException">The value is null.</exception>
         public static MaterialTheme Theme {
-            get => _theme;
+            get => _state.Theme;
             set {
                 if (value == null) {
                     throw new ArgumentNullException(nameof(value));
                 }
 
-                if (ReferenceEquals(value, _theme)) {
-                    return;
-                }
-                _theme = value;
-                ThemeChanged?.Invoke(null, EventArgs.Empty);
+                Apply(value, _state.IsDark);
             }
         }
 
         /// <summary>Whether the dark scheme is active. Switching repaints all subscribed controls.</summary>
         public static bool IsDark {
-            get => _isDark;
+            get => _state.IsDark;
             set {
-                if (_isDark == value) {
-                    return;
+                bool changed;
+                lock (Gate) {
+                    Snapshot state = _state;
+                    changed = state.IsDark != value;
+                    if (changed) {
+                        _state = new Snapshot(state.Theme, value);
+                    }
                 }
-                _isDark = value;
-                ThemeChanged?.Invoke(null, EventArgs.Empty);
+                if (changed) {
+                    ThemeChanged?.Invoke(null, EventArgs.Empty);
+                }
             }
         }
 
         /// <summary>The active color scheme — single source of truth for every control.</summary>
-        public static ColorScheme Scheme => _isDark ? _theme.DarkScheme : _theme.LightScheme;
+        public static ColorScheme Scheme {
+            get {
+                Snapshot state = _state;
+                return state.IsDark ? state.Theme.DarkScheme : state.Theme.LightScheme;
+            }
+        }
 
         /// <summary>Sets theme and mode in one transaction (one repaint instead of two).</summary>
         /// <exception cref="ArgumentNullException"><paramref name="theme"/> is null.</exception>
@@ -66,9 +85,14 @@ namespace Material3.WinForms.Theming {
                 throw new ArgumentNullException(nameof(theme));
             }
 
-            bool changed = !ReferenceEquals(theme, _theme) || isDark != _isDark;
-            _theme = theme;
-            _isDark = isDark;
+            bool changed;
+            lock (Gate) {
+                Snapshot state = _state;
+                changed = !ReferenceEquals(theme, state.Theme) || isDark != state.IsDark;
+                if (changed) {
+                    _state = new Snapshot(theme, isDark);
+                }
+            }
             if (changed) {
                 ThemeChanged?.Invoke(null, EventArgs.Empty);
             }
