@@ -596,6 +596,35 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
+        public void ASelectReportsTheFirstPickAndTheClear() {
+            using var select = new MaterialDropdownSelect();
+            int raised = 0;
+            select.SelectedIndexChanged += (s, e) => raised++;
+            select.AddItem("Day", "d");
+            select.AddItem("Week", "w");
+            Assert.Equal(1, raised);
+            select.ClearItems();
+            Assert.Equal(2, raised);
+            Assert.Equal(-1, select.SelectedIndex);
+            select.ClearItems();
+            Assert.Equal(2, raised);
+        }
+
+        [Fact]
+        public void ASelectRefilledFromItsClearEventKeepsAValidPick() {
+            using var select = new MaterialDropdownSelect();
+            select.AddItem("Day", "d");
+            select.SelectedIndexChanged += (s, e) => {
+                if (select.SelectedIndex < 0) {
+                    select.AddItem("Month", "m");
+                }
+            };
+            select.ClearItems();
+            Assert.Equal(0, select.SelectedIndex);
+            Assert.Equal("m", select.SelectedTag);
+        }
+
+        [Fact]
         public void SelectionIsSettableByIndexAndReportsTheChange() {
             using var select = new MaterialDropdownSelect();
             select.AddItem("Day", "d");
