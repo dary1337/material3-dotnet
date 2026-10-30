@@ -399,8 +399,6 @@ namespace Material3.WinForms.Controls {
                 : null;
         }
 
-        private const int SurfaceInset = 0;
-
         private int EffectiveRadius(Rectangle rect) {
             return Math.Max(0, Math.Min(Dpi.Scale(this, _cornerRadius), Math.Min(rect.Width, rect.Height) / 2));
         }
@@ -419,13 +417,7 @@ namespace Material3.WinForms.Controls {
                 Color parent = SurfaceBehind.Of(this);
                 g.Clear(parent);
 
-                int inset = SurfaceInset;
-                var rect = new Rectangle(
-                    inset,
-                    inset,
-                    Math.Max(0, Width - 1 - inset * 2),
-                    Math.Max(0, Height - 1 - inset * 2)
-                );
+                var rect = new Rectangle(0, 0, Math.Max(0, Width - 1), Math.Max(0, Height - 1));
                 int radius = EffectiveRadius(rect);
 
                 Color fill = FillColor;
@@ -569,8 +561,8 @@ namespace Material3.WinForms.Controls {
                 int iconWidth = !hasIcon
                     ? 0
                     : iconPx + (text.Length == 0 ? 0 : iconGap);
-                int width = horizontalPadding + iconWidth + textWidth + SurfaceInset * 2;
-                int height = Math.Max(Dpi.Scale(this, _buttonHeight), Font.Height + Padding.Vertical + Dpi.Scale(this, Spacing.Space4)) + SurfaceInset * 2;
+                int width = horizontalPadding + iconWidth + textWidth;
+                int height = Math.Max(Dpi.Scale(this, _buttonHeight), Font.Height + Padding.Vertical + Dpi.Scale(this, Spacing.Space4));
                 _prefKey = key;
                 _prefSize = new Size(width, height);
                 _prefValid = true;

@@ -76,22 +76,12 @@ namespace Material3.WinForms.Drawing {
 
             using (GraphicsPath pathSurface = GetFigurePath(rectSurface, cornerRadius))
             using (GraphicsPath pathBorder = GetFigurePath(rectBorder, cornerRadius - borderSize))
-            using (var penSurface = new Pen(GetOpaqueAncestorBackground(control), smoothSize))
+            using (var penSurface = new Pen(SurfaceBehind.Of(control), smoothSize))
             using (var penBorder = new Pen(borderColor, borderSize)) {
                 e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
                 e.Graphics.DrawPath(penSurface, pathSurface);
                 e.Graphics.DrawPath(penBorder, pathBorder);
             }
-        }
-
-        internal static Color GetOpaqueAncestorBackground(Control control) {
-            for (Control? parent = control.Parent; parent != null; parent = parent.Parent) {
-                if (parent.BackColor.A > 0) {
-                    return parent.BackColor;
-                }
-            }
-
-            return Theming.MaterialColors.Surface;
         }
 
         private static void ReplaceRegion(Control control, GraphicsPath path) {
@@ -113,7 +103,7 @@ namespace Material3.WinForms.Drawing {
                 return control.BackColor;
             }
 
-            return GetOpaqueAncestorBackground(control);
+            return SurfaceBehind.Of(control);
         }
     }
 }
