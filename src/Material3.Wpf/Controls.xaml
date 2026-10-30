@@ -1097,14 +1097,32 @@
     </Style>
 
 
-    <!-- A templated card, not a Border style: its shadow is a layer of its own, so the content keeps ClearType
-         and a virtualizing list inside paints as it realizes. -->
-    <Style x:Key="ElevatedCard" TargetType="ContentControl">
-        <Setter Property="Background" Value="{DynamicResource SurfaceContainerLow}" />
+    <!-- The three M3 cards are templated, not Border styles, so the elevated one can keep its shadow on a layer of its
+         own: the content keeps ClearType and a virtualizing list inside paints as it realizes. -->
+    <ControlTemplate x:Key="CardTemplate" TargetType="ContentControl">
+        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                CornerRadius="{m3:FitCornerRadius}" Padding="{TemplateBinding Padding}">
+            <ContentPresenter />
+        </Border>
+    </ControlTemplate>
+
+    <Style x:Key="FilledCard" TargetType="ContentControl">
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainerHighest}" />
         <Setter Property="m3:Metrics.CornerRadius" Value="{DynamicResource RadiusMd}" />
         <Setter Property="Padding" Value="16" />
         <Setter Property="Focusable" Value="False" />
         <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Template" Value="{StaticResource CardTemplate}" />
+    </Style>
+
+    <Style x:Key="OutlinedCard" TargetType="ContentControl" BasedOn="{StaticResource FilledCard}">
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource OutlineVariant}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <Style x:Key="ElevatedCard" TargetType="ContentControl" BasedOn="{StaticResource FilledCard}">
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainerLow}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ContentControl">
@@ -1117,20 +1135,6 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-    </Style>
-
-    <Style x:Key="FilledCard" TargetType="Border">
-        <Setter Property="Background" Value="{DynamicResource SurfaceContainerHighest}" />
-        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMd}" />
-        <Setter Property="Padding" Value="16" />
-    </Style>
-
-    <Style x:Key="OutlinedCard" TargetType="Border">
-        <Setter Property="Background" Value="{DynamicResource Surface}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource OutlineVariant}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMd}" />
-        <Setter Property="Padding" Value="16" />
     </Style>
 
     <Style x:Key="M3RoundCheckBox" TargetType="CheckBox">
