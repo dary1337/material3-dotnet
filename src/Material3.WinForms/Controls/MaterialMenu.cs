@@ -327,13 +327,18 @@ namespace Material3.WinForms.Controls {
                 return -1;
             }
 
-            // The popup never takes focus, so its keys arrive at the window under it and are read here on the way.
-            internal bool OnKey(Keys key) {
+            // The popup never takes focus, so its keys arrive at the window under it and are read here on the way. A text
+            // box under it keeps its Space, and Enter picks only a highlighted row, so a search field still submits.
+            internal bool OnKey(Keys key, bool typing = false) {
                 switch (key) {
                     case Keys.Up:
                     case Keys.Down:
                         MoveHot(key == Keys.Down ? 1 : -1);
                         return true;
+                    case Keys.Space when typing:
+                        return false;
+                    case Keys.Enter when _hotIndex < 0:
+                        return false;
                     case Keys.Enter:
                     case Keys.Space:
                         if (_hotIndex >= 0 && _entries[_hotIndex].Enabled) {
@@ -371,7 +376,7 @@ namespace Material3.WinForms.Controls {
                 const int WM_RBUTTONDOWN = 0x0204;
                 const int WM_NCLBUTTONDOWN = 0x00A1;
                 if (m.Msg == WM_KEYDOWN && Visible && !IsDisposed) {
-                    return OnKey((Keys)(int)m.WParam & Keys.KeyCode);
+                    return OnKey((Keys)(int)m.WParam & Keys.KeyCode, Control.FromChildHandle(m.HWnd) is TextBoxBase);
                 }
 
                 if (m.Msg != WM_LBUTTONDOWN && m.Msg != WM_RBUTTONDOWN && m.Msg != WM_NCLBUTTONDOWN) {

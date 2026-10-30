@@ -126,5 +126,19 @@ namespace Material3.WinForms.Tests {
             Assert.True(popup.OnKey(Keys.Enter));
             Assert.Equal(1, picked);
         }
+
+        [Fact]
+        public void AMenuOverATextBoxLeavesItsSpaceAndAnUnpickedEnter() {
+            using var menu = new MaterialMenu();
+            int picked = -1;
+            menu.AddItem("Copy", onClick: () => picked = 0);
+            using var popup = new MaterialMenu.MenuPopup(menu, i => menu.Entries[i].OnClick?.Invoke());
+            Assert.False(popup.OnKey(Keys.Enter, typing: true));
+            Assert.True(popup.OnKey(Keys.Down, typing: true));
+            Assert.False(popup.OnKey(Keys.Space, typing: true));
+            Assert.Equal(-1, picked);
+            Assert.True(popup.OnKey(Keys.Enter, typing: true));
+            Assert.Equal(0, picked);
+        }
     }
 }
