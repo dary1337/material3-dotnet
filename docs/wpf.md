@@ -27,9 +27,12 @@ Merge the control dictionary (it self-contains its tokens) and apply a theme onc
 // One seed → every role published as a live DynamicResource brush.
 ThemeManager.Apply(MaterialTheme.FromSeed(Argb.FromArgb(0x67, 0x50, 0xA4)), isDark: true, Application.Current.Resources);
 
-// Later, one at a time — each republishes into the same dictionary.
+// Later, one at a time — each republishes into every dictionary Apply has written to.
 ThemeManager.IsDark = !ThemeManager.IsDark;
 ThemeManager.Theme = MaterialTheme.FromSeed(Argb.FromArgb(0x2E, 0x7D, 0x32), SchemeVariant.Vibrant);
+
+// A window with a theme of its own, such as a light preview beside a dark app, is published once and left alone.
+ThemeManager.Publish(preview.Resources, MaterialTheme.Platinum().LightScheme);
 ```
 
 Wrap the window content in one `<m3:ModalLayer>` to enable `Modal.Show(card)` (an app-wide scrim that
