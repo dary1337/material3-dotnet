@@ -458,7 +458,8 @@ namespace Material3.WinForms.Forms {
         }
 
         private int MeasureBodyHeight(string text, int width) {
-            using (Graphics g = CreateGraphics()) {
+            using (var measure = MeasureContext.For(this)) {
+                Graphics g = measure.Graphics;
                 SizeF size = g.MeasureString(text, Body, width);
                 return (int)Math.Ceiling(size.Height) + Dpi.Scale(this, Spacing.Space1);
             }

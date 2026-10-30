@@ -239,7 +239,8 @@ namespace Material3.WinForms.Controls {
             if (!IsHandleCreated || !AutoSize) {
                 return;
             }
-            using (Graphics g = CreateGraphics()) {
+            using (var measure = MeasureContext.For(this)) {
+                Graphics g = measure.Graphics;
                 ChipRenderer.Metrics metrics = BuildMetrics();
                 int width = ChipRenderer.Measure(g, Text, ShowsLeading, metrics);
                 if (ShowsRemove) {

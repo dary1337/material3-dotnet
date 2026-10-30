@@ -158,7 +158,8 @@ namespace Material3.WinForms.Controls {
             int overhang = Dpi.Scale(this, HaloOverhang);
             int width = Dpi.Scale(this, _trackWidth) + overhang;
             if (text.Length > 0) {
-                using (Graphics g = CreateGraphics()) {
+                using (var measure = MeasureContext.For(this)) {
+                    Graphics g = measure.Graphics;
                     width += Dpi.Scale(this, _labelGap) + (int)Math.Ceiling(
                         g.MeasureString(text, Font, int.MaxValue, StringFormat.GenericTypographic).Width);
                 }

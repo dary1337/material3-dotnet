@@ -561,7 +561,8 @@ namespace Material3.WinForms.Controls {
             int iconPx = Dpi.Scale(this, _iconSize);
             int iconGap = Dpi.Scale(this, _iconGap);
 
-            using (Graphics g = CreateGraphics()) {
+            using (var measure = MeasureContext.For(this)) {
+                Graphics g = measure.Graphics;
                 int textWidth = text.Length == 0
                     ? 0
                     : (int)Math.Ceiling(g.MeasureString(text, Font, int.MaxValue, StringFormat.GenericTypographic).Width);

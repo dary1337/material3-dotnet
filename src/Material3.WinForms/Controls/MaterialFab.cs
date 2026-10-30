@@ -173,7 +173,8 @@ namespace Material3.WinForms.Controls {
             if (IsExtended) {
                 int width = surfacePx;
                 if (IsHandleCreated) {
-                    using (Graphics g = CreateGraphics()) {
+                    using (var measure = MeasureContext.For(this)) {
+                        Graphics g = measure.Graphics;
                         float text = g.MeasureString(Text, Font,
                             int.MaxValue, StringFormat.GenericTypographic).Width;
                         width = Dpi.Scale(this, 16) + Dpi.Scale(this, icon) + Dpi.Scale(this, 12)

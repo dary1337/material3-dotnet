@@ -168,7 +168,8 @@ namespace Material3.WinForms.Controls {
             int inset = HaloInset;
             int width = inset + Dpi.Scale(this, _boxSize);
             if (text.Length > 0) {
-                using (Graphics g = CreateGraphics()) {
+                using (var measure = MeasureContext.For(this)) {
+                    Graphics g = measure.Graphics;
                     width += Dpi.Scale(this, _labelGap) + (int)Math.Ceiling(
                         g.MeasureString(text, Font, int.MaxValue, StringFormat.GenericTypographic).Width);
                 }
