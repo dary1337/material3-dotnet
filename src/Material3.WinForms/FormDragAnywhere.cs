@@ -86,7 +86,7 @@ namespace Material3.WinForms {
             }
 
             // The filter sees every window's clicks, so only a press inside this form's own controls counts.
-            private bool IsDragSurface(Message m) {
+            internal bool IsDragSurface(Message m) {
                 if (!_form.IsHandleCreated || !_form.Visible) {
                     return false;
                 }

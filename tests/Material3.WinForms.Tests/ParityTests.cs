@@ -794,6 +794,25 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
+        public void APressOnAControlIsNotADragButAPressOnTheFormIs() {
+            using var form = new QuietForm { StartPosition = FormStartPosition.Manual, Location = new Point(-32000, -32000), Size = new Size(200, 200) };
+            var slider = new MaterialSlider { Bounds = new Rectangle(10, 10, 150, 44) };
+            form.Controls.Add(slider);
+            form.Show();
+            var filter = new FormDragAnywhere.DragFilter(form);
+            Assert.False(filter.IsDragSurface(Message.Create(slider.Handle, 0x0201, IntPtr.Zero, IntPtr.Zero)));
+            Assert.True(filter.IsDragSurface(Message.Create(form.Handle, 0x0201, IntPtr.Zero, IntPtr.Zero)));
+        }
+
+        [Fact]
+        public void EnablingDragTwiceOnOneFormIsHarmless() {
+            using var form = new Form();
+            _ = form.Handle;
+            FormDragAnywhere.Enable(form);
+            FormDragAnywhere.Enable(form);
+        }
+
+        [Fact]
         public void AHoldButtonIsNeverADragSurface() {
             using var hold = new Material3.WinForms.Forms.HoldButton("Reset", TimeSpan.FromSeconds(1), destructive: false);
             Assert.IsAssignableFrom<FormDragAnywhere.IDragExcluded>(hold);
