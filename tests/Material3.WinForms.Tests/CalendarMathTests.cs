@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.Linq;
 using Material3.Shared;
 using Xunit;
 
@@ -38,6 +39,8 @@ namespace Material3.WinForms.Tests {
         [InlineData(2026, 3, 31, -1, 2026, 2, 28)]
         [InlineData(2026, 12, 15, 1, 2027, 1, 15)]
         [InlineData(2026, 1, 15, -1, 2025, 12, 15)]
+        [InlineData(1, 1, 1, -1, 1, 1, 1)]
+        [InlineData(9999, 12, 31, 1, 9999, 12, 31)]
         public void AddMonthsClamped_ClampsDayAndRollsYears(
             int year, int month, int day, int delta, int expYear, int expMonth, int expDay) {
             DateTime result = CalendarMath.AddMonthsClamped(new DateTime(year, month, day), delta);
@@ -50,6 +53,13 @@ namespace Material3.WinForms.Tests {
             Assert.Equal(7, headers.Length);
             Assert.Equal("M", headers[0]);
             Assert.Equal("S", headers[6]);
+        }
+
+        [Fact]
+        public void ChineseWeekdayHeadersAreSevenDifferentDays() {
+            string[] headers = CalendarMath.WeekdayHeaders(DayOfWeek.Sunday, CultureInfo.GetCultureInfo("zh-CN"));
+            Assert.Equal(7, headers.Distinct().Count());
+            Assert.DoesNotContain("周", headers);
         }
     }
 }

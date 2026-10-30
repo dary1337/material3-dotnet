@@ -24,9 +24,13 @@ namespace Material3.Shared {
             return (index / Columns, index % Columns);
         }
 
-        // Jan 31 plus a month is Feb 28, not Mar 3.
+        // Jan 31 plus a month is Feb 28, not Mar 3; a step past year 1 or 9999 leaves the date where it is.
         internal static DateTime AddMonthsClamped(DateTime date, int months) {
             int totalMonths = date.Year * 12 + (date.Month - 1) + months;
+            if (totalMonths < 12 || totalMonths >= 10000 * 12) {
+                return date;
+            }
+
             int year = totalMonths / 12;
             int month = totalMonths % 12 + 1;
             int day = Math.Min(date.Day, DateTime.DaysInMonth(year, month));
@@ -34,7 +38,8 @@ namespace Material3.Shared {
         }
 
         internal static string[] WeekdayHeaders(DayOfWeek firstDayOfWeek, CultureInfo culture) {
-            string[] names = culture.DateTimeFormat.AbbreviatedDayNames;
+            // ShortestDayNames, not the first letter of the abbreviation: in Chinese every abbreviation starts with 周.
+            string[] names = culture.DateTimeFormat.ShortestDayNames;
             string[] headers = new string[Columns];
             for (int i = 0; i < Columns; i++) {
                 string name = names[((int)firstDayOfWeek + i) % 7];
