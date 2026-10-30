@@ -287,7 +287,8 @@ window holding `owner`, and Esc or a scrim click closes only that window's top m
 
 `DatePickerDialog.Show(owner, DatePickerOptions)` and `TimePickerDialog.Show(owner, TimePickerOptions)` answer with
 the value or null for a cancel. Every label in their options is overridable; the culture picks the first weekday
-and whether the time picker shows AM/PM, and a typed time is clamped into range.
+and whether the time picker shows AM/PM, and a typed time is clamped into range. The date picker is M3's docked one
+(in WinForms too): month and year steppers, Page Up/Down for a month, with Shift for a year.
 
 ## Motion
 

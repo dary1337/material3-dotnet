@@ -97,6 +97,12 @@ namespace Material3.Wpf {
         internal bool IsHeaderHidden { get; set; }
 
         internal double? CardWidth { get; set; }
+
+        internal Thickness? CardPadding { get; set; }
+
+        internal string? CardRadiusKey { get; set; }
+
+        internal double? ActionsGap { get; set; }
     }
 
     /// <summary>
@@ -182,6 +188,13 @@ namespace Material3.Wpf {
 
                 _scrim.SetResourceReference(Border.BackgroundProperty, nameof(ColorScheme.Scrim));
                 _card.SetResourceReference(StyleProperty, ResourceKeys.DialogCard);
+                if (options.CardPadding is Thickness padding) {
+                    _card.Padding = padding;
+                }
+
+                if (options.CardRadiusKey != null) {
+                    _card.SetResourceReference(Border.CornerRadiusProperty, options.CardRadiusKey);
+                }
                 _card.HorizontalAlignment = HorizontalAlignment.Center;
                 _card.VerticalAlignment = VerticalAlignment.Center;
                 _card.MouseLeftButtonDown += (_, e) => e.Handled = true;
@@ -328,7 +341,7 @@ namespace Material3.Wpf {
                 }
                 buttons.Children.Add(_confirm);
 
-                var row = new DockPanel { LastChildFill = true, Margin = new Thickness(0, ActionsGap, 0, 0) };
+                var row = new DockPanel { LastChildFill = true, Margin = new Thickness(0, _options.ActionsGap ?? ActionsGap, 0, 0) };
                 if (_options.SupportingAction is DialogAction extra) {
                     Button supporting = MakeButton(extra.Text, ResourceKeys.TextButton);
                     supporting.VerticalAlignment = VerticalAlignment.Center;

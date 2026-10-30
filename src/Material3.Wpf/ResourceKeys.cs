@@ -21,6 +21,7 @@ namespace Material3.Wpf {
         internal const string M3StandardDecelerate = nameof(M3StandardDecelerate);
         internal const string RadiusPill = nameof(RadiusPill);
         internal const string RadiusSm = nameof(RadiusSm);
+        internal const string RadiusLg = nameof(RadiusLg);
         internal const string RichTipCard = nameof(RichTipCard);
         internal const string RichTipText = nameof(RichTipText);
         internal const string RowIconButton = nameof(RowIconButton);

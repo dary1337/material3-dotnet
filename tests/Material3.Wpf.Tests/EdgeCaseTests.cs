@@ -29,6 +29,20 @@ namespace Material3.Wpf.Tests {
             Assert.Equal(new DateTime(9999, 12, 1), grid.ShownMonth);
         });
 
+        [Fact]
+        public void TheDockedSteppersMoveAMonthAndAYear() => Ui.InWindow(w => {
+            var grid = new DateGrid(new DateTime(2026, 10, 30), CultureInfo.GetCultureInfo("en-US"), "Select date");
+            w.Content = grid;
+            Ui.Settle(w);
+            Button[] steps = Ui.Descendants<Button>(grid).Take(4).ToArray();
+            steps[1].RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            Assert.Equal(new DateTime(2026, 11, 1), grid.ShownMonth);
+            steps[3].RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            Assert.Equal(new DateTime(2027, 11, 1), grid.ShownMonth);
+            Assert.Contains(Ui.Descendants<TextBlock>(grid), t => t.Text == "Nov");
+            Assert.Contains(Ui.Descendants<TextBlock>(grid), t => t.Text == "2027");
+        });
+
         [Theory]
         [InlineData(Key.Left)]
         [InlineData(Key.Up)]

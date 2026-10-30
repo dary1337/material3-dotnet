@@ -15,7 +15,7 @@ namespace Material3.Wpf {
         /// <summary>The date selected when the dialog opens; its month is the one shown.</summary>
         public DateTime Initial { get; set; } = DateTime.Today;
 
-        /// <summary>The line above the selected date.</summary>
+        /// <summary>What a screen reader calls the calendar.</summary>
         public string Title { get; set; } = LibraryText.Get(TextKey.SelectDate);
 
         /// <summary>The confirm label.</summary>
@@ -29,8 +29,8 @@ namespace Material3.Wpf {
     }
 
     /// <summary>
-    /// The M3 docked date picker as a blocking dialog: the selected date as the headline, month navigation, and a grid
-    /// of days with today outlined. The arrow keys move the selection by a day or a week, Page Up and Page Down by a month.
+    /// The M3 docked date picker as a blocking dialog: month and year steppers and a grid of days with today outlined.
+    /// The arrow keys move the selection by a day or a week, Page Up and Page Down by a month, with Shift by a year.
     /// </summary>
     public static class DatePickerDialog {
         /// <summary>Shows the picker over <paramref name="owner"/>; returns the picked date, or null when it was cancelled.</summary>
@@ -47,6 +47,9 @@ namespace Material3.Wpf {
                 CancelText = options.CancelText,
                 IsHeaderHidden = true,
                 CardWidth = (cell + DateGrid.CellRoom) * 7,
+                CardPadding = new Thickness(DateGrid.CardPadding),
+                CardRadiusKey = ResourceKeys.RadiusLg,
+                ActionsGap = DateGrid.CardPadding,
             });
             return choice == DialogChoice.Confirm ? calendar.Selected : (DateTime?)null;
         }
@@ -58,11 +61,9 @@ namespace Material3.Wpf {
     internal sealed class DateGrid : StackPanel {
         // A day is a circle of the cell size centred in a cell this much wider and taller, as M3 lays the month out.
         internal const double CellRoom = 8;
-        private const double HeadlineRise = 4;
-        private const double DividerAbove = 12;
-        private const double DividerBelow = 8;
-        private const double NavHeight = 48;
-        private const double MonthIndent = 12;
+        internal const double CardPadding = 12;
+        // With the 12 the card pads it by, the stepper row is the 56 of the docked spec.
+        private const double NavHeight = 44;
         private const double NavGlyph = 20;
         private const double NavButtonSize = 40;
         private const double HoverLayer = 0.08;
@@ -71,8 +72,8 @@ namespace Material3.Wpf {
 
         private readonly CultureInfo _culture;
         private readonly DayOfWeek _firstDay;
-        private readonly TextBlock _headline = new TextBlock { Margin = new Thickness(0, HeadlineRise, 0, 0) };
-        private readonly TextBlock _month = new TextBlock { VerticalAlignment = VerticalAlignment.Center };
+        private readonly TextBlock _month = new TextBlock { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+        private readonly TextBlock _year = new TextBlock { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
         private readonly UniformGrid _days = new UniformGrid { Rows = 6, Columns = 7 };
         private DateTime _shown;
 
@@ -87,29 +88,11 @@ namespace Material3.Wpf {
             _shown = new DateTime(initial.Year, initial.Month, 1);
             Focusable = true;
             FocusVisualStyle = null;
+            System.Windows.Automation.AutomationProperties.SetName(this, title);
 
-            var overline = new TextBlock { Text = title };
-            overline.SetResourceReference(StyleProperty, ResourceKeys.LabelLarge);
-            overline.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurfaceVariant));
-            _month.SetResourceReference(StyleProperty, ResourceKeys.LabelLarge);
-            _headline.SetResourceReference(StyleProperty, ResourceKeys.HeadlineLarge);
-            _headline.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurface));
-            Children.Add(overline);
-            Children.Add(_headline);
-            var divider = new Border { Height = 1, Margin = new Thickness(0, DividerAbove, 0, DividerBelow) };
-            divider.SetResourceReference(Border.BackgroundProperty, nameof(ColorScheme.OutlineVariant));
-            Children.Add(divider);
-
-            var nav = new DockPanel { Height = NavHeight };
-            Button next = NavButton("ChevronRight", 1);
-            DockPanel.SetDock(next, Dock.Right);
-            Button previous = NavButton("ChevronLeft", -1);
-            DockPanel.SetDock(previous, Dock.Right);
-            _month.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurfaceVariant));
-            _month.Margin = new Thickness(MonthIndent, 0, 0, 0);
-            nav.Children.Add(next);
-            nav.Children.Add(previous);
-            nav.Children.Add(_month);
+            var nav = new UniformGrid { Rows = 1, Columns = 2, Height = NavHeight };
+            nav.Children.Add(Stepper(_month, 1));
+            nav.Children.Add(Stepper(_year, 12));
             Children.Add(nav);
 
             var weekdays = new UniformGrid { Rows = 1, Columns = 7, Height = _cell + CellRoom };
@@ -150,11 +133,9 @@ namespace Material3.Wpf {
             if (days != 0) {
                 next = CalendarMath.AddDaysClamped(Selected, days);
             }
-            else if (e.Key == Key.PageUp) {
-                next = CalendarMath.AddMonthsClamped(Selected, -1);
-            }
-            else if (e.Key == Key.PageDown) {
-                next = CalendarMath.AddMonthsClamped(Selected, 1);
+            else if (e.Key == Key.PageUp || e.Key == Key.PageDown) {
+                int months = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? 12 : 1;
+                next = CalendarMath.AddMonthsClamped(Selected, e.Key == Key.PageUp ? -months : months);
             }
             else {
                 base.OnKeyDown(e);
@@ -167,6 +148,21 @@ namespace Material3.Wpf {
             e.Handled = true;
         }
 
+        // A label between a back and an on button; the month one steps a month, the year one twelve.
+        private DockPanel Stepper(TextBlock label, int months) {
+            label.SetResourceReference(StyleProperty, ResourceKeys.LabelLarge);
+            label.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurfaceVariant));
+            var stepper = new DockPanel();
+            Button back = NavButton("ChevronLeft", -months);
+            Button on = NavButton("ChevronRight", months);
+            DockPanel.SetDock(back, Dock.Left);
+            DockPanel.SetDock(on, Dock.Right);
+            stepper.Children.Add(back);
+            stepper.Children.Add(on);
+            stepper.Children.Add(label);
+            return stepper;
+        }
+
         private Button NavButton(string glyph, int delta) {
             var icon = new PathIcon { Glyph = glyph, Width = NavGlyph, Height = NavGlyph };
             var button = new Button { Content = icon, Width = NavButtonSize, Height = NavButtonSize };
@@ -176,8 +172,8 @@ namespace Material3.Wpf {
         }
 
         private void Render() {
-            _headline.Text = Selected.ToString("ddd, MMM d", _culture);
-            _month.Text = _shown.ToString("Y", _culture);
+            _month.Text = _culture.DateTimeFormat.GetAbbreviatedMonthName(_shown.Month);
+            _year.Text = _shown.ToString("yyyy", _culture);
             _days.Children.Clear();
             int offset = CalendarMath.FirstDayOffset(_shown.Year, _shown.Month, _firstDay);
             int length = DateTime.DaysInMonth(_shown.Year, _shown.Month);

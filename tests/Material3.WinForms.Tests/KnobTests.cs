@@ -311,6 +311,18 @@ namespace Material3.WinForms.Tests {
     [Collection("LibraryText")]
     public class PickerTextTests {
         [Fact]
+        public void TheDatePickerIsTheDockedOneAndShiftPageStepsAYear() {
+            using var picker = new MaterialDatePickerDialog(new DateTime(2026, 10, 21));
+            Assert.Equal(new Size(360, 456), picker.Size);
+            Assert.Equal(0, picker.HeaderHeight);
+            Message message = default;
+            bool handled = (bool)typeof(MaterialDatePickerDialog).GetMethod("ProcessCmdKey", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+                .Invoke(picker, new object[] { message, Keys.Shift | Keys.PageDown })!;
+            Assert.True(handled);
+            Assert.Equal(new DateTime(2027, 10, 21), picker.Value);
+        }
+
+        [Fact]
         public void ADatePickersButtonsUseLibraryTextUnlessOverridden() {
             try {
                 LibraryText.Set(TextKey.Ok, "Go");
