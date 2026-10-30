@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Material3.WinForms.Controls;
 
@@ -24,55 +25,42 @@ namespace Material3.WinForms {
 
         private sealed class DragFilter : IMessageFilter {
             private const int WM_LBUTTONDOWN = 0x0201;
-            private const int WM_MOUSEMOVE = 0x0200;
-            private const int WM_LBUTTONUP = 0x0202;
+            private const int WM_NCLBUTTONDOWN = 0x00A1;
+            private const int HTCAPTION = 2;
 
             private readonly Form _form;
-            private bool _dragging;
-            private Point _dragOriginScreen;
-            private Point _formOriginLocation;
 
             public DragFilter(Form form) {
                 _form = form;
             }
 
+            [DllImport("user32.dll")]
+            private static extern bool ReleaseCapture();
+
+            [DllImport("user32.dll")]
+            private static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
+
+            // The filter sees every window's clicks, so only a press inside this form's own controls starts a move;
+            // the move itself is the system's caption drag, which holds the mouse and ends wherever the button comes up.
             public bool PreFilterMessage(ref Message m) {
-                if (!_form.IsHandleCreated || !_form.Visible) {
+                if (m.Msg != WM_LBUTTONDOWN || !_form.IsHandleCreated || !_form.Visible) {
                     return false;
                 }
 
-                switch (m.Msg) {
-                    case WM_LBUTTONDOWN: {
-                            Point screen = MessageToScreenPoint(m);
-                            Rectangle bounds = _form.RectangleToScreen(_form.ClientRectangle);
-                            if (!bounds.Contains(screen)) {
-                                return false;
-                            }
-                            Control? leaf = WalkToLeaf(_form, _form.PointToClient(screen));
-                            if (leaf != null && IsInteractive(leaf)) {
-                                return false;
-                            }
-                            _dragging = true;
-                            _dragOriginScreen = screen;
-                            _formOriginLocation = _form.Location;
-                            return false;
-                        }
-                    case WM_MOUSEMOVE: {
-                            if (!_dragging) {
-                                return false;
-                            }
-                            Point cur = Cursor.Position;
-                            _form.Location = new Point(
-                                _formOriginLocation.X + cur.X - _dragOriginScreen.X,
-                                _formOriginLocation.Y + cur.Y - _dragOriginScreen.Y
-                            );
-                            return false;
-                        }
-                    case WM_LBUTTONUP:
-                        _dragging = false;
-                        return false;
+                var target = Control.FromChildHandle(m.HWnd);
+                if (target == null || !ReferenceEquals(target.FindForm(), _form)) {
+                    return false;
                 }
-                return false;
+
+                Point screen = MessageToScreenPoint(m);
+                Control? leaf = WalkToLeaf(_form, _form.PointToClient(screen));
+                if (leaf != null && IsInteractive(leaf)) {
+                    return false;
+                }
+
+                ReleaseCapture();
+                SendMessage(_form.Handle, WM_NCLBUTTONDOWN, (IntPtr)HTCAPTION, IntPtr.Zero);
+                return true;
             }
 
             private static Point MessageToScreenPoint(Message m) {
