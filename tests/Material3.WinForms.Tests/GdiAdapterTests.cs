@@ -34,7 +34,7 @@ namespace Material3.WinForms.Tests {
                         continue;
                     }
 
-                    PropertyInfo gdiRole = typeof(MaterialColors).GetProperty(role.Name);
+                    PropertyInfo? gdiRole = typeof(MaterialColors).GetProperty(role.Name);
                     Assert.True(gdiRole != null, $"MaterialColors is missing role {role.Name}");
                     int expected = ((Argb)role.GetValue(ThemeManager.Scheme)!).ToGdi().ToArgb();
                     int actual = ((System.Drawing.Color)gdiRole!.GetValue(null)!).ToArgb();
