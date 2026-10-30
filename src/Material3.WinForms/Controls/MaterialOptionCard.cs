@@ -68,6 +68,7 @@ namespace Material3.WinForms.Controls {
 
         /// <summary>Initializes a new instance of the <see cref="MaterialOptionCard"/> class.</summary>
         public MaterialOptionCard() : base(Shape.Medium) {
+            FocusRing.Attach(this);
             SetStyle(ControlStyles.Selectable, true);
             TabStop = true;
             Height = DefaultCardHeight;
@@ -388,24 +389,6 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override AccessibleObject CreateAccessibilityInstance() =>
             new MaterialAccessible(this, Indicator == MaterialOptionIndicator.Check ? AccessibleRole.CheckButton : AccessibleRole.RadioButton, () => IsSelected ? AccessibleStates.Checked : AccessibleStates.None, () => Title, null, TextKey.Select, OnCardClick);
-
-        /// <inheritdoc />
-        protected override void OnGotFocus(EventArgs e) {
-            base.OnGotFocus(e);
-            Invalidate();
-        }
-
-        /// <inheritdoc />
-        protected override void OnLostFocus(EventArgs e) {
-            base.OnLostFocus(e);
-            Invalidate();
-        }
-
-        /// <inheritdoc />
-        protected override void OnChangeUICues(UICuesEventArgs e) {
-            base.OnChangeUICues(e);
-            Invalidate();
-        }
 
         /// <inheritdoc />
         protected override void OnKeyDown(KeyEventArgs e) {

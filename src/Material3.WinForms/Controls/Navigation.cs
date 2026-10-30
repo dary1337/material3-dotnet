@@ -90,6 +90,7 @@ namespace Material3.WinForms.Controls {
         public event EventHandler? SelectedIndexChanged;
 
         private protected MaterialNavigationBase() {
+            FocusRing.Attach(this);
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
                     | ControlStyles.UserPaint
@@ -268,24 +269,6 @@ namespace Material3.WinForms.Controls {
                 SelectedIndex = next;
                 e.Handled = true;
             }
-        }
-
-        /// <inheritdoc />
-        protected override void OnGotFocus(EventArgs e) {
-            base.OnGotFocus(e);
-            Invalidate();
-        }
-
-        /// <inheritdoc />
-        protected override void OnLostFocus(EventArgs e) {
-            base.OnLostFocus(e);
-            Invalidate();
-        }
-
-        /// <inheritdoc />
-        protected override void OnChangeUICues(UICuesEventArgs e) {
-            base.OnChangeUICues(e);
-            Invalidate();
         }
 
         private protected void PaintFocus(Graphics g) {

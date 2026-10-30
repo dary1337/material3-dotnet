@@ -41,6 +41,7 @@ namespace Material3.WinForms.Controls {
 
         /// <summary>Initializes a new instance of the <see cref="MaterialSwitch"/> class.</summary>
         public MaterialSwitch() {
+            FocusRing.Attach(this);
             _layer = new StateLayerFade(this);
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
@@ -227,24 +228,6 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override AccessibleObject CreateAccessibilityInstance() =>
             new MaterialAccessible(this, AccessibleRole.CheckButton, () => Checked ? AccessibleStates.Checked : AccessibleStates.None, () => Text, null, TextKey.Toggle, () => Checked = !Checked);
-
-        /// <inheritdoc />
-        protected override void OnGotFocus(EventArgs e) {
-            base.OnGotFocus(e);
-            Invalidate();
-        }
-
-        /// <inheritdoc />
-        protected override void OnLostFocus(EventArgs e) {
-            base.OnLostFocus(e);
-            Invalidate();
-        }
-
-        /// <inheritdoc />
-        protected override void OnChangeUICues(UICuesEventArgs e) {
-            base.OnChangeUICues(e);
-            Invalidate();
-        }
 
         private void PaintContent(PaintEventArgs e) {
             Graphics g = e.Graphics;

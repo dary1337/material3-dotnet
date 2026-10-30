@@ -31,6 +31,7 @@ namespace Material3.WinForms.Controls {
 
         /// <summary>Initializes a new instance of the <see cref="MaterialCheckBox"/> class.</summary>
         public MaterialCheckBox() {
+            FocusRing.Attach(this);
             _layer = new StateLayerFade(this);
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
@@ -241,24 +242,6 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override AccessibleObject CreateAccessibilityInstance() =>
             new MaterialAccessible(this, AccessibleRole.CheckButton, () => CheckState == CheckState.Checked ? AccessibleStates.Checked : CheckState == CheckState.Indeterminate ? AccessibleStates.Mixed : AccessibleStates.None, () => Text, null, TextKey.Toggle, Toggle);
-
-        /// <inheritdoc />
-        protected override void OnGotFocus(EventArgs e) {
-            base.OnGotFocus(e);
-            Invalidate();
-        }
-
-        /// <inheritdoc />
-        protected override void OnLostFocus(EventArgs e) {
-            base.OnLostFocus(e);
-            Invalidate();
-        }
-
-        /// <inheritdoc />
-        protected override void OnChangeUICues(UICuesEventArgs e) {
-            base.OnChangeUICues(e);
-            Invalidate();
-        }
 
         private void PaintContent(PaintEventArgs e) {
             Graphics g = e.Graphics;

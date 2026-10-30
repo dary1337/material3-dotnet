@@ -41,6 +41,7 @@ namespace Material3.WinForms.Controls {
 
         /// <summary>Initializes a new instance of the <see cref="MaterialListItem"/> class.</summary>
         public MaterialListItem() {
+            FocusRing.Attach(this);
             _layer = new StateLayerFade(this);
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
@@ -261,24 +262,6 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override AccessibleObject CreateAccessibilityInstance() =>
             new MaterialAccessible(this, AccessibleRole.ListItem, () => AccessibleStates.Selectable | (IsSelected ? AccessibleStates.Selected : AccessibleStates.None), () => Headline, null, TextKey.Press, () => OnClick(EventArgs.Empty));
-
-        /// <inheritdoc />
-        protected override void OnGotFocus(EventArgs e) {
-            base.OnGotFocus(e);
-            Invalidate();
-        }
-
-        /// <inheritdoc />
-        protected override void OnLostFocus(EventArgs e) {
-            base.OnLostFocus(e);
-            Invalidate();
-        }
-
-        /// <inheritdoc />
-        protected override void OnChangeUICues(UICuesEventArgs e) {
-            base.OnChangeUICues(e);
-            Invalidate();
-        }
 
         /// <inheritdoc />
         protected override void OnKeyDown(KeyEventArgs e) {

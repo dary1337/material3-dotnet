@@ -48,6 +48,7 @@ namespace Material3.WinForms.Controls {
 
         /// <summary>Initializes a new instance of the <see cref="MaterialTabs"/> class.</summary>
         public MaterialTabs() {
+            FocusRing.Attach(this);
             _hover = new ItemHoverFade(this);
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
@@ -354,24 +355,6 @@ namespace Material3.WinForms.Controls {
                 }
                 return items;
             });
-
-        /// <inheritdoc />
-        protected override void OnGotFocus(EventArgs e) {
-            base.OnGotFocus(e);
-            Invalidate();
-        }
-
-        /// <inheritdoc />
-        protected override void OnLostFocus(EventArgs e) {
-            base.OnLostFocus(e);
-            Invalidate();
-        }
-
-        /// <inheritdoc />
-        protected override void OnChangeUICues(UICuesEventArgs e) {
-            base.OnChangeUICues(e);
-            Invalidate();
-        }
 
         /// <inheritdoc />
         protected override bool IsInputKey(Keys keyData) =>

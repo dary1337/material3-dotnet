@@ -48,6 +48,7 @@ namespace Material3.WinForms.Controls {
 
         /// <summary>Initializes a new instance of the <see cref="MaterialIconButton"/> class.</summary>
         public MaterialIconButton() {
+            FocusRing.Attach(this);
             _layer = new StateLayerFade(this);
             _busy = new BusySpinner(this);
             SetStyle(
@@ -282,24 +283,6 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override AccessibleObject CreateAccessibilityInstance() =>
             new MaterialAccessible(this, IsToggle ? AccessibleRole.CheckButton : AccessibleRole.PushButton, () => IsToggle && Checked ? AccessibleStates.Checked : AccessibleStates.None, () => Text.Length > 0 ? Text : MaterialTooltip.TextOf(this), null, TextKey.Press, () => OnClick(EventArgs.Empty));
-
-        /// <inheritdoc />
-        protected override void OnGotFocus(EventArgs e) {
-            base.OnGotFocus(e);
-            Invalidate();
-        }
-
-        /// <inheritdoc />
-        protected override void OnLostFocus(EventArgs e) {
-            base.OnLostFocus(e);
-            Invalidate();
-        }
-
-        /// <inheritdoc />
-        protected override void OnChangeUICues(UICuesEventArgs e) {
-            base.OnChangeUICues(e);
-            Invalidate();
-        }
 
         private void PaintContent(PaintEventArgs e) {
             Graphics g = e.Graphics;

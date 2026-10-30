@@ -127,6 +127,7 @@ namespace Material3.WinForms.Controls {
 
         /// <summary>Initializes a new instance of the <see cref="MaterialChip"/> class.</summary>
         public MaterialChip() {
+            FocusRing.Attach(this);
             _layer = new StateLayerFade(this);
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
@@ -331,24 +332,6 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override AccessibleObject CreateAccessibilityInstance() =>
             new MaterialAccessible(this, _kind == MaterialChipKind.Filter ? AccessibleRole.CheckButton : AccessibleRole.PushButton, () => _kind == MaterialChipKind.Filter && IsSelected ? AccessibleStates.Checked : AccessibleStates.None, () => Text, null, _kind == MaterialChipKind.Input ? TextKey.Remove : TextKey.Press, Activate);
-
-        /// <inheritdoc />
-        protected override void OnGotFocus(EventArgs e) {
-            base.OnGotFocus(e);
-            Invalidate();
-        }
-
-        /// <inheritdoc />
-        protected override void OnLostFocus(EventArgs e) {
-            base.OnLostFocus(e);
-            Invalidate();
-        }
-
-        /// <inheritdoc />
-        protected override void OnChangeUICues(UICuesEventArgs e) {
-            base.OnChangeUICues(e);
-            Invalidate();
-        }
 
         /// <inheritdoc />
         protected override void OnKeyDown(KeyEventArgs e) {
