@@ -24,7 +24,8 @@ namespace Material3.Shared {
             return (index / Columns, index % Columns);
         }
 
-        // Jan 31 plus a month is Feb 28, not Mar 3; a step past year 1 or 9999 leaves the date where it is.
+        // Jan 31 plus a month is Feb 28, not Mar 3; a step past year 1 or 9999 leaves the date where it is. The time of day
+        // and the kind ride along, as AddDaysClamped keeps them.
         internal static DateTime AddMonthsClamped(DateTime date, int months) {
             int totalMonths = date.Year * 12 + (date.Month - 1) + months;
             if (totalMonths < 12 || totalMonths >= 10000 * 12) {
@@ -34,7 +35,7 @@ namespace Material3.Shared {
             int year = totalMonths / 12;
             int month = totalMonths % 12 + 1;
             int day = Math.Min(date.Day, DateTime.DaysInMonth(year, month));
-            return new DateTime(year, month, day);
+            return new DateTime(year, month, day, 0, 0, 0, date.Kind) + date.TimeOfDay;
         }
 
         // A step past year 1 or 9999 leaves the date where it is, as AddMonthsClamped does.

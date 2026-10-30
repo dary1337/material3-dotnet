@@ -61,6 +61,16 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
+        public void BothClampedStepsKeepTheTimeOfDayAndTheKind() {
+            var start = new DateTime(2026, 1, 31, 13, 45, 0, DateTimeKind.Local);
+            DateTime month = CalendarMath.AddMonthsClamped(start, 1);
+            DateTime day = CalendarMath.AddDaysClamped(start, 1);
+            Assert.Equal(new DateTime(2026, 2, 28, 13, 45, 0), month);
+            Assert.Equal(start.TimeOfDay, day.TimeOfDay);
+            Assert.Equal(DateTimeKind.Local, month.Kind);
+        }
+
+        [Fact]
         public void WeekdayHeaders_StartAtTheConfiguredFirstDay() {
             string[] headers = CalendarMath.WeekdayHeaders(DayOfWeek.Monday, CultureInfo.InvariantCulture);
             Assert.Equal(7, headers.Length);
