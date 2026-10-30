@@ -277,7 +277,7 @@ window holding `owner`, and Esc or a scrim click closes only that window's top m
 | `ConfirmText` `CancelText` `SecondaryText` | With a secondary present, cancel steps down to a text button — three actions, three levels of emphasis |
 | `Destructive` | The confirm turns error-tonal. Independent of `Tone`: an error notice still closes with a neutral button |
 | `HoldToConfirm` | The confirm fills while held and commits once full; an early release shakes it. Enter does not reach it |
-| `ConfirmWork` | Runs before the close; the confirm spins and nothing dismisses the dialog meanwhile. Its exception is rethrown by `Show` |
+| `ConfirmWork` | Runs before the close; the confirm spins and nothing dismisses the dialog meanwhile. If it throws, `Show` answers `Failed` and the exception is in `WorkFailure`, as in WinForms (`DialogResult.Abort`) |
 | `SupportingAction` | A text button at the far end of the row that neither confirms nor cancels |
 | `Links` | `OpenInNew`-marked links under the body that run without closing |
 

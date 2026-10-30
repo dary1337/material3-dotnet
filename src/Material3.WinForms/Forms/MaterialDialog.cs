@@ -123,7 +123,7 @@ namespace Material3.WinForms.Forms {
         /// </summary>
         public MaterialTone? Tone { get; set; }
 
-        /// <summary>What the work of a working action threw; the dialog closed with that action's result regardless.</summary>
+        /// <summary>What the work of a working action threw; the dialog then closed with <see cref="DialogResult.Abort"/>.</summary>
         public Exception? WorkFailure { get; private set; }
 
         /// <summary>Set by the action whose <c>tag</c> overload was clicked.</summary>
@@ -215,7 +215,7 @@ namespace Material3.WinForms.Forms {
             }
 
             showBusy(false);
-            DialogResult = result;
+            DialogResult = WorkFailure != null ? DialogResult.Abort : result;
             Close();
         }
 

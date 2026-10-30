@@ -384,7 +384,7 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
-        public async System.Threading.Tasks.Task AWorkingActionClosesWithItsResultAndKeepsTheFailure() {
+        public async System.Threading.Tasks.Task AFailedWorkingActionClosesWithAbortAndKeepsTheFailure() {
             using var dialog = new Material3.WinForms.Forms.MaterialDialog { TitleText = "Delete?" };
             dialog.AddAction("Delete", DialogResult.OK, MaterialButtonVariant.Tonal, () => throw new InvalidOperationException("locked"), MaterialTone.Error);
             MethodInfo run = typeof(Material3.WinForms.Forms.MaterialDialog).GetMethod("RunAsync", BindingFlags.Instance | BindingFlags.NonPublic)!;
@@ -392,7 +392,7 @@ namespace Material3.WinForms.Tests {
                 DialogResult.OK, new Func<System.Threading.Tasks.Task>(() => throw new InvalidOperationException("locked")),
                 new Action<bool>(_ => { }), dialog })!;
             await task;
-            Assert.Equal(DialogResult.OK, dialog.DialogResult);
+            Assert.Equal(DialogResult.Abort, dialog.DialogResult);
             Assert.Equal("locked", dialog.WorkFailure?.Message);
         }
 

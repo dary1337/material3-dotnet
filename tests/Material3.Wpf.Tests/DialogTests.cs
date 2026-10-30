@@ -130,8 +130,8 @@ namespace Material3.Wpf.Tests {
                 },
             };
 
-            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => Dialog.Show(w, options));
-            Assert.Equal("locked", ex.Message);
+            Assert.Equal(DialogChoice.Failed, Dialog.Show(w, options));
+            Assert.Equal("locked", Assert.IsType<InvalidOperationException>(options.WorkFailure).Message);
             Assert.Empty(w.OwnedWindows);
         });
 

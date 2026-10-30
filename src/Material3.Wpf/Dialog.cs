@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -21,6 +20,8 @@ namespace Material3.Wpf {
         Secondary,
         /// <summary>The confirm action.</summary>
         Confirm,
+        /// <summary>The confirm's <see cref="DialogOptions.ConfirmWork"/> threw; the exception is in <see cref="DialogOptions.WorkFailure"/>.</summary>
+        Failed,
     }
 
     /// <summary>A labelled action a dialog runs without closing.</summary>
@@ -78,10 +79,14 @@ namespace Material3.Wpf {
 
         /// <summary>
         /// Work the confirm runs before the dialog closes. While it runs the confirm spins, every other action is
-        /// disabled and nothing dismisses the dialog, so it stays on screen as the progress. An exception it throws is
-        /// rethrown by <see cref="Dialog.Show"/> once the dialog has closed.
+        /// disabled and nothing dismisses the dialog, so it stays on screen as the progress. If it throws, the dialog
+        /// closes, <see cref="Dialog.Show"/> answers <see cref="DialogChoice.Failed"/> and the exception is in
+        /// <see cref="WorkFailure"/> — the same contract as the WinForms dialog.
         /// </summary>
         public Func<Task>? ConfirmWork { get; set; }
+
+        /// <summary>What <see cref="ConfirmWork"/> threw, after <see cref="Dialog.Show"/> answered <see cref="DialogChoice.Failed"/>.</summary>
+        public Exception? WorkFailure { get; internal set; }
 
         /// <summary>
         /// An action that neither confirms nor cancels — it edits the dialog's own content — at the far end of the
@@ -117,10 +122,11 @@ namespace Material3.Wpf {
                 throw new ArgumentNullException(nameof(options));
             }
 
+            options.WorkFailure = null;
             var window = new DialogWindow(options);
             window.ShowOver(owner);
-            window.Failure?.Throw();
-            return window.Choice;
+            options.WorkFailure = window.Failure;
+            return window.Failure != null ? DialogChoice.Failed : window.Choice;
         }
 
         /// <summary>
@@ -160,7 +166,7 @@ namespace Material3.Wpf {
 
             public DialogChoice Choice { get; private set; } = DialogChoice.Cancel;
 
-            public ExceptionDispatchInfo? Failure { get; private set; }
+            public Exception? Failure { get; private set; }
 
             public DialogWindow(DialogOptions options) {
                 _options = options;
@@ -349,7 +355,7 @@ namespace Material3.Wpf {
                 _working = true;
                 ShowConfirmBusy();
                 try { await _options.ConfirmWork(); }
-                catch (Exception ex) { Failure = ExceptionDispatchInfo.Capture(ex); }
+                catch (Exception ex) { Failure = ex; }
                 finally { _working = false; }
                 Close();
             }
