@@ -163,12 +163,12 @@ namespace Material3.Wpf.Tests {
         });
 
         [Fact]
-        public void AListTileRoundsOnlyWhenSelected() => Ui.InWindow(w => {
+        public void AListTileKeepsOneRadiusForItsHoverAndItsSelection() => Ui.InWindow(w => {
             var tile = new ListTile { Headline = "Inbox", Width = 300 };
             w.Content = new StackPanel { Children = { tile } };
             Ui.Settle(w);
             var b = (Border)tile.Template.FindName("b", tile);
-            Assert.Equal(new CornerRadius(0), b.CornerRadius);
+            Assert.Equal(16, b.CornerRadius.TopLeft);
             tile.IsSelected = true;
             Ui.Settle(w);
             Assert.Equal(16, b.CornerRadius.TopLeft);

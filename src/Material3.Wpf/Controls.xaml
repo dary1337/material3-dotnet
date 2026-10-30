@@ -2244,9 +2244,6 @@
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="b" Property="Background" Value="{DynamicResource SurfaceContainerHigh}" />
                         </Trigger>
-                        <Trigger Property="IsSelected" Value="False">
-                            <Setter TargetName="b" Property="CornerRadius" Value="0" />
-                        </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="b" Property="Background" Value="{DynamicResource SecondaryContainer}" />
                             <Setter TargetName="headline" Property="Foreground" Value="{DynamicResource OnSecondaryContainer}" />

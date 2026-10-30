@@ -142,9 +142,9 @@ namespace Material3.WinForms.Controls {
             set { _gap = Math.Max(0, value); Invalidate(); }
         }
 
-        /// <summary>The radius of the selected container, in 96-DPI px; an unselected row stays square, as M3 draws it.</summary>
+        /// <summary>The radius of the row's hovered, pressed and selected container, in 96-DPI px.</summary>
         [Category("Material Design")]
-        [Description("The radius of the selected container, in 96-DPI px; an unselected row stays square.")]
+        [Description("The radius of the row's hovered, pressed and selected container, in 96-DPI px.")]
         [DefaultValue(Shape.Large)]
         public int CornerRadius {
             get => _cornerRadius;
@@ -289,8 +289,7 @@ namespace Material3.WinForms.Controls {
             }
             if (surface.ToArgb() != parent.ToArgb()) {
                 var bounds = new Rectangle(0, 0, Math.Max(0, Width - 1), Math.Max(0, Height - 1));
-                // M3 rounds only the selected container; a hovered row stays a plain rectangle.
-                using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(bounds, _selected ? Dpi.Scale(this, _cornerRadius) : 0))
+                using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(bounds, Dpi.Scale(this, _cornerRadius)))
                 using (var brush = new SolidBrush(surface)) {
                     g.FillPath(brush, path);
                 }
