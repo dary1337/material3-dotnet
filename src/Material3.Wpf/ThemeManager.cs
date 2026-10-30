@@ -16,95 +16,34 @@ namespace Material3.Wpf {
     /// no restart, no per-control wiring.
     /// </summary>
     public static class ThemeManager {
-        private static MaterialTheme _theme = MaterialTheme.Platinum();
-        private static bool _isDark = true;
-        private static readonly object Gate = new object();
-        private static readonly List<(WeakReference<ResourceDictionary> Dictionary, Dispatcher Dispatcher)> Targets =
-            new List<(WeakReference<ResourceDictionary>, Dispatcher)>();
+        private static readonly ThemeState State = new ThemeState(() => Application.Current?.Resources);
 
         /// <summary>Raised after a successful <see cref="Apply"/>.</summary>
-        public static event EventHandler? ThemeChanged;
+        public static event EventHandler? ThemeChanged {
+            add => State.Changed += value;
+            remove => State.Changed -= value;
+        }
 
         /// <summary>
-        /// The active theme (holds both light and dark schemes). Setting it changes the whole app: it republishes into
-        /// every dictionary <see cref="Apply"/> has written to, or into the application's resources before the first one.
-        /// With neither (WPF hosted in WinForms, before any <see cref="Apply"/>) the value is kept for the first one.
+        /// The active theme (holds both light and dark schemes). Setting it republishes into every dictionary
+        /// <see cref="Apply"/> has written to, or into the application's resources before the first one. With neither (WPF
+        /// hosted in WinForms, before any <see cref="Apply"/>) the value is kept for the first one. A window that keeps a
+        /// theme of its own is given it with <see cref="Publish"/>, which these setters never reach.
         /// </summary>
         /// <exception cref="ArgumentNullException">The value is null.</exception>
         public static MaterialTheme Theme {
-            get => _theme;
-            set {
-                if (value == null) {
-                    throw new ArgumentNullException(nameof(value));
-                }
-
-                if (ReferenceEquals(value, _theme) && HasTargets) {
-                    return;
-                }
-
-                _theme = value;
-                Republish();
-            }
+            get => State.Theme;
+            set => State.Theme = value;
         }
 
         /// <summary>Whether the dark scheme is active. Setting it republishes like <see cref="Theme"/>.</summary>
         public static bool IsDark {
-            get => _isDark;
-            set {
-                if (value == _isDark && HasTargets) {
-                    return;
-                }
-
-                _isDark = value;
-                Republish();
-            }
-        }
-
-        private static bool HasTargets => Live().Count > 0;
-
-        private static void Republish() {
-            if (!HasTargets && Application.Current?.Resources is ResourceDictionary app) {
-                Remember(app);
-            }
-            PublishEverywhere();
-            ThemeChanged?.Invoke(null, EventArgs.Empty);
-        }
-
-        // A closed window's dictionary is held weakly and dropped once collected or once its thread shut down.
-        private static List<(ResourceDictionary Dictionary, Dispatcher Dispatcher)> Live() {
-            lock (Gate) {
-                Targets.RemoveAll(t => !t.Dictionary.TryGetTarget(out _) || t.Dispatcher.HasShutdownStarted);
-                var live = new List<(ResourceDictionary, Dispatcher)>();
-                foreach ((WeakReference<ResourceDictionary> dictionary, Dispatcher dispatcher) in Targets) {
-                    if (dictionary.TryGetTarget(out ResourceDictionary? d)) {
-                        live.Add((d, dispatcher));
-                    }
-                }
-                return live;
-            }
-        }
-
-        private static void Remember(ResourceDictionary target) {
-            lock (Gate) {
-                Targets.RemoveAll(t => !t.Dictionary.TryGetTarget(out ResourceDictionary? d) || ReferenceEquals(d, target));
-                Targets.Add((new WeakReference<ResourceDictionary>(target), Dispatcher.CurrentDispatcher));
-            }
-        }
-
-        private static void PublishEverywhere() {
-            ColorScheme scheme = Scheme;
-            foreach ((ResourceDictionary dictionary, Dispatcher dispatcher) in Live()) {
-                if (dispatcher.CheckAccess()) {
-                    Publish(dictionary, scheme);
-                }
-                else {
-                    dispatcher.BeginInvoke(new Action(() => Publish(dictionary, scheme)));
-                }
-            }
+            get => State.IsDark;
+            set => State.IsDark = value;
         }
 
         /// <summary>The active color scheme — what <see cref="Apply"/> publishes.</summary>
-        public static ColorScheme Scheme => _isDark ? _theme.DarkScheme : _theme.LightScheme;
+        public static ColorScheme Scheme => State.Scheme;
 
         private static readonly PropertyInfo[] RoleProps =
             typeof(ColorScheme).GetProperties().Where(p => p.PropertyType == typeof(Argb)).ToArray();
@@ -119,24 +58,11 @@ namespace Material3.Wpf {
         /// <summary>
         /// Builds the scheme for <paramref name="theme"/>/<paramref name="isDark"/> and publishes it into
         /// <paramref name="target"/> only (typically <c>Application.Current.Resources</c>), which then follows later
-        /// <see cref="Theme"/> and <see cref="IsDark"/> changes. Safe to call at startup before the UI loads.
+        /// <see cref="Theme"/> and <see cref="IsDark"/> changes. Other dictionaries keep what they show until the next
+        /// change. Safe to call at startup before the UI loads.
         /// </summary>
         /// <exception cref="ArgumentNullException"><paramref name="theme"/> or <paramref name="target"/> is null.</exception>
-        public static void Apply(MaterialTheme theme, bool isDark, ResourceDictionary target) {
-            if (theme == null) {
-                throw new ArgumentNullException(nameof(theme));
-            }
-
-            if (target == null) {
-                throw new ArgumentNullException(nameof(target));
-            }
-
-            _theme = theme;
-            _isDark = isDark;
-            Remember(target);
-            Publish(target, Scheme);
-            ThemeChanged?.Invoke(null, EventArgs.Empty);
-        }
+        public static void Apply(MaterialTheme theme, bool isDark, ResourceDictionary target) => State.Apply(theme, isDark, target);
 
         /// <summary>
         /// Writes the scheme's role brushes into <paramref name="target"/> without touching theme state — for a window
