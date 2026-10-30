@@ -45,12 +45,26 @@ namespace Material3.Wpf.Tests {
             Assert.False(IsShimmering(skeleton), "the sweep outlived the skeleton leaving the tree");
         });
 
+        [Fact]
+        public void TheSweepIsAGradientBackgroundAndFollowsTheTheme() => Ui.InWindow(w => {
+            var skeleton = new Skeleton { Width = 120, Height = 16 };
+            w.Content = skeleton;
+            Ui.Settle(w);
+            var shimmer = (Border)skeleton.Template.FindName("PART_Shimmer", skeleton);
+            Assert.Null(shimmer.OpacityMask);
+            var brush = (LinearGradientBrush)shimmer.Background;
+            w.Resources["OnSurface"] = new SolidColorBrush(Color.FromRgb(10, 20, 30));
+            ThemeManager.Apply(ThemeManager.Theme, ThemeManager.IsDark, new ResourceDictionary());
+            Ui.Settle(w);
+            Assert.Contains(brush.GradientStops, s => s.Color == Color.FromArgb(28, 10, 20, 30));
+        });
+
         private static bool IsShimmering(Skeleton skeleton) {
             if (!(skeleton.Template?.FindName("PART_Shimmer", skeleton) is Border shimmer)) {
                 return false;
             }
 
-            return shimmer.OpacityMask is LinearGradientBrush brush
+            return shimmer.Background is LinearGradientBrush brush
                 && brush.RelativeTransform is TranslateTransform sweep
                 && sweep.HasAnimatedProperties;
         }
