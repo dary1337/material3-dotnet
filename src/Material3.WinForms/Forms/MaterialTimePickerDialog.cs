@@ -73,8 +73,8 @@ namespace Material3.WinForms.Forms {
             int displayHour = _use24Hour
                 ? _value.Hours
                 : _value.Hours % 12 == 0 ? 12 : _value.Hours % 12;
-            _hourBox.Text = displayHour.ToString("00");
-            _minuteBox.Text = _value.Minutes.ToString("00");
+            _hourBox.Text = displayHour.ToString("00", CultureInfo.InvariantCulture);
+            _minuteBox.Text = _value.Minutes.ToString("00", CultureInfo.InvariantCulture);
             Controls.Add(_hourBox);
             Controls.Add(_minuteBox);
 
@@ -254,11 +254,11 @@ namespace Material3.WinForms.Forms {
         }
 
         private void ClampFields() {
-            int.TryParse(_hourBox.Text, out int hour);
-            int.TryParse(_minuteBox.Text, out int minute);
+            int.TryParse(_hourBox.Text, NumberStyles.None, CultureInfo.InvariantCulture, out int hour);
+            int.TryParse(_minuteBox.Text, NumberStyles.None, CultureInfo.InvariantCulture, out int minute);
             (hour, minute, _value) = TimeMath.Normalize(hour, minute, _isPm, _use24Hour);
-            _hourBox.Text = hour.ToString("00");
-            _minuteBox.Text = minute.ToString("00");
+            _hourBox.Text = hour.ToString("00", CultureInfo.InvariantCulture);
+            _minuteBox.Text = minute.ToString("00", CultureInfo.InvariantCulture);
         }
 
         /// <inheritdoc />
