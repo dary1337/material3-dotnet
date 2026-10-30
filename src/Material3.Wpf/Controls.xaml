@@ -2109,23 +2109,23 @@
                         <!-- The shadow is a layer of its own: an Effect on the face would rasterize the label. -->
                         <Border x:Name="shadow" Background="{DynamicResource PrimaryContainer}" CornerRadius="{m3:FitCornerRadius}"
                                 Effect="{DynamicResource Elevation3}" />
-                    <Border x:Name="b" Background="{DynamicResource PrimaryContainer}" CornerRadius="{m3:FitCornerRadius}">
-                        <Grid>
-                            <Border x:Name="state" Background="{DynamicResource OnPrimaryContainer}" Opacity="0"
-                                    CornerRadius="{m3:FitCornerRadius}" />
-                            <StackPanel x:Name="row" Orientation="Horizontal" Margin="{TemplateBinding Padding}"
-                                        HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <m3:PathIcon x:Name="icon" Width="{TemplateBinding m3:Metrics.GlyphSize}" Height="{TemplateBinding m3:Metrics.GlyphSize}" Margin="{TemplateBinding m3:Metrics.GlyphMargin}" VerticalAlignment="Center"
-                                           Glyph="{TemplateBinding Glyph}" Foreground="{TemplateBinding Foreground}" />
-                                <ContentPresenter x:Name="label" VerticalAlignment="Center"
-                                                  TextElement.Foreground="{TemplateBinding Foreground}">
-                                    <ContentPresenter.Resources>
-                                        <Style TargetType="TextBlock" BasedOn="{StaticResource ButtonLabel}" />
-                                    </ContentPresenter.Resources>
-                                </ContentPresenter>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
+                        <Border x:Name="b" Background="{DynamicResource PrimaryContainer}" CornerRadius="{m3:FitCornerRadius}">
+                            <Grid>
+                                <Border x:Name="state" Background="{DynamicResource OnPrimaryContainer}" Opacity="0"
+                                        CornerRadius="{m3:FitCornerRadius}" />
+                                <StackPanel x:Name="row" Orientation="Horizontal" Margin="{TemplateBinding Padding}"
+                                            HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <m3:PathIcon x:Name="icon" Width="{TemplateBinding m3:Metrics.GlyphSize}" Height="{TemplateBinding m3:Metrics.GlyphSize}" Margin="{TemplateBinding m3:Metrics.GlyphMargin}" VerticalAlignment="Center"
+                                               Glyph="{TemplateBinding Glyph}" Foreground="{TemplateBinding Foreground}" />
+                                    <ContentPresenter x:Name="label" VerticalAlignment="Center"
+                                                      TextElement.Foreground="{TemplateBinding Foreground}">
+                                        <ContentPresenter.Resources>
+                                            <Style TargetType="TextBlock" BasedOn="{StaticResource ButtonLabel}" />
+                                        </ContentPresenter.Resources>
+                                    </ContentPresenter>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="Content" Value="{x:Null}">
