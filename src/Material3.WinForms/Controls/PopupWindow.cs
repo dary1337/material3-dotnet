@@ -40,7 +40,7 @@ namespace Material3.WinForms.Controls {
 
         protected void ShowAnimated(Point location, bool slideDown) {
             _target = location;
-            bool animate = Motion.AnimationsEnabled;
+            bool animate = Motion.IsAnimating;
             _slideFrom = animate ? (slideDown ? -SlidePx : SlidePx) : 0;
             Location = new Point(location.X, location.Y + Dpi.Scale(this, _slideFrom));
             Opacity = animate ? 0d : 1d;

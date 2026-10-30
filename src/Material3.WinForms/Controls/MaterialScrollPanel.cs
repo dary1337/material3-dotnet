@@ -19,7 +19,7 @@ namespace Material3.WinForms.Controls {
 
         internal const int DefaultTrackWidth = 12;
 
-        private static readonly TimeSpan FadeDuration = TimeSpan.FromMilliseconds(220);
+        private static readonly TimeSpan FadeDuration = TimeSpan.FromMilliseconds(Motion.Short4);
 
         private int _trackWidth = DefaultTrackWidth;
         private int _thumbInset = 2;
@@ -419,7 +419,7 @@ namespace Material3.WinForms.Controls {
                 _targetOpacity = 0f;
             }
 
-            float step = (float)(_fadeTimer.Interval / FadeDuration.TotalMilliseconds);
+            float step = Motion.IsAnimating ? (float)(_fadeTimer.Interval / FadeDuration.TotalMilliseconds) : 1f;
             float prev = _thumbOpacity;
             if (Math.Abs(_thumbOpacity - _targetOpacity) <= step) {
                 _thumbOpacity = _targetOpacity;

@@ -12,8 +12,7 @@ namespace Material3.WinForms {
         /// <summary>How long the open animation runs, in milliseconds.</summary>
         public const int OpenDurationMs = Motion.Short4;
         /// <summary>How long the close animation runs, in milliseconds.</summary>
-        public const int CloseDurationMs = 140;
-        private const int FrameDelayMs = 8;
+        public const int CloseDurationMs = Motion.Short3;
         private const int SlideOffsetPx = 10;
 
         private static readonly ConditionalWeakTable<Form, StrongBox<int>> Epochs =
@@ -35,6 +34,11 @@ namespace Material3.WinForms {
             if (form == null || form.IsDisposed) {
                 return;
             }
+            if (!Motion.IsAnimating) {
+                form.Opacity = 1d;
+                return;
+            }
+
             int epoch = BeginEpoch(form);
             Point target = form.Location;
             var start = new Point(target.X, target.Y - SlideOffsetPx);
@@ -57,7 +61,7 @@ namespace Material3.WinForms {
                 if (t >= 1.0) {
                     break;
                 }
-                await Task.Delay(FrameDelayMs);
+                await Task.Delay(Motion.FrameIntervalMs);
             }
             if (!form.IsDisposed && IsCurrent(form, epoch)) {
                 form.Opacity = 1d;
@@ -70,6 +74,10 @@ namespace Material3.WinForms {
             if (form == null || form.IsDisposed) {
                 return;
             }
+            if (!Motion.IsAnimating) {
+                return;
+            }
+
             int epoch = BeginEpoch(form);
             Point start = form.Location;
             var target = new Point(start.X, start.Y + SlideOffsetPx);
@@ -90,7 +98,7 @@ namespace Material3.WinForms {
                 if (t >= 1.0) {
                     break;
                 }
-                await Task.Delay(FrameDelayMs);
+                await Task.Delay(Motion.FrameIntervalMs);
             }
             if (!form.IsDisposed && IsCurrent(form, epoch)) {
                 form.Opacity = 0d;

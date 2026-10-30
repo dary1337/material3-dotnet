@@ -24,7 +24,7 @@ namespace Material3.WinForms.Drawing {
                 _clock.Restart();
                 _timer = new Timer { Interval = Motion.FrameIntervalMs };
                 _timer.Tick += (s, e) => _owner.Invalidate();
-                if (Motion.AnimationsEnabled) {
+                if (Motion.IsAnimating) {
                     _timer.Start();
                 }
             }

@@ -4,6 +4,7 @@ using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using Material3.WinForms.Drawing;
 using Material3.WinForms.Theming;
+using Material3.WinForms.Tokens;
 
 namespace Material3.WinForms.Controls {
     /// <summary>
@@ -12,16 +13,24 @@ namespace Material3.WinForms.Controls {
     /// <see cref="MaterialSkeleton"/> and <see cref="MaterialSkeletonCard"/>.
     /// </summary>
     internal static class SkeletonShimmer {
-        private static readonly Timer Timer = new Timer { Interval = 33 };
+        private const double SweepMs = Motion.ExtraLong2 * 1.5;
+        private static readonly Timer Timer = new Timer { Interval = Motion.FrameIntervalMs };
+        private static readonly System.Diagnostics.Stopwatch Clock = System.Diagnostics.Stopwatch.StartNew();
         private static event Action? Tick;
         private static float _phase;
 
+        // The band travels from -0.4 to 1.4 of the width once per sweep, timed by the clock rather than by ticks.
         static SkeletonShimmer() {
             Timer.Tick += (s, a) => {
-                _phase += 0.04f;
-                if (_phase > 1.4f) {
-                    _phase = -0.4f;
+                if (!Motion.IsAnimating) {
+                    if (_phase != -0.4f) {
+                        _phase = -0.4f;
+                        Tick?.Invoke();
+                    }
+                    return;
                 }
+
+                _phase = (float)(Clock.ElapsedMilliseconds % SweepMs / SweepMs * 1.8 - 0.4);
                 Tick?.Invoke();
             };
         }

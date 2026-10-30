@@ -205,7 +205,7 @@ namespace Material3.WinForms.Controls {
         private void OnSlideTick(object? sender, EventArgs e) {
             float dPos = _targetPos - _indicatorPos;
             float dWidth = _targetWidth - _indicatorWidth;
-            if (Math.Abs(dPos) < 0.6f && Math.Abs(dWidth) < 0.6f) {
+            if (!Motion.IsAnimating || (Math.Abs(dPos) < 0.6f && Math.Abs(dWidth) < 0.6f)) {
                 _indicatorPos = _targetPos;
                 _indicatorWidth = _targetWidth;
                 _slide.Stop();

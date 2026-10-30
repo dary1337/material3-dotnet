@@ -346,7 +346,7 @@ namespace Material3.WinForms.Controls {
                     form.Deactivate += OnShineFormActivation;
                 }
             }
-            bool run = form != null && Visible && Enabled && Motion.AnimationsEnabled && ReferenceEquals(Form.ActiveForm, form);
+            bool run = form != null && Visible && Enabled && Motion.IsAnimating && ReferenceEquals(Form.ActiveForm, form);
             if (run && _shine == null) {
                 _shine = new Timer { Interval = Motion.FrameIntervalMs };
                 _shine.Tick += (s, e) => Invalidate();

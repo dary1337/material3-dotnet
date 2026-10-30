@@ -26,7 +26,7 @@ namespace Material3.WinForms.Drawing {
         internal static void Run(Control band, bool folding, Action applyLayout) {
             Form? form = band.FindForm();
             Control? parent = band.Parent;
-            if (!Motion.AnimationsEnabled || form == null || parent == null || !form.Visible || !parent.IsHandleCreated
+            if (!Motion.IsAnimating || form == null || parent == null || !form.Visible || !parent.IsHandleCreated
                 || form.WindowState == FormWindowState.Minimized) {
                 applyLayout();
                 return;

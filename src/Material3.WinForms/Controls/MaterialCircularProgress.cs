@@ -69,7 +69,7 @@ namespace Material3.WinForms.Controls {
                     return;
                 }
                 _value = normalized;
-                if (DesignMode || !Motion.AnimationsEnabled) {
+                if (DesignMode || !Motion.IsAnimating) {
                     _displayValue = _value;
                     Invalidate();
                 }
@@ -78,7 +78,7 @@ namespace Material3.WinForms.Controls {
         }
 
         private void SyncTimer() {
-            if (DesignMode || !Motion.AnimationsEnabled) {
+            if (DesignMode || !Motion.IsAnimating) {
                 return;
             }
             bool needsFrames = _indeterminate || Math.Abs(_displayValue - _value) > 0.1f;
@@ -146,7 +146,7 @@ namespace Material3.WinForms.Controls {
         }
 
         private void OnTick(object? sender, EventArgs e) {
-            if (!Motion.AnimationsEnabled) {
+            if (!Motion.IsAnimating) {
                 _displayValue = _value;
                 _timer.Stop();
                 Invalidate();

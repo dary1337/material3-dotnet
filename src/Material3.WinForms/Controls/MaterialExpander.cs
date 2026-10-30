@@ -58,7 +58,7 @@ namespace Material3.WinForms.Controls {
                 }
 
                 _expanded = value;
-                if (Motion.AnimationsEnabled && IsHandleCreated) {
+                if (Motion.IsAnimating && IsHandleCreated) {
                     _open.To(value ? 1f : 0f);
                 }
                 else {

@@ -137,7 +137,7 @@ namespace Material3.WinForms.Forms {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             float offset = 0;
-            if (_shake.IsRunning && Motion.AnimationsEnabled) {
+            if (_shake.IsRunning && Motion.IsAnimating) {
                 double t = Math.Min(1, _shake.Elapsed.TotalMilliseconds / ShakeMs);
                 offset = (float)(Math.Sin(t * Math.PI * 4) * (1 - t) * Dpi.Scale(this, ShakeAmplitude));
             }

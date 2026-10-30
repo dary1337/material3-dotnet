@@ -158,8 +158,9 @@ namespace Material3.WinForms.Controls {
                 return;
             }
 
+            float step = Motion.IsAnimating ? (float)(_animator.Interval / (double)Motion.Short4) : 1f;
             if (_leaving) {
-                _enterProgress -= 0.12f;
+                _enterProgress -= step;
                 if (_enterProgress <= 0f) {
                     _animator.Stop();
                     host.Controls.Remove(this);
@@ -168,7 +169,7 @@ namespace Material3.WinForms.Controls {
                 }
             }
             else if (_enterProgress < 1f) {
-                _enterProgress = Math.Min(1f, _enterProgress + 0.1f);
+                _enterProgress = Math.Min(1f, _enterProgress + step);
             }
             else if ((DateTime.UtcNow - _shownAtUtc).TotalMilliseconds > _durationMs) {
                 _leaving = true;

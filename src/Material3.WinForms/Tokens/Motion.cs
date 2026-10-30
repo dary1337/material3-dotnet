@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.InteropServices;
 
 namespace Material3.WinForms.Tokens {
     /// <summary>
@@ -16,6 +17,22 @@ namespace Material3.WinForms.Tokens {
         public static bool AnimationsEnabled { get; set; } = true;
 
         internal const int FrameIntervalMs = 16;
+
+        // Tests pin it so a machine with Windows animations off still runs the animated paths.
+        internal static bool IgnoreSystemSetting;
+
+        // Read each time, as WPF reads ClientAreaAnimation, so "Show animations in Windows" applies at once.
+        internal static bool IsAnimating => AnimationsEnabled && (IgnoreSystemSetting || ClientAreaAnimation());
+
+        private const uint SPI_GETCLIENTAREAANIMATION = 0x1042;
+
+        [DllImport("user32.dll")]
+        private static extern bool SystemParametersInfo(uint action, uint param, ref bool value, uint winIni);
+
+        private static bool ClientAreaAnimation() {
+            bool on = true;
+            return !SystemParametersInfo(SPI_GETCLIENTAREAANIMATION, 0, ref on, 0) || on;
+        }
 
         /// <summary>The M3 <c>Short1</c> duration, 50 ms.</summary>
         public const int Short1 = 50;
