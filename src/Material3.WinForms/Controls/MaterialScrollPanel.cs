@@ -185,8 +185,44 @@ namespace Material3.WinForms.Controls {
             }
             e.Control.SizeChanged += OnContentChildLayoutChanged;
             e.Control.LocationChanged += OnContentChildLayoutChanged;
+            TrackFocus(e.Control, true);
             if (_contentUpdateDepth == 0) {
                 Relayout();
+            }
+        }
+
+        // Tab onto a control below the fold scrolls it into view, wherever it sits in the content.
+        private void TrackFocus(Control control, bool track) {
+            if (track) {
+                control.GotFocus += OnDescendantFocused;
+                control.ControlAdded += OnDescendantAdded;
+                control.ControlRemoved += OnDescendantRemoved;
+            }
+            else {
+                control.GotFocus -= OnDescendantFocused;
+                control.ControlAdded -= OnDescendantAdded;
+                control.ControlRemoved -= OnDescendantRemoved;
+            }
+            foreach (Control child in control.Controls) {
+                TrackFocus(child, track);
+            }
+        }
+
+        private void OnDescendantAdded(object? sender, ControlEventArgs e) {
+            if (e.Control != null) {
+                TrackFocus(e.Control, true);
+            }
+        }
+
+        private void OnDescendantRemoved(object? sender, ControlEventArgs e) {
+            if (e.Control != null) {
+                TrackFocus(e.Control, false);
+            }
+        }
+
+        private void OnDescendantFocused(object? sender, EventArgs e) {
+            if (sender is Control focused) {
+                ScrollIntoView(focused);
             }
         }
 
@@ -196,6 +232,7 @@ namespace Material3.WinForms.Controls {
             }
             e.Control.SizeChanged -= OnContentChildLayoutChanged;
             e.Control.LocationChanged -= OnContentChildLayoutChanged;
+            TrackFocus(e.Control, false);
             if (_contentUpdateDepth == 0) {
                 Relayout();
             }
@@ -582,12 +619,28 @@ namespace Material3.WinForms.Controls {
                     (short)((lParam >> 16) & 0xFFFF)
                 );
                 Rectangle screenBounds = _owner.RectangleToScreen(_owner.ClientRectangle);
-                if (!screenBounds.Contains(screenPoint)) {
+                if (!screenBounds.Contains(screenPoint) || ScrollsItself(screenPoint)) {
                     return false;
                 }
                 int delta = (short)((m.WParam.ToInt64() >> 16) & 0xFFFF);
                 _owner.HandleWheel(delta);
                 return true;
+            }
+
+            [System.Runtime.InteropServices.DllImport("user32.dll")]
+            private static extern IntPtr WindowFromPoint(Point point);
+
+            // A scrollable control under the pointer, between it and this panel, takes the wheel first.
+            private bool ScrollsItself(Point screenPoint) {
+                for (var c = Control.FromChildHandle(WindowFromPoint(screenPoint)); c != null && !ReferenceEquals(c, _owner); c = c.Parent) {
+                    if ((c is MaterialScrollPanel inner && inner.HasOverflow)
+                        || (c is TextBoxBase box && box.Multiline)
+                        || c is ListBox || c is ListView || c is TreeView || c is DataGridView
+                        || (c is ScrollableControl scrollable && scrollable.AutoScroll && scrollable.VerticalScroll.Visible)) {
+                        return true;
+                    }
+                }
+                return false;
             }
         }
     }
