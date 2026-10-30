@@ -99,12 +99,15 @@ namespace Material3.WinForms {
                 return !IsInteractive(target);
             }
 
-            // Whatever takes focus takes its own drags too: a slider's thumb, a switch, a chip. A form or a user control is
-            // selectable only as a container, so it stays a drag surface.
+            // The pressed control takes its own drag when it takes focus: a slider's thumb, a switch, a chip. Its parents
+            // count only by type, so empty space on a tab page or inside an expander still moves the form.
             internal static bool IsInteractive(Control c) {
+                if (c.CanSelect && !(c is ContainerControl)) {
+                    return true;
+                }
+
                 for (Control? p = c; p != null; p = p.Parent) {
-                    if ((p.CanSelect && !(p is ContainerControl))
-                        || p is ButtonBase
+                    if (p is ButtonBase
                         || p is TextBoxBase
                         || p is ComboBox
                         || p is LinkLabel

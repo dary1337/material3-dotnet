@@ -803,6 +803,19 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
+        public void EmptySpaceInsideASelectableParentStillMovesTheForm() {
+            using var tabs = new TabControl();
+            var page = new TabPage("General");
+            tabs.TabPages.Add(page);
+            using var expander = new MaterialExpander { Text = "Advanced" };
+            var content = new Panel();
+            expander.Controls.Add(content);
+            Assert.True(FormDragAnywhere.DragFilter.IsInteractive(tabs));
+            Assert.False(FormDragAnywhere.DragFilter.IsInteractive(page));
+            Assert.False(FormDragAnywhere.DragFilter.IsInteractive(content));
+        }
+
+        [Fact]
         public void APressOnAControlIsNotADragButAPressOnTheFormIs() {
             using var form = new QuietForm { StartPosition = FormStartPosition.Manual, Location = new Point(-32000, -32000), Size = new Size(200, 200) };
             var slider = new MaterialSlider { Bounds = new Rectangle(10, 10, 150, 44) };
