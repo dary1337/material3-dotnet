@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using Material3.Core;
 
 namespace Material3.WinForms.Controls {
     // What an owner-drawn control tells a screen reader: the role, the state and the name a native control would
@@ -12,7 +13,7 @@ namespace Material3.WinForms.Controls {
         private readonly Func<AccessibleStates>? _state;
         private readonly Func<string?>? _name;
         private readonly Func<string?>? _value;
-        private readonly string? _action;
+        private readonly TextKey? _action;
         private readonly Action? _run;
         private readonly Func<IReadOnlyList<Item>>? _items;
 
@@ -25,7 +26,7 @@ namespace Material3.WinForms.Controls {
         }
 
         public MaterialAccessible(Control owner, AccessibleRole role, Func<AccessibleStates>? state = null, Func<string?>? name = null,
-            Func<string?>? value = null, string? action = null, Action? run = null, Func<IReadOnlyList<Item>>? items = null) : base(owner) {
+            Func<string?>? value = null, TextKey? action = null, Action? run = null, Func<IReadOnlyList<Item>>? items = null) : base(owner) {
             _owner = owner;
             _role = role;
             _state = state;
@@ -50,7 +51,21 @@ namespace Material3.WinForms.Controls {
             set => base.Value = value;
         }
 
-        public override string? DefaultAction => _action ?? base.DefaultAction;
+        public override string? DefaultAction => _action is TextKey key ? LibraryText.Get(key) : base.DefaultAction;
+
+        // Raised only once the control has a window: a screen reader cannot have asked about one without it.
+        public static void Notify(Control owner, AccessibleEvents change, int child = -1) {
+            if (owner.IsHandleCreated && owner.AccessibilityObject is Control.ControlAccessibleObject accessible) {
+                accessible.NotifyClients(change, child);
+            }
+        }
+
+        public static void NotifyPicked(Control owner, int index) {
+            Notify(owner, AccessibleEvents.Selection, index);
+            if (owner.Focused) {
+                Notify(owner, AccessibleEvents.Focus, index);
+            }
+        }
 
         public override void DoDefaultAction() {
             if (_run != null && _owner.Enabled) {
@@ -94,7 +109,7 @@ namespace Material3.WinForms.Controls {
 
             public override Rectangle Bounds => _parent._owner.RectangleToScreen(_item.Bounds);
 
-            public override string? DefaultAction => _item.Select != null ? "Select" : null;
+            public override string? DefaultAction => _item.Select != null ? LibraryText.Get(TextKey.Select) : null;
 
             public override void DoDefaultAction() => _item.Select?.Invoke();
         }

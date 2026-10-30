@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Text;
 using System.Windows.Forms;
+using Material3.Core;
 using Material3.WinForms.Drawing;
 using Material3.WinForms.Theming;
 using Material3.WinForms.Tokens;
@@ -242,7 +243,7 @@ namespace Material3.WinForms.Controls {
 
         /// <inheritdoc />
         protected override AccessibleObject CreateAccessibilityInstance() =>
-            new MaterialAccessible(this, AccessibleRole.RadioButton, () => Checked ? AccessibleStates.Checked : AccessibleStates.None, () => Text, null, "Select", () => Checked = true);
+            new MaterialAccessible(this, AccessibleRole.RadioButton, () => Checked ? AccessibleStates.Checked : AccessibleStates.None, () => Text, null, TextKey.Select, () => Checked = true);
 
         /// <inheritdoc />
         protected override void OnGotFocus(EventArgs e) {

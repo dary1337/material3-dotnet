@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
 using System.Windows.Forms;
+using Material3.Core;
 using Material3.WinForms.Drawing;
 using Material3.WinForms.Theming;
 using Material3.WinForms.Tokens;
@@ -201,7 +202,7 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override AccessibleObject CreateAccessibilityInstance() =>
             new MaterialAccessible(this, AccessibleRole.ComboBox, () => _menu.IsOpen ? AccessibleStates.Expanded : AccessibleStates.Collapsed,
-                null, () => _selectedIndex >= 0 ? _items[_selectedIndex].DisplayText : null, "Open", Open);
+                null, () => _selectedIndex >= 0 ? _items[_selectedIndex].DisplayText : null, TextKey.Open, Open);
 
         /// <inheritdoc />
         protected override bool IsInputKey(Keys keyData) =>

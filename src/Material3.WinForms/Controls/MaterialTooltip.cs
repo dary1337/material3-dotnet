@@ -98,6 +98,15 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        // What an icon-only control is called for a screen reader when the app gave it no AccessibleName.
+        internal static string? TextOf(Control control) {
+            if (!Registry.TryGetValue(control, out StrongBox<(string title, string body)>? tip)) {
+                return null;
+            }
+
+            return tip.Value.title.Length > 0 ? tip.Value.title : tip.Value.body;
+        }
+
         /// <summary>Detaches the tooltip from a control.</summary>
         public static void Remove(Control control) {
             if (control == null || !Registry.Remove(control)) {

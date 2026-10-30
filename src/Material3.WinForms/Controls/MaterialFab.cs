@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
 using System.Windows.Forms;
+using Material3.Core;
 using Material3.WinForms.Drawing;
 using Material3.WinForms.Theming;
 using Material3.WinForms.Tokens;
@@ -219,7 +220,7 @@ namespace Material3.WinForms.Controls {
 
         /// <inheritdoc />
         protected override AccessibleObject CreateAccessibilityInstance() =>
-            new MaterialAccessible(this, AccessibleRole.PushButton, null, () => Text.Length > 0 ? Text : Glyph, null, "Press", () => OnClick(EventArgs.Empty));
+            new MaterialAccessible(this, AccessibleRole.PushButton, null, () => Text.Length > 0 ? Text : MaterialTooltip.TextOf(this), null, TextKey.Press, () => OnClick(EventArgs.Empty));
 
         /// <inheritdoc />
         protected override void OnGotFocus(EventArgs e) {

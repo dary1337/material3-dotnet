@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using Material3.Core;
 using Material3.WinForms.Drawing;
 using Material3.WinForms.Theming;
 using Material3.WinForms.Tokens;
@@ -181,7 +182,7 @@ namespace Material3.WinForms.Controls {
 
         /// <inheritdoc />
         protected override AccessibleObject CreateAccessibilityInstance() =>
-            new MaterialAccessible(this, AccessibleRole.OutlineButton, () => IsExpanded ? AccessibleStates.Expanded : AccessibleStates.Collapsed, () => Text, null, "Toggle", () => IsExpanded = !IsExpanded);
+            new MaterialAccessible(this, AccessibleRole.OutlineButton, () => IsExpanded ? AccessibleStates.Expanded : AccessibleStates.Collapsed, () => Text, null, TextKey.Toggle, () => IsExpanded = !IsExpanded);
 
         /// <inheritdoc />
         protected override void OnGotFocus(EventArgs e) {

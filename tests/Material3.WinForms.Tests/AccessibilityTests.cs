@@ -24,12 +24,22 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
-        public void AnIconOnlyButtonIsNamedAfterItsGlyphUnlessTheAppNamesIt() {
+        public void AnIconOnlyButtonIsNamedByItsTooltipOrTheAppNeverByItsGlyph() {
             using var button = new MaterialIconButton { Glyph = MaterialIcons.Close };
             Assert.Equal(AccessibleRole.PushButton, button.AccessibilityObject.Role);
-            Assert.Equal(MaterialIcons.Close, button.AccessibilityObject.Name);
+            Assert.NotEqual(MaterialIcons.Close, button.AccessibilityObject.Name);
+            MaterialTooltip.SetTooltip(button, "Close");
+            Assert.Equal("Close", button.AccessibilityObject.Name);
             button.AccessibleName = "Close the panel";
             Assert.Equal("Close the panel", button.AccessibilityObject.Name);
+        }
+
+        [Fact]
+        public void ASwitchAndASelectNameTheirActionInTheUiLanguage() {
+            using var toggle = new MaterialSwitch { Text = "Wi-Fi" };
+            using var select = new MaterialDropdownSelect();
+            Assert.Equal(Material3.Core.LibraryText.Get(Material3.Core.TextKey.Toggle), toggle.AccessibilityObject.DefaultAction);
+            Assert.Equal(Material3.Core.LibraryText.Get(Material3.Core.TextKey.Open), select.AccessibilityObject.DefaultAction);
         }
 
         [Fact]

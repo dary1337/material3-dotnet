@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
 using System.Windows.Forms;
+using Material3.Core;
 using Material3.WinForms.Drawing;
 using Material3.WinForms.Theming;
 using Material3.WinForms.Tokens;
@@ -329,7 +330,7 @@ namespace Material3.WinForms.Controls {
 
         /// <inheritdoc />
         protected override AccessibleObject CreateAccessibilityInstance() =>
-            new MaterialAccessible(this, _kind == MaterialChipKind.Filter ? AccessibleRole.CheckButton : AccessibleRole.PushButton, () => _kind == MaterialChipKind.Filter && IsSelected ? AccessibleStates.Checked : AccessibleStates.None, () => Text, null, _kind == MaterialChipKind.Input ? "Remove" : "Press", Activate);
+            new MaterialAccessible(this, _kind == MaterialChipKind.Filter ? AccessibleRole.CheckButton : AccessibleRole.PushButton, () => _kind == MaterialChipKind.Filter && IsSelected ? AccessibleStates.Checked : AccessibleStates.None, () => Text, null, _kind == MaterialChipKind.Input ? TextKey.Remove : TextKey.Press, Activate);
 
         /// <inheritdoc />
         protected override void OnGotFocus(EventArgs e) {

@@ -33,6 +33,16 @@ namespace Material3.Core {
         Hour,
         /// <summary>The caption under a time picker's minute field.</summary>
         Minute,
+        /// <summary>What a screen reader calls the default action of a switch, a checkbox or an expander.</summary>
+        Toggle,
+        /// <summary>What a screen reader calls the default action of a button, a chip or a list row.</summary>
+        Press,
+        /// <summary>What a screen reader calls the default action of a radio, a card, a tab or a day.</summary>
+        Select,
+        /// <summary>What a screen reader calls the default action of an input chip.</summary>
+        Remove,
+        /// <summary>What a screen reader calls the default action of a select.</summary>
+        Open,
     }
 
     /// <summary>
@@ -130,6 +140,11 @@ namespace Material3.Core {
             [TextKey.EnterTime] = "Enter time",
             [TextKey.Hour] = "Hour",
             [TextKey.Minute] = "Minute",
+            [TextKey.Toggle] = "Toggle",
+            [TextKey.Press] = "Press",
+            [TextKey.Select] = "Select",
+            [TextKey.Remove] = "Remove",
+            [TextKey.Open] = "Open",
         };
 
         internal static readonly Dictionary<TextKey, string> Russian = new Dictionary<TextKey, string> {
@@ -147,6 +162,11 @@ namespace Material3.Core {
             [TextKey.EnterTime] = "Введите время",
             [TextKey.Hour] = "Часы",
             [TextKey.Minute] = "Минуты",
+            [TextKey.Toggle] = "Переключить",
+            [TextKey.Press] = "Нажать",
+            [TextKey.Select] = "Выбрать",
+            [TextKey.Remove] = "Удалить",
+            [TextKey.Open] = "Открыть",
         };
 
         internal static readonly Dictionary<string, Dictionary<TextKey, string>> ByCulture =
