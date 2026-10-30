@@ -449,6 +449,26 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
+        public void AGridAtItsLastRowGivesTheWheelBackEvenWhenThatRowIsClipped() {
+            using var outer = new MaterialScrollPanel { Size = new Size(200, 200) };
+            DataGridView Grid(int rows, int rowHeight) {
+                var grid = new DataGridView { Bounds = new Rectangle(0, 0, 150, 80), ColumnHeadersVisible = false, RowHeadersVisible = false, AllowUserToAddRows = false };
+                grid.Columns.Add("c", "c");
+                for (int i = 0; i < rows; i++) {
+                    grid.Rows.Add("x");
+                    grid.Rows[i].Height = rowHeight;
+                }
+                outer.ContentPanel.Controls.Add(grid);
+                _ = grid.Handle;
+                return grid;
+            }
+
+            const int Down = -120;
+            Assert.False(MaterialScrollPanel.DefersTo(Grid(1, 300), outer, Down));
+            Assert.True(MaterialScrollPanel.DefersTo(Grid(6, 40), outer, Down));
+        }
+
+        [Fact]
         public void AHoldButtonCommitsOnlyAfterTheWholeHold() {
             using var hold = new Material3.WinForms.Forms.HoldButton("Reset", TimeSpan.FromMilliseconds(60), destructive: true);
             int committed = 0;

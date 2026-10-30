@@ -28,7 +28,8 @@ namespace Material3.Wpf {
         /// The active theme (holds both light and dark schemes). Setting it republishes into every dictionary
         /// <see cref="Apply"/> has written to, or into the application's resources before the first one. With neither (WPF
         /// hosted in WinForms, before any <see cref="Apply"/>) the value is kept for the first one. A window that keeps a
-        /// theme of its own is given it with <see cref="Publish"/>, which these setters never reach.
+        /// theme of its own is given it with <see cref="Publish"/> into a dictionary never passed to <see cref="Apply"/>: one
+        /// that was stays registered, and the next change overwrites what Publish wrote there.
         /// </summary>
         /// <exception cref="ArgumentNullException">The value is null.</exception>
         public static MaterialTheme Theme {

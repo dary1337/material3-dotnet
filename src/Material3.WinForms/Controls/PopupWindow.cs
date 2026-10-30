@@ -55,7 +55,17 @@ namespace Material3.WinForms.Controls {
             _fade.Start();
         }
 
-        // A topmost popup outlives its window otherwise: Alt+Tab, Win+D or a minimize would leave it over other apps.
+        // The app losing activation reaches every top-level window it owns, so the popup hears it even when the form it
+        // follows was not the active one.
+        protected override void WndProc(ref Message m) {
+            const int WM_ACTIVATEAPP = 0x001C;
+            if (m.Msg == WM_ACTIVATEAPP && m.WParam == IntPtr.Zero && Visible && !IsDisposed) {
+                Close();
+            }
+            base.WndProc(ref m);
+        }
+
+        // A topmost popup outlives its window otherwise: a minimize or a move would leave it hanging off its anchor.
         private void FollowOwner(Form? owner) {
             if (owner == null || ReferenceEquals(owner, this) || ReferenceEquals(owner, _owner)) {
                 return;
