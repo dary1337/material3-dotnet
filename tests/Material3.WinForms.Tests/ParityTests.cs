@@ -691,5 +691,26 @@ namespace Material3.WinForms.Tests {
         [InlineData("1\n", false)]
         public void TheSharedNumberRuleAcceptsWhatIsStillBeingTyped(string text, bool accepted) =>
             Assert.Equal(accepted, TextInputRules.IsNumberPrefix(text));
+
+        private sealed class QuietForm : Form {
+            protected override bool ShowWithoutActivation => true;
+        }
+
+        [Fact]
+        public void ADragSurfaceStillGetsThePressSoItsClicksWork() {
+            using var form = new QuietForm { StartPosition = FormStartPosition.Manual, Location = new Point(-32000, -32000), Size = new Size(200, 200) };
+            form.Show();
+            var filter = new FormDragAnywhere.DragFilter(form);
+            var press = Message.Create(form.Handle, 0x0201, IntPtr.Zero, (IntPtr)((50 << 16) | 50));
+            Assert.False(filter.PreFilterMessage(ref press));
+            var move = Message.Create(form.Handle, 0x0200, IntPtr.Zero, (IntPtr)((90 << 16) | 90));
+            Assert.False(filter.PreFilterMessage(ref move));
+        }
+
+        [Fact]
+        public void AHoldButtonIsNeverADragSurface() {
+            using var hold = new Material3.WinForms.Forms.HoldButton("Reset", TimeSpan.FromSeconds(1), destructive: false);
+            Assert.IsAssignableFrom<FormDragAnywhere.IDragExcluded>(hold);
+        }
     }
 }

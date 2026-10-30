@@ -7,6 +7,8 @@ using Material3.WinForms.Controls;
 using Xunit;
 
 namespace Material3.WinForms.Tests {
+    // Application.OpenForms is one list for the process, and a test showing a form on another thread changes it mid-scan.
+    [Collection("GlobalStyle")]
     public class FoldTransitionTests {
         private sealed class QuietForm : Form {
             protected override bool ShowWithoutActivation => true;
