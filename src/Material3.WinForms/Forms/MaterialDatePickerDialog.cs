@@ -194,7 +194,32 @@ namespace Material3.WinForms.Forms {
                 Close();
                 return true;
             }
+            // The arrows walk the days and the page keys the months, as in the WPF picker; Enter is the accept button.
+            DateTime? next = keyData switch {
+                Keys.Left => Shifted(() => _value.AddDays(-1)),
+                Keys.Right => Shifted(() => _value.AddDays(1)),
+                Keys.Up => Shifted(() => _value.AddDays(-7)),
+                Keys.Down => Shifted(() => _value.AddDays(7)),
+                Keys.PageUp => Shifted(() => _value.AddMonths(-1)),
+                Keys.PageDown => Shifted(() => _value.AddMonths(1)),
+                _ => null,
+            };
+            if (next is DateTime date) {
+                _value = date;
+                _visibleMonth = new DateTime(date.Year, date.Month, 1);
+                Invalidate();
+                return true;
+            }
             return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private static DateTime? Shifted(Func<DateTime> step) {
+            try {
+                return step();
+            }
+            catch (ArgumentOutOfRangeException) {
+                return null;
+            }
         }
 
         private Rectangle PrevRect => new Rectangle(Pad, Header + (Nav - S(32)) / 2, S(32), S(32));
