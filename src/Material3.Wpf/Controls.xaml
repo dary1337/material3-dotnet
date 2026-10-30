@@ -253,6 +253,7 @@
 
     <Style x:Key="M3Progress" TargetType="ProgressBar">
         <Setter Property="Height" Value="4" />
+        <Setter Property="m3:ProgressMotion.IsAnimated" Value="True" />
         <Setter Property="m3:Metrics.CornerRadius" Value="{DynamicResource RadiusXs}" />
         <Setter Property="Foreground" Value="{DynamicResource Primary}" />
         <Setter Property="Background" Value="{DynamicResource SecondaryContainer}" />
@@ -262,7 +263,8 @@
                     <Grid>
                         <Border x:Name="PART_Track" />
                         <DockPanel>
-                            <Border x:Name="PART_Indicator" DockPanel.Dock="Left" CornerRadius="{m3:FitCornerRadius}" Background="{TemplateBinding Foreground}" />
+                            <!-- Not PART_Indicator: ProgressBar would size it at once, and ProgressMotion eases it instead. -->
+                            <Border x:Name="fill" DockPanel.Dock="Left" Width="0" CornerRadius="{m3:FitCornerRadius}" Background="{TemplateBinding Foreground}" />
                             <Grid x:Name="rest" Margin="4,0,0,0">
                                 <Border CornerRadius="{m3:FitCornerRadius}" Background="{TemplateBinding Background}" />
                                 <Ellipse x:Name="stop" Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}" HorizontalAlignment="Right"

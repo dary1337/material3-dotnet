@@ -116,18 +116,37 @@ namespace Material3.Wpf.Tests {
         });
 
         [Fact]
+        public void ALinearProgressEasesItsFillTowardANewValue() => Ui.InWindow(w => {
+            var bar = new ProgressBar { Style = (Style)w.FindResource("M3Progress"), Width = 300, Value = 20 };
+            w.Content = new StackPanel { Children = { bar } };
+            Ui.Settle(w);
+            var fill = (FrameworkElement)bar.Template.FindName("fill", bar);
+            Assert.Equal(60, fill.ActualWidth, 1);
+            Assert.True(ProgressMotion.GetIsAnimated(bar));
+            bar.Value = 80;
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+            do {
+                Ui.Settle(w);
+            } while (Math.Abs(fill.ActualWidth - 240) > 1 && clock.ElapsedMilliseconds < 3000);
+            Assert.Equal(240, fill.ActualWidth, 1);
+        });
+
+        [Fact]
         public void ALinearProgressLeavesAGapBetweenItsTwoSegmentsOnlyWhileBothExist() => Ui.InWindow(w => {
             var bar = new ProgressBar { Style = (Style)w.FindResource("M3Progress"), Width = 300, Value = 50 };
             w.Content = new StackPanel { Children = { bar } };
             Ui.Settle(w);
-            var fill = (FrameworkElement)bar.Template.FindName("PART_Indicator", bar);
+            var fill = (FrameworkElement)bar.Template.FindName("fill", bar);
             var rest = (FrameworkElement)bar.Template.FindName("rest", bar);
             double fillRight = fill.TranslatePoint(new Point(fill.ActualWidth, 0), bar).X;
             double restLeft = rest.TranslatePoint(new Point(0, 0), bar).X;
             Assert.Equal(4, restLeft - fillRight, 1);
 
             bar.Value = 0;
-            Ui.Settle(w);
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+            do {
+                Ui.Settle(w);
+            } while (fill.ActualWidth > 0.5 && clock.ElapsedMilliseconds < 3000);
             Assert.Equal(0, rest.TranslatePoint(new Point(0, 0), bar).X, 1);
         });
 
