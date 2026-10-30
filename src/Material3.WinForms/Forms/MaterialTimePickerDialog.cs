@@ -254,8 +254,8 @@ namespace Material3.WinForms.Forms {
         }
 
         private void ClampFields() {
-            int.TryParse(_hourBox.Text, NumberStyles.None, CultureInfo.InvariantCulture, out int hour);
-            int.TryParse(_minuteBox.Text, NumberStyles.None, CultureInfo.InvariantCulture, out int minute);
+            int.TryParse(_hourBox.Text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int hour);
+            int.TryParse(_minuteBox.Text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int minute);
             (hour, minute, _value) = TimeMath.Normalize(hour, minute, _isPm, _use24Hour);
             _hourBox.Text = hour.ToString("00", CultureInfo.InvariantCulture);
             _minuteBox.Text = minute.ToString("00", CultureInfo.InvariantCulture);
