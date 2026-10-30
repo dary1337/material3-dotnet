@@ -155,11 +155,11 @@ namespace Material3.Wpf.Tests {
             Assert.Equal(card.Padding, look.Padding);
             Assert.Equal(text.FontSize, look.FontSize);
             Assert.Equal(text.MaxWidth, look.MaxWidth);
+            Assert.Null(card.Effect);
             if (!rich) {
-                Assert.Null(card.Effect);
                 return;
             }
-            DropShadowEffect styled = Assert.IsType<DropShadowEffect>(card.Effect);
+            DropShadowEffect styled = Assert.IsType<DropShadowEffect>(w.FindResource("Elevation2"));
             DropShadowEffect fallback = Tip.TipLook.Shadow();
             Assert.Equal((styled.BlurRadius, styled.ShadowDepth, styled.Direction, styled.Opacity),
                 (fallback.BlurRadius, fallback.ShadowDepth, fallback.Direction, fallback.Opacity));

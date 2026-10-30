@@ -304,7 +304,7 @@
         <Setter Property="Background" Value="{DynamicResource SurfaceContainer}" />
         <Setter Property="CornerRadius" Value="{DynamicResource RadiusMd}" />
         <Setter Property="Padding" Value="16,12,16,14" />
-        <Setter Property="Effect" Value="{StaticResource Elevation2}" />
+        <Setter Property="Effect" Value="{x:Null}" />
     </Style>
 
     <Style x:Key="TipText" TargetType="TextBlock">
@@ -1097,11 +1097,26 @@
     </Style>
 
 
-    <Style x:Key="ElevatedCard" TargetType="Border">
+    <!-- A templated card, not a Border style: its shadow is a layer of its own, so the content keeps ClearType
+         and a virtualizing list inside paints as it realizes. -->
+    <Style x:Key="ElevatedCard" TargetType="ContentControl">
         <Setter Property="Background" Value="{DynamicResource SurfaceContainerLow}" />
-        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMd}" />
+        <Setter Property="m3:Metrics.CornerRadius" Value="{DynamicResource RadiusMd}" />
         <Setter Property="Padding" Value="16" />
-        <Setter Property="Effect" Value="{DynamicResource Elevation1}" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContentControl">
+                    <Grid>
+                        <Border Background="{TemplateBinding Background}" CornerRadius="{m3:FitCornerRadius}" Effect="{DynamicResource Elevation1}" />
+                        <Border Background="{TemplateBinding Background}" CornerRadius="{m3:FitCornerRadius}" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter />
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <Style x:Key="FilledCard" TargetType="Border">
@@ -2075,8 +2090,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type m3:Fab}">
-                    <Border x:Name="b" Background="{DynamicResource PrimaryContainer}" CornerRadius="{m3:FitCornerRadius}"
-                            Effect="{DynamicResource Elevation3}">
+                    <Grid>
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroup x:Name="CommonStates">
                                 <VisualStateGroup.Transitions>
@@ -2088,6 +2102,10 @@
                                 <VisualState x:Name="Disabled"><Storyboard><DoubleAnimation Storyboard.TargetName="state" Storyboard.TargetProperty="Opacity" To="0" Duration="0" /></Storyboard></VisualState>
                             </VisualStateGroup>
                         </VisualStateManager.VisualStateGroups>
+                        <!-- The shadow is a layer of its own: an Effect on the face would rasterize the label. -->
+                        <Border x:Name="shadow" Background="{DynamicResource PrimaryContainer}" CornerRadius="{m3:FitCornerRadius}"
+                                Effect="{DynamicResource Elevation3}" />
+                    <Border x:Name="b" Background="{DynamicResource PrimaryContainer}" CornerRadius="{m3:FitCornerRadius}">
                         <Grid>
                             <Border x:Name="state" Background="{DynamicResource OnPrimaryContainer}" Opacity="0"
                                     CornerRadius="{m3:FitCornerRadius}" />
@@ -2104,6 +2122,7 @@
                             </StackPanel>
                         </Grid>
                     </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="Content" Value="{x:Null}">
                             <Setter TargetName="label" Property="Visibility" Value="Collapsed" />
@@ -2112,7 +2131,7 @@
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="b" Property="Background" Value="{DynamicResource SurfaceContainerHighest}" />
-                            <Setter TargetName="b" Property="Effect" Value="{x:Null}" />
+                            <Setter TargetName="shadow" Property="Visibility" Value="Collapsed" />
                             <Setter Property="Foreground" Value="{DynamicResource OnSurfaceMuted}" />
                             <Setter Property="Cursor" Value="Arrow" />
                         </Trigger>
@@ -2391,8 +2410,10 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type m3:Snackbar}">
+                    <Grid>
                     <Border Background="{DynamicResource InverseSurface}" CornerRadius="{m3:FitCornerRadius}"
-                            Effect="{DynamicResource Elevation3}">
+                            Effect="{DynamicResource Elevation3}" />
+                    <Border Background="{DynamicResource InverseSurface}" CornerRadius="{m3:FitCornerRadius}">
                         <Grid Margin="{TemplateBinding Padding}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -2418,6 +2439,7 @@
                             </Button>
                         </Grid>
                     </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="ActionText" Value="{x:Null}">
                             <Setter TargetName="PART_Action" Property="Visibility" Value="Collapsed" />

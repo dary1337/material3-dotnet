@@ -366,7 +366,10 @@ namespace Material3.Wpf.Gallery {
                 WrapPanel variants = Row();
                 foreach ((string key, string note) in new[] { ("ElevatedCard", "Elevated"), ("FilledCard", "Filled"), ("OutlinedCard", "Outlined") }) {
                     var body = new TextBlock { Text = note, Style = (Style)FindResource("TitleMedium") };
-                    variants.Children.Add(new Border { Style = (Style)FindResource(key), Width = 180, Height = 84, Margin = new Thickness(2, 4, 16, 12), Child = body });
+                    var size = new Thickness(2, 4, 16, 12);
+                    variants.Children.Add(key == "ElevatedCard"
+                        ? new ContentControl { Style = (Style)FindResource(key), Width = 180, Height = 84, Margin = size, Content = body }
+                        : new Border { Style = (Style)FindResource(key), Width = 180, Height = 84, Margin = size, Child = body });
                 }
             },
             ["cards.list"] = () => {

@@ -2,6 +2,7 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -44,6 +45,7 @@ namespace Material3.Wpf {
         [ThreadStatic] private static TextBlock? _label;
         [ThreadStatic] private static TextBlock? _title;
         [ThreadStatic] private static Border? _border;
+        [ThreadStatic] private static Border? _shadow;
         [ThreadStatic] private static bool _closing;
 
         private static void OnTextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
@@ -174,6 +176,10 @@ namespace Material3.Wpf {
                 IsHitTestVisible = false,
                 Child = stack,
             };
+            // The rich tip's shadow is a layer of its own: an Effect on the card would rasterize its text.
+            _shadow = new Border { IsHitTestVisible = false };
+            _shadow.SetBinding(Border.BackgroundProperty, new Binding(nameof(Border.Background)) { Source = _border });
+            _shadow.SetBinding(Border.CornerRadiusProperty, new Binding(nameof(Border.CornerRadius)) { Source = _border });
             Undress();
             var room = new Border {
                 Padding = new Thickness(ShadowRoom),
@@ -181,7 +187,7 @@ namespace Material3.Wpf {
                 IsHitTestVisible = false,
                 SnapsToDevicePixels = true,
                 UseLayoutRounding = true,
-                Child = _border,
+                Child = new Grid { Children = { _shadow, _border } },
             };
             _popup = new Popup {
                 AllowsTransparency = true,
@@ -234,6 +240,7 @@ namespace Material3.Wpf {
                     _title.ClearValue(p);
                 }
                 _border!.Style = card;
+                _shadow!.Effect = rich ? target.TryFindResource(ResourceKeys.Elevation2) as Effect ?? TipLook.Shadow() : null;
                 _label!.Style = text;
                 _title.Style = head;
                 _label.TextAlignment = TextAlignment.Left;
@@ -247,7 +254,7 @@ namespace Material3.Wpf {
             _border!.CornerRadius = look.CornerRadius;
             _border.Padding = look.Padding;
             _border.BorderThickness = new Thickness(1);
-            _border.Effect = rich ? TipLook.Shadow() : null;
+            _shadow!.Effect = rich ? TipLook.Shadow() : null;
             Themed(_label, TextBlock.ForegroundProperty, rich ? nameof(ColorScheme.OnSurfaceVariant) : nameof(ColorScheme.OnSurface), Colors.White);
             Themed(_border, Border.BackgroundProperty, rich ? nameof(ColorScheme.SurfaceContainer) : nameof(ColorScheme.SurfaceContainerHighest), Color.FromRgb(0x2D, 0x2C, 0x2E));
         }

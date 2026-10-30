@@ -209,7 +209,7 @@ nothing is lost.
 | `m3:Badge` | `Count` `IsDot` `Tone` | Zero shows nothing and past 999 it reads `999+`. It does not place itself: put it in the corner of a Grid cell over what it annotates |
 | `m3:OptionCard` | `Leading` content, `Indicator` (`Radio` `Check` `None`) `IsChecked` `GroupName` `Tone` | A radio card behaves like a `RadioButton`: a click only chooses, and it unchooses its panel's siblings or its `GroupName` window-wide. `Tone` tints the outline before the option is picked |
 | `M3RoundCheckBox` *(style)* | any `CheckBox` | A round check for an on/off that lives inside a selectable card, so it does not read as a second list selection |
-| `ElevatedCard` / `FilledCard` / `OutlinedCard` *(styles)* | any `Border` | The three M3 card containers; `Card` stays the plain SurfaceContainer one |
+| `ElevatedCard` / `FilledCard` / `OutlinedCard` *(styles)* | a `ContentControl` / any `Border` / any `Border` | The three M3 card containers; `Card` stays the plain SurfaceContainer one. The elevated one is templated so its shadow stays off the content |
 | `ErrorIconButton` *(style)* | any `Button` | The hover turns ErrorContainer, so the colour warns about the click instead of decorating every icon. Keeps a `Background` you give it |
 | `m3:ButtonContent.LeadingGlyph` | on the shipped button styles | The glyph follows the label's colour, the disabled one included |
 | `m3:Snackbar` | `Snackbar.Show(anchor, message[, actionText, onAction][, duration])`, `DismissCurrent([anchor])` | Goes into the window's adorner layer, so it needs no host element; one shows at a time in each window and the rest of that window queue |

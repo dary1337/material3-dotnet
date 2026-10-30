@@ -8,6 +8,7 @@ namespace Material3.Wpf {
         internal const string DatePickerCellSize = nameof(DatePickerCellSize);
         internal const string DialogCard = nameof(DialogCard);
         internal const string DialogWidth = nameof(DialogWidth);
+        internal const string Elevation2 = nameof(Elevation2);
         internal const string ErrorTonalButton = nameof(ErrorTonalButton);
         internal const string FilledButton = nameof(FilledButton);
         internal const string FontFamily = nameof(FontFamily);
