@@ -284,14 +284,14 @@ namespace Material3.WinForms.Gallery {
                 Accent("Cloud", "CloudOutline").SetAccent(Color.Transparent, brand, brand);
             }),
             ["selection.segmented"] = b => {
-                var single = new MaterialSegmentedButton { Width = 300 };
+                var single = new MaterialSegmentedButton { Width = 384 };
                 foreach (string s in new[] { "Day", "Week", "Month" }) {
                     single.AddSegment(s);
                 }
 
                 single.SetSelected(1, true);
                 b.Add(single);
-                var multi = new MaterialSegmentedButton { MultiSelect = true, Width = 300 };
+                var multi = new MaterialSegmentedButton { MultiSelect = true, Width = 384 };
                 foreach (string s in new[] { "Bold", "Italic", "Underline" }) {
                     multi.AddSegment(s);
                 }
@@ -300,7 +300,7 @@ namespace Material3.WinForms.Gallery {
             },
             ["selection.slider"] = b => {
                 var slider = new MaterialSlider { Minimum = 0, Maximum = 100, Value = 40, Width = 300 };
-                var readout = new MaterialLabel { Text = "40", Font = TypeScale.BodySmall, ForeColor = MaterialColors.OnSurfaceVariant, AutoSize = true };
+                var readout = new MaterialLabel { Text = "40", Font = TypeScale.BodySmall, ForeColor = MaterialColors.OnSurfaceVariant, AutoSize = false, Width = 40, Height = 20 };
                 slider.ValueChanged += (s, e) => readout.Text = slider.Value.ToString(CultureInfo.InvariantCulture);
                 b.Add(slider);
                 b.Add(readout);

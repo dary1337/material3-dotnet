@@ -319,12 +319,12 @@ namespace Material3.Wpf.Gallery {
                 }
             },
             ["selection.segmented"] = () => {
-                PageHost.Children.Add(new SegmentedButton { ItemsSource = new[] { "Day", "Week", "Month" }, SelectedIndex = 1, Width = 300, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 0, 0, 12) });
-                PageHost.Children.Add(new SegmentedButton { ItemsSource = new[] { "Bold", "Italic", "Underline" }, MultiSelect = true, Width = 300, HorizontalAlignment = HorizontalAlignment.Left });
+                PageHost.Children.Add(new SegmentedButton { ItemsSource = new[] { "Day", "Week", "Month" }, SelectedIndex = 1, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 0, 0, 12) });
+                PageHost.Children.Add(new SegmentedButton { ItemsSource = new[] { "Bold", "Italic", "Underline" }, MultiSelect = true, HorizontalAlignment = HorizontalAlignment.Left });
             },
             ["selection.slider"] = () => {
                 var slider = new Slider { Style = (Style)FindResource("M3Slider"), Minimum = 0, Maximum = 100, Value = 40, Width = 300, HorizontalAlignment = HorizontalAlignment.Left };
-                var readout = new TextBlock { Text = "40", Style = (Style)FindResource("BodySmall"), Margin = new Thickness(2, 6, 0, 0) };
+                var readout = new TextBlock { Text = "40", Style = (Style)FindResource("BodySmall"), Margin = new Thickness(2, 6, 0, 0), Width = 40, HorizontalAlignment = HorizontalAlignment.Left };
                 slider.ValueChanged += (_, e) => readout.Text = ((int)e.NewValue).ToString(CultureInfo.InvariantCulture);
                 PageHost.Children.Add(slider);
                 PageHost.Children.Add(readout);

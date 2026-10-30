@@ -18,6 +18,17 @@ namespace Material3.Wpf.Tests {
         });
 
         [Fact]
+        public void ARowLeftToItsContentFitsItsLongestLabelWithTheCheck() => Ui.InWindow(w => {
+            SegmentedButton row = Row(w, "Bold", "Italic", "Underline");
+            row.MultiSelect = true;
+            Segment(row, 2).IsChecked = true;
+            Ui.Settle(w);
+            SegmentedItem longest = Segment(row, 2);
+            longest.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
+            Assert.True(longest.ActualWidth >= longest.DesiredSize.Width - 0.5, $"{longest.ActualWidth} < {longest.DesiredSize.Width}");
+        });
+
+        [Fact]
         public void MultiSelectKeepsThemAll() => Ui.InWindow(w => {
             SegmentedButton row = Row(w, "Day", "Week", "Month");
             row.MultiSelect = true;
