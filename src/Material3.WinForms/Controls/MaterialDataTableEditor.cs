@@ -74,7 +74,7 @@ namespace Material3.WinForms.Controls {
             Width = 460;
             TypeRole.Follow(this, () => TypeScale.BodyMedium);
             ThemeHook.Attach(this, Invalidate);
-            HandleBound.Attach(this, () => LibraryText.Changed += OnLibraryTextChanged, () => LibraryText.Changed -= OnLibraryTextChanged,
+            HandleBound.Attach(this, h => LibraryText.Changed += h, h => LibraryText.Changed -= h,
                 () => OnLibraryTextChanged(this, EventArgs.Empty));
             ApplyAddText();
         }

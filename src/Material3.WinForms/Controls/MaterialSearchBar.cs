@@ -68,7 +68,7 @@ namespace Material3.WinForms.Controls {
 
             Click += (s, e) => _editor.Focus();
             TypeRole.Follow(this, () => TypeScale.BodyMedium);
-            HandleBound.Attach(this, () => LibraryText.Changed += OnLibraryTextChanged, () => LibraryText.Changed -= OnLibraryTextChanged,
+            HandleBound.Attach(this, h => LibraryText.Changed += h, h => LibraryText.Changed -= h,
                 () => OnLibraryTextChanged(this, EventArgs.Empty));
             ThemeHook.Attach(this, ApplyTheme);
             ApplyTheme();
