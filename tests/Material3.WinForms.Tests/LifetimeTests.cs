@@ -82,6 +82,23 @@ namespace Material3.WinForms.Tests {
             Assert.False(control.IsAlive, $"{type} is still reachable");
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void FollowAndDrop(int count) {
+            for (int i = 0; i < count; i++) {
+                _ = new MaterialButton();
+            }
+        }
+
+        [Fact]
+        public void TheTypeRoleListStaysBoundedWhileRowsAreRecreated() {
+            const int Round = 300;
+            for (int i = 0; i < 5; i++) {
+                FollowAndDrop(Round);
+                Collect();
+            }
+            Assert.True(Typography.TypeRole.TrackedCount < Round * 4, $"{Typography.TypeRole.TrackedCount} tracked");
+        }
+
         [Fact]
         public void AThemeSwitchOnAWorkerThreadReachesTheControlOnItsOwn() {
             MaterialTheme before = ThemeManager.Theme;
