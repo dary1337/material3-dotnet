@@ -268,7 +268,8 @@ Each window's `ModalLayer` keeps its own stack: `Show(card)` picks the active wi
 window holding `owner`, and Esc or a scrim click closes only that window's top modal.
 
 `Dialog.Show(owner, options)` is the ready-made dialog: it blocks, needs no `ModalLayer`, and returns a
-`DialogChoice` — `Confirm`, `Secondary`, or `Cancel` for a cancel, Esc or a click on the scrim.
+`DialogChoice` — `Confirm`, `Secondary`, `Cancel` for a cancel, Esc or a click on the scrim, or `Failed` when
+`ConfirmWork` throws.
 
 | `DialogOptions` | Behaviour |
 |---|---|
@@ -277,7 +278,7 @@ window holding `owner`, and Esc or a scrim click closes only that window's top m
 | `ConfirmText` `CancelText` `SecondaryText` | With a secondary present, cancel steps down to a text button — three actions, three levels of emphasis |
 | `Destructive` | The confirm turns error-tonal. Independent of `Tone`: an error notice still closes with a neutral button |
 | `HoldToConfirm` | The confirm fills while held and commits once full; an early release shakes it. Enter does not reach it |
-| `ConfirmWork` | Runs before the close; the confirm spins and nothing dismisses the dialog meanwhile. If it throws, `Show` answers `Failed` and the exception is in `WorkFailure`, as in WinForms (`DialogResult.Abort`) |
+| `ConfirmWork` | Runs before the close; the confirm spins and nothing dismisses the dialog meanwhile. If it throws, `Show` answers `Failed` and `Show(owner, options, out failure)` hands back the exception, as WinForms answers `DialogResult.Abort` with `WorkFailure` |
 | `SupportingAction` | A text button at the far end of the row that neither confirms nor cancels |
 | `Links` | `OpenInNew`-marked links under the body that run without closing |
 

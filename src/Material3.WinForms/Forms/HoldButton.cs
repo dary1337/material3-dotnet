@@ -11,7 +11,7 @@ using Material3.WinForms.Typography;
 namespace Material3.WinForms.Forms {
     // A confirm that commits only once it has been held for the whole duration: the fill sweeps across while held,
     // and an early release snaps it back with a shake.
-    internal sealed class HoldButton : Control {
+    internal sealed class HoldButton : Control, FormDragAnywhere.IDragExcluded {
         private const double ShakeMs = 260;
         private const int ShakeAmplitude = 7;
         private const int MinWidth = 120;

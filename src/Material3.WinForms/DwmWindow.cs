@@ -84,16 +84,8 @@ namespace Material3.WinForms {
                 return;
             }
 
-            EventHandler onThemeChanged = (s, e) => {
-                if (!form.IsDisposed && form.IsHandleCreated) {
-                    ApplyToHandle(form.Handle);
-                }
-            };
-            HandleBound.Attach(form, () => ThemeManager.ThemeChanged += onThemeChanged, () => ThemeManager.ThemeChanged -= onThemeChanged,
+            HandleBound.Attach(form, h => ThemeManager.ThemeChanged += h, h => ThemeManager.ThemeChanged -= h,
                 () => ApplyToHandle(form.Handle));
-            if (form.IsHandleCreated) {
-                ApplyToHandle(form.Handle);
-            }
         }
 
         private static void ApplyToHandle(IntPtr hwnd) {

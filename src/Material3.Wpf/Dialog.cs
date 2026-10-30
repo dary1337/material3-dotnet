@@ -20,7 +20,7 @@ namespace Material3.Wpf {
         Secondary,
         /// <summary>The confirm action.</summary>
         Confirm,
-        /// <summary>The confirm's <see cref="DialogOptions.ConfirmWork"/> threw; the exception is in <see cref="DialogOptions.WorkFailure"/>.</summary>
+        /// <summary>The confirm's <see cref="DialogOptions.ConfirmWork"/> threw; <see cref="Dialog.Show(Window, DialogOptions, out Exception)"/> hands back the exception.</summary>
         Failed,
     }
 
@@ -80,13 +80,10 @@ namespace Material3.Wpf {
         /// <summary>
         /// Work the confirm runs before the dialog closes. While it runs the confirm spins, every other action is
         /// disabled and nothing dismisses the dialog, so it stays on screen as the progress. If it throws, the dialog
-        /// closes, <see cref="Dialog.Show"/> answers <see cref="DialogChoice.Failed"/> and the exception is in
-        /// <see cref="WorkFailure"/> — the same contract as the WinForms dialog.
+        /// closes, <see cref="Dialog.Show(Window, DialogOptions)"/> answers <see cref="DialogChoice.Failed"/> and its overload with
+        /// an out parameter hands back the exception, as the WinForms dialog answers Abort with its WorkFailure.
         /// </summary>
         public Func<Task>? ConfirmWork { get; set; }
-
-        /// <summary>What <see cref="ConfirmWork"/> threw, after <see cref="Dialog.Show"/> answered <see cref="DialogChoice.Failed"/>.</summary>
-        public Exception? WorkFailure { get; internal set; }
 
         /// <summary>
         /// An action that neither confirms nor cancels — it edits the dialog's own content — at the far end of the
@@ -104,7 +101,7 @@ namespace Material3.Wpf {
 
     /// <summary>
     /// A blocking M3 dialog in a window of its own over its owner: a scrim, a card with a role glyph and a headline,
-    /// the body, and up to three actions. <see cref="Show"/> returns once it is answered.
+    /// the body, and up to three actions. <see cref="Show(Window, DialogOptions)"/> returns once it is answered.
     /// </summary>
     /// <remarks>
     /// <see cref="Modal"/> hosts a card you build inside the window's own <see cref="ModalLayer"/>; this one needs
@@ -117,15 +114,20 @@ namespace Material3.Wpf {
         /// Shows the dialog and returns the answer. A missing or unloaded <paramref name="owner"/> falls back to the
         /// application's main window, and without one the dialog centres on the screen.
         /// </summary>
-        public static DialogChoice Show(Window? owner, DialogOptions options) {
+        public static DialogChoice Show(Window? owner, DialogOptions options) => Show(owner, options, out _);
+
+        /// <summary>
+        /// Shows the dialog like <see cref="Show(Window, DialogOptions)"/>, and hands back what
+        /// <see cref="DialogOptions.ConfirmWork"/> threw when the answer is <see cref="DialogChoice.Failed"/>, null otherwise.
+        /// </summary>
+        public static DialogChoice Show(Window? owner, DialogOptions options, out Exception? workFailure) {
             if (options == null) {
                 throw new ArgumentNullException(nameof(options));
             }
 
-            options.WorkFailure = null;
             var window = new DialogWindow(options);
             window.ShowOver(owner);
-            options.WorkFailure = window.Failure;
+            workFailure = window.Failure;
             return window.Failure != null ? DialogChoice.Failed : window.Choice;
         }
 

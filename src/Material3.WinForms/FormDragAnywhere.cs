@@ -10,7 +10,10 @@ namespace Material3.WinForms {
         /// <summary>Controls implementing this are never treated as a drag surface.</summary>
         public interface IDragExcluded { }
 
-        /// <summary>Lets the user drag <paramref name="form"/> by any point that is not an interactive control.</summary>
+        /// <summary>
+        /// Lets the user drag <paramref name="form"/> by any point that is not an interactive control. The press still
+        /// reaches what is under it, so a click clicks; the move starts once the pointer travels past the system drag distance.
+        /// </summary>
         public static void Enable(Form form) {
             if (form == null) {
                 return;
@@ -23,12 +26,15 @@ namespace Material3.WinForms {
             }
         }
 
-        private sealed class DragFilter : IMessageFilter {
+        internal sealed class DragFilter : IMessageFilter {
             private const int WM_LBUTTONDOWN = 0x0201;
+            private const int WM_LBUTTONUP = 0x0202;
+            private const int WM_MOUSEMOVE = 0x0200;
             private const int WM_NCLBUTTONDOWN = 0x00A1;
             private const int HTCAPTION = 2;
 
             private readonly Form _form;
+            private Point? _pressedAt;
 
             public DragFilter(Form form) {
                 _form = form;
@@ -40,10 +46,40 @@ namespace Material3.WinForms {
             [DllImport("user32.dll")]
             private static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
 
-            // The filter sees every window's clicks, so only a press inside this form's own controls starts a move;
-            // the move itself is the system's caption drag, which holds the mouse and ends wherever the button comes up.
+            // The press itself always reaches the control, so a click still clicks; only a press that then travels past the
+            // system drag distance becomes the system's caption drag, which ends wherever the button comes up.
             public bool PreFilterMessage(ref Message m) {
-                if (m.Msg != WM_LBUTTONDOWN || !_form.IsHandleCreated || !_form.Visible) {
+                switch (m.Msg) {
+                    case WM_LBUTTONDOWN:
+                        _pressedAt = IsDragSurface(m) ? Cursor.Position : (Point?)null;
+                        return false;
+                    case WM_LBUTTONUP:
+                        _pressedAt = null;
+                        return false;
+                    case WM_MOUSEMOVE when _pressedAt is Point origin:
+                        if ((Control.MouseButtons & MouseButtons.Left) == 0 || !_form.IsHandleCreated) {
+                            _pressedAt = null;
+                            return false;
+                        }
+
+                        Size slop = SystemInformation.DragSize;
+                        Point now = Cursor.Position;
+                        if (Math.Abs(now.X - origin.X) * 2 < slop.Width && Math.Abs(now.Y - origin.Y) * 2 < slop.Height) {
+                            return false;
+                        }
+
+                        _pressedAt = null;
+                        ReleaseCapture();
+                        SendMessage(_form.Handle, WM_NCLBUTTONDOWN, (IntPtr)HTCAPTION, IntPtr.Zero);
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+
+            // The filter sees every window's clicks, so only a press inside this form's own controls counts.
+            private bool IsDragSurface(Message m) {
+                if (!_form.IsHandleCreated || !_form.Visible) {
                     return false;
                 }
 
@@ -52,15 +88,8 @@ namespace Material3.WinForms {
                     return false;
                 }
 
-                Point screen = MessageToScreenPoint(m);
-                Control? leaf = WalkToLeaf(_form, _form.PointToClient(screen));
-                if (leaf != null && IsInteractive(leaf)) {
-                    return false;
-                }
-
-                ReleaseCapture();
-                SendMessage(_form.Handle, WM_NCLBUTTONDOWN, (IntPtr)HTCAPTION, IntPtr.Zero);
-                return true;
+                Control? leaf = WalkToLeaf(_form, _form.PointToClient(MessageToScreenPoint(m)));
+                return leaf == null || !IsInteractive(leaf);
             }
 
             private static Point MessageToScreenPoint(Message m) {

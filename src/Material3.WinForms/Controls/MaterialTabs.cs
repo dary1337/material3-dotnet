@@ -234,15 +234,10 @@ namespace Material3.WinForms.Controls {
                 : rect.Width;
         }
 
-        private static readonly Bitmap MeasureBitmap = new Bitmap(1, 1);
-
-        private static Graphics CreateMeasureGraphics() {
-            return Graphics.FromImage(MeasureBitmap);
-        }
-
         private Rectangle TabRect(int index) {
             int x = 0;
-            using (Graphics g = CreateMeasureGraphics()) {
+            using (var measure = MeasureContext.For(this)) {
+                Graphics g = measure.Graphics;
                 for (int i = 0; i < _tabs.Count; i++) {
                     int w = MeasureTab(g, i);
                     if (i == index) {
@@ -266,7 +261,8 @@ namespace Material3.WinForms.Controls {
 
         private int HitTest(Point location) {
             int x = 0;
-            using (Graphics g = CreateMeasureGraphics()) {
+            using (var measure = MeasureContext.For(this)) {
+                Graphics g = measure.Graphics;
                 for (int i = 0; i < _tabs.Count; i++) {
                     int w = MeasureTab(g, i);
                     if (location.X >= x && location.X < x + w) {
