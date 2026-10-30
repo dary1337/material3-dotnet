@@ -132,6 +132,10 @@ namespace Material3.Wpf.Tests {
         public void OnlyAWholePlacementParses(string? text, bool parses) => Assert.Equal(parses, Material3.Shared.PlacementText.TryParse(text, out _, out _));
 
         [Fact]
+        public void AFractionalPlacementRoundsInsteadOfDriftingRight() =>
+            Assert.Equal("-1,11,800,600,0", Material3.Shared.PlacementText.Format(-0.6, 10.7, 799.6, 600.2, false));
+
+        [Fact]
         public void APlacementOffEveryScreenIsRefused() {
             var screen = new Rect(0, 0, 1920, 1080);
             Assert.True(WindowPlacement.IsReachable(new Rect(100, 100, 800, 600), screen));

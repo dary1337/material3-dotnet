@@ -9,7 +9,7 @@ namespace Material3.Shared {
 
         internal static string Format(double left, double top, double width, double height, bool maximized) =>
             string.Format(CultureInfo.InvariantCulture, "{0},{1},{2},{3},{4}",
-                (int)left, (int)top, (int)width, (int)height, maximized ? 1 : 0);
+                (int)Math.Round(left), (int)Math.Round(top), (int)Math.Round(width), (int)Math.Round(height), maximized ? 1 : 0);
 
         internal static bool TryParse(string? text, out (int Left, int Top, int Width, int Height) bounds, out bool maximized) {
             bounds = default;
