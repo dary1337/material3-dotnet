@@ -275,6 +275,91 @@ namespace Material3.WinForms.Controls {
 
         /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
+            PaintContent(e);
+            if (Focused && ShowFocusCues) {
+                FocusRing.Paint(e.Graphics, this, _segments.Count > 0 ? SegmentRect(Math.Min(_focusIndex, _segments.Count - 1)) : Rectangle.Empty, Dpi.Scale(this, Shape.Small));
+            }
+        }
+
+        /// <inheritdoc />
+        protected override AccessibleObject CreateAccessibilityInstance() =>
+            new MaterialAccessible(this, AccessibleRole.Grouping, items: () => {
+                var items = new List<MaterialAccessible.Item>();
+                for (int i = 0; i < _segments.Count; i++) {
+                    int index = i;
+                    items.Add(new MaterialAccessible.Item {
+                        Name = _segments[i],
+                        Role = _multiSelect ? AccessibleRole.CheckButton : AccessibleRole.RadioButton,
+                        State = IsSelected(i) ? AccessibleStates.Checked : AccessibleStates.None,
+                        Bounds = SegmentRect(i),
+                        Select = () => Press(index),
+                    });
+                }
+                return items;
+            });
+
+        /// <inheritdoc />
+        protected override void OnGotFocus(EventArgs e) {
+            base.OnGotFocus(e);
+            Invalidate();
+        }
+
+        /// <inheritdoc />
+        protected override void OnLostFocus(EventArgs e) {
+            base.OnLostFocus(e);
+            Invalidate();
+        }
+
+        /// <inheritdoc />
+        protected override void OnChangeUICues(UICuesEventArgs e) {
+            base.OnChangeUICues(e);
+            Invalidate();
+        }
+
+        private int _focusIndex;
+
+        /// <inheritdoc />
+        protected override bool IsInputKey(Keys keyData) =>
+            keyData == Keys.Left || keyData == Keys.Right || keyData == Keys.Home || keyData == Keys.End || base.IsInputKey(keyData);
+
+        // The arrows move the focus between segments and Space presses the focused one, as a toolbar does.
+        /// <inheritdoc />
+        protected override void OnKeyDown(KeyEventArgs e) {
+            base.OnKeyDown(e);
+            if (_segments.Count == 0) {
+                return;
+            }
+
+            int focus = Math.Min(_focusIndex, _segments.Count - 1);
+            int next = e.KeyCode switch {
+                Keys.Left => Math.Max(0, focus - 1),
+                Keys.Right => Math.Min(_segments.Count - 1, focus + 1),
+                Keys.Home => 0,
+                Keys.End => _segments.Count - 1,
+                _ => -1,
+            };
+            if (next >= 0) {
+                _focusIndex = next;
+                Invalidate();
+                e.Handled = true;
+            }
+            else if (e.KeyCode == Keys.Space || e.KeyCode == Keys.Enter) {
+                Press(focus);
+                e.Handled = true;
+            }
+        }
+
+        private void Press(int index) {
+            _focusIndex = index;
+            if (_multiSelect) {
+                SetSelected(index, !IsSelected(index));
+            }
+            else {
+                SetSelected(index, true);
+            }
+        }
+
+        private void PaintContent(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;

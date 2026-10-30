@@ -217,6 +217,35 @@ namespace Material3.WinForms.Controls {
 
         /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
+            PaintContent(e);
+            if (Focused && ShowFocusCues) {
+                FocusRing.Paint(e.Graphics, this, ClientRectangle, Dpi.Scale(this, Shape.Small));
+            }
+        }
+
+        /// <inheritdoc />
+        protected override AccessibleObject CreateAccessibilityInstance() =>
+            new MaterialAccessible(this, AccessibleRole.CheckButton, () => Checked ? AccessibleStates.Checked : AccessibleStates.None, () => Text, null, "Toggle", () => Checked = !Checked);
+
+        /// <inheritdoc />
+        protected override void OnGotFocus(EventArgs e) {
+            base.OnGotFocus(e);
+            Invalidate();
+        }
+
+        /// <inheritdoc />
+        protected override void OnLostFocus(EventArgs e) {
+            base.OnLostFocus(e);
+            Invalidate();
+        }
+
+        /// <inheritdoc />
+        protected override void OnChangeUICues(UICuesEventArgs e) {
+            base.OnChangeUICues(e);
+            Invalidate();
+        }
+
+        private void PaintContent(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;

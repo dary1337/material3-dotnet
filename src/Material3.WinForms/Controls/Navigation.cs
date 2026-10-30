@@ -245,6 +245,73 @@ namespace Material3.WinForms.Controls {
         }
 
         /// <inheritdoc />
+        protected override bool IsInputKey(Keys keyData) =>
+            keyData == Keys.Left || keyData == Keys.Right || keyData == Keys.Up || keyData == Keys.Down
+            || keyData == Keys.Home || keyData == Keys.End || base.IsInputKey(keyData);
+
+        // The arrows move the selection, as along tabs; a bar runs left to right, a rail and a drawer top to bottom.
+        /// <inheritdoc />
+        protected override void OnKeyDown(KeyEventArgs e) {
+            base.OnKeyDown(e);
+            if (Items.Count == 0) {
+                return;
+            }
+
+            int next = e.KeyCode switch {
+                Keys.Left or Keys.Up => Math.Max(0, _selectedIndex - 1),
+                Keys.Right or Keys.Down => Math.Min(Items.Count - 1, _selectedIndex + 1),
+                Keys.Home => 0,
+                Keys.End => Items.Count - 1,
+                _ => -1,
+            };
+            if (next >= 0) {
+                SelectedIndex = next;
+                e.Handled = true;
+            }
+        }
+
+        /// <inheritdoc />
+        protected override void OnGotFocus(EventArgs e) {
+            base.OnGotFocus(e);
+            Invalidate();
+        }
+
+        /// <inheritdoc />
+        protected override void OnLostFocus(EventArgs e) {
+            base.OnLostFocus(e);
+            Invalidate();
+        }
+
+        /// <inheritdoc />
+        protected override void OnChangeUICues(UICuesEventArgs e) {
+            base.OnChangeUICues(e);
+            Invalidate();
+        }
+
+        private protected void PaintFocus(Graphics g) {
+            if (Focused && ShowFocusCues && _selectedIndex >= 0 && _selectedIndex < Items.Count) {
+                FocusRing.Paint(g, this, ItemRect(_selectedIndex), Dpi.Scale(this, Shape.Large));
+            }
+        }
+
+        /// <inheritdoc />
+        protected override AccessibleObject CreateAccessibilityInstance() =>
+            new MaterialAccessible(this, AccessibleRole.PageTabList, items: () => {
+                var items = new List<MaterialAccessible.Item>();
+                for (int i = 0; i < Items.Count; i++) {
+                    int index = i;
+                    items.Add(new MaterialAccessible.Item {
+                        Name = Items[i].Label,
+                        Role = AccessibleRole.PageTab,
+                        State = AccessibleStates.Selectable | (i == _selectedIndex ? AccessibleStates.Selected : AccessibleStates.None),
+                        Bounds = ItemRect(i),
+                        Select = () => SelectedIndex = index,
+                    });
+                }
+                return items;
+            });
+
+        /// <inheritdoc />
         protected override void OnMouseUp(MouseEventArgs e) {
             base.OnMouseUp(e);
             if (e.Button == MouseButtons.Left) {
@@ -396,6 +463,11 @@ namespace Material3.WinForms.Controls {
 
         /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
+            PaintContent(e);
+            PaintFocus(e.Graphics);
+        }
+
+        private void PaintContent(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
@@ -529,6 +601,11 @@ namespace Material3.WinForms.Controls {
 
         /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
+            PaintContent(e);
+            PaintFocus(e.Graphics);
+        }
+
+        private void PaintContent(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
@@ -676,6 +753,11 @@ namespace Material3.WinForms.Controls {
 
         /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
+            PaintContent(e);
+            PaintFocus(e.Graphics);
+        }
+
+        private void PaintContent(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;

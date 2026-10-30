@@ -30,6 +30,8 @@ namespace Material3.WinForms.Controls {
 
         /// <summary>Initializes a new instance of the <see cref="MaterialExpander"/> class.</summary>
         public MaterialExpander() {
+            SetStyle(ControlStyles.Selectable, true);
+            TabStop = true;
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer
                 | ControlStyles.ResizeRedraw | ControlStyles.SupportsTransparentBackColor, true);
             BackColor = Color.Transparent;
@@ -171,6 +173,44 @@ namespace Material3.WinForms.Controls {
 
         /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
+            PaintContent(e);
+            if (Focused && ShowFocusCues) {
+                FocusRing.Paint(e.Graphics, this, new Rectangle(0, 0, Width, HeaderPx), Dpi.Scale(this, Shape.Small));
+            }
+        }
+
+        /// <inheritdoc />
+        protected override AccessibleObject CreateAccessibilityInstance() =>
+            new MaterialAccessible(this, AccessibleRole.OutlineButton, () => IsExpanded ? AccessibleStates.Expanded : AccessibleStates.Collapsed, () => Text, null, "Toggle", () => IsExpanded = !IsExpanded);
+
+        /// <inheritdoc />
+        protected override void OnGotFocus(EventArgs e) {
+            base.OnGotFocus(e);
+            Invalidate();
+        }
+
+        /// <inheritdoc />
+        protected override void OnLostFocus(EventArgs e) {
+            base.OnLostFocus(e);
+            Invalidate();
+        }
+
+        /// <inheritdoc />
+        protected override void OnChangeUICues(UICuesEventArgs e) {
+            base.OnChangeUICues(e);
+            Invalidate();
+        }
+
+        /// <inheritdoc />
+        protected override void OnKeyDown(KeyEventArgs e) {
+            base.OnKeyDown(e);
+            if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space) {
+                IsExpanded = !IsExpanded;
+                e.Handled = true;
+            }
+        }
+
+        private void PaintContent(PaintEventArgs e) {
             base.OnPaint(e);
             if (_open.Animated) {
                 ApplyHeight();

@@ -104,6 +104,10 @@ namespace Material3.WinForms.Controls {
         }
 
         /// <inheritdoc />
+        protected override AccessibleObject CreateAccessibilityInstance() =>
+            new MaterialAccessible(this, AccessibleRole.ProgressBar, value: () => Value.ToString(System.Globalization.CultureInfo.CurrentCulture) + "%");
+
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;

@@ -67,6 +67,8 @@ namespace Material3.WinForms.Controls {
 
         /// <summary>Initializes a new instance of the <see cref="MaterialOptionCard"/> class.</summary>
         public MaterialOptionCard() : base(Shape.Medium) {
+            SetStyle(ControlStyles.Selectable, true);
+            TabStop = true;
             Height = DefaultCardHeight;
             AutoSize = true;
             MaterialCursors.Apply(this, MaterialCursors.Pointer);
@@ -376,6 +378,44 @@ namespace Material3.WinForms.Controls {
 
         /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
+            PaintContent(e);
+            if (Focused && ShowFocusCues) {
+                FocusRing.Paint(e.Graphics, this, ClientRectangle, Dpi.Scale(this, CornerRadius));
+            }
+        }
+
+        /// <inheritdoc />
+        protected override AccessibleObject CreateAccessibilityInstance() =>
+            new MaterialAccessible(this, Indicator == MaterialOptionIndicator.Check ? AccessibleRole.CheckButton : AccessibleRole.RadioButton, () => IsSelected ? AccessibleStates.Checked : AccessibleStates.None, () => Title, null, "Select", OnCardClick);
+
+        /// <inheritdoc />
+        protected override void OnGotFocus(EventArgs e) {
+            base.OnGotFocus(e);
+            Invalidate();
+        }
+
+        /// <inheritdoc />
+        protected override void OnLostFocus(EventArgs e) {
+            base.OnLostFocus(e);
+            Invalidate();
+        }
+
+        /// <inheritdoc />
+        protected override void OnChangeUICues(UICuesEventArgs e) {
+            base.OnChangeUICues(e);
+            Invalidate();
+        }
+
+        /// <inheritdoc />
+        protected override void OnKeyDown(KeyEventArgs e) {
+            base.OnKeyDown(e);
+            if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space) {
+                OnCardClick();
+                e.Handled = true;
+            }
+        }
+
+        private void PaintContent(PaintEventArgs e) {
             base.OnPaint(e);
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;

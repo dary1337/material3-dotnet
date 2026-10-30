@@ -321,6 +321,61 @@ namespace Material3.WinForms.Controls {
 
         /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
+            PaintContent(e);
+            if (Focused && ShowFocusCues) {
+                FocusRing.Paint(e.Graphics, this, ClientRectangle, Dpi.Scale(this, _cornerRadius));
+            }
+        }
+
+        /// <inheritdoc />
+        protected override AccessibleObject CreateAccessibilityInstance() =>
+            new MaterialAccessible(this, _kind == MaterialChipKind.Filter ? AccessibleRole.CheckButton : AccessibleRole.PushButton, () => _kind == MaterialChipKind.Filter && IsSelected ? AccessibleStates.Checked : AccessibleStates.None, () => Text, null, _kind == MaterialChipKind.Input ? "Remove" : "Press", Activate);
+
+        /// <inheritdoc />
+        protected override void OnGotFocus(EventArgs e) {
+            base.OnGotFocus(e);
+            Invalidate();
+        }
+
+        /// <inheritdoc />
+        protected override void OnLostFocus(EventArgs e) {
+            base.OnLostFocus(e);
+            Invalidate();
+        }
+
+        /// <inheritdoc />
+        protected override void OnChangeUICues(UICuesEventArgs e) {
+            base.OnChangeUICues(e);
+            Invalidate();
+        }
+
+        /// <inheritdoc />
+        protected override void OnKeyDown(KeyEventArgs e) {
+            base.OnKeyDown(e);
+            if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space) {
+                Activate();
+                e.Handled = true;
+            }
+            else if (ShowsRemove && (e.KeyCode == Keys.Delete || e.KeyCode == Keys.Back)) {
+                Removed?.Invoke(this, EventArgs.Empty);
+                e.Handled = true;
+            }
+        }
+
+        // The keyboard and a screen reader press the chip the way a click on its body does.
+        private void Activate() {
+            if (_kind == MaterialChipKind.Filter) {
+                IsSelected = !IsSelected;
+            }
+            else if (_kind == MaterialChipKind.Input) {
+                Removed?.Invoke(this, EventArgs.Empty);
+            }
+            else {
+                OnClick(EventArgs.Empty);
+            }
+        }
+
+        private void PaintContent(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;

@@ -195,6 +195,11 @@ namespace Material3.WinForms.Controls {
         }
 
         /// <inheritdoc />
+        protected override AccessibleObject CreateAccessibilityInstance() =>
+            new MaterialAccessible(this, AccessibleRole.ComboBox, () => _menu.IsOpen ? AccessibleStates.Expanded : AccessibleStates.Collapsed,
+                null, () => _selectedIndex >= 0 ? _items[_selectedIndex].DisplayText : null, "Open", Open);
+
+        /// <inheritdoc />
         protected override bool IsInputKey(Keys keyData) =>
             keyData == Keys.Down || keyData == Keys.Up
             || (_menu.IsOpen && (keyData == Keys.Escape || keyData == Keys.Enter))

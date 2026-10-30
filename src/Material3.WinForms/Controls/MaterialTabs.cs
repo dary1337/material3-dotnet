@@ -336,6 +336,73 @@ namespace Material3.WinForms.Controls {
 
         /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
+            PaintContent(e);
+            if (Focused && ShowFocusCues) {
+                FocusRing.Paint(e.Graphics, this, _selectedIndex >= 0 ? TabRect(_selectedIndex) : Rectangle.Empty, Dpi.Scale(this, Shape.Small));
+            }
+        }
+
+        /// <inheritdoc />
+        protected override AccessibleObject CreateAccessibilityInstance() =>
+            new MaterialAccessible(this, AccessibleRole.PageTabList, items: () => {
+                var items = new List<MaterialAccessible.Item>();
+                for (int i = 0; i < _tabs.Count; i++) {
+                    int index = i;
+                    items.Add(new MaterialAccessible.Item {
+                        Name = _tabs[i].text,
+                        Role = AccessibleRole.PageTab,
+                        State = AccessibleStates.Selectable | (i == _selectedIndex ? AccessibleStates.Selected : AccessibleStates.None),
+                        Bounds = TabRect(i),
+                        Select = () => SelectedIndex = index,
+                    });
+                }
+                return items;
+            });
+
+        /// <inheritdoc />
+        protected override void OnGotFocus(EventArgs e) {
+            base.OnGotFocus(e);
+            Invalidate();
+        }
+
+        /// <inheritdoc />
+        protected override void OnLostFocus(EventArgs e) {
+            base.OnLostFocus(e);
+            Invalidate();
+        }
+
+        /// <inheritdoc />
+        protected override void OnChangeUICues(UICuesEventArgs e) {
+            base.OnChangeUICues(e);
+            Invalidate();
+        }
+
+        /// <inheritdoc />
+        protected override bool IsInputKey(Keys keyData) =>
+            keyData == Keys.Left || keyData == Keys.Right || keyData == Keys.Home || keyData == Keys.End || base.IsInputKey(keyData);
+
+        // The arrows move the selection along the bar, as a tab strip does; the panel shown follows it.
+        /// <inheritdoc />
+        protected override void OnKeyDown(KeyEventArgs e) {
+            base.OnKeyDown(e);
+            if (_tabs.Count == 0) {
+                return;
+            }
+
+            int next = e.KeyCode switch {
+                Keys.Left => Math.Max(0, _selectedIndex - 1),
+                Keys.Right => Math.Min(_tabs.Count - 1, _selectedIndex + 1),
+                Keys.Home => 0,
+                Keys.End => _tabs.Count - 1,
+                _ => -1,
+            };
+            if (next >= 0) {
+                SelectedIndex = next;
+                e.Handled = true;
+            }
+        }
+
+        private void PaintContent(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
