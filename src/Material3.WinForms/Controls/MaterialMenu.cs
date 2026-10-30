@@ -219,6 +219,7 @@ namespace Material3.WinForms.Controls {
                 _hintFont = menu.ShortcutFont ?? TypeScale.BodySmall;
                 _onClicked = onClicked;
                 _hover = new ItemHoverFade(this);
+                _hotIndex = _entries.FindIndex(entry => entry.Selected);
                 BackColor = MaterialColors.SurfaceContainer;
             }
 
@@ -333,10 +334,53 @@ namespace Material3.WinForms.Controls {
                 return -1;
             }
 
+            // The popup never takes focus, so its keys arrive at the window under it and are read here on the way.
+            internal bool OnKey(Keys key) {
+                switch (key) {
+                    case Keys.Up:
+                    case Keys.Down:
+                        MoveHot(key == Keys.Down ? 1 : -1);
+                        return true;
+                    case Keys.Enter:
+                    case Keys.Space:
+                        if (_hotIndex >= 0 && _entries[_hotIndex].Enabled) {
+                            int chosen = _hotIndex;
+                            CloseAndDispose();
+                            _onClicked(chosen);
+                        }
+                        return true;
+                    case Keys.Escape:
+                        CloseAndDispose();
+                        return true;
+                    case Keys.Tab:
+                        CloseAndDispose();
+                        return false;
+                    default:
+                        return false;
+                }
+            }
+
+            private void MoveHot(int step) {
+                for (int i = 1; i <= _entries.Count; i++) {
+                    int candidate = ((_hotIndex < 0 ? (step > 0 ? -1 : 0) : _hotIndex) + step * i + _entries.Count * 2) % _entries.Count;
+                    if (!_entries[candidate].IsSeparator && _entries[candidate].Enabled) {
+                        _hotIndex = candidate;
+                        _hover.SetHot(candidate);
+                        Invalidate();
+                        return;
+                    }
+                }
+            }
+
             public bool PreFilterMessage(ref Message m) {
+                const int WM_KEYDOWN = 0x0100;
                 const int WM_LBUTTONDOWN = 0x0201;
                 const int WM_RBUTTONDOWN = 0x0204;
                 const int WM_NCLBUTTONDOWN = 0x00A1;
+                if (m.Msg == WM_KEYDOWN && Visible && !IsDisposed) {
+                    return OnKey((Keys)(int)m.WParam & Keys.KeyCode);
+                }
+
                 if (m.Msg != WM_LBUTTONDOWN && m.Msg != WM_RBUTTONDOWN && m.Msg != WM_NCLBUTTONDOWN) {
                     return false;
                 }
