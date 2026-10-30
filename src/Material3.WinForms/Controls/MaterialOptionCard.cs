@@ -232,6 +232,7 @@ namespace Material3.WinForms.Controls {
                         }
                     }
                 }
+                MaterialAccessible.Notify(this, AccessibleEvents.StateChange);
                 SelectedChanged?.Invoke(this);
             }
         }

@@ -182,6 +182,7 @@ namespace Material3.WinForms.Controls {
                     return;
                 }
                 _value = clamped;
+                MaterialAccessible.Notify(this, AccessibleEvents.ValueChange);
                 ValueChanged?.Invoke(this, EventArgs.Empty);
                 _handle.To(_value);
                 Invalidate();

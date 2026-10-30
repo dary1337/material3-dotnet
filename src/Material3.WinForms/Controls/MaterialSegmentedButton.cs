@@ -168,6 +168,7 @@ namespace Material3.WinForms.Controls {
                     _selected.Add(value);
                 }
 
+                MaterialAccessible.Notify(this, AccessibleEvents.StateChange);
                 SelectionChanged?.Invoke(this, EventArgs.Empty);
                 Invalidate();
             }
@@ -213,6 +214,7 @@ namespace Material3.WinForms.Controls {
                 changed = _selected.Remove(index);
             }
             if (changed) {
+                MaterialAccessible.Notify(this, AccessibleEvents.StateChange);
                 SelectionChanged?.Invoke(this, EventArgs.Empty);
                 Invalidate();
             }
@@ -263,14 +265,8 @@ namespace Material3.WinForms.Controls {
                 return;
             }
             int hit = HitTest(e.Location);
-            if (hit < 0) {
-                return;
-            }
-            if (_multiSelect) {
-                SetSelected(hit, !IsSelected(hit));
-            }
-            else {
-                SetSelected(hit, true);
+            if (hit >= 0) {
+                Press(hit);
             }
         }
 
@@ -323,6 +319,7 @@ namespace Material3.WinForms.Controls {
             };
             if (next >= 0) {
                 _focusIndex = next;
+                MaterialAccessible.Notify(this, AccessibleEvents.Focus, next);
                 Invalidate();
                 e.Handled = true;
             }

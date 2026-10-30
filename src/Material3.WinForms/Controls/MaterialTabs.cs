@@ -165,6 +165,7 @@ namespace Material3.WinForms.Controls {
                 if (!_slide.Enabled) {
                     _slide.Start();
                 }
+                MaterialAccessible.NotifyPicked(this, value);
                 SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
                 Invalidate();
             }

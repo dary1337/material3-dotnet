@@ -69,6 +69,7 @@ namespace Material3.WinForms.Controls {
                     return;
                 }
                 _value = normalized;
+                MaterialAccessible.Notify(this, AccessibleEvents.ValueChange);
                 if (DesignMode || !Motion.IsAnimating) {
                     _displayValue = _value;
                     Invalidate();

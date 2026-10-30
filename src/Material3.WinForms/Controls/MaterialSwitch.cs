@@ -72,6 +72,7 @@ namespace Material3.WinForms.Controls {
                 }
                 _checked = value;
                 _thumb.To(_checked ? 1f : 0f);
+                MaterialAccessible.Notify(this, AccessibleEvents.StateChange);
                 CheckedChanged?.Invoke(this, EventArgs.Empty);
                 Invalidate();
             }

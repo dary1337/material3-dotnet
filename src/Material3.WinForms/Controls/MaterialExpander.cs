@@ -70,6 +70,7 @@ namespace Material3.WinForms.Controls {
                 }
 
                 ApplyHeight();
+                MaterialAccessible.Notify(this, AccessibleEvents.StateChange);
                 ExpandedChanged?.Invoke(this, EventArgs.Empty);
             }
         }

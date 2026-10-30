@@ -178,6 +178,7 @@ namespace Material3.WinForms.Controls {
                 _selectedIndex = value;
                 Indicator.SnapTo(0f);
                 Indicator.To(1f);
+                MaterialAccessible.NotifyPicked(this, value);
                 SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
                 Invalidate();
             }

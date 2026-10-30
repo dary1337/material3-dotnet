@@ -30,7 +30,8 @@ dotnet add package Material3.WinForms
   role color.
 - **Keyboard and screen readers** — every control is reachable with Tab, takes the keys its native
   counterpart does (Space and Enter, the arrows across tabs, segments and destinations, the menu and date
-  picker), draws the M3 focus ring for keyboard focus and reports its role, name and state to UI Automation.
+  picker), draws the M3 focus ring for keyboard focus and reports its role, name and state to UI Automation,
+  announcing each change. An icon-only button is named by its `AccessibleName`, else by its `MaterialTooltip`.
 - **Designer support** — controls drop from the toolbox with their M3 properties grouped under a
   *Material Design* category, and a non-visual `MaterialThemeManager` component drives the theme
   from the property grid — no `ThemeManager.Apply` in `Main` — while previewing it live on the

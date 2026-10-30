@@ -121,6 +121,7 @@ namespace Material3.WinForms.Controls {
             _selectedIndex = -1;
             Invalidate();
             if (hadPick) {
+                MaterialAccessible.Notify(this, AccessibleEvents.ValueChange);
                 SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
             }
         }
@@ -273,6 +274,7 @@ namespace Material3.WinForms.Controls {
 
             _selectedIndex = index;
             Invalidate();
+            MaterialAccessible.Notify(this, AccessibleEvents.ValueChange);
             SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
         }
 

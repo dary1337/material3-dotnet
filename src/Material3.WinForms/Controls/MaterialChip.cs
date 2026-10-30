@@ -204,6 +204,7 @@ namespace Material3.WinForms.Controls {
                     return;
                 }
                 _selected = value;
+                MaterialAccessible.Notify(this, AccessibleEvents.StateChange);
                 SelectedChanged?.Invoke(this, EventArgs.Empty);
                 AutoSizeToContent();
                 Invalidate();

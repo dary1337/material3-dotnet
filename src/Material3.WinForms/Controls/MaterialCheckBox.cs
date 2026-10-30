@@ -70,6 +70,7 @@ namespace Material3.WinForms.Controls {
                 }
                 _state = value;
                 _mark.To(_state == CheckState.Unchecked ? 0f : 1f);
+                MaterialAccessible.Notify(this, AccessibleEvents.StateChange);
                 CheckedChanged?.Invoke(this, EventArgs.Empty);
                 Invalidate();
             }

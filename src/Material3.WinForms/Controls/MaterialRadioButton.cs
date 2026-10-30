@@ -63,6 +63,7 @@ namespace Material3.WinForms.Controls {
                     UncheckSiblings();
                 }
                 _dot.To(_checked ? 1f : 0f);
+                MaterialAccessible.Notify(this, AccessibleEvents.StateChange);
                 CheckedChanged?.Invoke(this, EventArgs.Empty);
                 Invalidate();
             }

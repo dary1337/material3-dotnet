@@ -178,6 +178,7 @@ namespace Material3.WinForms.Controls {
                     return;
                 }
                 _checked = value;
+                MaterialAccessible.Notify(this, AccessibleEvents.StateChange);
                 CheckedChanged?.Invoke(this, EventArgs.Empty);
                 Invalidate();
             }
