@@ -68,7 +68,8 @@ namespace Material3.WinForms.Controls {
 
             Click += (s, e) => _editor.Focus();
             TypeRole.Follow(this, () => TypeScale.BodyMedium);
-            LibraryText.Changed += OnLibraryTextChanged;
+            HandleBound.Attach(this, () => LibraryText.Changed += OnLibraryTextChanged, () => LibraryText.Changed -= OnLibraryTextChanged,
+                () => OnLibraryTextChanged(this, EventArgs.Empty));
             ThemeHook.Attach(this, ApplyTheme);
             ApplyTheme();
             LayoutEditor();
@@ -179,7 +180,6 @@ namespace Material3.WinForms.Controls {
         protected override void Dispose(bool disposing) {
             if (disposing) {
                 _layer.Dispose();
-                LibraryText.Changed -= OnLibraryTextChanged;
             }
             base.Dispose(disposing);
         }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
+using System.Runtime.CompilerServices;
 using System.Windows.Forms;
 using Material3.WinForms.Drawing;
 using Material3.WinForms.Theming;
@@ -19,8 +20,9 @@ namespace Material3.WinForms.Controls {
         private static int _cornerRadius = Shape.ExtraSmall;
         private static int _gap = 4;
 
-        private static readonly Dictionary<Control, (string title, string body)> Registry =
-            new Dictionary<Control, (string, string)>();
+        // Weak, so a control dropped without Dispose does not stay alive for its tooltip.
+        private static readonly ConditionalWeakTable<Control, StrongBox<(string title, string body)>> Registry =
+            new ConditionalWeakTable<Control, StrongBox<(string title, string body)>>();
         private static readonly Timer Delay = BuildDelayTimer();
         private static TipPopup? _popup;
         private static Control? _pendingSource;
@@ -81,8 +83,13 @@ namespace Material3.WinForms.Controls {
                 Remove(control);
                 return;
             }
-            bool isNew = !Registry.ContainsKey(control);
-            Registry[control] = (title ?? string.Empty, body);
+            bool isNew = !Registry.TryGetValue(control, out StrongBox<(string title, string body)>? entry);
+            if (entry != null) {
+                entry.Value = (title ?? string.Empty, body);
+            }
+            else {
+                Registry.Add(control, new StrongBox<(string title, string body)>((title ?? string.Empty, body)));
+            }
             if (isNew) {
                 control.MouseEnter += OnSourceEnter;
                 control.MouseLeave += OnSourceLeave;
@@ -107,8 +114,8 @@ namespace Material3.WinForms.Controls {
             timer.Tick += (s, e) => {
                 timer.Stop();
                 if (_pendingSource != null && !_pendingSource.IsDisposed
-                    && Registry.TryGetValue(_pendingSource, out (string title, string body) tip)) {
-                    ShowPopup(_pendingSource, tip.title, tip.body);
+                    && Registry.TryGetValue(_pendingSource, out StrongBox<(string title, string body)>? tip)) {
+                    ShowPopup(_pendingSource, tip.Value.title, tip.Value.body);
                 }
             };
             return timer;

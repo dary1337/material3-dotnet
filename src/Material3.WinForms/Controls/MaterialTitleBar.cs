@@ -235,7 +235,8 @@ namespace Material3.WinForms.Controls {
             AutoSize = true;
             TypeRole.Follow(this, () => TypeScale.LabelLarge);
             NameCaptionButtons();
-            LibraryText.Changed += OnLibraryTextChanged;
+            HandleBound.Attach(this, () => LibraryText.Changed += OnLibraryTextChanged, () => LibraryText.Changed -= OnLibraryTextChanged,
+                () => OnLibraryTextChanged(this, EventArgs.Empty));
 
             ThemeHook.Attach(this, () => {
                 ApplyThemeColors();
@@ -420,7 +421,6 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override void Dispose(bool disposing) {
             if (disposing) {
-                LibraryText.Changed -= OnLibraryTextChanged;
                 if (_hookedForm != null) {
                     _hookedForm.SizeChanged -= OnFormSizeChanged;
                     _hookedForm = null;

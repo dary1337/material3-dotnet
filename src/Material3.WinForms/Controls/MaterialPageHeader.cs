@@ -37,8 +37,7 @@ namespace Material3.WinForms.Controls {
                 | ControlStyles.ResizeRedraw | ControlStyles.SupportsTransparentBackColor, true);
             BackColor = Color.Transparent;
             Margin = new Padding(0, 0, 0, 14);
-            ThemeHook.Attach(this, Invalidate);
-            TypeScale.Changed += OnTypeScaleChanged;
+            ThemeHook.Attach(this, () => { PerformLayout(); Invalidate(); });
         }
 
         /// <summary>A small all-caps line above the title; empty hides it.</summary>
@@ -97,19 +96,6 @@ namespace Material3.WinForms.Controls {
         public Control? TitleTrailing {
             get => _titleTrailing;
             set => _titleTrailing = ChildSlot.Swap(this, _titleTrailing, value);
-        }
-
-        private void OnTypeScaleChanged(object? sender, EventArgs e) {
-            if (IsDisposed) {
-                return;
-            }
-
-            if (InvokeRequired) {
-                BeginInvoke(new MethodInvoker(PerformLayout));
-            }
-            else {
-                PerformLayout();
-            }
         }
 
         /// <inheritdoc />
@@ -190,13 +176,5 @@ namespace Material3.WinForms.Controls {
             }
         }
 
-        /// <inheritdoc />
-        protected override void Dispose(bool disposing) {
-            if (disposing) {
-                TypeScale.Changed -= OnTypeScaleChanged;
-            }
-
-            base.Dispose(disposing);
-        }
     }
 }

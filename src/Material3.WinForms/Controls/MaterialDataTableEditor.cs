@@ -74,7 +74,8 @@ namespace Material3.WinForms.Controls {
             Width = 460;
             TypeRole.Follow(this, () => TypeScale.BodyMedium);
             ThemeHook.Attach(this, Invalidate);
-            LibraryText.Changed += OnLibraryTextChanged;
+            HandleBound.Attach(this, () => LibraryText.Changed += OnLibraryTextChanged, () => LibraryText.Changed -= OnLibraryTextChanged,
+                () => OnLibraryTextChanged(this, EventArgs.Empty));
             ApplyAddText();
         }
 
@@ -364,7 +365,6 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override void Dispose(bool disposing) {
             if (disposing) {
-                LibraryText.Changed -= OnLibraryTextChanged;
                 // A row's checkbox and remove button sit outside the content while their column is off.
                 foreach (Row row in _rows) {
                     Dispose(row);

@@ -40,10 +40,9 @@ namespace Material3.WinForms.Controls {
             _dismissLayer = new StateLayerFade(this);
             Padding = new Padding(12, 8, 12, 8);
             Width = 480;
-            ThemeHook.Attach(this, ApplyTone);
+            ThemeHook.Attach(this, () => { ApplyTone(); PerformLayout(); });
             ApplyTone();
             TypeRole.Follow(this, Dense);
-            TypeScale.Changed += OnTypeScaleChanged;
             Height = NaturalHeight(Width);
         }
 
@@ -142,19 +141,6 @@ namespace Material3.WinForms.Controls {
                 _denseFrom = body;
             }
             return _dense;
-        }
-
-        private void OnTypeScaleChanged(object? sender, EventArgs e) {
-            if (IsDisposed) {
-                return;
-            }
-
-            if (InvokeRequired) {
-                BeginInvoke(new MethodInvoker(PerformLayout));
-            }
-            else {
-                PerformLayout();
-            }
         }
 
         private int NaturalHeight(int width) {
@@ -309,7 +295,6 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override void Dispose(bool disposing) {
             if (disposing) {
-                TypeScale.Changed -= OnTypeScaleChanged;
                 _dismissLayer.Dispose();
             }
             base.Dispose(disposing);

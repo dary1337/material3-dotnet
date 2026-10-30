@@ -32,8 +32,7 @@ namespace Material3.WinForms.Controls {
                 | ControlStyles.ResizeRedraw | ControlStyles.SupportsTransparentBackColor, true);
             BackColor = Color.Transparent;
             Size = new Size(360, 220);
-            ThemeHook.Attach(this, Invalidate);
-            TypeScale.Changed += OnTypeScaleChanged;
+            ThemeHook.Attach(this, () => { PerformLayout(); Invalidate(); });
         }
 
         /// <summary>Material Symbols key of the glyph above the title; empty shows none.</summary>
@@ -96,19 +95,6 @@ namespace Material3.WinForms.Controls {
             set => _action = ChildSlot.Swap(this, _action, value);
         }
 
-        private void OnTypeScaleChanged(object? sender, EventArgs e) {
-            if (IsDisposed) {
-                return;
-            }
-
-            if (InvokeRequired) {
-                BeginInvoke(new MethodInvoker(PerformLayout));
-            }
-            else {
-                PerformLayout();
-            }
-        }
-
         /// <inheritdoc />
         protected override void OnLayout(LayoutEventArgs levent) {
             base.OnLayout(levent);
@@ -157,13 +143,5 @@ namespace Material3.WinForms.Controls {
             }
         }
 
-        /// <inheritdoc />
-        protected override void Dispose(bool disposing) {
-            if (disposing) {
-                TypeScale.Changed -= OnTypeScaleChanged;
-            }
-
-            base.Dispose(disposing);
-        }
     }
 }

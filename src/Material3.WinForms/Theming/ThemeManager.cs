@@ -113,6 +113,8 @@ namespace Material3.WinForms.Theming {
                 ThemeManager.ThemeChanged += onThemeChanged;
                 Typography.TypeScale.Changed += onThemeChanged;
                 Tokens.Elevation.Changed += onThemeChanged;
+                // A theme switch while the control had no handle was missed, so it catches up here.
+                applyTheme();
             };
             control.HandleDestroyed += (s, e) => {
                 ThemeManager.ThemeChanged -= onThemeChanged;
@@ -123,6 +125,7 @@ namespace Material3.WinForms.Theming {
                 ThemeManager.ThemeChanged += onThemeChanged;
                 Typography.TypeScale.Changed += onThemeChanged;
                 Tokens.Elevation.Changed += onThemeChanged;
+                applyTheme();
             }
         }
     }

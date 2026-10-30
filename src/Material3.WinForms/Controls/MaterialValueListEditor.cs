@@ -60,7 +60,8 @@ namespace Material3.WinForms.Controls {
             Width = 360;
             TypeRole.Follow(this, () => TypeScale.BodyMedium);
             ThemeHook.Attach(this, Invalidate);
-            LibraryText.Changed += OnLibraryTextChanged;
+            HandleBound.Attach(this, () => LibraryText.Changed += OnLibraryTextChanged, () => LibraryText.Changed -= OnLibraryTextChanged,
+                () => OnLibraryTextChanged(this, EventArgs.Empty));
             ApplyAddText();
             Rebuild();
         }
@@ -423,15 +424,6 @@ namespace Material3.WinForms.Controls {
             }
 
             PerformLayout();
-        }
-
-        /// <inheritdoc />
-        protected override void Dispose(bool disposing) {
-            if (disposing) {
-                LibraryText.Changed -= OnLibraryTextChanged;
-            }
-
-            base.Dispose(disposing);
         }
 
         internal Control EntryAt(int index) => _rows[index].Entry;
