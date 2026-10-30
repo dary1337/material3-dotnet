@@ -21,8 +21,8 @@ Existing "Material for WinForms" libraries implement Material **2** and are larg
 This project targets the current spec: HCT tonal palettes, color roles, surface containers and
 the 2023+ component look.
 
-**WinForms** ships the full component catalog with Visual Studio designer support. **WPF** ships the same
-engine and live theming plus largely the same catalog ([coverage](docs/wpf.md#control-coverage)).
+Both packages ship the same engine, live theming and component catalog ([coverage](docs/wpf.md#control-coverage)); WinForms
+adds Visual Studio designer support.
 
 ## Packages
 
@@ -37,7 +37,6 @@ One HCT engine, three packages — a shared `Core` plus two UI stacks:
 Each package is versioned and released on its own. Before 1.0 a minor version can change the public API; the release notes mark it **BREAKING**.
 
 Every release carries both demo galleries: **`Material3.WinForms.Gallery`** (WinForms) and **`Material3.Wpf.Gallery`** (WPF).
-The galleries show every control.
 
 ## Documentation
 

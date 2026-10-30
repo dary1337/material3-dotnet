@@ -17,7 +17,7 @@ dotnet add package Material3.WinForms
   (M3 default), `Neutral` (near-monochrome), `Vibrant`.
 - **Runtime theme switching** — `ThemeManager.IsDark = false` repaints every subscribed control;
   no restart, no per-control wiring.
-- **Color roles** — all M3 roles including the six surface containers, inverse roles, outline
+- **Color roles** — all M3 roles including the five surface containers, inverse roles, outline
   pair, plus shared `Success`/`Warning` extensions.
 - **Type scale** — all 15 styles (Display → Label) on Segoe UI with letter-spacing and
   line-height metadata GDI fonts can't carry.

@@ -54,7 +54,7 @@ so one icon set stays consistent.
 | 5 | Tints | One `Tone` enum for chips, banners and dialogs; WinForms buttons take the same `MaterialTone` | The same meaning reads the same everywhere |
 | 6 | Boolean state | `Is…` (`IsSelected`, `IsDot`, `IsEnabled`), the same in the WinForms package | One rule across both packages; WinForms keeps a name its base control already fixed (`Checked`, `ReadOnly`) |
 | 7 | Keyed styles | `M3<Control>` for the M3 look of a stock control (`M3CheckBox`, `M3Switch`, `M3Combo`); the M3 component name otherwise (`FilledButton`, `Card`) | Resource keys share one app-wide namespace, so a restyle must not take a bare control name |
-| 8 | Tests | A sentence that states the behaviour (`ARadioCardUnchoosesItsGroupAcrossPanelsOfOneTree`), in both test projects | A failing name says what broke, and the two suites read alike |
+| 8 | Tests | A new test is a sentence that states the behaviour (`ARadioCardUnchoosesItsGroupAcrossPanelsOfOneTree`), in both test projects | A failing name says what broke, and the two suites read alike |
 
 ## Sizes, type and text
 
@@ -79,15 +79,13 @@ What each `Metrics` property means, per control family:
 | 3 | `GlyphMargin` | The same, plus `Dialog`'s header glyph | The space around the glyph (its gap to the label) |
 | 4 | `IndicatorSize` | Check box, radio, switch, option card, slider thumb, nav pill, tab underline, badge dot, step ring | The selection mark's size |
 
-| # | Token | Default |
-|---|---|---|
-| 1 | `RadiusXs` · `RadiusSm` · `RadiusMd` · `RadiusLg` · `RadiusPill` · `RadiusXl` | 4 · 8 · 12 · 16 · 20 · 28 |
-| 2 | `FocusRingRadius` | 8 |
-| 3 | `Space1` … `Space7` | 4 · 8 · 12 · 16 · 24 · 32 · 48 |
-| 4 | `CompactControlHeight` · `ControlHeight` · `FieldHeight` | 32 · 40 · 56 |
-| 5 | `DialogWidth` · `DatePickerCellSize` | 420 · 40 |
-| 6 | `TimePickerFieldSize` · `TimePickerFieldFontSize` | 96,72 · 45 |
-| 7 | `FontFamily` · `FontWeightMedium` | Segoe UI · SemiBold |
+| # | Tokens (defaults in `Tokens.xaml`) |
+|---|---|
+| 1 | `RadiusXs` · `RadiusSm` · `RadiusMd` · `RadiusLg` · `RadiusPill` · `RadiusXl` · `FocusRingRadius` |
+| 2 | `Space1` … `Space7` |
+| 3 | `CompactControlHeight` · `ControlHeight` · `FieldHeight` |
+| 4 | `DialogWidth` · `DatePickerCellSize` · `TimePickerFieldSize` · `TimePickerFieldFontSize` · `TimePickerPeriodWidth` |
+| 5 | `FontFamily` · `FontWeightMedium` |
 
 A template radius is capped at half the element's shorter side (`{m3:FitCornerRadius}`), so a pill radius on a shorter control keeps round ends.
 A select's list opens centred under it and at least as wide as it.
@@ -226,10 +224,10 @@ control was dropped into — a role assigned by a style setter never gets a say.
 
 | Type | Knobs | Why it behaves that way |
 |---|---|---|
-| `m3:TextField` | `Text` `Label` `Variant` (`Filled` `Outlined`) `SupportingText` `ErrorText` `IsError` `LeadingGlyph` `TrailingGlyph` `IsPassword` `IsReadOnly` `MaxLength`, `TrailingGlyphClick` | The label is laid out at rest and floats by a transform, so the editor never reflows. `IsPassword` swaps in a `PasswordBox` whose content still flows through `Text` |
+| `m3:TextField` | `Text` `Label` `Variant` (`Filled` `Outlined`) `SupportingText` `ErrorText` `IsError` `LeadingGlyph` `TrailingGlyph` `IsPassword` `IsReadOnly` `MaxLength` `InputKind`, `TrailingGlyphClick` | The label is laid out at rest and floats by a transform, so the editor never reflows. `IsPassword` swaps in a `PasswordBox` whose content still flows through `Text` |
 | `m3:SearchBar` | `Query` `Placeholder`, `QueryChanged` `QuerySubmitted` | Esc clears the query first and lets the key through once it is empty, so an Esc that closes the page still works |
 | `M3Combo` *(style)* | any `ComboBox`, `m3:Placeholder.Text` | The menu is a `PopupCard`, so it is never narrower than the field; the highlight follows the arrow keys, not just the mouse |
-| `M3PillTextBox` *(style)* | any `TextBox` | A 30 px pill for an inline rename; the outline turns Primary while it has focus |
+| `M3PillTextBox` *(style)* | any `TextBox` | A pill for an inline rename; the outline turns Primary while it has focus |
 | `M3FocusRing` *(style)* | as any control's `FocusVisualStyle` | WPF draws a focus visual only when focus arrived from the keyboard, so the ring answers Tab and never a click |
 | `m3:InputFilter.Kind` | `Text` `Number` `Integer`, on any `TextBox`; `InputFilter.Accepts(kind, text)` | Judges the text as it would read after the keystroke or paste, so `-` is taken only first and a second `.` is refused. A half-typed `-` or `1.` passes |
 | `m3:ColorField` | `Color` `ShowAlpha` `IsReadOnly` `ReadOnlyCaption`, `ColorChanged` | A caption replaces the hex and locks the field: a colour that follows another one says so instead of offering an edit that would break the link. Without the alpha rail a pasted alpha is ignored |
@@ -344,7 +342,7 @@ Lookless, so an `x:Name` inside a content slot compiles — a `UserControl` name
 | `m3:EmptyState` | `Glyph` `Title` `Text` `Action` | |
 | `m3:PopupCard` | content = `MenuItemButton` rows | Grows to the opener's width (own `MinWidth` still wins): a menu narrower than its trigger reads as an unrelated panel |
 | `m3:Skeleton` | `Width` `Height` `CornerRadius` | Shimmer runs on the render thread, so it moves while the dispatcher rebuilds; stops itself on hide and on unload |
-| `m3:Busy.IsBusy` | on `PathIcon` — swaps the glyph for the spinner | Inert elsewhere, so a template can trigger off it (`IconToggle` does) |
+| `m3:Busy.IsBusy` | on `PathIcon` — swaps the glyph for the spinner; on `Button` — swaps its leading glyph and ignores presses | Inert elsewhere, so a template can trigger off it (`IconToggle` does) |
 | `m3:Busy.SpinWhileVisible` | on an already-spinner glyph | Drops the clock the moment it hides |
 | `m3:StepChecklist` | `Steps` `ActiveIndex` `ErrorIndex`, `Complete()` `CompleteAsync(hold)` | Moving `ActiveIndex` on morphs every passed step into done, so a jump still reads as each finishing. New `Steps` start over; moving on clears an error |
 
