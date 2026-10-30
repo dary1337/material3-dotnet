@@ -286,24 +286,22 @@ namespace Material3.WinForms.Controls {
             private void MeasureAndSize(int anchorWidth) {
                 int height = Dpi.Scale(this, RowInset * 2);
                 int width = Math.Max(anchorWidth, Dpi.Scale(this, _minWidth));
-                using (var bitmap = new Bitmap(1, 1)) {
-                    bitmap.SetResolution(DeviceDpi, DeviceDpi);
-                    using (var g = Graphics.FromImage(bitmap)) {
-                        foreach (Entry entry in _entries) {
-                            height += RowHeight(entry);
-                            if (entry.IsSeparator) {
-                                continue;
-                            }
-                            float w = Dpi.Scale(this, _horizontalPadding) * 2
-                                + g.MeasureString(entry.Text, _textFont, int.MaxValue, StringFormat.GenericTypographic).Width;
-                            if (!string.IsNullOrEmpty(entry.Glyph)) {
-                                w += Dpi.Scale(this, _iconSize) + Dpi.Scale(this, _iconGap);
-                            }
-                            if (!string.IsNullOrEmpty(entry.Shortcut)) {
-                                w += Dpi.Scale(this, Spacing.Space6) + g.MeasureString(entry.Shortcut, _hintFont, int.MaxValue, StringFormat.GenericTypographic).Width;
-                            }
-                            width = Math.Max(width, (int)Math.Ceiling(w));
+                using (var measure = MeasureContext.For(this)) {
+                    Graphics g = measure.Graphics;
+                    foreach (Entry entry in _entries) {
+                        height += RowHeight(entry);
+                        if (entry.IsSeparator) {
+                            continue;
                         }
+                        float w = Dpi.Scale(this, _horizontalPadding) * 2
+                            + g.MeasureString(entry.Text, _textFont, int.MaxValue, StringFormat.GenericTypographic).Width;
+                        if (!string.IsNullOrEmpty(entry.Glyph)) {
+                            w += Dpi.Scale(this, _iconSize) + Dpi.Scale(this, _iconGap);
+                        }
+                        if (!string.IsNullOrEmpty(entry.Shortcut)) {
+                            w += Dpi.Scale(this, Spacing.Space6) + g.MeasureString(entry.Shortcut, _hintFont, int.MaxValue, StringFormat.GenericTypographic).Width;
+                        }
+                        width = Math.Max(width, (int)Math.Ceiling(w));
                     }
                 }
                 Size = new Size(Math.Min(width, Math.Max(anchorWidth, Dpi.Scale(this, _maxWidth))), height);
