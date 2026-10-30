@@ -449,6 +449,15 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
+        public void OnlyANestedPanelHandsTheWheelOnAtItsEnd() {
+            using var outer = new MaterialScrollPanel { Size = new Size(200, 200) };
+            var inner = new MaterialScrollPanel { Bounds = new Rectangle(0, 0, 180, 100) };
+            outer.ContentPanel.Controls.Add(inner);
+            Assert.True(MaterialScrollPanel.HasOuterPanel(inner));
+            Assert.False(MaterialScrollPanel.HasOuterPanel(outer));
+        }
+
+        [Fact]
         public void AGridAtItsLastRowGivesTheWheelBackEvenWhenThatRowIsClipped() {
             using var outer = new MaterialScrollPanel { Size = new Size(200, 200) };
             DataGridView Grid(int rows, int rowHeight) {

@@ -607,6 +607,15 @@ namespace Material3.WinForms.Controls {
 
         // A scrollable control between the pointer and this panel takes the wheel while it can still move that way; at its
         // end the wheel passes on to the panel, as a browser chains nested scrolling.
+        internal static bool HasOuterPanel(Control panel) {
+            for (Control? c = panel.Parent; c != null; c = c.Parent) {
+                if (c is MaterialScrollPanel) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         internal static bool DefersTo(Control? under, Control owner, int wheelDelta) {
             for (Control? c = under; c != null && !ReferenceEquals(c, owner); c = c.Parent) {
                 if (NativeScroll.CanMove(c, wheelDelta)) {
@@ -712,10 +721,12 @@ namespace Material3.WinForms.Controls {
                 );
                 Rectangle screenBounds = owner.RectangleToScreen(owner.ClientRectangle);
                 int delta = (short)((m.WParam.ToInt64() >> 16) & 0xFFFF);
-                // A panel at its end lets the wheel through, so an outer one still gets it whichever filter runs first.
-                if (!screenBounds.Contains(screenPoint) || !owner.CanScroll(delta)
-                    || DefersTo(Control.FromChildHandle(WindowFromPoint(screenPoint)), owner, delta)) {
+                if (!screenBounds.Contains(screenPoint) || DefersTo(Control.FromChildHandle(WindowFromPoint(screenPoint)), owner, delta)) {
                     return false;
+                }
+                // At its end a panel hands the wheel on only to an outer panel; with none, the focused combo would take it.
+                if (!owner.CanScroll(delta)) {
+                    return !HasOuterPanel(owner);
                 }
                 owner.HandleWheel(delta);
                 return true;
