@@ -658,8 +658,10 @@ namespace Material3.WinForms.Controls {
                     return grid.VerticalScrollingOffset > 0;
                 }
 
+                // A grid scrolls by whole rows, so a last row taller than the view is clipped with nowhere left to go.
                 int last = grid.Rows.GetLastRow(DataGridViewElementStates.Visible);
-                return last >= 0 && grid.GetRowDisplayRectangle(last, true).Height < grid.Rows[last].Height;
+                return last >= 0 && grid.FirstDisplayedScrollingRowIndex != last
+                    && grid.GetRowDisplayRectangle(last, true).Height < grid.Rows[last].Height;
             }
 
             private static bool CanMoveNative(Control c, int wheelDelta) {
