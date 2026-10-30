@@ -11,9 +11,12 @@ using System.Reflection;
 namespace Material3.WinForms.Drawing {
     /// <summary>
     /// Renders embedded Material Symbols SVG icons to tinted bitmaps, cached by (key, size, color).
-    /// Returned <see cref="Bitmap"/> instances are shared cache entries — callers must not dispose them.
+    /// Returned <see cref="Bitmap"/> instances are shared cache entries — callers must not dispose them. The cache
+    /// forgets its tints on every theme change and when it grows past a bound; a bitmap a caller still holds stays valid.
     /// </summary>
     public static class MaterialIconRenderer {
+        private const int MaxTints = 1024;
+
         private static readonly Dictionary<string, Bitmap> Cache =
             new Dictionary<string, Bitmap>(StringComparer.Ordinal);
         private static readonly Dictionary<string, Glyph?> GlyphCache =
@@ -21,6 +24,15 @@ namespace Material3.WinForms.Drawing {
         private static readonly Dictionary<string, string> CustomSvg =
             new Dictionary<string, string>(StringComparer.Ordinal);
         private static readonly object Gate = new object();
+
+        // Dropped, not disposed: a dialog's PictureBox or an app may still hold one, and the finalizer frees the rest.
+        static MaterialIconRenderer() => Theming.ThemeManager.ThemeChanged += (s, e) => Forget();
+
+        private static void Forget() {
+            lock (Gate) {
+                Cache.Clear();
+            }
+        }
 
         private sealed class Glyph {
             internal GraphicsPath Path = null!;
@@ -56,6 +68,9 @@ namespace Material3.WinForms.Drawing {
                 }
 
                 Bitmap result = RenderUncached(key, size, color);
+                if (Cache.Count >= MaxTints) {
+                    Cache.Clear();
+                }
                 Cache[cacheKey] = result;
                 return result;
             }

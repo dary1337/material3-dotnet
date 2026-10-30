@@ -46,6 +46,21 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
+        public void TheIconCacheForgetsOldTintsWhenTheThemeChangesButKeepsHeldBitmapsValid() {
+            MaterialTheme before = ThemeManager.Theme;
+            bool wasDark = ThemeManager.IsDark;
+            try {
+                System.Drawing.Bitmap held = Drawing.MaterialIconRenderer.Render(Drawing.MaterialIcons.Check, 24, System.Drawing.Color.Red);
+                ThemeManager.IsDark = !wasDark;
+                Assert.Equal(24, held.Width);
+                Assert.NotSame(held, Drawing.MaterialIconRenderer.Render(Drawing.MaterialIcons.Check, 24, System.Drawing.Color.Red));
+            }
+            finally {
+                ThemeManager.Apply(before, wasDark);
+            }
+        }
+
+        [Fact]
         public void AControlCatchesUpWithAThemeSwitchMissedBeforeItsHandle() {
             MaterialTheme before = ThemeManager.Theme;
             bool wasDark = ThemeManager.IsDark;
