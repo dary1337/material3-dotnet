@@ -67,5 +67,41 @@ namespace Material3.Wpf.Tests {
                 ThemeManager.Apply(before, wasDark, new ResourceDictionary());
             }
         }
+
+        [Fact]
+        public void ApplyingToOneWindowLeavesAnotherWindowsThemeAlone() {
+            MaterialTheme before = ThemeManager.Theme;
+            bool wasDark = ThemeManager.IsDark;
+            var main = new ResourceDictionary();
+            var preview = new ResourceDictionary();
+            try {
+                ThemeManager.Apply(MaterialTheme.Platinum(), isDark: true, main);
+                Color dark = ((SolidColorBrush)main["Surface"]).Color;
+                ThemeManager.Apply(MaterialTheme.Platinum(), isDark: false, preview);
+                Assert.Equal(dark, ((SolidColorBrush)main["Surface"]).Color);
+                Assert.NotEqual(dark, ((SolidColorBrush)preview["Surface"]).Color);
+            }
+            finally {
+                ThemeManager.Apply(before, wasDark, new ResourceDictionary());
+            }
+        }
+
+        [Fact]
+        public void TheSettersKeepTheirValueWhenThereIsNothingToPublishInto() {
+            System.Reflection.FieldInfo field = typeof(ThemeManager).GetField("Targets", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)!;
+            var targets = (System.Collections.IList)field.GetValue(null)!;
+            MaterialTheme before = ThemeManager.Theme;
+            bool wasDark = ThemeManager.IsDark;
+            targets.Clear();
+            try {
+                ThemeManager.IsDark = wasDark;
+                ThemeManager.IsDark = !wasDark;
+                Assert.Equal(!wasDark, ThemeManager.IsDark);
+                Assert.Throws<System.ArgumentNullException>(() => ThemeManager.Theme = null!);
+            }
+            finally {
+                ThemeManager.Apply(before, wasDark, new ResourceDictionary());
+            }
+        }
     }
 }

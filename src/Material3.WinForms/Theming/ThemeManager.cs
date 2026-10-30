@@ -28,10 +28,15 @@ namespace Material3.WinForms.Theming {
         public static event EventHandler? ThemeChanged;
 
         /// <summary>The active theme (both schemes).</summary>
+        /// <exception cref="ArgumentNullException">The value is null.</exception>
         public static MaterialTheme Theme {
             get => _theme;
             set {
-                if (value == null || ReferenceEquals(value, _theme)) {
+                if (value == null) {
+                    throw new ArgumentNullException(nameof(value));
+                }
+
+                if (ReferenceEquals(value, _theme)) {
                     return;
                 }
                 _theme = value;
@@ -55,9 +60,14 @@ namespace Material3.WinForms.Theming {
         public static ColorScheme Scheme => _isDark ? _theme.DarkScheme : _theme.LightScheme;
 
         /// <summary>Sets theme and mode in one transaction (one repaint instead of two).</summary>
+        /// <exception cref="ArgumentNullException"><paramref name="theme"/> is null.</exception>
         public static void Apply(MaterialTheme theme, bool isDark) {
+            if (theme == null) {
+                throw new ArgumentNullException(nameof(theme));
+            }
+
             bool changed = !ReferenceEquals(theme, _theme) || isDark != _isDark;
-            _theme = theme ?? _theme;
+            _theme = theme;
             _isDark = isDark;
             if (changed) {
                 ThemeChanged?.Invoke(null, EventArgs.Empty);

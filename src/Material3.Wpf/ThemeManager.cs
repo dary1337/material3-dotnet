@@ -26,14 +26,19 @@ namespace Material3.Wpf {
         public static event EventHandler? ThemeChanged;
 
         /// <summary>
-        /// The active theme (holds both light and dark schemes). Setting it republishes into every dictionary
-        /// <see cref="Apply"/> has written to — the application's and each window's — or into the application's
-        /// resources before the first one.
+        /// The active theme (holds both light and dark schemes). Setting it changes the whole app: it republishes into
+        /// every dictionary <see cref="Apply"/> has written to, or into the application's resources before the first one.
+        /// With neither (WPF hosted in WinForms, before any <see cref="Apply"/>) the value is kept for the first one.
         /// </summary>
+        /// <exception cref="ArgumentNullException">The value is null.</exception>
         public static MaterialTheme Theme {
             get => _theme;
             set {
-                if (value == null || (ReferenceEquals(value, _theme) && HasTargets)) {
+                if (value == null) {
+                    throw new ArgumentNullException(nameof(value));
+                }
+
+                if (ReferenceEquals(value, _theme) && HasTargets) {
                     return;
                 }
 
@@ -58,9 +63,8 @@ namespace Material3.Wpf {
         private static bool HasTargets => Live().Count > 0;
 
         private static void Republish() {
-            if (!HasTargets) {
-                Remember(Application.Current?.Resources
-                    ?? throw new InvalidOperationException("There is no Application to publish into: call Apply with a target first."));
+            if (!HasTargets && Application.Current?.Resources is ResourceDictionary app) {
+                Remember(app);
             }
             PublishEverywhere();
             ThemeChanged?.Invoke(null, EventArgs.Empty);
@@ -112,22 +116,32 @@ namespace Material3.Wpf {
                 .Concat(Enumerable.Range(0, Elevation.MaxLevel + 1).Select(Elevation.SurfaceKey))
                 .ToArray());
 
-        /// <summary>Builds the scheme for <paramref name="theme"/>/<paramref name="isDark"/> and publishes
-        /// it into <paramref name="target"/> (typically <c>Application.Current.Resources</c>) and every dictionary
-        /// published into before. Safe to call at startup before the UI loads and again on every theme change.</summary>
+        /// <summary>
+        /// Builds the scheme for <paramref name="theme"/>/<paramref name="isDark"/> and publishes it into
+        /// <paramref name="target"/> only (typically <c>Application.Current.Resources</c>), which then follows later
+        /// <see cref="Theme"/> and <see cref="IsDark"/> changes. Safe to call at startup before the UI loads.
+        /// </summary>
+        /// <exception cref="ArgumentNullException"><paramref name="theme"/> or <paramref name="target"/> is null.</exception>
         public static void Apply(MaterialTheme theme, bool isDark, ResourceDictionary target) {
+            if (theme == null) {
+                throw new ArgumentNullException(nameof(theme));
+            }
+
             if (target == null) {
                 throw new ArgumentNullException(nameof(target));
             }
 
-            _theme = theme ?? _theme;
+            _theme = theme;
             _isDark = isDark;
             Remember(target);
-            PublishEverywhere();
+            Publish(target, Scheme);
             ThemeChanged?.Invoke(null, EventArgs.Empty);
         }
 
-        /// <summary>Writes the scheme's role brushes into <paramref name="target"/> without touching theme state.</summary>
+        /// <summary>
+        /// Writes the scheme's role brushes into <paramref name="target"/> without touching theme state — for a window
+        /// that keeps a theme of its own, such as a light preview beside a dark app.
+        /// </summary>
         public static void Publish(ResourceDictionary target, ColorScheme scheme) {
             if (target == null) {
                 throw new ArgumentNullException(nameof(target));
