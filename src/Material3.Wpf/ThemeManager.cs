@@ -16,7 +16,8 @@ namespace Material3.Wpf {
     /// no restart, no per-control wiring.
     /// </summary>
     public static class ThemeManager {
-        private static readonly ThemeState State = new ThemeState(() => Application.Current?.Resources);
+        private static readonly ThemeState State = new ThemeState(() =>
+            Application.Current is Application app ? (app.Resources, app.Dispatcher) : ((ResourceDictionary, Dispatcher)?)null);
 
         /// <summary>Raised after a successful <see cref="Apply"/>.</summary>
         public static event EventHandler? ThemeChanged {

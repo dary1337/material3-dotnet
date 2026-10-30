@@ -7,48 +7,63 @@ using Material3.Core;
 namespace Material3.Wpf {
     // ThemeManager's state as an instance, so a test can stand one up with no application and nothing applied.
     internal sealed class ThemeState {
-        private readonly Func<ResourceDictionary?> _appResources;
+        private readonly Func<(ResourceDictionary Resources, Dispatcher Dispatcher)?> _app;
         private readonly object _gate = new object();
         private readonly List<(WeakReference<ResourceDictionary> Dictionary, Dispatcher Dispatcher)> _targets =
             new List<(WeakReference<ResourceDictionary>, Dispatcher)>();
-        private MaterialTheme _theme = MaterialTheme.Platinum();
-        private bool _isDark = true;
+        private volatile Snapshot _state = new Snapshot(MaterialTheme.Platinum(), true);
 
-        public ThemeState(Func<ResourceDictionary?> appResources) {
-            _appResources = appResources;
+        public ThemeState(Func<(ResourceDictionary Resources, Dispatcher Dispatcher)?> app) {
+            _app = app;
+        }
+
+        // One immutable pair, so a publish never reads a new theme with the old mode.
+        private sealed class Snapshot {
+            public Snapshot(MaterialTheme theme, bool isDark) {
+                Theme = theme;
+                IsDark = isDark;
+            }
+
+            public MaterialTheme Theme { get; }
+
+            public bool IsDark { get; }
+
+            public ColorScheme Scheme => IsDark ? Theme.DarkScheme : Theme.LightScheme;
         }
 
         public event EventHandler? Changed;
 
         public MaterialTheme Theme {
-            get => _theme;
+            get => _state.Theme;
             set {
                 if (value == null) {
                     throw new ArgumentNullException(nameof(value));
                 }
 
-                if (ReferenceEquals(value, _theme) && HasTargets) {
-                    return;
-                }
-
-                _theme = value;
-                Republish();
+                Change(value, null);
             }
         }
 
         public bool IsDark {
-            get => _isDark;
-            set {
-                if (value == _isDark && HasTargets) {
+            get => _state.IsDark;
+            set => Change(null, value);
+        }
+
+        public ColorScheme Scheme => _state.Scheme;
+
+        private void Change(MaterialTheme? theme, bool? isDark) {
+            Snapshot next;
+            lock (_gate) {
+                Snapshot state = _state;
+                next = new Snapshot(theme ?? state.Theme, isDark ?? state.IsDark);
+                if (ReferenceEquals(next.Theme, state.Theme) && next.IsDark == state.IsDark && HasTargets) {
                     return;
                 }
 
-                _isDark = value;
-                Republish();
+                _state = next;
             }
+            Republish(next);
         }
-
-        public ColorScheme Scheme => _isDark ? _theme.DarkScheme : _theme.LightScheme;
 
         public void Apply(MaterialTheme theme, bool isDark, ResourceDictionary target) {
             if (theme == null) {
@@ -59,27 +74,29 @@ namespace Material3.Wpf {
                 throw new ArgumentNullException(nameof(target));
             }
 
-            _theme = theme;
-            _isDark = isDark;
-            Remember(target);
-            ThemeManager.Publish(target, Scheme);
+            var next = new Snapshot(theme, isDark);
+            _state = next;
+            Remember(target, Dispatcher.CurrentDispatcher);
+            ThemeManager.Publish(target, next.Scheme);
             Changed?.Invoke(null, EventArgs.Empty);
         }
 
         private bool HasTargets => Live().Count > 0;
 
-        private void Republish() {
-            if (!HasTargets && _appResources() is ResourceDictionary app) {
-                Remember(app);
+        private void Republish(Snapshot state) {
+            // The app's dictionary belongs to the app's thread, not to whichever thread set the value first.
+            if (!HasTargets && _app() is (ResourceDictionary Resources, Dispatcher Dispatcher) app) {
+                Remember(app.Resources, app.Dispatcher);
             }
 
-            ColorScheme scheme = Scheme;
+            ColorScheme scheme = state.Scheme;
             foreach ((ResourceDictionary dictionary, Dispatcher dispatcher) in Live()) {
                 if (dispatcher.CheckAccess()) {
                     ThemeManager.Publish(dictionary, scheme);
                 }
                 else {
-                    dispatcher.BeginInvoke(new Action(() => ThemeManager.Publish(dictionary, scheme)));
+                    // Read again when it runs, so a change queued behind a later one never lands last with the old scheme.
+                    dispatcher.BeginInvoke(new Action(() => ThemeManager.Publish(dictionary, _state.Scheme)));
                 }
             }
             Changed?.Invoke(null, EventArgs.Empty);
@@ -99,10 +116,10 @@ namespace Material3.Wpf {
             }
         }
 
-        private void Remember(ResourceDictionary target) {
+        private void Remember(ResourceDictionary target, Dispatcher dispatcher) {
             lock (_gate) {
                 _targets.RemoveAll(t => !t.Dictionary.TryGetTarget(out ResourceDictionary? d) || ReferenceEquals(d, target));
-                _targets.Add((new WeakReference<ResourceDictionary>(target), Dispatcher.CurrentDispatcher));
+                _targets.Add((new WeakReference<ResourceDictionary>(target), dispatcher));
             }
         }
     }
