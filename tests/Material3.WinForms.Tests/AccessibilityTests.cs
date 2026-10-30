@@ -115,6 +115,20 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
+        public void ADatePickerOffersEveryDayOfTheMonthToAScreenReader() {
+            using var picker = new Material3.WinForms.Forms.MaterialDatePickerDialog(new DateTime(2026, 10, 30));
+            AccessibleObject a = picker.AccessibilityObject;
+            int buttons = picker.Controls.Count;
+            Assert.Equal(buttons + 31, a.GetChildCount());
+            AccessibleObject day = a.GetChild(buttons + 29)!;
+            Assert.Equal(new DateTime(2026, 10, 30).ToLongDateString(), day.Name);
+            Assert.True(day.State.HasFlag(AccessibleStates.Selected));
+            a.GetChild(buttons + 4)!.DoDefaultAction();
+            Assert.Equal(new DateTime(2026, 10, 5), picker.Value);
+            Assert.False(day.State.HasFlag(AccessibleStates.Selected));
+        }
+
+        [Fact]
         public void AMenuPicksWithTheArrowsAndEnter() {
             using var menu = new MaterialMenu();
             int picked = -1;

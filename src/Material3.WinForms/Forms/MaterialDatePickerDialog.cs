@@ -196,30 +196,101 @@ namespace Material3.WinForms.Forms {
             }
             // The arrows walk the days and the page keys the months, as in the WPF picker; Enter is the accept button.
             DateTime? next = keyData switch {
-                Keys.Left => Shifted(() => _value.AddDays(-1)),
-                Keys.Right => Shifted(() => _value.AddDays(1)),
-                Keys.Up => Shifted(() => _value.AddDays(-7)),
-                Keys.Down => Shifted(() => _value.AddDays(7)),
-                Keys.PageUp => Shifted(() => _value.AddMonths(-1)),
-                Keys.PageDown => Shifted(() => _value.AddMonths(1)),
-                _ => null,
+                Keys.Left => CalendarMath.AddDaysClamped(_value, -1),
+                Keys.Right => CalendarMath.AddDaysClamped(_value, 1),
+                Keys.Up => CalendarMath.AddDaysClamped(_value, -7),
+                Keys.Down => CalendarMath.AddDaysClamped(_value, 7),
+                Keys.PageUp => CalendarMath.AddMonthsClamped(_value, -1),
+                Keys.PageDown => CalendarMath.AddMonthsClamped(_value, 1),
+                _ => (DateTime?)null,
             };
             if (next is DateTime date) {
-                _value = date;
-                _visibleMonth = new DateTime(date.Year, date.Month, 1);
-                Invalidate();
+                Pick(date);
                 return true;
             }
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
-        private static DateTime? Shifted(Func<DateTime> step) {
-            try {
-                return step();
+        private void Pick(DateTime date) {
+            if (date == _value) {
+                return;
             }
-            catch (ArgumentOutOfRangeException) {
-                return null;
+
+            _value = date;
+            _visibleMonth = new DateTime(date.Year, date.Month, 1);
+            Invalidate();
+            int child = ((PickerAccessible)AccessibilityObject).ChildOf(date);
+            MaterialAccessible.Notify(this, AccessibleEvents.Selection, child);
+            MaterialAccessible.Notify(this, AccessibleEvents.Focus, child);
+        }
+
+        /// <inheritdoc />
+        protected override AccessibleObject CreateAccessibilityInstance() => new PickerAccessible(this);
+
+        private DateTime ShownMonth => _visibleMonth;
+
+        private Rectangle DayRect(int day) {
+            (int row, int column) = CalendarMath.CellOfDay(_visibleMonth.Year, _visibleMonth.Month, day, _firstDayOfWeek);
+            Rectangle grid = GridOrigin;
+            return new Rectangle(grid.X + column * Cell, grid.Y + row * Cell, Cell, Cell);
+        }
+
+        // The days are drawn, not controls, so each one is a child of its own beside the buttons for a screen reader.
+        private sealed class PickerAccessible : ControlAccessibleObject {
+            private readonly MaterialDatePickerDialog _picker;
+
+            public PickerAccessible(MaterialDatePickerDialog picker) : base(picker) {
+                _picker = picker;
             }
+
+            private int Days => DateTime.DaysInMonth(_picker.ShownMonth.Year, _picker.ShownMonth.Month);
+
+            public int ChildOf(DateTime date) => _picker.Controls.Count + date.Day - 1;
+
+            public override int GetChildCount() => _picker.Controls.Count + Days;
+
+            public override AccessibleObject? GetChild(int index) {
+                if (index < 0) {
+                    return null;
+                }
+
+                if (index < _picker.Controls.Count) {
+                    return _picker.Controls[index].AccessibilityObject;
+                }
+
+                int day = index - _picker.Controls.Count + 1;
+                return day <= Days ? new DayAccessible(this, _picker, day) : null;
+            }
+        }
+
+        private sealed class DayAccessible : AccessibleObject {
+            private readonly PickerAccessible _parent;
+            private readonly MaterialDatePickerDialog _picker;
+            private readonly DateTime _date;
+
+            public DayAccessible(PickerAccessible parent, MaterialDatePickerDialog picker, int day) {
+                _parent = parent;
+                _picker = picker;
+                _date = new DateTime(picker.ShownMonth.Year, picker.ShownMonth.Month, day);
+            }
+
+            public override string? Name {
+                get => _date.ToString(_picker._culture.DateTimeFormat.LongDatePattern, _picker._culture);
+                set { }
+            }
+
+            public override AccessibleRole Role => AccessibleRole.ListItem;
+
+            public override AccessibleStates State => AccessibleStates.Selectable | AccessibleStates.Focusable
+                | (_date == _picker._value ? AccessibleStates.Selected | AccessibleStates.Focused : AccessibleStates.None);
+
+            public override AccessibleObject Parent => _parent;
+
+            public override Rectangle Bounds => _picker.RectangleToScreen(_picker.DayRect(_date.Day));
+
+            public override string DefaultAction => LibraryText.Get(TextKey.Select);
+
+            public override void DoDefaultAction() => _picker.Pick(_date);
         }
 
         private Rectangle PrevRect => new Rectangle(Pad, Header + (Nav - S(32)) / 2, S(32), S(32));
@@ -284,8 +355,7 @@ namespace Material3.WinForms.Forms {
             if (cell.X >= 0) {
                 int day = CalendarMath.DayAtCell(_visibleMonth.Year, _visibleMonth.Month, cell.Y, cell.X, _firstDayOfWeek);
                 if (day > 0) {
-                    _value = new DateTime(_visibleMonth.Year, _visibleMonth.Month, day);
-                    Invalidate();
+                    Pick(new DateTime(_visibleMonth.Year, _visibleMonth.Month, day));
                 }
             }
         }
