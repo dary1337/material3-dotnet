@@ -285,7 +285,8 @@ namespace Material3.WinForms.Forms {
                 Close();
                 return true;
             }
-            if (keyData == Keys.Enter) {
+            // Enter on a focused button presses that button: Tab to Cancel then Enter must cancel.
+            if (keyData == Keys.Enter && !(ActiveControl is IButtonControl)) {
                 ClampFields();
                 DialogResult = DialogResult.OK;
                 Close();
