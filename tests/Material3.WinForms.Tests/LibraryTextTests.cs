@@ -13,6 +13,10 @@ namespace Material3.WinForms.Tests {
         private static readonly string[] Cultures = { "en", "ru" };
 
         [Fact]
+        public void AnUnknownKeyReadsAsItsNameInsteadOfThrowing() =>
+            Assert.Equal("999", LibraryText.Get((TextKey)999, CultureInfo.GetCultureInfo("en")));
+
+        [Fact]
         public void EveryBuiltInTableTranslatesEveryKey() {
             Assert.Equal(Cultures.Length, LibraryTextTables.ByCulture.Count);
             foreach (string name in Cultures) {

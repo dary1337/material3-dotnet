@@ -104,7 +104,7 @@ namespace Material3.Core {
                     return text;
                 }
             }
-            return LibraryTextTables.English[key];
+            return LibraryTextTables.English.TryGetValue(key, out string? english) ? english : key.ToString();
         }
 
         /// <summary>Replaces one text whatever the culture; null hands it back to the resolver and the tables.</summary>
