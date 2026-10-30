@@ -89,12 +89,19 @@ namespace Material3.WinForms.Controls {
         /// <summary>Raised when a different option is picked.</summary>
         public event EventHandler? SelectedIndexChanged;
 
-        /// <summary>The index of the picked option, or -1. Setting -1 clears the pick; an index past the list is ignored.</summary>
+        /// <summary>The index of the picked option, or -1. Setting -1 clears the pick.</summary>
+        /// <exception cref="ArgumentOutOfRangeException">The value is below -1 or past the last option.</exception>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int SelectedIndex {
             get => _selectedIndex;
-            set => SelectIndex(value);
+            set {
+                if (value < -1 || value >= _items.Count) {
+                    throw new ArgumentOutOfRangeException(nameof(value));
+                }
+
+                SelectIndex(value);
+            }
         }
 
         /// <summary>The tag of the picked option, or null.</summary>
@@ -103,20 +110,22 @@ namespace Material3.WinForms.Controls {
         public object? SelectedTag =>
             _selectedIndex >= 0 && _selectedIndex < _items.Count ? _items[_selectedIndex].Tag : null;
 
-        /// <summary>Removes every option.</summary>
+        /// <summary>Removes every option, raising <see cref="SelectedIndexChanged"/> when one was picked.</summary>
         public void ClearItems() {
             _menu.Close();
+            SelectIndex(-1);
             _items.Clear();
-            _selectedIndex = -1;
             Invalidate();
         }
 
-        /// <summary>Appends an option showing <paramref name="displayText"/> and carrying <paramref name="tag"/>.</summary>
+        /// <summary>
+        /// Appends an option showing <paramref name="displayText"/> and carrying <paramref name="tag"/>. The first option
+        /// added to an empty field is picked, and that raises <see cref="SelectedIndexChanged"/>.
+        /// </summary>
         public void AddItem(string displayText, object tag) {
             _items.Add(new DropdownItem(displayText ?? string.Empty, tag));
             if (_selectedIndex < 0) {
-                _selectedIndex = 0;
-                Invalidate();
+                SelectIndex(0);
             }
         }
 
