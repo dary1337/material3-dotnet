@@ -260,23 +260,15 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ProgressBar">
-                    <Grid>
-                        <Border x:Name="PART_Track" />
-                        <DockPanel>
-                            <!-- Not PART_Indicator: ProgressBar would size it at once, and ProgressMotion eases it instead. -->
-                            <Border x:Name="fill" DockPanel.Dock="Left" Width="0" CornerRadius="{m3:FitCornerRadius}" Background="{TemplateBinding Foreground}" />
-                            <Grid x:Name="rest" Margin="4,0,0,0">
-                                <Border CornerRadius="{m3:FitCornerRadius}" Background="{TemplateBinding Background}" />
-                                <Ellipse x:Name="stop" Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}" HorizontalAlignment="Right"
-                                         Fill="{TemplateBinding Foreground}" />
-                            </Grid>
-                        </DockPanel>
+                    <!-- Both segments span the bar and ProgressMotion clips them, so a moving value never relays the layout.
+                         Not PART_Indicator: ProgressBar would size that one at once. -->
+                    <Grid x:Name="PART_Track">
+                        <Grid x:Name="rest" Background="{TemplateBinding Background}">
+                            <Ellipse x:Name="stop" Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}" HorizontalAlignment="Right"
+                                     Fill="{TemplateBinding Foreground}" />
+                        </Grid>
+                        <Border x:Name="fill" Background="{TemplateBinding Foreground}" />
                     </Grid>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="Value" Value="0">
-                            <Setter TargetName="rest" Property="Margin" Value="0" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

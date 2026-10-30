@@ -121,14 +121,17 @@ namespace Material3.Wpf.Tests {
             w.Content = new StackPanel { Children = { bar } };
             Ui.Settle(w);
             var fill = (FrameworkElement)bar.Template.FindName("fill", bar);
-            Assert.Equal(60, fill.ActualWidth, 1);
+            double FillEnd() => ((RectangleGeometry)fill.Clip).Rect.Right;
+            Assert.Equal(60, FillEnd(), 1);
             Assert.True(ProgressMotion.GetIsAnimated(bar));
+            double laidOut = fill.ActualWidth;
             bar.Value = 80;
             var clock = System.Diagnostics.Stopwatch.StartNew();
             do {
                 Ui.Settle(w);
-            } while (Math.Abs(fill.ActualWidth - 240) > 1 && clock.ElapsedMilliseconds < 3000);
-            Assert.Equal(240, fill.ActualWidth, 1);
+            } while (ProgressMotion.GetDrawn(bar) != 0.8 && clock.ElapsedMilliseconds < 3000);
+            Assert.Equal(240, FillEnd(), 1);
+            Assert.Equal(laidOut, fill.ActualWidth);
         });
 
         [Fact]
@@ -138,16 +141,15 @@ namespace Material3.Wpf.Tests {
             Ui.Settle(w);
             var fill = (FrameworkElement)bar.Template.FindName("fill", bar);
             var rest = (FrameworkElement)bar.Template.FindName("rest", bar);
-            double fillRight = fill.TranslatePoint(new Point(fill.ActualWidth, 0), bar).X;
-            double restLeft = rest.TranslatePoint(new Point(0, 0), bar).X;
-            Assert.Equal(4, restLeft - fillRight, 1);
+            Rect Drawn(FrameworkElement part) => ((RectangleGeometry)part.Clip).Rect;
+            Assert.Equal(4, Drawn(rest).Left - Drawn(fill).Right, 1);
 
             bar.Value = 0;
             var clock = System.Diagnostics.Stopwatch.StartNew();
             do {
                 Ui.Settle(w);
-            } while (fill.ActualWidth > 0.5 && clock.ElapsedMilliseconds < 3000);
-            Assert.Equal(0, rest.TranslatePoint(new Point(0, 0), bar).X, 1);
+            } while (ProgressMotion.GetDrawn(bar) != 0 && clock.ElapsedMilliseconds < 3000);
+            Assert.Equal(0, Drawn(rest).Left, 1);
         });
 
         [Theory]
