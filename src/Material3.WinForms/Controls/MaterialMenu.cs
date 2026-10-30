@@ -262,6 +262,11 @@ namespace Material3.WinForms.Controls {
                 ShowAnimated(location, below);
             }
 
+            protected override void OnFormClosed(FormClosedEventArgs e) {
+                Application.RemoveMessageFilter(this);
+                base.OnFormClosed(e);
+            }
+
             public void CloseAndDispose() {
                 Application.RemoveMessageFilter(this);
                 if (!IsDisposed) {

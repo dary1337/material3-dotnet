@@ -15,6 +15,7 @@ namespace Material3.WinForms.Controls {
         private readonly Stopwatch _clock = new Stopwatch();
         private Point _target;
         private int _slideFrom;
+        private Form? _owner;
 
         protected PopupWindow() {
             FormBorderStyle = FormBorderStyle.None;
@@ -43,6 +44,7 @@ namespace Material3.WinForms.Controls {
             _slideFrom = animate ? (slideDown ? -SlidePx : SlidePx) : 0;
             Location = new Point(location.X, location.Y + Dpi.Scale(this, _slideFrom));
             Opacity = animate ? 0d : 1d;
+            FollowOwner(ActiveForm);
             Show();
             Refresh();
             if (!animate) {
@@ -51,6 +53,41 @@ namespace Material3.WinForms.Controls {
 
             _clock.Restart();
             _fade.Start();
+        }
+
+        // A topmost popup outlives its window otherwise: Alt+Tab, Win+D or a minimize would leave it over other apps.
+        private void FollowOwner(Form? owner) {
+            if (owner == null || ReferenceEquals(owner, this) || ReferenceEquals(owner, _owner)) {
+                return;
+            }
+
+            Unfollow();
+            _owner = owner;
+            owner.Deactivate += OnOwnerLeft;
+            owner.Move += OnOwnerLeft;
+            owner.Resize += OnOwnerLeft;
+        }
+
+        private void Unfollow() {
+            if (_owner == null) {
+                return;
+            }
+
+            _owner.Deactivate -= OnOwnerLeft;
+            _owner.Move -= OnOwnerLeft;
+            _owner.Resize -= OnOwnerLeft;
+            _owner = null;
+        }
+
+        private void OnOwnerLeft(object? sender, EventArgs e) {
+            if (Visible && !IsDisposed) {
+                Close();
+            }
+        }
+
+        protected override void OnFormClosed(FormClosedEventArgs e) {
+            Unfollow();
+            base.OnFormClosed(e);
         }
 
         private void OnFadeTick(object? sender, EventArgs e) {
@@ -65,6 +102,7 @@ namespace Material3.WinForms.Controls {
 
         protected override void Dispose(bool disposing) {
             if (disposing) {
+                Unfollow();
                 _fade.Stop();
                 _fade.Dispose();
             }
