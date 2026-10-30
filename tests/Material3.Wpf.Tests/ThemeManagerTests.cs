@@ -88,20 +88,21 @@ namespace Material3.Wpf.Tests {
 
         [Fact]
         public void TheSettersKeepTheirValueWhenThereIsNothingToPublishInto() {
-            System.Reflection.FieldInfo field = typeof(ThemeManager).GetField("Targets", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)!;
-            var targets = (System.Collections.IList)field.GetValue(null)!;
-            MaterialTheme before = ThemeManager.Theme;
-            bool wasDark = ThemeManager.IsDark;
-            targets.Clear();
-            try {
-                ThemeManager.IsDark = wasDark;
-                ThemeManager.IsDark = !wasDark;
-                Assert.Equal(!wasDark, ThemeManager.IsDark);
-                Assert.Throws<System.ArgumentNullException>(() => ThemeManager.Theme = null!);
-            }
-            finally {
-                ThemeManager.Apply(before, wasDark, new ResourceDictionary());
-            }
+            var state = new ThemeState(() => null);
+            bool wasDark = state.IsDark;
+            state.IsDark = wasDark;
+            state.IsDark = !wasDark;
+            Assert.Equal(!wasDark, state.IsDark);
+
+            var seeded = MaterialTheme.FromSeed(Argb.FromArgb(0x67, 0x50, 0xA4));
+            state.Theme = seeded;
+            Assert.Same(seeded, state.Theme);
+            Assert.Throws<System.ArgumentNullException>(() => state.Theme = null!);
+            Assert.Same(seeded, state.Theme);
+
+            var later = new ResourceDictionary();
+            state.Apply(state.Theme, state.IsDark, later);
+            Assert.Equal((wasDark ? seeded.LightScheme : seeded.DarkScheme).Primary.ToMedia(), ((SolidColorBrush)later["Primary"]).Color);
         }
     }
 }

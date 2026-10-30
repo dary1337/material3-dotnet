@@ -381,7 +381,7 @@ namespace Material3.WinForms.Controls {
                 }
 
                 Application.AddMessageFilter(this);
-                ShowAnimated(new Point(x, y), below);
+                ShowAnimated(new Point(x, y), below, _field.FindForm());
             }
 
             protected override void OnFormClosed(FormClosedEventArgs e) {

@@ -115,9 +115,13 @@ namespace Material3.WinForms.Controls {
         /// <summary>Removes every option, raising <see cref="SelectedIndexChanged"/> when one was picked.</summary>
         public void ClearItems() {
             _menu.Close();
-            SelectIndex(-1);
+            bool hadPick = _selectedIndex >= 0;
             _items.Clear();
+            _selectedIndex = -1;
             Invalidate();
+            if (hadPick) {
+                SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
+            }
         }
 
         /// <summary>

@@ -17,11 +17,6 @@ namespace Material3.WinForms.Controls {
 
         internal IReadOnlyList<Entry> Entries => _entries;
 
-        // An unshown popup can stand in for an open one, so the select's keys are checked with no window on screen.
-        internal MenuPopup? Popup {
-            get => _popup;
-            set => _popup = value;
-        }
         private int _itemHeight = ComponentSizes.ControlHeight;
         private int _separatorHeight = 9;
         private int _horizontalPadding = 12;
@@ -135,7 +130,7 @@ namespace Material3.WinForms.Controls {
                 return;
             }
             _popup = Track(new MenuPopup(this, OnPopupClicked));
-            _popup.ShowBelow(anchor.RectangleToScreen(anchor.ClientRectangle));
+            _popup.ShowBelow(anchor.RectangleToScreen(anchor.ClientRectangle), anchor.FindForm());
         }
 
         /// <summary>Opens the menu at a screen location (e.g. cursor position for context menus).</summary>
@@ -145,7 +140,7 @@ namespace Material3.WinForms.Controls {
                 return;
             }
             _popup = Track(new MenuPopup(this, OnPopupClicked));
-            _popup.ShowAt(screenLocation);
+            _popup.ShowAt(screenLocation, null);
         }
 
         /// <summary>Closes the popup if open.</summary>
@@ -234,20 +229,20 @@ namespace Material3.WinForms.Controls {
                 }
             }
 
-            public void ShowAt(Point screenLocation) {
+            public void ShowAt(Point screenLocation, Form? owner) {
                 MeasureAndSize(0);
 
                 Rectangle screen = Screen.FromPoint(screenLocation).WorkingArea;
                 int x = Math.Max(screen.Left, Math.Min(screenLocation.X, screen.Right - Width));
                 bool below = screenLocation.Y + Height <= screen.Bottom;
                 int y = below ? screenLocation.Y : Math.Max(screen.Top, screenLocation.Y - Height - Dpi.Scale(this, Spacing.Space1));
-                Open(new Point(x, y), below);
+                Open(new Point(x, y), below, owner);
             }
 
-            public void ShowBelow(Rectangle anchor) {
+            public void ShowBelow(Rectangle anchor, Form? owner) {
                 MeasureAndSize(anchor.Width);
                 Point location = PlaceBelow(anchor, Size, Screen.FromRectangle(anchor).WorkingArea, Dpi.Scale(this, AnchorGap));
-                Open(location, location.Y >= anchor.Bottom);
+                Open(location, location.Y >= anchor.Bottom, owner);
             }
 
             internal static Point PlaceBelow(Rectangle anchor, Size popup, Rectangle screen, int gap) {
@@ -260,7 +255,7 @@ namespace Material3.WinForms.Controls {
                 return new Point(x, y);
             }
 
-            private void Open(Point location, bool below) {
+            private void Open(Point location, bool below, Form? owner) {
                 using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(
                     new Rectangle(0, 0, Width, Height), Dpi.Scale(this, _cornerRadius))) {
                     Region?.Dispose();
@@ -268,7 +263,7 @@ namespace Material3.WinForms.Controls {
                 }
 
                 Application.AddMessageFilter(this);
-                ShowAnimated(location, below);
+                ShowAnimated(location, below, owner);
             }
 
             protected override void OnFormClosed(FormClosedEventArgs e) {
@@ -287,24 +282,22 @@ namespace Material3.WinForms.Controls {
             private void MeasureAndSize(int anchorWidth) {
                 int height = Dpi.Scale(this, RowInset * 2);
                 int width = Math.Max(anchorWidth, Dpi.Scale(this, _minWidth));
-                using (var bitmap = new Bitmap(1, 1)) {
-                    bitmap.SetResolution(DeviceDpi, DeviceDpi);
-                    using (var g = Graphics.FromImage(bitmap)) {
-                        foreach (Entry entry in _entries) {
-                            height += RowHeight(entry);
-                            if (entry.IsSeparator) {
-                                continue;
-                            }
-                            float w = Dpi.Scale(this, _horizontalPadding) * 2
-                                + g.MeasureString(entry.Text, _textFont, int.MaxValue, StringFormat.GenericTypographic).Width;
-                            if (!string.IsNullOrEmpty(entry.Glyph)) {
-                                w += Dpi.Scale(this, _iconSize) + Dpi.Scale(this, _iconGap);
-                            }
-                            if (!string.IsNullOrEmpty(entry.Shortcut)) {
-                                w += Dpi.Scale(this, Spacing.Space6) + g.MeasureString(entry.Shortcut, _hintFont, int.MaxValue, StringFormat.GenericTypographic).Width;
-                            }
-                            width = Math.Max(width, (int)Math.Ceiling(w));
+                using (var measure = MeasureContext.For(this)) {
+                    Graphics g = measure.Graphics;
+                    foreach (Entry entry in _entries) {
+                        height += RowHeight(entry);
+                        if (entry.IsSeparator) {
+                            continue;
                         }
+                        float w = Dpi.Scale(this, _horizontalPadding) * 2
+                            + g.MeasureString(entry.Text, _textFont, int.MaxValue, StringFormat.GenericTypographic).Width;
+                        if (!string.IsNullOrEmpty(entry.Glyph)) {
+                            w += Dpi.Scale(this, _iconSize) + Dpi.Scale(this, _iconGap);
+                        }
+                        if (!string.IsNullOrEmpty(entry.Shortcut)) {
+                            w += Dpi.Scale(this, Spacing.Space6) + g.MeasureString(entry.Shortcut, _hintFont, int.MaxValue, StringFormat.GenericTypographic).Width;
+                        }
+                        width = Math.Max(width, (int)Math.Ceiling(w));
                     }
                 }
                 Size = new Size(Math.Min(width, Math.Max(anchorWidth, Dpi.Scale(this, _maxWidth))), height);

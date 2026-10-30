@@ -430,6 +430,25 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
+        public void AWheelOverANestedPanelStaysWithItUntilItsEndThenReachesTheOuterOne() {
+            using var outer = new MaterialScrollPanel { Size = new Size(200, 200) };
+            var inner = new MaterialScrollPanel { Bounds = new Rectangle(0, 0, 180, 100) };
+            var row = new Panel { Bounds = new Rectangle(0, 0, 160, 400) };
+            inner.ContentPanel.Controls.Add(row);
+            outer.ContentPanel.Controls.Add(inner);
+            outer.ContentPanel.Controls.Add(new Panel { Bounds = new Rectangle(0, 100, 180, 400) });
+            const int Up = 120;
+            const int Down = -120;
+
+            Assert.False(MaterialScrollPanel.DefersTo(row, outer, Up));
+            Assert.True(MaterialScrollPanel.DefersTo(row, outer, Down));
+            inner.HandleWheel(Down * 50);
+            Assert.False(MaterialScrollPanel.DefersTo(row, outer, Down));
+            Assert.True(MaterialScrollPanel.DefersTo(row, outer, Up));
+            Assert.False(MaterialScrollPanel.DefersTo(outer.ContentPanel, outer, Down));
+        }
+
+        [Fact]
         public void AHoldButtonCommitsOnlyAfterTheWholeHold() {
             using var hold = new Material3.WinForms.Forms.HoldButton("Reset", TimeSpan.FromMilliseconds(60), destructive: true);
             int committed = 0;
@@ -496,16 +515,16 @@ namespace Material3.WinForms.Tests {
 
         [Fact]
         public void AnOpenSelectFollowsTheArrowsAndClosesOnEscape() {
+            using var host = new Form();
             using var select = new MaterialDropdownSelect();
+            host.Controls.Add(select);
+            _ = select.Handle;
             select.AddItem("Day", "d");
             select.AddItem("Week", "w");
             MaterialMenu menu = select.Menu;
             void Key(Keys key) => typeof(MaterialDropdownSelect).GetMethod("OnKeyDown", BindingFlags.Instance | BindingFlags.NonPublic)!
                 .Invoke(select, new object[] { new KeyEventArgs(key) });
-            menu.AddChoice("Day", true, () => { });
-            menu.AddChoice("Week", false, () => { });
-            // An unshown popup stands in for the open menu, so no window appears on screen.
-            menu.Popup = new MaterialMenu.MenuPopup(menu, _ => { });
+            Key(Keys.Enter);
             Assert.True(menu.IsOpen);
             Assert.True((bool)typeof(MaterialDropdownSelect).GetMethod("IsInputKey", BindingFlags.Instance | BindingFlags.NonPublic)!
                 .Invoke(select, new object[] { Keys.Escape })!);
@@ -574,6 +593,35 @@ namespace Material3.WinForms.Tests {
             b.IsSelected = true;
             Assert.False(a.IsSelected);
             Assert.Equal(3, changes);
+        }
+
+        [Fact]
+        public void ASelectReportsTheFirstPickAndTheClear() {
+            using var select = new MaterialDropdownSelect();
+            int raised = 0;
+            select.SelectedIndexChanged += (s, e) => raised++;
+            select.AddItem("Day", "d");
+            select.AddItem("Week", "w");
+            Assert.Equal(1, raised);
+            select.ClearItems();
+            Assert.Equal(2, raised);
+            Assert.Equal(-1, select.SelectedIndex);
+            select.ClearItems();
+            Assert.Equal(2, raised);
+        }
+
+        [Fact]
+        public void ASelectRefilledFromItsClearEventKeepsAValidPick() {
+            using var select = new MaterialDropdownSelect();
+            select.AddItem("Day", "d");
+            select.SelectedIndexChanged += (s, e) => {
+                if (select.SelectedIndex < 0) {
+                    select.AddItem("Month", "m");
+                }
+            };
+            select.ClearItems();
+            Assert.Equal(0, select.SelectedIndex);
+            Assert.Equal("m", select.SelectedTag);
         }
 
         [Fact]
@@ -691,5 +739,26 @@ namespace Material3.WinForms.Tests {
         [InlineData("1\n", false)]
         public void TheSharedNumberRuleAcceptsWhatIsStillBeingTyped(string text, bool accepted) =>
             Assert.Equal(accepted, TextInputRules.IsNumberPrefix(text));
+
+        private sealed class QuietForm : Form {
+            protected override bool ShowWithoutActivation => true;
+        }
+
+        [Fact]
+        public void ADragSurfaceStillGetsThePressSoItsClicksWork() {
+            using var form = new QuietForm { StartPosition = FormStartPosition.Manual, Location = new Point(-32000, -32000), Size = new Size(200, 200) };
+            form.Show();
+            var filter = new FormDragAnywhere.DragFilter(form);
+            var press = Message.Create(form.Handle, 0x0201, IntPtr.Zero, (IntPtr)((50 << 16) | 50));
+            Assert.False(filter.PreFilterMessage(ref press));
+            var move = Message.Create(form.Handle, 0x0200, IntPtr.Zero, (IntPtr)((90 << 16) | 90));
+            Assert.False(filter.PreFilterMessage(ref move));
+        }
+
+        [Fact]
+        public void AHoldButtonIsNeverADragSurface() {
+            using var hold = new Material3.WinForms.Forms.HoldButton("Reset", TimeSpan.FromSeconds(1), destructive: false);
+            Assert.IsAssignableFrom<FormDragAnywhere.IDragExcluded>(hold);
+        }
     }
 }

@@ -20,8 +20,14 @@ namespace Material3.WinForms.Drawing {
             }
 
             var bitmap = new Bitmap(1, 1);
-            bitmap.SetResolution(control.DeviceDpi, control.DeviceDpi);
-            return new MeasureContext(Graphics.FromImage(bitmap), bitmap);
+            try {
+                bitmap.SetResolution(control.DeviceDpi, control.DeviceDpi);
+                return new MeasureContext(Graphics.FromImage(bitmap), bitmap);
+            }
+            catch {
+                bitmap.Dispose();
+                throw;
+            }
         }
 
         public void Dispose() {

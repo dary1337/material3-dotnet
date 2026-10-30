@@ -16,6 +16,37 @@ namespace Material3.WinForms.Tests {
             return new WeakReference(control);
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static WeakReference Removed(Form form, Func<Control> create) {
+            Control control = create();
+            form.Controls.Add(control);
+            _ = control.Handle;
+            form.Controls.Remove(control);
+            // The form's cached layout holds a docked child it just lost until it lays out again, a plain Panel too.
+            form.PerformLayout();
+            Assert.True(control.IsHandleCreated);
+            return new WeakReference(control);
+        }
+
+        private static Func<Control> Factory(string type) => type switch {
+            nameof(MaterialEmptyState) => () => new MaterialEmptyState(),
+            nameof(MaterialNoticeBanner) => () => new MaterialNoticeBanner(),
+            nameof(MaterialPageHeader) => () => new MaterialPageHeader(),
+            nameof(MaterialSearchBar) => () => new MaterialSearchBar(),
+            nameof(MaterialValueListEditor) => () => new MaterialValueListEditor(),
+            nameof(MaterialButton) => () => new MaterialButton(),
+            nameof(MaterialScrollPanel) => () => new MaterialScrollPanel(),
+            nameof(MaterialCheckBox) => () => new MaterialCheckBox(),
+            nameof(MaterialTitleBar) => () => new MaterialTitleBar(),
+            _ => () => new MaterialDataTableEditor(),
+        };
+
+        private static void Collect() {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+        }
+
         [Theory]
         [InlineData(nameof(MaterialEmptyState))]
         [InlineData(nameof(MaterialNoticeBanner))]
@@ -27,22 +58,46 @@ namespace Material3.WinForms.Tests {
         [InlineData(nameof(MaterialScrollPanel))]
         [InlineData(nameof(MaterialCheckBox))]
         public void AControlDroppedWithoutDisposeIsNotHeldByAStaticEvent(string type) {
-            Func<Control> create = type switch {
-                nameof(MaterialEmptyState) => () => new MaterialEmptyState(),
-                nameof(MaterialNoticeBanner) => () => new MaterialNoticeBanner(),
-                nameof(MaterialPageHeader) => () => new MaterialPageHeader(),
-                nameof(MaterialSearchBar) => () => new MaterialSearchBar(),
-                nameof(MaterialValueListEditor) => () => new MaterialValueListEditor(),
-                nameof(MaterialButton) => () => new MaterialButton(),
-                nameof(MaterialScrollPanel) => () => new MaterialScrollPanel(),
-                nameof(MaterialCheckBox) => () => new MaterialCheckBox(),
-                _ => () => new MaterialDataTableEditor(),
-            };
-            WeakReference control = Dropped(create);
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
+            WeakReference control = Dropped(Factory(type));
+            Collect();
             Assert.False(control.IsAlive, $"{type} is still reachable");
+        }
+
+        // WinForms parks a removed control's handle instead of destroying it, so the control keeps its static subscriptions.
+        [Theory]
+        [InlineData(nameof(MaterialEmptyState))]
+        [InlineData(nameof(MaterialNoticeBanner))]
+        [InlineData(nameof(MaterialPageHeader))]
+        [InlineData(nameof(MaterialSearchBar))]
+        [InlineData(nameof(MaterialValueListEditor))]
+        [InlineData(nameof(MaterialDataTableEditor))]
+        [InlineData(nameof(MaterialButton))]
+        [InlineData(nameof(MaterialScrollPanel))]
+        [InlineData(nameof(MaterialTitleBar))]
+        public void AControlRemovedFromALiveFormWithoutDisposeIsNotHeldByAStaticEvent(string type) {
+            using var form = new Form();
+            _ = form.Handle;
+            WeakReference control = Removed(form, Factory(type));
+            Collect();
+            Assert.False(control.IsAlive, $"{type} is still reachable");
+        }
+
+        [Fact]
+        public void AThemeSwitchOnAWorkerThreadReachesTheControlOnItsOwn() {
+            MaterialTheme before = ThemeManager.Theme;
+            bool wasDark = ThemeManager.IsDark;
+            try {
+                using var panel = new MaterialScrollPanel();
+                _ = panel.Handle;
+                var worker = new System.Threading.Thread(() => ThemeManager.IsDark = !wasDark);
+                worker.Start();
+                worker.Join();
+                Application.DoEvents();
+                Assert.Equal(MaterialColors.Surface, panel.BackColor);
+            }
+            finally {
+                ThemeManager.Apply(before, wasDark);
+            }
         }
 
         [Fact]

@@ -87,7 +87,9 @@ namespace Material3.WinForms.Theming {
 
         /// <summary>
         /// Calls <paramref name="applyTheme"/> on every theme, type-scale or elevation change while the control has a handle,
-        /// and once immediately if it already exists. A second Attach on the same control is a no-op.
+        /// and once immediately if it already exists. A change raised on another thread is marshalled to the control's own.
+        /// The control is held weakly, so one removed from its form without Dispose can still be collected. A second Attach
+        /// on the same control is a no-op.
         /// </summary>
         public static void Attach(Control control, Action applyTheme) {
             if (control == null || applyTheme == null) {
@@ -103,30 +105,19 @@ namespace Material3.WinForms.Theming {
             }
             Attached.Add(control, Attached);
 
-            EventHandler onThemeChanged = (s, e) => {
-                if (!control.IsDisposed) {
-                    applyTheme();
-                }
-            };
-
-            control.HandleCreated += (s, e) => {
-                ThemeManager.ThemeChanged += onThemeChanged;
-                Typography.TypeScale.Changed += onThemeChanged;
-                Tokens.Elevation.Changed += onThemeChanged;
-                // A theme switch while the control had no handle was missed, so it catches up here.
-                applyTheme();
-            };
-            control.HandleDestroyed += (s, e) => {
-                ThemeManager.ThemeChanged -= onThemeChanged;
-                Typography.TypeScale.Changed -= onThemeChanged;
-                Tokens.Elevation.Changed -= onThemeChanged;
-            };
-            if (control.IsHandleCreated) {
-                ThemeManager.ThemeChanged += onThemeChanged;
-                Typography.TypeScale.Changed += onThemeChanged;
-                Tokens.Elevation.Changed += onThemeChanged;
-                applyTheme();
-            }
+            // A theme switch while the control had no handle was missed, so HandleBound catches it up on HandleCreated.
+            HandleBound.Attach(control,
+                h => {
+                    ThemeManager.ThemeChanged += h;
+                    Typography.TypeScale.Changed += h;
+                    Tokens.Elevation.Changed += h;
+                },
+                h => {
+                    ThemeManager.ThemeChanged -= h;
+                    Typography.TypeScale.Changed -= h;
+                    Tokens.Elevation.Changed -= h;
+                },
+                applyTheme);
         }
     }
 }

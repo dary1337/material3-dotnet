@@ -29,5 +29,17 @@ namespace Material3.Wpf.Tests {
         [Fact]
         public void AnElevatedCardsShadowStaysOffItsContent() => Ui.InWindow(w =>
             Check(w, new ContentControl { Style = (Style)w.FindResource("ElevatedCard"), Content = new TextBlock { Text = "Card" } }));
+
+        [Theory]
+        [InlineData("ElevatedCard")]
+        [InlineData("FilledCard")]
+        [InlineData("OutlinedCard")]
+        public void EveryCardHoldsItsContentTheSameWay(string key) => Ui.InWindow(w => {
+            var card = new ContentControl { Style = (Style)w.FindResource(key), Content = new TextBlock { Text = "Card" } };
+            w.Content = card;
+            Ui.Settle(w);
+            Assert.Equal(typeof(ContentControl), card.Style.TargetType);
+            Assert.Single(Ui.Descendants<TextBlock>(card));
+        });
     }
 }

@@ -345,8 +345,8 @@ namespace Material3.Wpf.Gallery {
             },
             ["cards.banner"] = () => PageHost.Children.Add(BuildNoticeDemo()),
             ["cards.empty"] = () => {
-                var host = new Border { Style = (Style)FindResource("FilledCard"), Width = 460, Height = 220, HorizontalAlignment = HorizontalAlignment.Left };
-                host.Child = new EmptyState {
+                var host = new ContentControl { Style = (Style)FindResource("FilledCard"), Width = 460, Height = 220, HorizontalAlignment = HorizontalAlignment.Left };
+                host.Content = new EmptyState {
                     Glyph = "InformationOutline",
                     Title = "Nothing here yet",
                     Text = "Create a project or import one — it will show up here.",
@@ -367,9 +367,7 @@ namespace Material3.Wpf.Gallery {
                 foreach ((string key, string note) in new[] { ("ElevatedCard", "Elevated"), ("FilledCard", "Filled"), ("OutlinedCard", "Outlined") }) {
                     var body = new TextBlock { Text = note, Style = (Style)FindResource("TitleMedium") };
                     var size = new Thickness(2, 4, 16, 12);
-                    variants.Children.Add(key == "ElevatedCard"
-                        ? new ContentControl { Style = (Style)FindResource(key), Width = 180, Height = 84, Margin = size, Content = body }
-                        : new Border { Style = (Style)FindResource(key), Width = 180, Height = 84, Margin = size, Child = body });
+                    variants.Children.Add(new ContentControl { Style = (Style)FindResource(key), Width = 180, Height = 84, Margin = size, Content = body });
                 }
             },
             ["cards.list"] = () => {

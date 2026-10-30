@@ -212,7 +212,7 @@ nothing is lost.
 | `m3:Badge` | `Count` `IsDot` `Tone` | Zero shows nothing and past 999 it reads `999+`. It does not place itself: put it in the corner of a Grid cell over what it annotates |
 | `m3:OptionCard` | `Leading` content, `Indicator` (`Radio` `Check` `None`) `IsChecked` `GroupName` `Tone` | A radio card behaves like a `RadioButton`: a click only chooses, and it unchooses its panel's siblings or its `GroupName` window-wide. `Tone` tints the outline before the option is picked |
 | `M3RoundCheckBox` *(style)* | any `CheckBox` | A round check for an on/off that lives inside a selectable card, so it does not read as a second list selection |
-| `ElevatedCard` / `FilledCard` / `OutlinedCard` *(styles)* | a `ContentControl` / any `Border` / any `Border` | The three M3 card containers; `Card` stays the plain SurfaceContainer one. The elevated one is templated so its shadow stays off the content |
+| `ElevatedCard` / `FilledCard` / `OutlinedCard` *(styles)* | a `ContentControl` | The three M3 card containers, templated so the elevated one's shadow stays off the content; `Card` stays the plain SurfaceContainer `Border` style |
 | `ErrorIconButton` *(style)* | any `Button` | The hover turns ErrorContainer, so the colour warns about the click instead of decorating every icon. Keeps a `Background` you give it |
 | `m3:ButtonContent.LeadingGlyph` | on the shipped button styles | The glyph follows the label's colour, the disabled one included |
 | `m3:Snackbar` | `Snackbar.Show(anchor, message[, actionText, onAction][, duration])`, `DismissCurrent([anchor])` | Goes into the window's adorner layer, so it needs no host element; one shows at a time in each window and the rest of that window queue |
@@ -271,7 +271,8 @@ Each window's `ModalLayer` keeps its own stack: `Show(card)` picks the active wi
 window holding `owner`, and Esc or a scrim click closes only that window's top modal.
 
 `Dialog.Show(owner, options)` is the ready-made dialog: it blocks, needs no `ModalLayer`, and returns a
-`DialogChoice` — `Confirm`, `Secondary`, or `Cancel` for a cancel, Esc or a click on the scrim.
+`DialogChoice` — `Confirm`, `Secondary`, `Cancel` for a cancel, Esc or a click on the scrim, or `Failed` when
+`ConfirmWork` throws.
 
 | `DialogOptions` | Behaviour |
 |---|---|
@@ -280,7 +281,7 @@ window holding `owner`, and Esc or a scrim click closes only that window's top m
 | `ConfirmText` `CancelText` `SecondaryText` | With a secondary present, cancel steps down to a text button — three actions, three levels of emphasis |
 | `Destructive` | The confirm turns error-tonal. Independent of `Tone`: an error notice still closes with a neutral button |
 | `HoldToConfirm` | The confirm fills while held and commits once full; an early release shakes it. Enter does not reach it |
-| `ConfirmWork` | Runs before the close; the confirm spins and nothing dismisses the dialog meanwhile. If it throws, `Show` answers `Failed` and the exception is in `WorkFailure`, as in WinForms (`DialogResult.Abort`) |
+| `ConfirmWork` | Runs before the close; the confirm spins and nothing dismisses the dialog meanwhile. If it throws, `Show` answers `Failed` and `Show(owner, options, out failure)` hands back the exception, as WinForms answers `DialogResult.Abort` with `WorkFailure` |
 | `SupportingAction` | A text button at the far end of the row that neither confirms nor cancels |
 | `Links` | `OpenInNew`-marked links under the body that run without closing |
 

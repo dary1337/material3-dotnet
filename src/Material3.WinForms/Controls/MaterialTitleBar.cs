@@ -235,7 +235,7 @@ namespace Material3.WinForms.Controls {
             AutoSize = true;
             TypeRole.Follow(this, () => TypeScale.LabelLarge);
             NameCaptionButtons();
-            HandleBound.Attach(this, () => LibraryText.Changed += OnLibraryTextChanged, () => LibraryText.Changed -= OnLibraryTextChanged,
+            HandleBound.Attach(this, h => LibraryText.Changed += h, h => LibraryText.Changed -= h,
                 () => OnLibraryTextChanged(this, EventArgs.Empty));
 
             ThemeHook.Attach(this, () => {
