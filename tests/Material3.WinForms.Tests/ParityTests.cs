@@ -776,6 +776,24 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
+        public void EveryControlThatTakesFocusKeepsItsOwnDrag() {
+            Control[] interactive = { new MaterialSlider(), new MaterialSwitch(), new MaterialChip(), new MaterialCheckBox(), new MaterialTabs() };
+            Control[] surfaces = { new Panel(), new Label(), new Form(), new UserControl() };
+            try {
+                Assert.All(interactive, c => Assert.True(FormDragAnywhere.DragFilter.IsInteractive(c), c.GetType().Name));
+                Assert.All(surfaces, c => Assert.False(FormDragAnywhere.DragFilter.IsInteractive(c), c.GetType().Name));
+            }
+            finally {
+                foreach (Control c in interactive) {
+                    c.Dispose();
+                }
+                foreach (Control c in surfaces) {
+                    c.Dispose();
+                }
+            }
+        }
+
+        [Fact]
         public void AHoldButtonIsNeverADragSurface() {
             using var hold = new Material3.WinForms.Forms.HoldButton("Reset", TimeSpan.FromSeconds(1), destructive: false);
             Assert.IsAssignableFrom<FormDragAnywhere.IDragExcluded>(hold);

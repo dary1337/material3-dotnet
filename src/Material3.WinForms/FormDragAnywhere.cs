@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Material3.WinForms.Controls;
@@ -15,16 +16,19 @@ namespace Material3.WinForms {
         /// reaches what is under it, so a click clicks; the move starts once the pointer travels past the system drag distance.
         /// </summary>
         public static void Enable(Form form) {
-            if (form == null) {
+            if (form == null || Enabled.TryGetValue(form, out _)) {
                 return;
             }
             var filter = new DragFilter(form);
+            Enabled.Add(form, filter);
             form.HandleCreated += (s, e) => Application.AddMessageFilter(filter);
             form.HandleDestroyed += (s, e) => Application.RemoveMessageFilter(filter);
             if (form.IsHandleCreated) {
                 Application.AddMessageFilter(filter);
             }
         }
+
+        private static readonly ConditionalWeakTable<Form, DragFilter> Enabled = new ConditionalWeakTable<Form, DragFilter>();
 
         internal sealed class DragFilter : IMessageFilter {
             private const int WM_LBUTTONDOWN = 0x0201;
@@ -92,35 +96,15 @@ namespace Material3.WinForms {
                     return false;
                 }
 
-                Control? leaf = WalkToLeaf(_form, _form.PointToClient(MessageToScreenPoint(m)));
-                return leaf == null || !IsInteractive(leaf);
+                return !IsInteractive(target);
             }
 
-            private static Point MessageToScreenPoint(Message m) {
-                long lp = m.LParam.ToInt64();
-                short x = unchecked((short)(lp & 0xFFFF));
-                short y = unchecked((short)((lp >> 16) & 0xFFFF));
-                var inTarget = new Point(x, y);
-                var target = Control.FromHandle(m.HWnd);
-                return target != null ? target.PointToScreen(inTarget) : Cursor.Position;
-            }
-
-            private static Control? WalkToLeaf(Control root, Point pInRoot) {
-                Control current = root;
-                Point p = pInRoot;
-                while (true) {
-                    Control? child = current.GetChildAtPoint(p);
-                    if (child == null) {
-                        return current;
-                    }
-                    p = new Point(p.X - child.Left, p.Y - child.Top);
-                    current = child;
-                }
-            }
-
-            private static bool IsInteractive(Control c) {
+            // Whatever takes focus takes its own drags too: a slider's thumb, a switch, a chip. A form or a user control is
+            // selectable only as a container, so it stays a drag surface.
+            internal static bool IsInteractive(Control c) {
                 for (Control? p = c; p != null; p = p.Parent) {
-                    if (p is ButtonBase
+                    if ((p.CanSelect && !(p is ContainerControl))
+                        || p is ButtonBase
                         || p is TextBoxBase
                         || p is ComboBox
                         || p is LinkLabel
