@@ -38,13 +38,13 @@ namespace Material3.WinForms.Controls {
             }
         }
 
-        protected void ShowAnimated(Point location, bool slideDown) {
+        protected void ShowAnimated(Point location, bool slideDown, Form? owner) {
             _target = location;
             bool animate = Motion.AnimationsEnabled;
             _slideFrom = animate ? (slideDown ? -SlidePx : SlidePx) : 0;
             Location = new Point(location.X, location.Y + Dpi.Scale(this, _slideFrom));
             Opacity = animate ? 0d : 1d;
-            FollowOwner(ActiveForm);
+            FollowOwner(owner ?? ActiveForm);
             Show();
             Refresh();
             if (!animate) {

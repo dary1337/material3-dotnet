@@ -151,7 +151,7 @@ namespace Material3.WinForms.Controls {
         private static void ShowPopup(Control source, string title, string body) {
             HidePopup();
             _popup = new TipPopup(title, body);
-            _popup.ShowFor(source.RectangleToScreen(source.ClientRectangle));
+            _popup.ShowFor(source.RectangleToScreen(source.ClientRectangle), source.FindForm());
         }
 
         private static void HidePopup() {
@@ -185,23 +185,21 @@ namespace Material3.WinForms.Controls {
                 }
             }
 
-            public void ShowFor(Rectangle anchor) {
+            public void ShowFor(Rectangle anchor, Form? owner) {
                 int padX = Dpi.Scale(this, _horizontalPadding);
                 int padY = Dpi.Scale(this, _verticalPadding);
-                using (var bitmap = new Bitmap(1, 1)) {
-                    bitmap.SetResolution(DeviceDpi, DeviceDpi);
-                    using (var g = Graphics.FromImage(bitmap)) {
-                        var layout = new SizeF(Dpi.Scale(this, _maxWidth) - padX * 2, float.MaxValue);
-                        SizeF bodySize = g.MeasureString(_body, Body, layout);
-                        float width = bodySize.Width;
-                        float height = bodySize.Height;
-                        if (!string.IsNullOrEmpty(_title)) {
-                            SizeF titleSize = g.MeasureString(_title, Title, layout);
-                            width = Math.Max(width, titleSize.Width);
-                            height += titleSize.Height + Dpi.Scale(this, 2);
-                        }
-                        Size = new Size((int)Math.Ceiling(width) + padX * 2, (int)Math.Ceiling(height) + padY * 2);
+                using (var measure = MeasureContext.For(this)) {
+                    Graphics g = measure.Graphics;
+                    var layout = new SizeF(Dpi.Scale(this, _maxWidth) - padX * 2, float.MaxValue);
+                    SizeF bodySize = g.MeasureString(_body, Body, layout);
+                    float width = bodySize.Width;
+                    float height = bodySize.Height;
+                    if (!string.IsNullOrEmpty(_title)) {
+                        SizeF titleSize = g.MeasureString(_title, Title, layout);
+                        width = Math.Max(width, titleSize.Width);
+                        height += titleSize.Height + Dpi.Scale(this, 2);
                     }
+                    Size = new Size((int)Math.Ceiling(width) + padX * 2, (int)Math.Ceiling(height) + padY * 2);
                 }
 
                 Point location = PlaceAbove(anchor, Size, Screen.FromRectangle(anchor).WorkingArea, Dpi.Scale(this, _gap));
@@ -211,7 +209,7 @@ namespace Material3.WinForms.Controls {
                     Region?.Dispose();
                     Region = new Region(path);
                 }
-                ShowAnimated(location, slideDown: location.Y > anchor.Top);
+                ShowAnimated(location, slideDown: location.Y > anchor.Top, owner);
             }
 
             internal static Point PlaceAbove(Rectangle anchor, Size tip, Rectangle screen, int gap) {

@@ -135,7 +135,7 @@ namespace Material3.WinForms.Controls {
                 return;
             }
             _popup = Track(new MenuPopup(this, OnPopupClicked));
-            _popup.ShowBelow(anchor.RectangleToScreen(anchor.ClientRectangle));
+            _popup.ShowBelow(anchor.RectangleToScreen(anchor.ClientRectangle), anchor.FindForm());
         }
 
         /// <summary>Opens the menu at a screen location (e.g. cursor position for context menus).</summary>
@@ -145,7 +145,7 @@ namespace Material3.WinForms.Controls {
                 return;
             }
             _popup = Track(new MenuPopup(this, OnPopupClicked));
-            _popup.ShowAt(screenLocation);
+            _popup.ShowAt(screenLocation, null);
         }
 
         /// <summary>Closes the popup if open.</summary>
@@ -233,20 +233,20 @@ namespace Material3.WinForms.Controls {
                 }
             }
 
-            public void ShowAt(Point screenLocation) {
+            public void ShowAt(Point screenLocation, Form? owner) {
                 MeasureAndSize(0);
 
                 Rectangle screen = Screen.FromPoint(screenLocation).WorkingArea;
                 int x = Math.Max(screen.Left, Math.Min(screenLocation.X, screen.Right - Width));
                 bool below = screenLocation.Y + Height <= screen.Bottom;
                 int y = below ? screenLocation.Y : Math.Max(screen.Top, screenLocation.Y - Height - Dpi.Scale(this, Spacing.Space1));
-                Open(new Point(x, y), below);
+                Open(new Point(x, y), below, owner);
             }
 
-            public void ShowBelow(Rectangle anchor) {
+            public void ShowBelow(Rectangle anchor, Form? owner) {
                 MeasureAndSize(anchor.Width);
                 Point location = PlaceBelow(anchor, Size, Screen.FromRectangle(anchor).WorkingArea, Dpi.Scale(this, AnchorGap));
-                Open(location, location.Y >= anchor.Bottom);
+                Open(location, location.Y >= anchor.Bottom, owner);
             }
 
             internal static Point PlaceBelow(Rectangle anchor, Size popup, Rectangle screen, int gap) {
@@ -259,7 +259,7 @@ namespace Material3.WinForms.Controls {
                 return new Point(x, y);
             }
 
-            private void Open(Point location, bool below) {
+            private void Open(Point location, bool below, Form? owner) {
                 using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(
                     new Rectangle(0, 0, Width, Height), Dpi.Scale(this, _cornerRadius))) {
                     Region?.Dispose();
@@ -267,7 +267,7 @@ namespace Material3.WinForms.Controls {
                 }
 
                 Application.AddMessageFilter(this);
-                ShowAnimated(location, below);
+                ShowAnimated(location, below, owner);
             }
 
             protected override void OnFormClosed(FormClosedEventArgs e) {
