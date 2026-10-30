@@ -712,7 +712,9 @@ namespace Material3.WinForms.Controls {
                 );
                 Rectangle screenBounds = owner.RectangleToScreen(owner.ClientRectangle);
                 int delta = (short)((m.WParam.ToInt64() >> 16) & 0xFFFF);
-                if (!screenBounds.Contains(screenPoint) || DefersTo(Control.FromChildHandle(WindowFromPoint(screenPoint)), owner, delta)) {
+                // A panel at its end lets the wheel through, so an outer one still gets it whichever filter runs first.
+                if (!screenBounds.Contains(screenPoint) || !owner.CanScroll(delta)
+                    || DefersTo(Control.FromChildHandle(WindowFromPoint(screenPoint)), owner, delta)) {
                     return false;
                 }
                 owner.HandleWheel(delta);
