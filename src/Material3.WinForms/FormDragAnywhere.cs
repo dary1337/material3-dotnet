@@ -57,6 +57,10 @@ namespace Material3.WinForms {
                         _pressedAt = null;
                         return false;
                     case WM_MOUSEMOVE when _pressedAt is Point origin:
+                        if (!ReferenceEquals(Control.FromChildHandle(m.HWnd)?.FindForm(), _form)) {
+                            return false;
+                        }
+
                         if ((Control.MouseButtons & MouseButtons.Left) == 0 || !_form.IsHandleCreated) {
                             _pressedAt = null;
                             return false;
