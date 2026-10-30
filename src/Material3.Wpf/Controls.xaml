@@ -859,6 +859,16 @@
             </Setter.Value>
         </Setter>
     </Style>
+    <!-- A menu styles its separators by this key, so without it the system one keeps its icon-gutter indent. -->
+    <Style x:Key="{x:Static MenuItem.SeparatorStyleKey}" TargetType="Separator">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Separator">
+                    <Border Height="1" Background="{DynamicResource OutlineVariant}" Margin="-4,4" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 
     <Style x:Key="ThinThumb" TargetType="Thumb">
         <Setter Property="Focusable" Value="False" />

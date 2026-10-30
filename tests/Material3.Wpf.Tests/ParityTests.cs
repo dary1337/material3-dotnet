@@ -201,6 +201,16 @@ namespace Material3.Wpf.Tests {
         });
 
         [Fact]
+        public void AMenuSeparatorRunsTheMenusWholeWidth() => Ui.InWindow(w => {
+            var separator = new Separator { Style = (Style)w.FindResource(MenuItem.SeparatorStyleKey) };
+            w.Content = new StackPanel { Width = 200, Children = { separator } };
+            Ui.Settle(w);
+            var line = (Border)VisualTreeHelper.GetChild(separator, 0);
+            Assert.Equal(-4, line.Margin.Left);
+            Assert.Equal(-4, line.Margin.Right);
+        });
+
+        [Fact]
         public void TheFontFamilyTokenReachesControlsAndTypeStyles() => Ui.InWindow(w => {
             w.Resources["FontFamily"] = new FontFamily("Tahoma");
             var chip = new Chip { Text = "Tag" };
