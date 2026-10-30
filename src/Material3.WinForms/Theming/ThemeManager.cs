@@ -48,7 +48,17 @@ namespace Material3.WinForms.Theming {
                     throw new ArgumentNullException(nameof(value));
                 }
 
-                Apply(value, _state.IsDark);
+                bool changed;
+                lock (Gate) {
+                    Snapshot state = _state;
+                    changed = !ReferenceEquals(state.Theme, value);
+                    if (changed) {
+                        _state = new Snapshot(value, state.IsDark);
+                    }
+                }
+                if (changed) {
+                    ThemeChanged?.Invoke(null, EventArgs.Empty);
+                }
             }
         }
 
