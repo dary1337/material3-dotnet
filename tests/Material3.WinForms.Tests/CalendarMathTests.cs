@@ -68,6 +68,7 @@ namespace Material3.WinForms.Tests {
             Assert.Equal(new DateTime(2026, 2, 28, 13, 45, 0), month);
             Assert.Equal(start.TimeOfDay, day.TimeOfDay);
             Assert.Equal(DateTimeKind.Local, month.Kind);
+            Assert.Equal(DateTimeKind.Local, day.Kind);
         }
 
         [Fact]

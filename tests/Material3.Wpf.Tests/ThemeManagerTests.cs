@@ -101,6 +101,18 @@ namespace Material3.Wpf.Tests {
         });
 
         [Fact]
+        public void AWorkerChangeReachesTheAppDictionaryAfterSettle() => Ui.InWindow(w => {
+            var app = new ResourceDictionary();
+            System.Windows.Threading.Dispatcher ui = w.Dispatcher;
+            var state = new ThemeState(() => (app, ui));
+            var worker = new System.Threading.Thread(() => state.IsDark = !state.IsDark);
+            worker.Start();
+            worker.Join();
+            Ui.Settle(w);
+            Assert.Equal(state.Scheme.Surface.ToMedia(), ((SolidColorBrush)app["Surface"]).Color);
+        });
+
+        [Fact]
         public void TheSettersKeepTheirValueWhenThereIsNothingToPublishInto() {
             var state = new ThemeState(() => null);
             bool wasDark = state.IsDark;
