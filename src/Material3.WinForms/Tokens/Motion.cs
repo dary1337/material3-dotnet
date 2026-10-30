@@ -1,5 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Threading;
+using Microsoft.Win32;
 
 namespace Material3.WinForms.Tokens {
     /// <summary>
@@ -21,17 +23,34 @@ namespace Material3.WinForms.Tokens {
         // Tests pin it so a machine with Windows animations off still runs the animated paths.
         internal static bool IgnoreSystemSetting;
 
-        // Read each time, as WPF reads ClientAreaAnimation, so "Show animations in Windows" applies at once.
         internal static bool IsAnimating => AnimationsEnabled && (IgnoreSystemSetting || ClientAreaAnimation());
 
         private const uint SPI_GETCLIENTAREAANIMATION = 0x1042;
+        private const int Unknown = 0;
+        private const int Off = 1;
+        private const int On = 2;
+        private static int _clientAreaAnimation;
+        private static int _watching;
 
         [DllImport("user32.dll")]
         private static extern bool SystemParametersInfo(uint action, uint param, ref bool value, uint winIni);
 
+        // Cached as WPF caches SystemParameters, and dropped on every settings broadcast so "Show animations in Windows"
+        // applies at once; every animated frame asks.
         private static bool ClientAreaAnimation() {
+            int cached = Volatile.Read(ref _clientAreaAnimation);
+            if (cached != Unknown) {
+                return cached == On;
+            }
+
+            if (Interlocked.Exchange(ref _watching, 1) == 0) {
+                SystemEvents.UserPreferenceChanged += (s, e) => Volatile.Write(ref _clientAreaAnimation, Unknown);
+            }
+
             bool on = true;
-            return !SystemParametersInfo(SPI_GETCLIENTAREAANIMATION, 0, ref on, 0) || on;
+            bool value = !SystemParametersInfo(SPI_GETCLIENTAREAANIMATION, 0, ref on, 0) || on;
+            Volatile.Write(ref _clientAreaAnimation, value ? On : Off);
+            return value;
         }
 
         /// <summary>The M3 <c>Short1</c> duration, 50 ms.</summary>
