@@ -137,7 +137,8 @@ namespace Material3.Wpf {
         }
 
         internal void ShowMonth(int delta) {
-            if (Shifted(() => _shown.AddMonths(delta)) is DateTime month) {
+            DateTime month = CalendarMath.AddMonthsClamped(_shown, delta);
+            if (month != _shown) {
                 _shown = month;
                 Render();
             }
@@ -145,35 +146,25 @@ namespace Material3.Wpf {
 
         protected override void OnKeyDown(KeyEventArgs e) {
             int days = e.Key switch { Key.Left => -1, Key.Right => 1, Key.Up => -7, Key.Down => 7, _ => 0 };
-            DateTime? next;
+            DateTime next;
             if (days != 0) {
-                next = Shifted(() => Selected.AddDays(days));
+                next = CalendarMath.AddDaysClamped(Selected, days);
             }
             else if (e.Key == Key.PageUp) {
-                next = Shifted(() => Selected.AddMonths(-1));
+                next = CalendarMath.AddMonthsClamped(Selected, -1);
             }
             else if (e.Key == Key.PageDown) {
-                next = Shifted(() => Selected.AddMonths(1));
+                next = CalendarMath.AddMonthsClamped(Selected, 1);
             }
             else {
                 base.OnKeyDown(e);
                 return;
             }
-            if (next is DateTime date) {
-                Select(date);
+            if (next != Selected) {
+                Select(next);
             }
 
             e.Handled = true;
-        }
-
-        // A step past DateTime.MinValue or MaxValue throws; at the edge of the calendar the step is ignored.
-        private static DateTime? Shifted(Func<DateTime> step) {
-            try {
-                return step();
-            }
-            catch (ArgumentOutOfRangeException) {
-                return null;
-            }
         }
 
         private Button NavButton(string glyph, int delta) {

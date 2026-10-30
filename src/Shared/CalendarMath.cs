@@ -37,6 +37,12 @@ namespace Material3.Shared {
             return new DateTime(year, month, day);
         }
 
+        // A step past year 1 or 9999 leaves the date where it is, as AddMonthsClamped does.
+        internal static DateTime AddDaysClamped(DateTime date, int days) {
+            long target = date.Ticks / TimeSpan.TicksPerDay + days;
+            return target < 0 || target > DateTime.MaxValue.Ticks / TimeSpan.TicksPerDay ? date : date.AddDays(days);
+        }
+
         internal static string[] WeekdayHeaders(DayOfWeek firstDayOfWeek, CultureInfo culture) {
             // ShortestDayNames, not the first letter of the abbreviation: in Chinese every abbreviation starts with 周.
             string[] names = culture.DateTimeFormat.ShortestDayNames;

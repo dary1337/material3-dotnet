@@ -47,6 +47,19 @@ namespace Material3.WinForms.Tests {
             Assert.Equal(new DateTime(expYear, expMonth, expDay), result);
         }
 
+        [Theory]
+        [InlineData(2026, 10, 31, 1, 2026, 11, 1)]
+        [InlineData(2026, 3, 1, -7, 2026, 2, 22)]
+        [InlineData(1, 1, 1, -1, 1, 1, 1)]
+        [InlineData(1, 1, 3, -7, 1, 1, 3)]
+        [InlineData(9999, 12, 31, 1, 9999, 12, 31)]
+        [InlineData(9999, 12, 30, 1, 9999, 12, 31)]
+        public void AddDaysClamped_StopsAtTheEndsOfTheCalendar(
+            int year, int month, int day, int delta, int expYear, int expMonth, int expDay) {
+            DateTime result = CalendarMath.AddDaysClamped(new DateTime(year, month, day), delta);
+            Assert.Equal(new DateTime(expYear, expMonth, expDay), result);
+        }
+
         [Fact]
         public void WeekdayHeaders_StartAtTheConfiguredFirstDay() {
             string[] headers = CalendarMath.WeekdayHeaders(DayOfWeek.Monday, CultureInfo.InvariantCulture);
