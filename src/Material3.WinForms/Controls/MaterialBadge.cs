@@ -14,9 +14,11 @@ namespace Material3.WinForms.Controls {
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialBadge : Control {
-        private const int PillHeight = 16;
-        private const int DotSize = 8;
+        private const int DefaultPillHeight = 16;
 
+        private int _pillHeight = DefaultPillHeight;
+        private int _dotSize = 8;
+        private int _horizontalPadding = 5;
         private int _count;
         private bool _dotMode;
 
@@ -30,8 +32,82 @@ namespace Material3.WinForms.Controls {
                 true);
             BackColor = Color.Transparent;
             TabStop = false;
-            Size = new Size(PillHeight, PillHeight);
+            Size = new Size(DefaultPillHeight, DefaultPillHeight);
+            AutoSize = true;
+            TypeRole.Follow(this, () => TypeScale.LabelSmall);
             ThemeHook.Attach(this, Invalidate);
+        }
+
+        /// <summary>Whether the badge sizes itself to its count or dot. Turn it off to give it a size of your own.</summary>
+        [Browsable(true)]
+        [EditorBrowsable(EditorBrowsableState.Always)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+        [DefaultValue(true)]
+        public override bool AutoSize {
+            get => base.AutoSize;
+            set { base.AutoSize = value; AutoSizeToContent(); }
+        }
+
+        /// <summary>The count pill's height, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The count pill's height, in 96-DPI px.")]
+        [DefaultValue(DefaultPillHeight)]
+        public int PillHeight {
+            get => _pillHeight;
+            set { _pillHeight = Math.Max(1, value); AutoSizeToContent(); Invalidate(); }
+        }
+
+        /// <summary>The dot's diameter in IsDot mode, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The dot's diameter in IsDot mode, in 96-DPI px.")]
+        [DefaultValue(8)]
+        public int DotSize {
+            get => _dotSize;
+            set { _dotSize = Math.Max(1, value); AutoSizeToContent(); Invalidate(); }
+        }
+
+        /// <summary>The space on each side of the count, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The space on each side of the count, in 96-DPI px.")]
+        [DefaultValue(5)]
+        public int HorizontalPadding {
+            get => _horizontalPadding;
+            set { _horizontalPadding = Math.Max(0, value); AutoSizeToContent(); Invalidate(); }
+        }
+
+        /// <inheritdoc />
+        public override Size GetPreferredSize(Size proposedSize) {
+            if (_dotMode) {
+                int dot = Dpi.Scale(this, _dotSize);
+                return new Size(dot, dot);
+            }
+            int height = Math.Max(Dpi.Scale(this, _pillHeight), Font.Height);
+            using (var bitmap = new Bitmap(1, 1)) {
+                bitmap.SetResolution(DeviceDpi, DeviceDpi);
+                using (var g = Graphics.FromImage(bitmap)) {
+                    SizeF size = g.MeasureString(CountText, Font, int.MaxValue, StringFormat.GenericTypographic);
+                    return new Size(Math.Max(height, (int)Math.Ceiling(size.Width) + Dpi.Scale(this, _horizontalPadding) * 2), height);
+                }
+            }
+        }
+
+        /// <inheritdoc />
+        protected override void OnHandleCreated(EventArgs e) {
+            base.OnHandleCreated(e);
+            AutoSizeToContent();
+        }
+
+        /// <inheritdoc />
+        protected override void OnDpiChangedAfterParent(EventArgs e) {
+            base.OnDpiChangedAfterParent(e);
+            AutoSizeToContent();
+        }
+
+        /// <inheritdoc />
+        protected override void OnFontChanged(EventArgs e) {
+            base.OnFontChanged(e);
+            AutoSizeToContent();
+            Invalidate();
         }
 
         /// <summary>Number rendered in the badge pill; clamped to non-negative.</summary>
@@ -55,14 +131,8 @@ namespace Material3.WinForms.Controls {
         private string CountText => _count > 999 ? "999+" : _count.ToString();
 
         private void AutoSizeToContent() {
-            if (_dotMode) {
-                Size = new Size(DotSize, DotSize);
-                return;
-            }
-            using (var bitmap = new Bitmap(1, 1))
-            using (Graphics g = Graphics.FromImage(bitmap)) {
-                SizeF size = g.MeasureString(CountText, TypeScale.LabelSmall, int.MaxValue, StringFormat.GenericTypographic);
-                Size = new Size(Math.Max(PillHeight, (int)Math.Ceiling(size.Width) + 10), PillHeight);
+            if (AutoSize) {
+                Size = GetPreferredSize(Size.Empty);
             }
         }
 
@@ -87,7 +157,7 @@ namespace Material3.WinForms.Controls {
                     Alignment = StringAlignment.Center,
                     LineAlignment = StringAlignment.Center,
                 }) {
-                    g.DrawString(CountText, TypeScale.LabelSmall, brush, rect, fmt);
+                    g.DrawString(CountText, Font, brush, rect, fmt);
                 }
             }
         }

@@ -10,21 +10,28 @@ using Material3.WinForms.Tokens;
 using Material3.WinForms.Typography;
 
 namespace Material3.WinForms.Controls {
-    /// <summary>Material 3 switch: 52×32 track with an animated thumb that grows off→on, an optional label, toggled by click or Space.</summary>
+    /// <summary>Material 3 switch: 52×32 track with an animated thumb that grows off→on, an optional label leading the track, toggled by click or Space.</summary>
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialSwitch : Control {
-        private const int TrackWidth = 52;
-        private const int TrackHeight = 32;
-        private const int ThumbOff = 16;
-        private const int ThumbOn = 24;
-        private const int ThumbPressed = 28;
-        private const int LabelGap = 12;
-        private const int HaloRadius = 20;
-        private const int ControlHeight = HaloRadius * 2;
+        private const int DefaultTrackWidth = 52;
+        private const int DefaultTrackHeight = 32;
+
+        private int _trackWidth = DefaultTrackWidth;
+        private int _trackHeight = DefaultTrackHeight;
+        private int _labelGap = 12;
+
+        private int ThumbOff => _trackHeight * 16 / DefaultTrackHeight;
+        private int ThumbOn => _trackHeight * 24 / DefaultTrackHeight;
+        private int ThumbPressed => _trackHeight * 28 / DefaultTrackHeight;
+        private int HaloRadius => _trackHeight * 20 / DefaultTrackHeight;
+        // The hover halo is wider than the track; a control clips at its bounds, so the track keeps this clear.
+        private int HaloOverhang => Math.Max(0, HaloRadius - _trackHeight / 2) + 1;
+        private int ControlHeight => HaloRadius * 2;
 
         private bool _checked;
         private bool _hovered;
+        private readonly StateLayerFade _layer;
         private bool _pressed;
         private readonly AnimatedValue _thumb;
 
@@ -33,6 +40,7 @@ namespace Material3.WinForms.Controls {
 
         /// <summary>Initializes a new instance of the <see cref="MaterialSwitch"/> class.</summary>
         public MaterialSwitch() {
+            _layer = new StateLayerFade(this);
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
                     | ControlStyles.UserPaint
@@ -42,8 +50,10 @@ namespace Material3.WinForms.Controls {
                 true);
             BackColor = Color.Transparent;
             MaterialCursors.Apply(this, MaterialCursors.Pointer);
-            Size = new Size(TrackWidth, ControlHeight);
+            Size = new Size(DefaultTrackWidth, ControlHeight);
+            AutoSize = true;
             TabStop = true;
+            TypeRole.Follow(this, () => TypeScale.BodyMedium);
             _thumb = new AnimatedValue(this, factor: 0.28f, threshold: 0.03f);
             ThemeHook.Attach(this, Invalidate);
         }
@@ -65,6 +75,76 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        /// <summary>The track's width, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The track's width, in 96-DPI px.")]
+        [DefaultValue(DefaultTrackWidth)]
+        public int TrackWidth {
+            get => _trackWidth;
+            set { _trackWidth = Math.Max(1, value); _prefDpi = -1; ApplyIntrinsicSize(); Invalidate(); }
+        }
+
+        /// <summary>The track's height; the thumb and its layer scale with it, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The track's height; the thumb and its layer scale with it, in 96-DPI px.")]
+        [DefaultValue(DefaultTrackHeight)]
+        public int TrackHeight {
+            get => _trackHeight;
+            set { _trackHeight = Math.Max(1, value); _prefDpi = -1; ApplyIntrinsicSize(); Invalidate(); }
+        }
+
+        /// <summary>The gap between the track and the label, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The gap between the track and the label, in 96-DPI px.")]
+        [DefaultValue(12)]
+        public int LabelGap {
+            get => _labelGap;
+            set { _labelGap = Math.Max(0, value); _prefDpi = -1; ApplyIntrinsicSize(); Invalidate(); }
+        }
+
+        /// <inheritdoc />
+        protected override void OnFontChanged(EventArgs e) {
+            base.OnFontChanged(e);
+            _prefDpi = -1;
+            ApplyIntrinsicSize();
+            Invalidate();
+        }
+
+        /// <summary>Whether the control sizes itself to its track and label. Turn it off to give it a size of your own.</summary>
+        [Browsable(true)]
+        [EditorBrowsable(EditorBrowsableState.Always)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+        [DefaultValue(true)]
+        public override bool AutoSize {
+            get => base.AutoSize;
+            set { base.AutoSize = value; ApplyIntrinsicSize(); }
+        }
+
+        /// <inheritdoc />
+        protected override void OnHandleCreated(EventArgs e) {
+            base.OnHandleCreated(e);
+            ApplyIntrinsicSize();
+        }
+
+        /// <inheritdoc />
+        protected override void OnDpiChangedAfterParent(EventArgs e) {
+            base.OnDpiChangedAfterParent(e);
+            _prefDpi = -1;
+            ApplyIntrinsicSize();
+        }
+
+        private void ApplyIntrinsicSize() {
+            if (!AutoSize) {
+                return;
+            }
+
+            if (IsHandleCreated) {
+                Size = GetPreferredSize(Size.Empty);
+            }
+
+            Parent?.PerformLayout(this, nameof(PreferredSize));
+        }
+
         private string? _prefText;
         private int _prefDpi = -1;
         private Size _prefSize;
@@ -75,16 +155,20 @@ namespace Material3.WinForms.Controls {
             if (_prefDpi == DeviceDpi && _prefText == text) {
                 return _prefSize;
             }
-            int width = Dpi.Scale(this, TrackWidth);
+            int overhang = Dpi.Scale(this, HaloOverhang);
+            int width = Dpi.Scale(this, _trackWidth) + overhang;
             if (text.Length > 0) {
                 using (Graphics g = CreateGraphics()) {
-                    width += Dpi.Scale(this, LabelGap) + (int)Math.Ceiling(
-                        g.MeasureString(text, TypeScale.BodyMedium, int.MaxValue, StringFormat.GenericTypographic).Width);
+                    width += Dpi.Scale(this, _labelGap) + (int)Math.Ceiling(
+                        g.MeasureString(text, Font, int.MaxValue, StringFormat.GenericTypographic).Width);
                 }
+            }
+            else {
+                width += overhang;
             }
             _prefText = text;
             _prefDpi = DeviceDpi;
-            _prefSize = new Size(width, Dpi.Scale(this, ControlHeight));
+            _prefSize = new Size(width, Math.Max(Font.Height, Math.Max(Dpi.Scale(this, ControlHeight), Dpi.Scale(this, _trackHeight) + overhang * 2)));
             return _prefSize;
         }
 
@@ -126,6 +210,7 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override void OnTextChanged(EventArgs e) {
             base.OnTextChanged(e);
+            ApplyIntrinsicSize();
             Invalidate();
         }
 
@@ -138,17 +223,18 @@ namespace Material3.WinForms.Controls {
                 g.FillRectangle(bg, ClientRectangle);
             }
 
-            int trackWidth = Dpi.Scale(this, TrackWidth);
-            int trackHeight = Dpi.Scale(this, TrackHeight);
+            int trackWidth = Dpi.Scale(this, _trackWidth);
+            int trackHeight = Dpi.Scale(this, _trackHeight);
             int trackY = (Height - trackHeight) / 2;
-            var track = new Rectangle(0, trackY, trackWidth, trackHeight);
+            int trackX = Width - trackWidth - Dpi.Scale(this, HaloOverhang);
+            var track = new Rectangle(trackX, trackY, trackWidth, trackHeight);
             float t = (float)Motion.Standard.Evaluate(_thumb.Current);
 
             Color trackFill;
             Color trackOutline;
             Color thumbColor;
             if (!Enabled) {
-                trackFill = ArgbExtensions.Overlay(ResolveParentColor(), MaterialColors.OnSurface, StateLayers.DisabledContainer);
+                trackFill = ArgbExtensions.Overlay(SurfaceBehind.Of(this), MaterialColors.OnSurface, StateLayers.DisabledContainer);
                 trackOutline = trackFill;
                 thumbColor = MaterialColors.OnSurfaceMuted;
             }
@@ -170,14 +256,14 @@ namespace Material3.WinForms.Controls {
             int thumbSize = _pressed
                 ? Dpi.Scale(this, ThumbPressed)
                 : (int)Math.Round(Dpi.Scale(this, ThumbOff) + Dpi.Scale(this, ThumbOn - ThumbOff) * t);
-            float cxOff = trackHeight / 2f;
-            float cxOn = trackWidth - trackHeight / 2f;
+            float cxOff = trackX + trackHeight / 2f;
+            float cxOn = trackX + trackWidth - trackHeight / 2f;
             float cx = cxOff + (cxOn - cxOff) * t;
             float cy = trackY + trackHeight / 2f;
 
-            if (Enabled && (_hovered || _pressed)) {
+            double overlay = _layer.Resolve(_hovered, _pressed, Enabled);
+            if (overlay > 0) {
                 int haloRadius = Dpi.Scale(this, HaloRadius);
-                double overlay = _pressed ? StateLayers.Pressed : StateLayers.Hover;
                 using (var halo = new SolidBrush(Color.FromArgb((int)(overlay * 255),
                     _checked ? MaterialColors.Primary : MaterialColors.OnSurface))) {
                     g.FillEllipse(halo, cx - haloRadius, cy - haloRadius, haloRadius * 2, haloRadius * 2);
@@ -192,20 +278,11 @@ namespace Material3.WinForms.Controls {
                 Color textColor = Enabled ? MaterialColors.OnSurface : MaterialColors.OnSurfaceMuted;
                 using (var brush = new SolidBrush(textColor))
                 using (var fmt = new StringFormat(StringFormat.GenericTypographic) { LineAlignment = StringAlignment.Center }) {
-                    int labelGap = Dpi.Scale(this, LabelGap);
-                    g.DrawString(Text, TypeScale.BodyMedium, brush,
-                        new RectangleF(trackWidth + labelGap, 0, Width - trackWidth - labelGap, Height), fmt);
+                    int labelGap = Dpi.Scale(this, _labelGap);
+                    g.DrawString(Text, Font, brush,
+                        new RectangleF(0, 0, Math.Max(0, trackX - labelGap), Height), fmt);
                 }
             }
-        }
-
-        private Color ResolveParentColor() {
-            for (Control? p = Parent; p != null; p = p.Parent) {
-                if (p.BackColor.A > 0) {
-                    return p.BackColor;
-                }
-            }
-            return MaterialColors.Surface;
         }
 
         private static Color Blend(Color from, Color to, float t) {
@@ -215,6 +292,7 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override void Dispose(bool disposing) {
             if (disposing) {
+                _layer.Dispose();
                 _thumb.Dispose();
             }
             base.Dispose(disposing);

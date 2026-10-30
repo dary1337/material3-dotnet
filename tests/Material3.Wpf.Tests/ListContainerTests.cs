@@ -34,9 +34,17 @@ namespace Material3.Wpf.Tests {
 
             int hover = -1, selected = -1;
             for (int i = 0; i < item.Template.Triggers.Count; i++) {
-                if (!(item.Template.Triggers[i] is Trigger trigger)) continue;
-                if (trigger.Property == UIElement.IsMouseOverProperty) hover = i;
-                if (trigger.Property == ListBoxItem.IsSelectedProperty) selected = i;
+                if (!(item.Template.Triggers[i] is Trigger trigger)) {
+                    continue;
+                }
+
+                if (trigger.Property == UIElement.IsMouseOverProperty) {
+                    hover = i;
+                }
+
+                if (trigger.Property == ListBoxItem.IsSelectedProperty) {
+                    selected = i;
+                }
             }
             Assert.True(hover >= 0 && selected > hover, "the selected fill does not outrank the hover fill");
         });
@@ -56,8 +64,10 @@ namespace Material3.Wpf.Tests {
 
         private static ListBoxItem Row(Window w, bool selected, Brush? fill = null) {
             var list = new ListBox {
-                ItemsSource = new[] { "One", "Two" }, BorderThickness = new Thickness(0),
-                Background = Brushes.Transparent, Width = 200,
+                ItemsSource = new[] { "One", "Two" },
+                BorderThickness = new Thickness(0),
+                Background = Brushes.Transparent,
+                Width = 200,
             };
             if (fill != null) {
                 var container = new Style(typeof(ListBoxItem), (Style)w.FindResource(typeof(ListBoxItem)));
@@ -66,7 +76,10 @@ namespace Material3.Wpf.Tests {
             }
             w.Content = list;
             Ui.Settle(w);
-            if (selected) list.SelectedIndex = 0;
+            if (selected) {
+                list.SelectedIndex = 0;
+            }
+
             Ui.Settle(w);
             return (ListBoxItem)list.ItemContainerGenerator.ContainerFromIndex(0);
         }

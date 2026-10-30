@@ -1,6 +1,6 @@
 using System;
 using System.Globalization;
-using Material3.WinForms.Forms;
+using Material3.Shared;
 using Xunit;
 
 namespace Material3.WinForms.Tests {

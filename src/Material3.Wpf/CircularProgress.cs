@@ -63,7 +63,7 @@ namespace Material3.Wpf {
 
         /// <summary>Identifies the <see cref="Diameter"/> property.</summary>
         public static readonly DependencyProperty DiameterProperty = DependencyProperty.Register(
-            nameof(Diameter), typeof(double), typeof(CircularProgress), new FrameworkPropertyMetadata(48.0, OnGeometryChanged));
+            nameof(Diameter), typeof(double), typeof(CircularProgress), new FrameworkPropertyMetadata(40.0, OnGeometryChanged));
 
         /// <summary>The ring's outer size.</summary>
         public double Diameter { get => (double)GetValue(DiameterProperty); set => SetValue(DiameterProperty, value); }
@@ -126,7 +126,10 @@ namespace Material3.Wpf {
             ((CircularProgress)d).Redraw();
 
         private void ApplySweepSource() {
-            if (IsIndeterminate) return;
+            if (IsIndeterminate) {
+                return;
+            }
+
             BeginAnimation(SweepProperty, null);
             double span = Maximum - Minimum;
             double fraction = span <= 0 ? 0 : (Value - Minimum) / span;
@@ -134,12 +137,19 @@ namespace Material3.Wpf {
         }
 
         private void Sync() {
-            if (IsIndeterminate && IsVisible) StartSpin();
-            else StopSpin();
+            if (IsIndeterminate && IsVisible) {
+                StartSpin();
+            }
+            else {
+                StopSpin();
+            }
         }
 
         private void StartSpin() {
-            if (_rotate == null || _rotate.HasAnimatedProperties) return;
+            if (_rotate == null || _rotate.HasAnimatedProperties) {
+                return;
+            }
+
             _rotate.BeginAnimation(RotateTransform.AngleProperty,
                 new DoubleAnimation(0, 360, new Duration(TimeSpan.FromSeconds(TurnSeconds))) { RepeatBehavior = RepeatBehavior.Forever });
 
@@ -153,7 +163,10 @@ namespace Material3.Wpf {
 
         private void StopSpin() {
             _rotate?.BeginAnimation(RotateTransform.AngleProperty, null);
-            if (!IsIndeterminate) return;
+            if (!IsIndeterminate) {
+                return;
+            }
+
             BeginAnimation(SweepProperty, null);
         }
 
@@ -161,20 +174,35 @@ namespace Material3.Wpf {
             double thickness = Math.Max(0.1, StrokeThickness);
             double radius = Math.Max(0.1, (Diameter - thickness) / 2);
             var centre = new Point(Diameter / 2, Diameter / 2);
-            if (_track != null) {
-                var ring = new EllipseGeometry(centre, radius, radius);
-                ring.Freeze();
-                _track.Data = ring;
-            }
-            if (_indicator == null) return;
             double sweep = Math.Max(0, Math.Min(359.99, (double)GetValue(SweepProperty)));
-            _indicator.Data = Arc(centre, radius, sweep);
+            if (_track != null) {
+                if (sweep <= 0.5) {
+                    var ring = new EllipseGeometry(centre, radius, radius);
+                    ring.Freeze();
+                    _track.Data = ring;
+                }
+                else {
+                    // The 4 dp gap is between the visible ends, so each round cap's half-stroke counts toward it.
+                    double gap = (TrackGap + thickness) / (2 * Math.PI * radius) * 360;
+                    _track.Data = Arc(centre, radius, -90 + sweep + gap, 360 - sweep - gap * 2);
+                }
+            }
+            if (_indicator == null) {
+                return;
+            }
+
+            _indicator.Data = Arc(centre, radius, -90, sweep);
         }
 
-        private static Geometry Arc(Point centre, double radius, double sweep) {
-            if (sweep <= 0) return Geometry.Empty;
-            Point start = OnCircle(centre, radius, -90);
-            Point end = OnCircle(centre, radius, -90 + sweep);
+        private const double TrackGap = 4;
+
+        private static Geometry Arc(Point centre, double radius, double from, double sweep) {
+            if (sweep <= 0) {
+                return Geometry.Empty;
+            }
+
+            Point start = OnCircle(centre, radius, from);
+            Point end = OnCircle(centre, radius, from + sweep);
             var figure = new PathFigure { StartPoint = start, IsClosed = false, IsFilled = false };
             figure.Segments.Add(new ArcSegment(end, new Size(radius, radius), 0, sweep > 180, SweepDirection.Clockwise, true));
             var geometry = new PathGeometry();

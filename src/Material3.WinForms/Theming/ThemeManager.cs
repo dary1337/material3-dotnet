@@ -76,7 +76,7 @@ namespace Material3.WinForms.Theming {
             new ConditionalWeakTable<Control, object>();
 
         /// <summary>
-        /// Calls <paramref name="applyTheme"/> on every theme change while the control has a handle,
+        /// Calls <paramref name="applyTheme"/> on every theme, type-scale or elevation change while the control has a handle,
         /// and once immediately if it already exists. A second Attach on the same control is a no-op.
         /// </summary>
         public static void Attach(Control control, Action applyTheme) {
@@ -99,10 +99,20 @@ namespace Material3.WinForms.Theming {
                 }
             };
 
-            control.HandleCreated += (s, e) => ThemeManager.ThemeChanged += onThemeChanged;
-            control.HandleDestroyed += (s, e) => ThemeManager.ThemeChanged -= onThemeChanged;
+            control.HandleCreated += (s, e) => {
+                ThemeManager.ThemeChanged += onThemeChanged;
+                Typography.TypeScale.Changed += onThemeChanged;
+                Tokens.Elevation.Changed += onThemeChanged;
+            };
+            control.HandleDestroyed += (s, e) => {
+                ThemeManager.ThemeChanged -= onThemeChanged;
+                Typography.TypeScale.Changed -= onThemeChanged;
+                Tokens.Elevation.Changed -= onThemeChanged;
+            };
             if (control.IsHandleCreated) {
                 ThemeManager.ThemeChanged += onThemeChanged;
+                Typography.TypeScale.Changed += onThemeChanged;
+                Tokens.Elevation.Changed += onThemeChanged;
             }
         }
     }

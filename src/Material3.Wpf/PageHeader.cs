@@ -40,6 +40,13 @@ namespace Material3.Wpf {
         /// <summary>The wrapping line under the title. Hidden when empty.</summary>
         public string Description { get => (string)GetValue(DescriptionProperty); set => SetValue(DescriptionProperty, value); }
 
+        /// <summary>Identifies the <see cref="DescriptionMaxWidth"/> property.</summary>
+        public static readonly DependencyProperty DescriptionMaxWidthProperty = DependencyProperty.Register(
+            nameof(DescriptionMaxWidth), typeof(double), typeof(PageHeader), new PropertyMetadata(680.0));
+
+        /// <summary>How wide the description runs before it wraps — a line any longer is hard to read.</summary>
+        public double DescriptionMaxWidth { get => (double)GetValue(DescriptionMaxWidthProperty); set => SetValue(DescriptionMaxWidthProperty, value); }
+
         /// <summary>Identifies the <see cref="OverlineTrailing"/> property.</summary>
         public static readonly DependencyProperty OverlineTrailingProperty = DependencyProperty.Register(
             nameof(OverlineTrailing), typeof(object), typeof(PageHeader), new PropertyMetadata(null));

@@ -8,20 +8,27 @@ using Material3.WinForms.Theming;
 using Material3.WinForms.Tokens;
 
 namespace Material3.WinForms.Controls {
-    /// <summary>Material 3 continuous slider: a draggable handle over an active/inactive track, reporting an integer <see cref="Value"/> in [<see cref="Minimum"/>, <see cref="Maximum"/>].</summary>
+    /// <summary>
+    /// Material 3 continuous slider: a bar handle between an active and an inactive track, each kept a gap from it,
+    /// with a stop dot at the end; reports an integer <see cref="Value"/> in [<see cref="Minimum"/>, <see cref="Maximum"/>].
+    /// </summary>
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialSlider : Control {
-        private const int HandleRadius = 10;
-        private const int TrackHeight = 6;
-        private const int StateLayerRadius = 16;
+        private const int DefaultHandleHeight = 44;
+        private const int PressedHandleWidth = 2;
+        private const int StopSize = 4;
+
+        private int _handleWidth = 4;
+        private int _handleHeight = DefaultHandleHeight;
+        private int _trackHeight = 16;
+        private int _trackGap = 6;
 
         private int _minimum;
         private int _maximum = 100;
         private int _value;
         private readonly AnimatedValue _handle;
         private bool _dragging;
-        private bool _hovered;
 
         /// <summary>Raised when the value changes.</summary>
         public event EventHandler? ValueChanged;
@@ -36,7 +43,8 @@ namespace Material3.WinForms.Controls {
                     | ControlStyles.SupportsTransparentBackColor
                     | ControlStyles.Selectable,
                 true);
-            Height = StateLayerRadius * 2;
+            Height = DefaultHandleHeight;
+            AutoSize = true;
             BackColor = Color.Transparent;
             MaterialCursors.Apply(this, MaterialCursors.Pointer);
             TabStop = true;
@@ -56,13 +64,68 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override void OnHandleCreated(EventArgs e) {
             base.OnHandleCreated(e);
-            Height = Dpi.Scale(this, StateLayerRadius * 2);
+            ApplyIntrinsicHeight();
         }
 
         /// <inheritdoc />
         protected override void OnDpiChangedAfterParent(EventArgs e) {
             base.OnDpiChangedAfterParent(e);
-            Height = Dpi.Scale(this, StateLayerRadius * 2);
+            ApplyIntrinsicHeight();
+        }
+
+        private void ApplyIntrinsicHeight() {
+            if (AutoSize) {
+                Height = GetPreferredSize(Size.Empty).Height;
+            }
+        }
+
+        /// <inheritdoc />
+        public override Size GetPreferredSize(Size proposedSize) => new Size(Width, Dpi.Scale(this, Math.Max(_handleHeight, _trackHeight)));
+
+        /// <summary>Whether the slider sizes its height to the handle. Turn it off to give it a size of your own.</summary>
+        [Browsable(true)]
+        [EditorBrowsable(EditorBrowsableState.Always)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+        [DefaultValue(true)]
+        public override bool AutoSize {
+            get => base.AutoSize;
+            set { base.AutoSize = value; ApplyIntrinsicHeight(); }
+        }
+
+        /// <summary>The handle bar's width at rest, in 96-DPI px; it narrows to 2 while dragged.</summary>
+        [Category("Material Design")]
+        [Description("The handle bar's width at rest, in 96-DPI px; it narrows to 2 while dragged.")]
+        [DefaultValue(4)]
+        public int HandleWidth {
+            get => _handleWidth;
+            set { _handleWidth = Math.Max(1, value); Invalidate(); }
+        }
+
+        /// <summary>The handle bar's height, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The handle bar's height, in 96-DPI px.")]
+        [DefaultValue(DefaultHandleHeight)]
+        public int HandleHeight {
+            get => _handleHeight;
+            set { _handleHeight = Math.Max(1, value); ApplyIntrinsicHeight(); Invalidate(); }
+        }
+
+        /// <summary>The track's thickness, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The track's thickness, in 96-DPI px.")]
+        [DefaultValue(16)]
+        public int TrackHeight {
+            get => _trackHeight;
+            set { _trackHeight = Math.Max(0, value); ApplyIntrinsicHeight(); Invalidate(); }
+        }
+
+        /// <summary>The space between the handle and each side of the track, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The space between the handle and each side of the track, in 96-DPI px.")]
+        [DefaultValue(6)]
+        public int TrackGap {
+            get => _trackGap;
+            set { _trackGap = Math.Max(0, value); Invalidate(); }
         }
 
         /// <summary>The lower bound of the slider range.</summary>
@@ -124,10 +187,11 @@ namespace Material3.WinForms.Controls {
             }
         }
 
+        // The handle travels its resting width in from each end, so narrowing it on a drag never moves the value.
+        private float Travel => Math.Max(1f, Width - Dpi.Scale(this, (float)_handleWidth));
+
         private void SetValueFromX(int x) {
-            int handleRadius = Dpi.Scale(this, HandleRadius);
-            int trackWidth = Math.Max(1, Width - handleRadius * 2);
-            double fraction = (double)(x - handleRadius) / trackWidth;
+            double fraction = (x - Dpi.Scale(this, (float)_handleWidth) / 2.0) / Travel;
             fraction = Math.Max(0.0, Math.Min(1.0, fraction));
             Value = _minimum + (int)Math.Round(fraction * (_maximum - _minimum));
         }
@@ -141,6 +205,7 @@ namespace Material3.WinForms.Controls {
                 Focus();
                 _dragging = true;
                 SetValueFromX(e.X);
+                Invalidate();
             }
         }
 
@@ -159,20 +224,6 @@ namespace Material3.WinForms.Controls {
                 _dragging = false;
                 Invalidate();
             }
-        }
-
-        /// <inheritdoc />
-        protected override void OnMouseEnter(EventArgs e) {
-            base.OnMouseEnter(e);
-            _hovered = true;
-            Invalidate();
-        }
-
-        /// <inheritdoc />
-        protected override void OnMouseLeave(EventArgs e) {
-            base.OnMouseLeave(e);
-            _hovered = false;
-            Invalidate();
         }
 
         /// <inheritdoc />
@@ -233,39 +284,74 @@ namespace Material3.WinForms.Controls {
                 g.FillRectangle(bg, ClientRectangle);
             }
 
-            int handleRadius = Dpi.Scale(this, HandleRadius);
-            int trackHeight = Dpi.Scale(this, TrackHeight);
-            int stateLayerRadius = Dpi.Scale(this, StateLayerRadius);
-            int trackWidth = Math.Max(1, Width - handleRadius * 2);
-            int cy = Height / 2;
+            float track = Dpi.Scale(this, (float)_trackHeight);
+            float handleWidth = Dpi.Scale(this, (float)(_dragging ? Math.Min(PressedHandleWidth, _handleWidth) : _handleWidth));
+            float handleHeight = Math.Min(Height, Dpi.Scale(this, (float)_handleHeight));
+            float gap = Dpi.Scale(this, (float)_trackGap);
             double fraction = _maximum > _minimum ? (_handle.Current - _minimum) / (_maximum - _minimum) : 0.0;
             fraction = Math.Max(0.0, Math.Min(1.0, fraction));
-            int handleX = handleRadius + (int)Math.Round(fraction * trackWidth);
+            float centre = Dpi.Scale(this, (float)_handleWidth) / 2f + (float)fraction * Travel;
+            float top = (Height - track) / 2f;
+            float outer = track / 2f;
+            float inner = Math.Min(Dpi.Scale(this, 2f), outer);
 
-            var inactive = new Rectangle(handleRadius, cy - trackHeight / 2, trackWidth, trackHeight);
-            using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(inactive, trackHeight / 2))
-            using (var brush = new SolidBrush(MaterialColors.SurfaceContainerHighest)) {
+            Color active = Enabled ? MaterialColors.Primary : MaterialColors.OnSurfaceMuted;
+            Color inactive = Enabled
+                ? MaterialColors.SecondaryContainer
+                : ArgbExtensions.Overlay(SurfaceBehind.Of(this), MaterialColors.OnSurface, StateLayers.DisabledContainer);
+
+            float activeRight = centre - handleWidth / 2f - gap;
+            if (activeRight > 0) {
+                Fill(g, active, new RectangleF(0, top, activeRight, track), outer, inner);
+            }
+
+            float inactiveLeft = centre + handleWidth / 2f + gap;
+            if (inactiveLeft < Width) {
+                Fill(g, inactive, new RectangleF(inactiveLeft, top, Width - inactiveLeft, track), inner, outer);
+                float stop = Dpi.Scale(this, (float)StopSize);
+                if (Width - inactiveLeft >= track) {
+                    using (var brush = new SolidBrush(active)) {
+                        g.FillEllipse(brush, Width - outer - stop / 2f, top + outer - stop / 2f, stop, stop);
+                    }
+                }
+            }
+
+            Fill(g, active, new RectangleF(centre - handleWidth / 2f, (Height - handleHeight) / 2f, handleWidth, handleHeight), handleWidth / 2f, handleWidth / 2f);
+        }
+
+        // A track segment is fully round on its outer end and only slightly round where it meets the gap.
+        private static void Fill(Graphics g, Color color, RectangleF rect, float leftRadius, float rightRadius) {
+            if (rect.Width <= 0 || rect.Height <= 0) {
+                return;
+            }
+
+            float l = Math.Min(leftRadius, Math.Min(rect.Width, rect.Height) / 2f);
+            float r = Math.Min(rightRadius, Math.Min(rect.Width, rect.Height) / 2f);
+            using (var path = new GraphicsPath())
+            using (var brush = new SolidBrush(color)) {
+                if (l > 0) {
+                    path.AddArc(rect.Left, rect.Top, l * 2, l * 2, 180, 90);
+                }
+                else {
+                    path.AddLine(rect.Left, rect.Top, rect.Left, rect.Top);
+                }
+
+                if (r > 0) {
+                    path.AddArc(rect.Right - r * 2, rect.Top, r * 2, r * 2, 270, 90);
+                    path.AddArc(rect.Right - r * 2, rect.Bottom - r * 2, r * 2, r * 2, 0, 90);
+                }
+                else {
+                    path.AddLine(rect.Right, rect.Top, rect.Right, rect.Bottom);
+                }
+                if (l > 0) {
+                    path.AddArc(rect.Left, rect.Bottom - l * 2, l * 2, l * 2, 90, 90);
+                }
+                else {
+                    path.AddLine(rect.Left, rect.Bottom, rect.Left, rect.Bottom);
+                }
+
+                path.CloseFigure();
                 g.FillPath(brush, path);
-            }
-
-            int activeWidth = handleX - handleRadius;
-            if (activeWidth > 0) {
-                var active = new Rectangle(handleRadius, cy - trackHeight / 2, activeWidth, trackHeight);
-                using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(active, trackHeight / 2))
-                using (var brush = new SolidBrush(MaterialColors.Primary)) {
-                    g.FillPath(brush, path);
-                }
-            }
-
-            double overlay = _dragging ? StateLayers.Pressed : _hovered ? StateLayers.Hover : 0.0;
-            if (overlay > 0.0) {
-                using (var brush = new SolidBrush(Color.FromArgb((int)(overlay * 255), MaterialColors.Primary))) {
-                    g.FillEllipse(brush, handleX - stateLayerRadius, cy - stateLayerRadius, stateLayerRadius * 2, stateLayerRadius * 2);
-                }
-            }
-
-            using (var handle = new SolidBrush(MaterialColors.Primary)) {
-                g.FillEllipse(handle, handleX - handleRadius, cy - handleRadius, handleRadius * 2, handleRadius * 2);
             }
         }
     }

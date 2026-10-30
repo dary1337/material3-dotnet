@@ -16,7 +16,8 @@ namespace Material3.Wpf.Tests {
 
         [Fact]
         public void RealizesOnlyAround_ViewportWorth_Not1000() {
-            int realized = -1; Exception? err = null;
+            int realized = -1;
+            Exception? err = null;
             var t = new Thread(() => {
                 try { realized = RunLayout(); }
                 catch (Exception e) { err = e; }
@@ -24,7 +25,10 @@ namespace Material3.Wpf.Tests {
             t.SetApartmentState(ApartmentState.STA);
             t.Start();
             t.Join();
-            if (err != null) throw new Exception("layout threw: " + err, err);
+            if (err != null) {
+                throw new Exception("layout threw: " + err, err);
+            }
+
             _o.WriteLine("realized containers = " + realized);
             Assert.True(realized > 0, "nothing realized");
             Assert.True(realized < 200, $"VWP did not virtualize: {realized} of 1000 realized");
@@ -37,26 +41,41 @@ namespace Material3.Wpf.Tests {
             t.SetApartmentState(ApartmentState.STA);
             t.Start();
             t.Join();
-            if (err != null) throw new Exception("remove threw: " + err, err);
+            if (err != null) {
+                throw new Exception("remove threw: " + err, err);
+            }
         }
 
         private static void RunRemoval() {
             var items = new System.Collections.ObjectModel.ObservableCollection<int>(Enumerable.Range(0, 200));
-            var lb = BuildListBox(items);
+            ListBox lb = BuildListBox(items);
             var win = new Window {
-                Width = 820, Height = 440, Left = -5000, Top = -5000,
-                WindowStyle = WindowStyle.None, ShowInTaskbar = false, ShowActivated = false, Content = lb,
+                Width = 820,
+                Height = 440,
+                Left = -5000,
+                Top = -5000,
+                WindowStyle = WindowStyle.None,
+                ShowInTaskbar = false,
+                ShowActivated = false,
+                Content = lb,
             };
             win.Show();
             win.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Loaded);
             win.UpdateLayout();
-            lb.ScrollIntoView(items[items.Count - 1]); win.UpdateLayout();
-            lb.ScrollIntoView(items[0]); win.UpdateLayout();
-            items.RemoveAt(0); win.UpdateLayout();
-            items.RemoveAt(3); win.UpdateLayout();
-            lb.ScrollIntoView(items[items.Count - 1]); win.UpdateLayout();
-            items.RemoveAt(items.Count - 1); win.UpdateLayout();
-            items.Clear(); win.UpdateLayout();
+            lb.ScrollIntoView(items[items.Count - 1]);
+            win.UpdateLayout();
+            lb.ScrollIntoView(items[0]);
+            win.UpdateLayout();
+            items.RemoveAt(0);
+            win.UpdateLayout();
+            items.RemoveAt(3);
+            win.UpdateLayout();
+            lb.ScrollIntoView(items[items.Count - 1]);
+            win.UpdateLayout();
+            items.RemoveAt(items.Count - 1);
+            win.UpdateLayout();
+            items.Clear();
+            win.UpdateLayout();
             win.UpdateLayout();
             win.Close();
         }
@@ -75,11 +94,17 @@ namespace Material3.Wpf.Tests {
         }
 
         private static int RunLayout() {
-            var lb = BuildListBox(Enumerable.Range(0, 1000).ToList());
+            ListBox lb = BuildListBox(Enumerable.Range(0, 1000).ToList());
 
             var win = new Window {
-                Width = 820, Height = 440, Left = -5000, Top = -5000,
-                WindowStyle = WindowStyle.None, ShowInTaskbar = false, ShowActivated = false, Content = lb,
+                Width = 820,
+                Height = 440,
+                Left = -5000,
+                Top = -5000,
+                WindowStyle = WindowStyle.None,
+                ShowInTaskbar = false,
+                ShowActivated = false,
+                Content = lb,
             };
             win.Show();
             win.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Loaded);
@@ -95,7 +120,10 @@ namespace Material3.Wpf.Tests {
             int childCount = VisualTreeHelper.GetChildrenCount(root);
             for (int i = 0; i < childCount; i++) {
                 DependencyObject child = VisualTreeHelper.GetChild(root, i);
-                if (child is ListBoxItem || child is Border) n++;
+                if (child is ListBoxItem || child is Border) {
+                    n++;
+                }
+
                 n += CountContainers(child);
             }
             return n;

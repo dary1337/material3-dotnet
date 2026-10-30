@@ -25,9 +25,14 @@ namespace Material3.Wpf {
         private double? _declaredMinWidth;
 
         private void MatchOpenerWidth() {
-            if (!(Parent is Popup popup) || !(popup.PlacementTarget is FrameworkElement opener)) return;
+            if (!(Parent is Popup popup) || !(popup.PlacementTarget is FrameworkElement opener)) {
+                return;
+            }
+
             _declaredMinWidth = _declaredMinWidth ?? MinWidth;
-            if (opener.ActualWidth > 0) MinWidth = Math.Max(_declaredMinWidth.Value, opener.ActualWidth);
+            if (opener.ActualWidth > 0) {
+                MinWidth = Math.Max(_declaredMinWidth.Value, opener.ActualWidth);
+            }
         }
     }
 }

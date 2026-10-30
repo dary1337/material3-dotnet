@@ -13,6 +13,10 @@ namespace Material3.WinForms.Drawing {
         public const string CheckCircleFilled = "check_circle_filled";
         /// <summary>The Material Symbols <c>check_filled</c> glyph.</summary>
         public const string CheckFilled = "check_filled";
+        /// <summary>The Material Symbols <c>add</c> glyph.</summary>
+        public const string Add = "add";
+        /// <summary>The Material Symbols <c>expand_less</c> glyph.</summary>
+        public const string ChevronUp = "expand_less";
         /// <summary>The Material Symbols <c>expand_more</c> glyph.</summary>
         public const string ChevronDown = "expand_more";
         /// <summary>The Material Symbols <c>close</c> glyph.</summary>

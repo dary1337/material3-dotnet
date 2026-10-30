@@ -71,7 +71,7 @@ namespace Material3.Core {
 
         /// <summary>Derives all palettes from a seed color.</summary>
         public static CorePalette FromSeed(Argb seed, SchemeVariant variant = SchemeVariant.TonalSpot) {
-            Hct hct = Hct.FromColor(seed);
+            var hct = Hct.FromColor(seed);
             return new CorePalette(hct.Hue, hct.Chroma, variant);
         }
     }

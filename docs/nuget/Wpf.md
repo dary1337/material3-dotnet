@@ -13,12 +13,19 @@ centered popup tooltip. Built on [`Material3.Core`](https://www.nuget.org/packag
   scrollbar, linear and circular progress, card, list item, divider, expander
 - Inputs: `TextField` (filled / outlined, floating label), `SearchBar`, the `M3Combo` select, `ColorField` colour picker, `ValueListEditor` and `DataTableEditor` for lists and records, the
   `InputFilter` number filter for any `TextBox`
-- Navigation and status: `Tabs` (primary / secondary), `Badge`, assist / filter / input / suggestion `Chip`s, rich `Tip`
+- Navigation and status: `NavigationRail` / `NavigationBar` / `NavigationDrawer`, `Tabs` (primary / secondary), `Badge`,
+  assist / filter / input / suggestion `Chip`s, rich `Tip`
+- Window: `TitleBar` caption with system animations and snap, `WindowPlacement` save / restore, `TaskbarProgress`
+- Cards: `Card`, elevated / filled / outlined variants, selectable `OptionCard`
 - Page furniture: `PageHeader`, `NoticeBanner`, `EmptyState`, `PopupCard`, `Snackbar`
 - Loading: `Skeleton` shimmer blocks, the `Busy` spinner and the `StepChecklist` progress list
-- `Dialog` blocking dialog — tone glyph, three-level actions, hold-to-confirm, a confirm that owns its work
+- `Dialog` blocking dialog — tone glyph, three-level actions, hold-to-confirm, a confirm that owns its work;
+  `DatePickerDialog` and `TimePickerDialog`
 - Elevation: shadow effects plus the tinted `SurfaceElevation` roles treatment
-- `Modal` app-level modal + scrim, `AnimatedPopup`, centered `Tip` tooltip, `PathIcon`, motion helpers
+- `Modal` app-level modal + scrim, `AnimatedPopup`, centered `Tip` tooltip, `CenteredToolTip` for stock tooltips,
+  `PathIcon` with the glyphs its own templates need built in, motion helpers
+- Every size, radius, glyph and font is a style setter, an `m3:Metrics` value or a token the app can override;
+  library strings are localized and switch language live through `{m3:Text}`
 - `AutoHideScroll` overlay-scrollbar timing, `WheelScroll` system-paced mouse wheel and `DwmWindow` Windows 11
   corner rounding
 
@@ -33,8 +40,6 @@ dotnet add package Material3.Wpf
   </Application.Resources>
 </Application>
 ```
-
-Not in WPF yet: navigation bar / rail / drawer, date and time pickers, title bar.
 
 **Full guide:** https://github.com/dary1337/material3-dotnet/blob/main/docs/wpf.md
 &nbsp;·&nbsp; **Repo & demo galleries:** https://github.com/dary1337/material3-dotnet

@@ -122,7 +122,7 @@ namespace Material3.Wpf.Tests {
             w.Content = editor;
             Ui.Settle(w);
 
-            List<TextBox> fields = Ui.Descendants<TextBox>(editor).ToList();
+            var fields = Ui.Descendants<TextBox>(editor).ToList();
             Assert.Equal(2, fields.Count);
             Assert.All(fields, f => Assert.Equal(InputKind.Integer, InputFilter.GetKind(f)));
         });
@@ -191,7 +191,7 @@ namespace Material3.Wpf.Tests {
             w.Content = table;
             Ui.Settle(w);
 
-            List<TextBox> fields = Ui.Descendants<TextBox>(table).ToList();
+            var fields = Ui.Descendants<TextBox>(table).ToList();
             Assert.Equal(4, fields.Count);
             Assert.Equal(2, fields.Count(f => InputFilter.GetKind(f) == InputKind.Number));
         });

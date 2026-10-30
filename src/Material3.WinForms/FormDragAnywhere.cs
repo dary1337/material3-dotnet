@@ -43,31 +43,31 @@ namespace Material3.WinForms {
 
                 switch (m.Msg) {
                     case WM_LBUTTONDOWN: {
-                        Point screen = MessageToScreenPoint(m);
-                        Rectangle bounds = _form.RectangleToScreen(_form.ClientRectangle);
-                        if (!bounds.Contains(screen)) {
+                            Point screen = MessageToScreenPoint(m);
+                            Rectangle bounds = _form.RectangleToScreen(_form.ClientRectangle);
+                            if (!bounds.Contains(screen)) {
+                                return false;
+                            }
+                            Control? leaf = WalkToLeaf(_form, _form.PointToClient(screen));
+                            if (leaf != null && IsInteractive(leaf)) {
+                                return false;
+                            }
+                            _dragging = true;
+                            _dragOriginScreen = screen;
+                            _formOriginLocation = _form.Location;
                             return false;
                         }
-                        Control? leaf = WalkToLeaf(_form, _form.PointToClient(screen));
-                        if (leaf != null && IsInteractive(leaf)) {
-                            return false;
-                        }
-                        _dragging = true;
-                        _dragOriginScreen = screen;
-                        _formOriginLocation = _form.Location;
-                        return false;
-                    }
                     case WM_MOUSEMOVE: {
-                        if (!_dragging) {
+                            if (!_dragging) {
+                                return false;
+                            }
+                            Point cur = Cursor.Position;
+                            _form.Location = new Point(
+                                _formOriginLocation.X + cur.X - _dragOriginScreen.X,
+                                _formOriginLocation.Y + cur.Y - _dragOriginScreen.Y
+                            );
                             return false;
                         }
-                        Point cur = Cursor.Position;
-                        _form.Location = new Point(
-                            _formOriginLocation.X + cur.X - _dragOriginScreen.X,
-                            _formOriginLocation.Y + cur.Y - _dragOriginScreen.Y
-                        );
-                        return false;
-                    }
                     case WM_LBUTTONUP:
                         _dragging = false;
                         return false;
@@ -79,8 +79,8 @@ namespace Material3.WinForms {
                 long lp = m.LParam.ToInt64();
                 short x = unchecked((short)(lp & 0xFFFF));
                 short y = unchecked((short)((lp >> 16) & 0xFFFF));
-                Point inTarget = new Point(x, y);
-                Control? target = Control.FromHandle(m.HWnd);
+                var inTarget = new Point(x, y);
+                var target = Control.FromHandle(m.HWnd);
                 return target != null ? target.PointToScreen(inTarget) : Cursor.Position;
             }
 

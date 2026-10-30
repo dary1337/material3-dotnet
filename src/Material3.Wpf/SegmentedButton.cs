@@ -31,6 +31,26 @@ namespace Material3.Wpf {
 
         /// <summary>Where the segment sits in the row — the template rounds only the outer edges.</summary>
         public SegmentPosition Position => (SegmentPosition)GetValue(PositionProperty);
+
+        /// <inheritdoc />
+        protected override Size MeasureOverride(Size constraint) {
+            Size size = base.MeasureOverride(constraint);
+            if (IsChecked == true) {
+                return size;
+            }
+            // Room for the check it shows once selected, so selecting never reflows the row.
+            Thickness margin = Metrics.GetGlyphMargin(this);
+            return new Size(size.Width + Metrics.GetGlyphSize(this) + margin.Left + margin.Right, size.Height);
+        }
+
+        /// <inheritdoc />
+        protected override void OnToggle() {
+            if (IsChecked == true && ItemsControl.ItemsControlFromItemContainer(this) is SegmentedButton { MultiSelect: false }) {
+                return;
+            }
+
+            base.OnToggle();
+        }
     }
 
     /// <summary>
@@ -69,7 +89,9 @@ namespace Material3.Wpf {
             get {
                 var hits = new List<int>();
                 for (int i = 0; i < Items.Count; i++) {
-                    if (Container(i)?.IsChecked == true) hits.Add(i);
+                    if (Container(i)?.IsChecked == true) {
+                        hits.Add(i);
+                    }
                 }
                 return hits;
             }
@@ -81,7 +103,9 @@ namespace Material3.Wpf {
         /// <summary>Turns one segment on or off, applying the single-select rule.</summary>
         public void SetSelected(int index, bool selected) {
             SegmentedItem? item = Container(index);
-            if (item != null) item.IsChecked = selected;
+            if (item != null) {
+                item.SetCurrentValue(ToggleButton.IsCheckedProperty, selected);
+            }
         }
 
         private bool _syncing;
@@ -115,16 +139,24 @@ namespace Material3.Wpf {
 
         private static void OnMultiSelectChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             var row = (SegmentedButton)d;
-            if ((bool)e.NewValue) return;
+            if ((bool)e.NewValue) {
+                return;
+            }
+
             IReadOnlyList<int> selected = row.SelectedIndices;
-            if (selected.Count < 2) return;
+            if (selected.Count < 2) {
+                return;
+            }
+
             row._syncing = true;
             try {
                 for (int i = 1; i < selected.Count; i++) {
                     SegmentedItem? extra = row.Container(selected[i]);
-                    if (extra != null) extra.IsChecked = false;
+                    if (extra != null) {
+                        extra.SetCurrentValue(ToggleButton.IsCheckedProperty, false);
+                    }
                 }
-                row.SelectedIndex = selected[0];
+                row.SetCurrentValue(SelectedIndexProperty, selected[0]);
             }
             finally { row._syncing = false; }
             row.SelectionChanged?.Invoke(row, EventArgs.Empty);
@@ -132,13 +164,18 @@ namespace Material3.Wpf {
 
         private static void OnSelectedIndexChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             var row = (SegmentedButton)d;
-            if (row._syncing) return;
+            if (row._syncing) {
+                return;
+            }
+
             int wanted = (int)e.NewValue;
             row._syncing = true;
             try {
                 for (int i = 0; i < row.Items.Count; i++) {
                     SegmentedItem? segment = row.Container(i);
-                    if (segment != null) segment.IsChecked = i == wanted;
+                    if (segment != null) {
+                        segment.SetCurrentValue(ToggleButton.IsCheckedProperty, i == wanted);
+                    }
                 }
             }
             finally { row._syncing = false; }
@@ -146,24 +183,32 @@ namespace Material3.Wpf {
         }
 
         private void OnSegmentToggled(object sender, RoutedEventArgs e) {
-            if (_syncing) return;
+            if (_syncing) {
+                return;
+            }
+
             var changed = (SegmentedItem)sender;
             _syncing = true;
             try {
                 if (!MultiSelect && changed.IsChecked == true) {
                     foreach (SegmentedItem other in Containers()) {
-                        if (!ReferenceEquals(other, changed)) other.IsChecked = false;
+                        if (!ReferenceEquals(other, changed)) {
+                            other.SetCurrentValue(ToggleButton.IsCheckedProperty, false);
+                        }
                     }
                 }
                 IReadOnlyList<int> selected = SelectedIndices;
-                SelectedIndex = selected.Count > 0 ? selected[0] : -1;
+                SetCurrentValue(SelectedIndexProperty, selected.Count > 0 ? selected[0] : -1);
             }
             finally { _syncing = false; }
             SelectionChanged?.Invoke(this, EventArgs.Empty);
         }
 
         private void ApplyPendingSelection() {
-            if (SelectedIndex < 0 || SelectedIndices.Count > 0) return;
+            if (SelectedIndex < 0 || SelectedIndices.Count > 0) {
+                return;
+            }
+
             _syncing = true;
             try { SetSelected(SelectedIndex, true); }
             finally { _syncing = false; }
@@ -173,7 +218,10 @@ namespace Material3.Wpf {
             int count = Items.Count;
             for (int i = 0; i < count; i++) {
                 SegmentedItem? segment = Container(i);
-                if (segment == null) continue;
+                if (segment == null) {
+                    continue;
+                }
+
                 SegmentPosition position =
                     count == 1 ? SegmentPosition.Only :
                     i == 0 ? SegmentPosition.First :
@@ -188,7 +236,9 @@ namespace Material3.Wpf {
         private IEnumerable<SegmentedItem> Containers() {
             for (int i = 0; i < Items.Count; i++) {
                 SegmentedItem? segment = Container(i);
-                if (segment != null) yield return segment;
+                if (segment != null) {
+                    yield return segment;
+                }
             }
         }
     }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -12,8 +12,13 @@ namespace Material3.Wpf.Tests {
     public class MultiWindowTests {
         private static Window Second(Window first) {
             var w = new Window {
-                Width = 500, Height = 400, Left = -5000, Top = -5000,
-                WindowStyle = WindowStyle.None, ShowInTaskbar = false, ShowActivated = false,
+                Width = 500,
+                Height = 400,
+                Left = -5000,
+                Top = -5000,
+                WindowStyle = WindowStyle.None,
+                ShowInTaskbar = false,
+                ShowActivated = false,
             };
             w.Resources.MergedDictionaries.Add(new ResourceDictionary {
                 Source = new Uri("pack://application:,,,/Material3.Wpf;component/Controls.xaml", UriKind.Absolute),

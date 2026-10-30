@@ -15,6 +15,7 @@ Argb primary = dark.Primary;
 
 - HCT tonal palettes + CAM16; all M3 color roles, surface containers and inverse/outline pairs
 - `SchemeVariant`: `TonalSpot` (M3 default), `Neutral`, `Vibrant`
+- `LibraryText`: the library's own UI strings in English and Russian, overridable per key or through your own resolver
 - `netstandard2.0`, dependency-free
 
 Consumed by [`Material3.WinForms`](https://www.nuget.org/packages/Material3.WinForms) and

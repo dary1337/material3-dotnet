@@ -74,6 +74,17 @@ namespace Material3.WinForms.Tests {
             Assert.True(litTinted > 100, "registered cubic SVG rendered empty");
         }
 
+        [Theory]
+        [InlineData("M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2Z")]
+        [InlineData("M2 12a10 10 0 1020 0a10 10 0 10-20 0z")]
+        public void ARegisteredArcFillsTheCircleItDescribes(string d) {
+            MaterialIconRenderer.Register("test_arc_" + d.Length, "<svg viewBox=\"0 0 24 24\"><path d=\"" + d + "\"/></svg>");
+            Bitmap bmp = MaterialIconRenderer.Render("test_arc_" + d.Length, 48, Color.White);
+            Assert.True(bmp.GetPixel(24, 24).A > 200, "the centre of the circle is empty");
+            Assert.True(bmp.GetPixel(24, 5).A > 200, "the top of the circle is empty");
+            Assert.True(bmp.GetPixel(3, 3).A < 20, "the corner outside the circle is painted");
+        }
+
         [Fact]
         public void HollowIcon_HasTransparentHole() {
             Bitmap bmp = MaterialIconRenderer.Render(MaterialIcons.RadioChecked, 48, Color.White);

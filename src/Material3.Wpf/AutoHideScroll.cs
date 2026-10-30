@@ -33,7 +33,10 @@ namespace Material3.Wpf {
             DependencyProperty.RegisterAttached("Timer", typeof(DispatcherTimer), typeof(AutoHideScroll));
 
         private static void OnEnabledChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-            if (!(d is ScrollBar bar)) return;
+            if (!(d is ScrollBar bar)) {
+                return;
+            }
+
             if ((bool)e.NewValue) {
                 bar.Opacity = 0;
                 bar.ValueChanged += OnScrolled;
@@ -79,17 +82,25 @@ namespace Material3.Wpf {
         }
 
         private static void OnIdle(ScrollBar bar, DispatcherTimer timer) {
-            if (bar.IsMouseOver || bar.IsMouseCaptureWithin) return;
+            if (bar.IsMouseOver || bar.IsMouseCaptureWithin) {
+                return;
+            }
+
             timer.Stop();
             Fade(bar, 0);
         }
 
         private static void StopTimer(ScrollBar bar) {
-            if (bar.GetValue(TimerProperty) is DispatcherTimer timer) timer.Stop();
+            if (bar.GetValue(TimerProperty) is DispatcherTimer timer) {
+                timer.Stop();
+            }
         }
 
         private static void Fade(ScrollBar bar, double to) {
-            if (Math.Abs(bar.Opacity - to) < 0.01) return;
+            if (Math.Abs(bar.Opacity - to) < 0.01) {
+                return;
+            }
+
             bar.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(to, Motion.Ms(220)) {
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
             });

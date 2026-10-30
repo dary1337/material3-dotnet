@@ -58,7 +58,10 @@ namespace Material3.Wpf {
         /// corners simply stay square, so a caller that does not care about the outcome can ignore it.
         /// </summary>
         public static bool TrySetCornerPreference(IntPtr hwnd, WindowCornerPreference preference) {
-            if (hwnd == IntPtr.Zero) return false;
+            if (hwnd == IntPtr.Zero) {
+                return false;
+            }
+
             int value = (int)preference;
             try {
                 return DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, ref value, sizeof(int)) == 0;
@@ -71,8 +74,14 @@ namespace Material3.Wpf {
 
         /// <summary>Asks the compositor to round a window. No-op before the handle exists.</summary>
         public static bool TrySetCornerPreference(Window window, WindowCornerPreference preference) {
-            if (window == null) return false;
-            if (!TrySetCornerPreference(new WindowInteropHelper(window).Handle, preference)) return false;
+            if (window == null) {
+                return false;
+            }
+
+            if (!TrySetCornerPreference(new WindowInteropHelper(window).Handle, preference)) {
+                return false;
+            }
+
             Applied.Remove(window);
             Applied.Add(window, preference);
             return true;

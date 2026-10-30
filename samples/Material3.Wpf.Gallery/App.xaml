@@ -5,7 +5,6 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- Controls.xaml is self-contained: it pulls in Tokens.xaml + Motion.xaml itself. -->
                 <ResourceDictionary Source="pack://application:,,,/Material3.Wpf;component/Controls.xaml" />
             </ResourceDictionary.MergedDictionaries>
 

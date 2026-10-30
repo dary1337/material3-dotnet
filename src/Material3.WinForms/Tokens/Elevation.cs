@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Linq;
 using Material3.WinForms.Drawing;
 using Material3.WinForms.Theming;
 
@@ -12,8 +14,23 @@ namespace Material3.WinForms.Tokens {
     /// has no compositor, so shadows are drawn as concentric translucent rounded strokes).
     /// </summary>
     public static class Elevation {
-        /// <summary>Surface-tint opacity per level (0–5), per the M3 spec.</summary>
-        public static readonly double[] TintOpacity = { 0.0, 0.05, 0.08, 0.11, 0.12, 0.14 };
+        /// <summary>Raised after <see cref="TintOpacity"/> changed, so tinted surfaces repaint.</summary>
+        public static event EventHandler? Changed;
+
+        private static IReadOnlyList<double> _tintOpacity = Array.AsReadOnly(new[] { 0.0, 0.05, 0.08, 0.11, 0.12, 0.14 });
+
+        /// <summary>Surface-tint opacity per level (0–5), per the M3 spec. Assign six values in 0–1 to retune every elevated surface.</summary>
+        /// <exception cref="ArgumentException">The list does not hold exactly six values in 0–1.</exception>
+        public static IReadOnlyList<double> TintOpacity {
+            get => _tintOpacity;
+            set {
+                if (value == null || value.Count != 6 || value.Any(v => !(v >= 0 && v <= 1))) {
+                    throw new ArgumentException("Six opacities in 0-1 are required, one per level.", nameof(value));
+                }
+                _tintOpacity = Array.AsReadOnly(value.ToArray());
+                Changed?.Invoke(null, EventArgs.Empty);
+            }
+        }
 
         private static readonly int[] ShadowOffsetY = { 0, 1, 2, 4, 6, 8 };
         private static readonly int[] ShadowBlur = { 0, 3, 6, 8, 10, 12 };
@@ -60,7 +77,7 @@ namespace Material3.WinForms.Tokens {
                 if (alpha <= 0) {
                     continue;
                 }
-                Rectangle ring = new Rectangle(
+                var ring = new Rectangle(
                     surfaceRect.X - i,
                     surfaceRect.Y - i + offsetY,
                     surfaceRect.Width + i * 2,

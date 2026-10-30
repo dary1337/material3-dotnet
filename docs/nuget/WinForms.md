@@ -10,6 +10,7 @@ Studio designer support. No mandatory base form, no native dependencies. Built o
 - Full M3 control catalog — buttons, text fields, chips, cards, lists, dialogs, snackbar, navigation, title bar
 - Designer support: toolbox + property grid + a design surface that paints with the live theme
 - `MaterialThemeManager` drives `Seed` / `Variant` / `IsDark` straight from the property grid
+- Every size, radius and font is a property or a `TypeScale` role the app can override; library strings are localized
 
 ```
 dotnet add package Material3.WinForms

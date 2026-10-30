@@ -17,18 +17,28 @@ namespace Material3.Wpf.Tests {
         public void AFullRingSpansTheWholeDiameter() => Ui.InWindow(w => {
             CircularProgress ring = Shown(w, value: 100);
             Rect bounds = Indicator(ring).Data.Bounds;
-            Assert.InRange(bounds.Width, 43, 45);
-            Assert.InRange(bounds.Height, 43, 45);
+            Assert.InRange(bounds.Width, 35, 37);
+            Assert.InRange(bounds.Height, 35, 37);
         });
 
         [Fact]
         public void AQuarterRunsFromTheTopClockwise() => Ui.InWindow(w => {
             CircularProgress ring = Shown(w, value: 25);
             Rect bounds = Indicator(ring).Data.Bounds;
-            Assert.InRange(bounds.Left, 23, 25);
+            Assert.InRange(bounds.Left, 19, 21);
             Assert.InRange(bounds.Top, 1, 3);
-            Assert.InRange(bounds.Right, 45, 47);
-            Assert.InRange(bounds.Bottom, 23, 25);
+            Assert.InRange(bounds.Right, 37, 39);
+            Assert.InRange(bounds.Bottom, 19, 21);
+        });
+
+        [Fact]
+        public void TheTrackStopsAGapShortOfTheArcAtBothEnds() => Ui.InWindow(w => {
+            CircularProgress ring = Shown(w, value: 25);
+            var track = (Path)ring.Template.FindName("PART_Track", ring);
+            Rect bounds = track.Data.Bounds;
+            Assert.IsNotType<EllipseGeometry>(track.Data);
+            Assert.True(bounds.Top > 2.5, "the track runs into the arc's start at the top");
+            Assert.True(bounds.Right < 38.9, "the track runs into the arc's end on the right");
         });
 
         [Fact]
@@ -37,8 +47,8 @@ namespace Material3.Wpf.Tests {
             w.Content = ring;
             Ui.Settle(w);
             Rect half = Indicator(ring).Data.Bounds;
-            Assert.InRange(half.Width, 21, 24);
-            Assert.InRange(half.Height, 43, 45);
+            Assert.InRange(half.Width, 17, 20);
+            Assert.InRange(half.Height, 35, 37);
         });
 
         [Fact]
@@ -74,7 +84,7 @@ namespace Material3.Wpf.Tests {
             Ui.Settle(w);
 
             Assert.False(IsSpinning(ring));
-            Assert.InRange(Indicator(ring).Data.Bounds.Width, 43, 45);
+            Assert.InRange(Indicator(ring).Data.Bounds.Width, 35, 37);
         });
 
         [Fact]

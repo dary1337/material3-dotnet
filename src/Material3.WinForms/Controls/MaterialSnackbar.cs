@@ -12,10 +12,13 @@ namespace Material3.WinForms.Controls {
     /// <summary>Material 3 snackbar: a transient inverse-surface banner with an optional action; one per form, a new message replaces the current.</summary>
     [System.ComponentModel.ToolboxItem(false)]
     public sealed class MaterialSnackbar : Control {
-        private const int BarHeight = 48;
-        private const int PadX = 16;
-        private const int BottomMargin = 24;
         private const int SlidePx = 14;
+        private const int MinWidth = 200;
+
+        private static int _barHeight = 48;
+        private static int _horizontalPadding = 16;
+        private static int _bottomMargin = 24;
+        private static int _cornerRadius = Shape.ExtraSmall;
 
         private readonly string _message;
         private readonly string? _actionText;
@@ -27,6 +30,7 @@ namespace Material3.WinForms.Controls {
         private float _enterProgress;
         private bool _leaving;
         private bool _actionHovered;
+        private readonly StateLayerFade _actionLayer;
         private Rectangle _actionRect;
 
         private MaterialSnackbar(string message, string? actionText, Action? onAction, int durationMs) {
@@ -40,12 +44,46 @@ namespace Material3.WinForms.Controls {
                     | ControlStyles.UserPaint
                     | ControlStyles.OptimizedDoubleBuffer,
                 true);
-            Height = BarHeight;
             MaterialCursors.Apply(this, MaterialCursors.Pointer);
+            _actionLayer = new StateLayerFade(this);
 
-            _animator = new Timer { Interval = 16 };
+            _animator = new Timer { Interval = Motion.FrameIntervalMs };
             _animator.Tick += OnAnimatorTick;
         }
+
+        /// <summary>The bar's height, in 96-DPI px. Applies to the next snackbar.</summary>
+        public static int BarHeight {
+            get => _barHeight;
+            set => _barHeight = Math.Max(1, value);
+        }
+
+        /// <summary>The space between the bar's edges and its content, in 96-DPI px. Applies to the next snackbar.</summary>
+        public static int HorizontalPadding {
+            get => _horizontalPadding;
+            set => _horizontalPadding = Math.Max(0, value);
+        }
+
+        /// <summary>The gap between the bar and the host form's bottom edge, in 96-DPI px. Applies to the next snackbar.</summary>
+        public static int BottomMargin {
+            get => _bottomMargin;
+            set => _bottomMargin = value;
+        }
+
+        /// <summary>The bar's corner radius, in 96-DPI px. Applies to the next snackbar.</summary>
+        public static int CornerRadius {
+            get => _cornerRadius;
+            set => _cornerRadius = Math.Max(0, value);
+        }
+
+        /// <summary>The message's font. Null follows <see cref="TypeScale.BodyMedium"/>.</summary>
+        public static Font? MessageFont { get; set; }
+
+        /// <summary>The action label's font. Null follows <see cref="TypeScale.LabelLarge"/>.</summary>
+        public static Font? ActionFont { get; set; }
+
+        private static Font Message => MessageFont ?? TypeScale.BodyMedium;
+
+        private static Font ActionLabel => ActionFont ?? TypeScale.LabelLarge;
 
         /// <summary>Shows a message snackbar with no action.</summary>
         public static void Show(Form host, string message, int durationMs = 4000) {
@@ -86,27 +124,28 @@ namespace Material3.WinForms.Controls {
         }
 
         private void SizeToContent(Form host) {
-            int padX = Dpi.Scale(this, PadX);
+            int padX = Dpi.Scale(this, _horizontalPadding);
+            Height = Math.Max(Dpi.Scale(this, _barHeight), Message.Height + Dpi.Scale(this, Spacing.Space4));
             using (var bitmap = new Bitmap(1, 1)) {
                 bitmap.SetResolution(DeviceDpi, DeviceDpi);
-                using (Graphics g = Graphics.FromImage(bitmap)) {
-                float width = padX
-                    + g.MeasureString(_message, TypeScale.BodyMedium, int.MaxValue, StringFormat.GenericTypographic).Width
-                    + padX;
-                if (!string.IsNullOrEmpty(_actionText)) {
-                    width += g.MeasureString(_actionText, TypeScale.LabelLarge, int.MaxValue, StringFormat.GenericTypographic).Width
-                        + padX * 2;
-                }
-                int available = host.ClientSize.Width - Dpi.Scale(this, 48);
-                int minWidth = Math.Min(Dpi.Scale(this, 200), available);
-                Width = Math.Min((int)Math.Ceiling(width), Math.Max(minWidth, available));
+                using (var g = Graphics.FromImage(bitmap)) {
+                    float width = padX
+                        + g.MeasureString(_message, Message, int.MaxValue, StringFormat.GenericTypographic).Width
+                        + padX;
+                    if (!string.IsNullOrEmpty(_actionText)) {
+                        width += g.MeasureString(_actionText, ActionLabel, int.MaxValue, StringFormat.GenericTypographic).Width
+                            + padX * 2;
+                    }
+                    int available = host.ClientSize.Width - Dpi.Scale(this, Spacing.Space6 * 2);
+                    int minWidth = Math.Min(Dpi.Scale(this, MinWidth), available);
+                    Width = Math.Max(minWidth, Math.Min((int)Math.Ceiling(width), available));
                 }
             }
             PositionIn(host, 0f);
         }
 
         private void PositionIn(Form host, float progress) {
-            int targetY = host.ClientSize.Height - Height - Dpi.Scale(this, BottomMargin);
+            int targetY = host.ClientSize.Height - Height - Dpi.Scale(this, _bottomMargin);
             int startY = targetY + Dpi.Scale(this, SlidePx);
             Left = (host.ClientSize.Width - Width) / 2;
             Top = startY + (int)Math.Round((targetY - startY) * Motion.EmphasizedDecelerate.Evaluate(progress));
@@ -178,23 +217,24 @@ namespace Material3.WinForms.Controls {
             Color text = ArgbExtensions.Overlay(container, MaterialColors.InverseOnSurface, alpha);
             Color action = ArgbExtensions.Overlay(container, MaterialColors.InversePrimary, alpha);
 
-            int padX = Dpi.Scale(this, PadX);
+            int padX = Dpi.Scale(this, _horizontalPadding);
             g.Clear(parent);
             var rect = new Rectangle(0, 0, Width - 1, Height - 1);
-            using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(rect, Dpi.Scale(this, Shape.ExtraSmall)))
+            using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(rect, Dpi.Scale(this, _cornerRadius)))
             using (var brush = new SolidBrush(container)) {
                 g.FillPath(brush, path);
             }
 
             float rightEdge = Width - padX;
             if (!string.IsNullOrEmpty(_actionText)) {
-                SizeF size = g.MeasureString(_actionText, TypeScale.LabelLarge, int.MaxValue, StringFormat.GenericTypographic);
-                int w = (int)Math.Ceiling(size.Width) + Dpi.Scale(this, 16);
-                int actionH = Dpi.Scale(this, 32);
+                SizeF size = g.MeasureString(_actionText, ActionLabel, int.MaxValue, StringFormat.GenericTypographic);
+                int w = (int)Math.Ceiling(size.Width) + Dpi.Scale(this, Spacing.Space4);
+                int actionH = Math.Min(Height, Math.Max(Dpi.Scale(this, ComponentSizes.CompactControlHeight), ActionLabel.Height + Dpi.Scale(this, Spacing.Space2)));
                 _actionRect = new Rectangle((int)(rightEdge - w), (Height - actionH) / 2, w, actionH);
-                if (_actionHovered) {
+                double actionLayer = _actionLayer.Resolve(_actionHovered, false);
+                if (actionLayer > 0) {
                     using (GraphicsPath hover = RoundedControlRenderer.GetFigurePath(_actionRect, Dpi.Scale(this, Shape.Full)))
-                    using (var brush = new SolidBrush(ArgbExtensions.Overlay(container, action, StateLayers.Hover))) {
+                    using (var brush = new SolidBrush(ArgbExtensions.Overlay(container, action, actionLayer))) {
                         g.FillPath(brush, hover);
                     }
                 }
@@ -203,9 +243,9 @@ namespace Material3.WinForms.Controls {
                     LineAlignment = StringAlignment.Center,
                     Alignment = StringAlignment.Center,
                 }) {
-                    g.DrawString(_actionText, TypeScale.LabelLarge, brush, _actionRect, fmt);
+                    g.DrawString(_actionText, ActionLabel, brush, _actionRect, fmt);
                 }
-                rightEdge = _actionRect.Left - Dpi.Scale(this, 8);
+                rightEdge = _actionRect.Left - Dpi.Scale(this, Spacing.Space2);
             }
             else {
                 _actionRect = Rectangle.Empty;
@@ -217,7 +257,7 @@ namespace Material3.WinForms.Controls {
                 Trimming = StringTrimming.EllipsisCharacter,
                 FormatFlags = StringFormatFlags.NoWrap,
             }) {
-                g.DrawString(_message, TypeScale.BodyMedium, brush,
+                g.DrawString(_message, Message, brush,
                     new RectangleF(padX, 0, rightEdge - padX, Height), fmt);
             }
         }
@@ -227,6 +267,7 @@ namespace Material3.WinForms.Controls {
             if (disposing) {
                 _animator.Stop();
                 _animator.Dispose();
+                _actionLayer.Dispose();
                 if (_host != null) {
                     _host.Resize -= OnHostResize;
                     _host = null;

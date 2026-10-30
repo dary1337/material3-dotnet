@@ -18,14 +18,19 @@ namespace Material3.WinForms.Controls {
         Tonal,
         /// <summary>A glyph inside an outline.</summary>
         Outlined,
+        /// <summary>A bare glyph whose hover fills with the error container, for a click that removes something.</summary>
+        Error,
     }
 
     /// <summary>Material 3 icon button; optionally a toggle (<see cref="IsToggle"/>) that swaps colors when selected.</summary>
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialIconButton : Control {
-        private const int DefaultDiameter = 40;
-        private const int GlyphSize = 24;
+        private const int DefaultDiameter = ComponentSizes.ControlHeight;
+
+        private int _diameter = DefaultDiameter;
+        private int _glyphSize = ComponentSizes.IconLarge;
+        private int _cornerRadius = Shape.Full;
 
         private MaterialIconButtonVariant _style = MaterialIconButtonVariant.Standard;
         private string _iconGlyph = string.Empty;
@@ -33,6 +38,8 @@ namespace Material3.WinForms.Controls {
         private bool _isToggle;
         private bool _checked;
         private bool _hovered;
+        private readonly StateLayerFade _layer;
+        private readonly BusySpinner _busy;
         private bool _pressed;
 
         /// <summary>Raised when a toggle button is switched.</summary>
@@ -40,6 +47,8 @@ namespace Material3.WinForms.Controls {
 
         /// <summary>Initializes a new instance of the <see cref="MaterialIconButton"/> class.</summary>
         public MaterialIconButton() {
+            _layer = new StateLayerFade(this);
+            _busy = new BusySpinner(this);
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
                     | ControlStyles.UserPaint
@@ -50,6 +59,7 @@ namespace Material3.WinForms.Controls {
             BackColor = Color.Transparent;
             MaterialCursors.Apply(this, MaterialCursors.Pointer);
             Size = new Size(DefaultDiameter, DefaultDiameter);
+            AutoSize = true;
             TabStop = true;
             ThemeHook.Attach(this, Invalidate);
         }
@@ -79,6 +89,71 @@ namespace Material3.WinForms.Controls {
         public Image? IconImage {
             get => _iconImage;
             set { _iconImage = value; Invalidate(); }
+        }
+
+        /// <summary>The side <see cref="AutoSize"/> gives the button, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The side AutoSize gives the button, in 96-DPI px.")]
+        [DefaultValue(DefaultDiameter)]
+        public int Diameter {
+            get => _diameter;
+            set { _diameter = Math.Max(1, value); ApplyIntrinsicSize(); Invalidate(); }
+        }
+
+        /// <summary>The glyph's side, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The glyph's side, in 96-DPI px.")]
+        [DefaultValue(ComponentSizes.IconLarge)]
+        public int GlyphSize {
+            get => _glyphSize;
+            set { _glyphSize = Math.Max(0, value); Invalidate(); }
+        }
+
+        /// <summary>The container's corner radius in 96-DPI px; the default is a full circle.</summary>
+        [Category("Material Design")]
+        [Description("The container's corner radius in 96-DPI px; the default is a full circle.")]
+        [DefaultValue(Shape.Full)]
+        public int CornerRadius {
+            get => _cornerRadius;
+            set { _cornerRadius = Math.Max(0, value); Invalidate(); }
+        }
+
+        /// <summary>Whether the button sizes itself to <see cref="Diameter"/>. Turn it off to give it a size of your own.</summary>
+        [Browsable(true)]
+        [EditorBrowsable(EditorBrowsableState.Always)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+        [DefaultValue(true)]
+        public override bool AutoSize {
+            get => base.AutoSize;
+            set { base.AutoSize = value; ApplyIntrinsicSize(); }
+        }
+
+        /// <inheritdoc />
+        public override Size GetPreferredSize(Size proposedSize) => new Size(Dpi.Scale(this, _diameter), Dpi.Scale(this, _diameter));
+
+        /// <summary>Shows a spinner in the glyph's place and ignores clicks, for an action already running.</summary>
+        [Category("Material Design")]
+        [Description("Shows a spinner in the glyph's place and ignores clicks, for an action already running.")]
+        [DefaultValue(false)]
+        public bool IsBusy {
+            get => _busy.IsRunning;
+            set {
+                if (value == _busy.IsRunning) {
+                    return;
+                }
+
+                _busy.Run(value);
+                Invalidate();
+            }
+        }
+
+        /// <inheritdoc />
+        protected override void OnClick(EventArgs e) {
+            if (_busy.IsRunning) {
+                return;
+            }
+
+            base.OnClick(e);
         }
 
         /// <summary>When true the button latches and <see cref="Checked"/> flips on click.</summary>
@@ -124,6 +199,10 @@ namespace Material3.WinForms.Controls {
                         return (MaterialColors.InverseSurface, MaterialColors.InverseOnSurface, false);
                     }
                     return (Color.Transparent, MaterialColors.OnSurfaceVariant, true);
+                case MaterialIconButtonVariant.Error:
+                    return _hovered && Enabled
+                        ? (MaterialColors.ErrorContainer, MaterialColors.OnErrorContainer, false)
+                        : (Color.Transparent, MaterialColors.OnSurfaceVariant, false);
                 default:
                     return (Color.Transparent, selected ? MaterialColors.Primary : MaterialColors.OnSurfaceVariant, false);
             }
@@ -148,7 +227,7 @@ namespace Material3.WinForms.Controls {
             base.OnMouseUp(e);
             if (e.Button == MouseButtons.Left && _pressed) {
                 _pressed = false;
-                if (_isToggle && ClientRectangle.Contains(e.Location)) {
+                if (_isToggle && !_busy.IsRunning && ClientRectangle.Contains(e.Location)) {
                     Checked = !Checked;
                 }
                 Invalidate();
@@ -158,7 +237,7 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override void OnKeyDown(KeyEventArgs e) {
             base.OnKeyDown(e);
-            if (e.KeyCode == Keys.Space) {
+            if (e.KeyCode == Keys.Space && !_busy.IsRunning) {
                 if (_isToggle) {
                     Checked = !Checked;
                 }
@@ -186,7 +265,9 @@ namespace Material3.WinForms.Controls {
         }
 
         private void ApplyIntrinsicSize() {
-            Size = new Size(Dpi.Scale(this, DefaultDiameter), Dpi.Scale(this, DefaultDiameter));
+            if (AutoSize) {
+                Size = GetPreferredSize(Size.Empty);
+            }
         }
 
         /// <inheritdoc />
@@ -200,35 +281,41 @@ namespace Material3.WinForms.Controls {
             (Color container, Color content, bool outlined) = ResolveColors();
             if (!Enabled) {
                 container = container.A > 0
-                    ? ArgbExtensions.Overlay(ResolveParentColor(), MaterialColors.OnSurface, StateLayers.DisabledContainer)
+                    ? ArgbExtensions.Overlay(SurfaceBehind.Of(this), MaterialColors.OnSurface, StateLayers.DisabledContainer)
                     : Color.Transparent;
                 content = MaterialColors.OnSurfaceMuted;
             }
 
-            int diameter = Math.Min(Width, Height) - Dpi.Scale(this, 2);
-            var circle = new Rectangle((Width - diameter) / 2, (Height - diameter) / 2, diameter, diameter);
+            int inset = Dpi.Scale(this, 1);
+            var shape = new Rectangle(inset, inset, Math.Max(0, Width - 1 - inset * 2), Math.Max(0, Height - 1 - inset * 2));
+            int radius = Math.Min(Dpi.Scale(this, _cornerRadius), Math.Min(shape.Width, shape.Height) / 2);
 
-            if (container.A > 0) {
-                using (var brush = new SolidBrush(container)) {
-                    g.FillEllipse(brush, circle);
+            using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(shape, radius)) {
+                if (container.A > 0) {
+                    using (var brush = new SolidBrush(container)) {
+                        g.FillPath(brush, path);
+                    }
+                }
+
+                if (outlined && Enabled) {
+                    using (var pen = new Pen(MaterialColors.Outline, Dpi.Scale(this, 1f))) {
+                        g.DrawPath(pen, path);
+                    }
+                }
+
+                double overlay = _style == MaterialIconButtonVariant.Error ? 0 : _layer.Resolve(_hovered, _pressed, Enabled);
+                if (overlay > 0) {
+                    using (var brush = new SolidBrush(Color.FromArgb((int)(overlay * 255), content))) {
+                        g.FillPath(brush, path);
+                    }
                 }
             }
 
-            if (outlined && Enabled) {
-                using (var pen = new Pen(MaterialColors.Outline, Dpi.Scale(this, 1f))) {
-                    g.DrawEllipse(pen, circle);
-                }
+            int glyphSize = Dpi.Scale(this, _glyphSize);
+            if (_busy.IsRunning) {
+                _busy.Paint(g, new Rectangle((Width - glyphSize) / 2, (Height - glyphSize) / 2, glyphSize, glyphSize), content);
             }
-
-            if (Enabled && (_hovered || _pressed)) {
-                double overlay = _pressed ? StateLayers.Pressed : StateLayers.Hover;
-                using (var brush = new SolidBrush(Color.FromArgb((int)(overlay * 255), content))) {
-                    g.FillEllipse(brush, circle);
-                }
-            }
-
-            int glyphSize = Dpi.Scale(this, GlyphSize);
-            if (_iconImage != null) {
+            else if (_iconImage != null) {
                 g.InterpolationMode = InterpolationMode.HighQualityBicubic;
                 g.DrawImage(_iconImage, new Rectangle((Width - glyphSize) / 2, (Height - glyphSize) / 2, glyphSize, glyphSize));
             }
@@ -238,13 +325,13 @@ namespace Material3.WinForms.Controls {
             }
         }
 
-        private Color ResolveParentColor() {
-            for (Control? p = Parent; p != null; p = p.Parent) {
-                if (p.BackColor.A > 0) {
-                    return p.BackColor;
-                }
+        /// <inheritdoc />
+        protected override void Dispose(bool disposing) {
+            if (disposing) {
+                _layer.Dispose();
+                _busy.Dispose();
             }
-            return MaterialColors.Surface;
+            base.Dispose(disposing);
         }
     }
 }

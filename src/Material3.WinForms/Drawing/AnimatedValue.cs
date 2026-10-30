@@ -19,7 +19,7 @@ namespace Material3.WinForms.Drawing {
         /// <param name="factor">Fraction of the remaining distance closed per frame (e.g. 0.25 ≈ M3 short4 at 60fps).</param>
         /// <param name="threshold">Distance to the target at which the glide snaps and stops.</param>
         /// <param name="intervalMs">Frame interval; 16 ms ≈ 60fps.</param>
-        public AnimatedValue(Control owner, float factor, float threshold, int intervalMs = 16) {
+        public AnimatedValue(Control owner, float factor, float threshold, int intervalMs = Motion.FrameIntervalMs) {
             _owner = owner;
             _factor = factor;
             _threshold = threshold;

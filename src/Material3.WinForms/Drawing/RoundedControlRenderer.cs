@@ -8,7 +8,7 @@ namespace Material3.WinForms.Drawing {
     public static class RoundedControlRenderer {
         /// <summary>Closed rounded-rect path; radius clamps to half the smaller side (pill at Shape.Full).</summary>
         public static GraphicsPath GetFigurePath(Rectangle rect, int radius) {
-            GraphicsPath path = new GraphicsPath();
+            var path = new GraphicsPath();
             int safeRadius = Math.Max(0, Math.Min(radius, Math.Min(rect.Width, rect.Height) / 2));
             float curveSize = safeRadius * 2F;
 
@@ -37,14 +37,14 @@ namespace Material3.WinForms.Drawing {
             bool clipToRoundedBounds = false,
             bool mutateWindowRegion = true
         ) {
-            Rectangle rectBorder = Rectangle.Inflate(rectSurface, -borderSize, -borderSize);
+            var rectBorder = Rectangle.Inflate(rectSurface, -borderSize, -borderSize);
 
             const int smoothSize = 1;
 
             using (GraphicsPath pathSurface = GetFigurePath(rectSurface, cornerRadius))
             using (GraphicsPath pathBorder = GetFigurePath(rectBorder, cornerRadius - borderSize))
-            using (Pen penSurface = new Pen(GetSurfaceColor(control), smoothSize))
-            using (Pen penBorder = new Pen(borderColor, borderSize)) {
+            using (var penSurface = new Pen(GetSurfaceColor(control), smoothSize))
+            using (var penBorder = new Pen(borderColor, borderSize)) {
                 e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
                 e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
                 e.Graphics.CompositingQuality = CompositingQuality.HighQuality;
@@ -71,13 +71,13 @@ namespace Material3.WinForms.Drawing {
             Control control,
             Color borderColor
         ) {
-            Rectangle rectBorder = Rectangle.Inflate(rectSurface, -borderSize, -borderSize);
+            var rectBorder = Rectangle.Inflate(rectSurface, -borderSize, -borderSize);
             const int smoothSize = 1;
 
             using (GraphicsPath pathSurface = GetFigurePath(rectSurface, cornerRadius))
             using (GraphicsPath pathBorder = GetFigurePath(rectBorder, cornerRadius - borderSize))
-            using (Pen penSurface = new Pen(GetOpaqueAncestorBackground(control), smoothSize))
-            using (Pen penBorder = new Pen(borderColor, borderSize)) {
+            using (var penSurface = new Pen(GetOpaqueAncestorBackground(control), smoothSize))
+            using (var penBorder = new Pen(borderColor, borderSize)) {
                 e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
                 e.Graphics.DrawPath(penSurface, pathSurface);
                 e.Graphics.DrawPath(penBorder, pathBorder);

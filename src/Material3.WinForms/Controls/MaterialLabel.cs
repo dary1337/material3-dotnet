@@ -24,14 +24,14 @@ namespace Material3.WinForms.Controls {
             ThemeHook.Attach(this, Invalidate);
         }
 
-        private (string, Font, int, int, bool) _prefKey;
+        private (string, Font, int, int, bool, Padding) _prefKey;
         private Size _prefSize;
         private bool _prefValid;
 
         /// <inheritdoc />
         public override Size GetPreferredSize(Size proposedSize) {
             string text = Text ?? string.Empty;
-            var key = (text, Font, DeviceDpi, proposedSize.Width, AutoEllipsis);
+            (string text, Font Font, int DeviceDpi, int Width, bool AutoEllipsis, Padding Padding) key = (text, Font, DeviceDpi, proposedSize.Width, AutoEllipsis, Padding);
             if (_prefValid && _prefKey.Equals(key)) {
                 return _prefSize;
             }
@@ -42,14 +42,14 @@ namespace Material3.WinForms.Controls {
             }
             else {
                 using (var bitmap = new Bitmap(1, 1))
-                using (Graphics g = Graphics.FromImage(bitmap))
-                using (var format = BuildFormat()) {
+                using (var g = Graphics.FromImage(bitmap))
+                using (StringFormat format = BuildFormat()) {
                     g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
                     SizeF layout = proposedSize.Width > 0 && proposedSize.Width < int.MaxValue
-                        ? new SizeF(proposedSize.Width, int.MaxValue)
+                        ? new SizeF(Math.Max(1, proposedSize.Width - Padding.Horizontal), int.MaxValue)
                         : new SizeF(float.MaxValue, float.MaxValue);
                     int gdiPlusWidth = (int)Math.Ceiling(g.MeasureString(text, Font, layout, format).Width);
-                    result = new Size(Math.Max(baseSize.Width, gdiPlusWidth + 1), baseSize.Height);
+                    result = new Size(Math.Max(baseSize.Width, gdiPlusWidth + 1 + Padding.Horizontal), baseSize.Height);
                 }
             }
             _prefKey = key;
@@ -72,9 +72,11 @@ namespace Material3.WinForms.Controls {
                 return;
             }
 
-            using (var format = BuildFormat())
+            using (StringFormat format = BuildFormat())
             using (var brush = new SolidBrush(Enabled ? ForeColor : MaterialColors.OnSurfaceMuted)) {
-                RectangleF rect = ClientRectangle;
+                Rectangle client = ClientRectangle;
+                var rect = new RectangleF(client.X + Padding.Left, client.Y + Padding.Top,
+                    Math.Max(0, client.Width - Padding.Horizontal), Math.Max(0, client.Height - Padding.Vertical));
                 g.DrawString(Text, Font, brush, rect, format);
             }
         }

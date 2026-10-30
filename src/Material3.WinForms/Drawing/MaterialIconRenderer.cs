@@ -29,7 +29,7 @@ namespace Material3.WinForms.Drawing {
 
         /// <summary>
         /// Registers a consumer SVG under <paramref name="key"/> so <see cref="Render"/> renders it like a
-        /// bundled icon. Markup must use the grammar <see cref="SvgGlyph"/> supports (no arcs/gradients).
+        /// bundled icon. Markup must use the grammar <see cref="SvgGlyph"/> supports (paths only, no gradients).
         /// </summary>
         public static void Register(string key, string svgMarkup) {
             if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(svgMarkup)) {
@@ -77,7 +77,7 @@ namespace Material3.WinForms.Drawing {
                     return (Bitmap)raw.Clone();
                 }
                 var resized = new Bitmap(size, size, PixelFormat.Format32bppArgb);
-                using (Graphics g = Graphics.FromImage(resized)) {
+                using (var g = Graphics.FromImage(resized)) {
                     g.InterpolationMode = InterpolationMode.HighQualityBicubic;
                     g.PixelOffsetMode = PixelOffsetMode.HighQuality;
                     g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -92,7 +92,7 @@ namespace Material3.WinForms.Drawing {
             RectangleF vb = glyph.ViewBox;
             float scaleX = renderSize / vb.Width;
             float scaleY = renderSize / vb.Height;
-            using (Graphics g = Graphics.FromImage(bmp))
+            using (var g = Graphics.FromImage(bmp))
             using (var path = (GraphicsPath)glyph.Path.Clone())
             using (var transform = new Matrix(scaleX, 0, 0, scaleY, -vb.X * scaleX, -vb.Y * scaleY))
             using (var brush = new SolidBrush(color)) {
@@ -128,7 +128,7 @@ namespace Material3.WinForms.Drawing {
 
                 if (resourceName != null) {
                     using (Stream? stream = assembly.GetManifestResourceStream(resourceName))
-                    using (var reader = stream != null ? new StreamReader(stream) : null) {
+                    using (StreamReader? reader = stream != null ? new StreamReader(stream) : null) {
                         if (reader != null) {
                             (GraphicsPath path, RectangleF viewBox)? parsed = SvgGlyph.Parse(reader.ReadToEnd());
                             if (parsed != null) {

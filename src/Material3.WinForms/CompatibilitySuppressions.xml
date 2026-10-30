@@ -2,1072 +2,169 @@
 <!-- https://learn.microsoft.com/dotnet/fundamentals/package-validation/diagnostic-ids -->
 <Suppressions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.Controls.DropdownSelect</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.Controls.MaterialIconButtonStyle</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.Controls.MaterialTabStyle</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.Controls.RoundedButton</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.Controls.RoundedPanel</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.Controls.SkeletonCard</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.Controls.SoftLabel</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.Controls.StepChecklist</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.Design.IconGlyphEditor</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.Theming.ColorScheme</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.Theming.GdiColor</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.Theming.MaterialTheme</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.Typography.MaterialType</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.WindowChrome</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.Controls.DropdownSelect</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.Controls.MaterialIconButtonStyle</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.Controls.MaterialTabStyle</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.Controls.RoundedButton</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.Controls.RoundedPanel</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.Controls.SkeletonCard</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.Controls.SoftLabel</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.Controls.StepChecklist</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.Theming.ColorScheme</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.Theming.GdiColor</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.Theming.MaterialTheme</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.Typography.MaterialType</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0001</DiagnosticId>
-    <Target>T:Material3.WinForms.WindowChrome</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>F:Material3.WinForms.Forms.BorderlessForm.HTBOTTOM</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>F:Material3.WinForms.Forms.BorderlessForm.HTBOTTOMLEFT</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>F:Material3.WinForms.Forms.BorderlessForm.HTBOTTOMRIGHT</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>F:Material3.WinForms.Forms.BorderlessForm.HTCAPTION</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>F:Material3.WinForms.Forms.BorderlessForm.HTCLIENT</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>F:Material3.WinForms.Forms.BorderlessForm.HTLEFT</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>F:Material3.WinForms.Forms.BorderlessForm.HTRIGHT</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>F:Material3.WinForms.Forms.BorderlessForm.HTTOP</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>F:Material3.WinForms.Forms.BorderlessForm.HTTOPLEFT</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>F:Material3.WinForms.Forms.BorderlessForm.HTTOPRIGHT</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>F:Material3.WinForms.Forms.BorderlessForm.HTTRANSPARENT</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialBadge.get_DotMode</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialBadge.set_DotMode(System.Boolean)</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialButton.get_IconGlyph</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialButton.set_IconGlyph(System.String)</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialChip.get_LeadingIcon</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialChip.get_Selected</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialChip.set_LeadingIcon(System.String)</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialChip.set_Selected(System.Boolean)</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialCircularProgress.get_Indeterminate</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
     <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialCircularProgress.set_Indeterminate(System.Boolean)</Target>
+    <Target>F:Material3.WinForms.Tokens.ComponentSizes.ButtonHeight</Target>
     <Left>lib/net472/Material3.WinForms.dll</Left>
     <Right>lib/net472/Material3.WinForms.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialDivider.get_Vertical</Target>
+    <Target>F:Material3.WinForms.Tokens.ComponentSizes.ButtonHeightSmall</Target>
     <Left>lib/net472/Material3.WinForms.dll</Left>
     <Right>lib/net472/Material3.WinForms.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialDivider.set_Vertical(System.Boolean)</Target>
+    <Target>F:Material3.WinForms.Tokens.ComponentSizes.DropdownHeight</Target>
     <Left>lib/net472/Material3.WinForms.dll</Left>
     <Right>lib/net472/Material3.WinForms.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialFab.get_IconGlyph</Target>
+    <Target>F:Material3.WinForms.Tokens.Elevation.TintOpacity</Target>
     <Left>lib/net472/Material3.WinForms.dll</Left>
     <Right>lib/net472/Material3.WinForms.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialFab.set_IconGlyph(System.String)</Target>
+    <Target>M:Material3.WinForms.Controls.MaterialOptionCard.SelectCard</Target>
     <Left>lib/net472/Material3.WinForms.dll</Left>
     <Right>lib/net472/Material3.WinForms.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialIconButton.get_ButtonStyle</Target>
+    <Target>M:Material3.WinForms.Controls.MaterialStepChecklist.SetError(System.Int32)</Target>
     <Left>lib/net472/Material3.WinForms.dll</Left>
     <Right>lib/net472/Material3.WinForms.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialIconButton.get_IconGlyph</Target>
+    <Target>M:Material3.WinForms.Controls.MaterialStepChecklist.SetSteps(System.String[])</Target>
     <Left>lib/net472/Material3.WinForms.dll</Left>
     <Right>lib/net472/Material3.WinForms.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialIconButton.set_ButtonStyle(Material3.WinForms.Controls.MaterialIconButtonStyle)</Target>
+    <Target>M:Material3.WinForms.TaskbarProgress.Clear(System.Windows.Forms.IWin32Window)</Target>
     <Left>lib/net472/Material3.WinForms.dll</Left>
     <Right>lib/net472/Material3.WinForms.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialIconButton.set_IconGlyph(System.String)</Target>
+    <Target>M:Material3.WinForms.TaskbarProgress.SetState(System.Windows.Forms.IWin32Window,Material3.WinForms.TaskbarProgress.State)</Target>
     <Left>lib/net472/Material3.WinForms.dll</Left>
     <Right>lib/net472/Material3.WinForms.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialListItem.get_LeadingIcon</Target>
+    <Target>M:Material3.WinForms.TaskbarProgress.SetValue(System.Windows.Forms.IWin32Window,System.Int32)</Target>
     <Left>lib/net472/Material3.WinForms.dll</Left>
     <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialListItem.get_Selected</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialListItem.get_TrailingIcon</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialListItem.set_LeadingIcon(System.String)</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialListItem.set_Selected(System.Boolean)</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialListItem.set_TrailingIcon(System.String)</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialOptionCard.get_CustomIcon</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialOptionCard.set_CustomIcon(System.Drawing.Image)</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialOptionCard.SetSelected(System.Boolean)</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialSlider.get_Animated</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialSlider.set_Animated(System.Boolean)</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialTabs.get_TabStyle</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialTabs.set_TabStyle(Material3.WinForms.Controls.MaterialTabStyle)</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialTextField.add_TrailingIconClick(System.EventHandler)</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialTextField.get_LeadingIcon</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialTextField.get_TrailingIcon</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialTextField.remove_TrailingIconClick(System.EventHandler)</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialTextField.set_LeadingIcon(System.String)</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialTextField.set_TrailingIcon(System.String)</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialTitleBar.get_AppIcon</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialTitleBar.set_AppIcon(System.Drawing.Bitmap)</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.NavigationItem.get_Icon</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Drawing.MaterialIconRenderer.Get(System.String,System.Int32,System.Drawing.Color)</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Forms.BorderlessForm.ResolveHit(System.Int32,System.Int32)</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Forms.MaterialDialog.get_IconColor</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Forms.MaterialDialog.get_IconGlyph</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Forms.MaterialDialog.set_IconColor(System.Drawing.Color)</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Forms.MaterialDialog.set_IconGlyph(System.String)</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Theming.MaterialColors.Overlay(System.Drawing.Color,System.Drawing.Color,System.Double)</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Theming.ThemeManager.Apply(Material3.WinForms.Theming.MaterialTheme,System.Boolean)</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Theming.ThemeManager.get_Scheme</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Theming.ThemeManager.get_Theme</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>F:Material3.WinForms.Forms.BorderlessForm.HTBOTTOM</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>F:Material3.WinForms.Forms.BorderlessForm.HTBOTTOMLEFT</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>F:Material3.WinForms.Forms.BorderlessForm.HTBOTTOMRIGHT</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>F:Material3.WinForms.Forms.BorderlessForm.HTCAPTION</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>F:Material3.WinForms.Forms.BorderlessForm.HTCLIENT</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>F:Material3.WinForms.Forms.BorderlessForm.HTLEFT</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>F:Material3.WinForms.Forms.BorderlessForm.HTRIGHT</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>F:Material3.WinForms.Forms.BorderlessForm.HTTOP</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>F:Material3.WinForms.Forms.BorderlessForm.HTTOPLEFT</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>F:Material3.WinForms.Forms.BorderlessForm.HTTOPRIGHT</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>F:Material3.WinForms.Forms.BorderlessForm.HTTRANSPARENT</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialBadge.get_DotMode</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialBadge.set_DotMode(System.Boolean)</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialButton.get_IconGlyph</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialButton.set_IconGlyph(System.String)</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialChip.get_LeadingIcon</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialChip.get_Selected</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialChip.set_LeadingIcon(System.String)</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialChip.set_Selected(System.Boolean)</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialCircularProgress.get_Indeterminate</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialCircularProgress.set_Indeterminate(System.Boolean)</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialDivider.get_Vertical</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialDivider.set_Vertical(System.Boolean)</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialFab.get_IconGlyph</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialFab.set_IconGlyph(System.String)</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialIconButton.get_ButtonStyle</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialIconButton.get_IconGlyph</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialIconButton.set_ButtonStyle(Material3.WinForms.Controls.MaterialIconButtonStyle)</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialIconButton.set_IconGlyph(System.String)</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialListItem.get_LeadingIcon</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialListItem.get_Selected</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialListItem.get_TrailingIcon</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialListItem.set_LeadingIcon(System.String)</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialListItem.set_Selected(System.Boolean)</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialListItem.set_TrailingIcon(System.String)</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialOptionCard.get_CustomIcon</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialOptionCard.set_CustomIcon(System.Drawing.Image)</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialOptionCard.SetSelected(System.Boolean)</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialSlider.get_Animated</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialSlider.set_Animated(System.Boolean)</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialTabs.get_TabStyle</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialTabs.set_TabStyle(Material3.WinForms.Controls.MaterialTabStyle)</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialTextField.add_TrailingIconClick(System.EventHandler)</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialTextField.get_LeadingIcon</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialTextField.get_TrailingIcon</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialTextField.remove_TrailingIconClick(System.EventHandler)</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialTextField.set_LeadingIcon(System.String)</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialTextField.set_TrailingIcon(System.String)</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialTitleBar.get_AppIcon</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.MaterialTitleBar.set_AppIcon(System.Drawing.Bitmap)</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Controls.NavigationItem.get_Icon</Target>
-    <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
-    <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Drawing.MaterialIconRenderer.Get(System.String,System.Int32,System.Drawing.Color)</Target>
+    <Target>F:Material3.WinForms.Tokens.ComponentSizes.ButtonHeight</Target>
     <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
     <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Forms.BorderlessForm.ResolveHit(System.Int32,System.Int32)</Target>
+    <Target>F:Material3.WinForms.Tokens.ComponentSizes.ButtonHeightSmall</Target>
     <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
     <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Forms.MaterialDialog.get_IconColor</Target>
+    <Target>F:Material3.WinForms.Tokens.ComponentSizes.DropdownHeight</Target>
     <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
     <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Forms.MaterialDialog.get_IconGlyph</Target>
+    <Target>F:Material3.WinForms.Tokens.Elevation.TintOpacity</Target>
     <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
     <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Forms.MaterialDialog.set_IconColor(System.Drawing.Color)</Target>
+    <Target>M:Material3.WinForms.Controls.MaterialOptionCard.SelectCard</Target>
     <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
     <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Forms.MaterialDialog.set_IconGlyph(System.String)</Target>
+    <Target>M:Material3.WinForms.Controls.MaterialStepChecklist.SetError(System.Int32)</Target>
     <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
     <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Theming.MaterialColors.Overlay(System.Drawing.Color,System.Drawing.Color,System.Double)</Target>
+    <Target>M:Material3.WinForms.Controls.MaterialStepChecklist.SetSteps(System.String[])</Target>
     <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
     <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Theming.ThemeManager.Apply(Material3.WinForms.Theming.MaterialTheme,System.Boolean)</Target>
+    <Target>M:Material3.WinForms.TaskbarProgress.Clear(System.Windows.Forms.IWin32Window)</Target>
     <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
     <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Theming.ThemeManager.get_Scheme</Target>
+    <Target>M:Material3.WinForms.TaskbarProgress.SetState(System.Windows.Forms.IWin32Window,Material3.WinForms.TaskbarProgress.State)</Target>
     <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
     <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0002</DiagnosticId>
-    <Target>M:Material3.WinForms.Theming.ThemeManager.get_Theme</Target>
+    <Target>M:Material3.WinForms.TaskbarProgress.SetValue(System.Windows.Forms.IWin32Window,System.Int32)</Target>
     <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
     <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0007</DiagnosticId>
-    <Target>T:Material3.WinForms.Controls.MaterialCard</Target>
+    <Target>T:Material3.WinForms.Controls.MaterialDropdownSelect</Target>
     <Left>lib/net472/Material3.WinForms.dll</Left>
     <Right>lib/net472/Material3.WinForms.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0007</DiagnosticId>
-    <Target>T:Material3.WinForms.Controls.MaterialOptionCard</Target>
-    <Left>lib/net472/Material3.WinForms.dll</Left>
-    <Right>lib/net472/Material3.WinForms.dll</Right>
-    <IsBaselineSuppression>true</IsBaselineSuppression>
-  </Suppression>
-  <Suppression>
-    <DiagnosticId>CP0007</DiagnosticId>
-    <Target>T:Material3.WinForms.Controls.MaterialCard</Target>
+    <Target>T:Material3.WinForms.Controls.MaterialDropdownSelect</Target>
     <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
     <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
   </Suppression>
   <Suppression>
-    <DiagnosticId>CP0007</DiagnosticId>
-    <Target>T:Material3.WinForms.Controls.MaterialOptionCard</Target>
+    <DiagnosticId>CP0008</DiagnosticId>
+    <Target>T:Material3.WinForms.Controls.MaterialDropdownSelect</Target>
+    <Left>lib/net472/Material3.WinForms.dll</Left>
+    <Right>lib/net472/Material3.WinForms.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0008</DiagnosticId>
+    <Target>T:Material3.WinForms.Controls.MaterialDropdownSelect</Target>
     <Left>lib/net8.0-windows7.0/Material3.WinForms.dll</Left>
     <Right>lib/net8.0-windows7.0/Material3.WinForms.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>

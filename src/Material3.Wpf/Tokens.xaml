@@ -5,44 +5,128 @@
                     xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options"
                     mc:Ignorable="po">
 
+    <FontFamily x:Key="FontFamily">Segoe UI</FontFamily>
+    <FontWeight x:Key="FontWeightMedium">SemiBold</FontWeight>
+
     <Style TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
         <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
     </Style>
 
+    <Style x:Key="HeadlineSmall" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
+        <Setter Property="FontSize" Value="24" />
+        <Setter Property="FontWeight" Value="Normal" />
+    </Style>
     <Style x:Key="TitleLarge" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
         <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
         <Setter Property="FontSize" Value="22" />
         <Setter Property="FontWeight" Value="Normal" />
     </Style>
     <Style x:Key="TitleMedium" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
         <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
         <Setter Property="FontSize" Value="16" />
-        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontWeight" Value="{DynamicResource FontWeightMedium}" />
     </Style>
     <Style x:Key="Overline" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
         <Setter Property="Foreground" Value="{DynamicResource OnSurfaceVariant}" />
         <Setter Property="FontSize" Value="11" />
-        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontWeight" Value="{DynamicResource FontWeightMedium}" />
     </Style>
     <Style x:Key="Body" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
         <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="Normal" />
     </Style>
     <Style x:Key="BodySmall" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
         <Setter Property="Foreground" Value="{DynamicResource OnSurfaceVariant}" />
         <Setter Property="FontSize" Value="12" />
         <Setter Property="FontWeight" Value="Normal" />
     </Style>
     <Style x:Key="Caption" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
         <Setter Property="Foreground" Value="{DynamicResource OnSurfaceVariant}" />
         <Setter Property="FontSize" Value="11" />
         <Setter Property="FontWeight" Value="Normal" />
     </Style>
     <Style x:Key="BodyDense" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="FontWeight" Value="Normal" />
+    </Style>
+
+    <!-- The full M3 type scale by role name; Title, Body, Overline and Caption above are the app-facing shorthands. -->
+    <Style x:Key="DisplayLarge" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
+        <Setter Property="FontSize" Value="57" />
+        <Setter Property="FontWeight" Value="Normal" />
+    </Style>
+    <Style x:Key="DisplayMedium" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
+        <Setter Property="FontSize" Value="45" />
+        <Setter Property="FontWeight" Value="Normal" />
+    </Style>
+    <Style x:Key="DisplaySmall" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
+        <Setter Property="FontSize" Value="36" />
+        <Setter Property="FontWeight" Value="Normal" />
+    </Style>
+    <Style x:Key="HeadlineLarge" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
+        <Setter Property="FontSize" Value="32" />
+        <Setter Property="FontWeight" Value="Normal" />
+    </Style>
+    <Style x:Key="HeadlineMedium" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
+        <Setter Property="FontSize" Value="28" />
+        <Setter Property="FontWeight" Value="Normal" />
+    </Style>
+    <Style x:Key="TitleSmall" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="{DynamicResource FontWeightMedium}" />
+    </Style>
+    <Style x:Key="BodyLarge" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontWeight" Value="Normal" />
+    </Style>
+    <Style x:Key="BodyMedium" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="Normal" />
+    </Style>
+    <Style x:Key="LabelLarge" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="{DynamicResource FontWeightMedium}" />
+    </Style>
+    <Style x:Key="LabelMedium" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="{DynamicResource FontWeightMedium}" />
+    </Style>
+    <Style x:Key="LabelSmall" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource FontFamily}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnSurface}" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="{DynamicResource FontWeightMedium}" />
     </Style>
 
     <CornerRadius x:Key="RadiusXs">4</CornerRadius>
@@ -51,6 +135,7 @@
     <CornerRadius x:Key="RadiusLg">16</CornerRadius>
     <CornerRadius x:Key="RadiusPill">20</CornerRadius>
     <CornerRadius x:Key="RadiusXl">28</CornerRadius>
+    <CornerRadius x:Key="FocusRingRadius">8</CornerRadius>
 
     <DropShadowEffect x:Key="Elevation1" Direction="270" ShadowDepth="1" BlurRadius="6" Opacity="0.20" Color="Black" po:Freeze="True" />
     <DropShadowEffect x:Key="Elevation2" Direction="270" ShadowDepth="2" BlurRadius="12" Opacity="0.24" Color="Black" po:Freeze="True" />
@@ -65,5 +150,21 @@
     <s:Double x:Key="Space5">24</s:Double>
     <s:Double x:Key="Space6">32</s:Double>
     <s:Double x:Key="Space7">48</s:Double>
+
+    <s:Double x:Key="CompactControlHeight">32</s:Double>
+    <s:Double x:Key="ControlHeight">40</s:Double>
+    <s:Double x:Key="FieldHeight">56</s:Double>
+
+    <s:Double x:Key="DialogWidth">420</s:Double>
+    <s:Double x:Key="DatePickerCellSize">40</s:Double>
+    <Size x:Key="TimePickerFieldSize">96,72</Size>
+    <s:Double x:Key="TimePickerFieldFontSize">45</s:Double>
+    <s:Double x:Key="TimePickerPeriodWidth">52</s:Double>
+
+    <!-- M3 state-layer opacities; the inverted pair is for light content on a dark tone fill. -->
+    <s:Double x:Key="StateLayerHover">0.08</s:Double>
+    <s:Double x:Key="StateLayerPressed">0.12</s:Double>
+    <s:Double x:Key="StateLayerInvertedHover">0.10</s:Double>
+    <s:Double x:Key="StateLayerInvertedPressed">0.16</s:Double>
 
 </ResourceDictionary>

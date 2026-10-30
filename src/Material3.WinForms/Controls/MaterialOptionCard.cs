@@ -10,6 +10,16 @@ using Material3.WinForms.Tokens;
 using Material3.WinForms.Typography;
 
 namespace Material3.WinForms.Controls {
+    /// <summary>How a <see cref="MaterialOptionCard"/> shows that it is chosen.</summary>
+    public enum MaterialOptionIndicator {
+        /// <summary>A radio dot: one card of the group is chosen.</summary>
+        Radio,
+        /// <summary>A round check: each card is on or off by itself.</summary>
+        Check,
+        /// <summary>Only the surface and the outline change; the card still chooses like a radio.</summary>
+        None,
+    }
+
     /// <summary>Selectable Material 3 option card: leading icon, title with optional accent suffix, description, trailing detail text and radio.</summary>
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
@@ -30,12 +40,25 @@ namespace Material3.WinForms.Controls {
         private string _detailText = string.Empty;
         private bool _selected;
         private bool _hovered;
+        private readonly StateLayerFade? _hover;
         private readonly AnimatedValue _selection;
 
-        private const int IconBox = 40;
         private const int RadioArea = 44;
-        private const int Pad = 14;
-        private const int MinHeight = 68;
+        private const int DefaultCardHeight = 68;
+        private const int DetailGap = 10;
+        private const int TitleMinHeight = 22;
+        private const int BadgeHeight = 20;
+        private const int BadgeIcon = 13;
+        private const int BadgeGap = 6;
+        private const int BadgeMaxWidth = 200;
+
+        private int _iconBoxSize = 40;
+        private int _horizontalPadding = 14;
+        private int _radioSize = 20;
+        private int _cardHeight = DefaultCardHeight;
+        private Font? _descriptionFont;
+        private Font? _detailFont;
+        private Font? _accentFont;
 
         /// <summary>Free-form payload, like Control.Tag but typed by the caller's convention.</summary>
         [Browsable(false)]
@@ -44,13 +67,16 @@ namespace Material3.WinForms.Controls {
 
         /// <summary>Initializes a new instance of the <see cref="MaterialOptionCard"/> class.</summary>
         public MaterialOptionCard() : base(Shape.Medium) {
-            MinimumSize = new Size(0, MinHeight);
+            Height = DefaultCardHeight;
+            AutoSize = true;
             MaterialCursors.Apply(this, MaterialCursors.Pointer);
+            TypeRole.Follow(this, () => TypeScale.TitleMedium);
+            _hover = new StateLayerFade(this);
             UpdateSurface();
 
             _selection = new AnimatedValue(this, factor: 0.22f, threshold: 0.01f);
 
-            Click += (s, e) => SelectCard();
+            Click += (s, e) => OnCardClick();
             ThemeHook.Attach(this, UpdateSurface);
         }
 
@@ -83,20 +109,106 @@ namespace Material3.WinForms.Controls {
         }
 
         private void ApplyIntrinsicSize() {
-            int min = Dpi.Scale(this, MinHeight);
-            MinimumSize = new Size(0, min);
-            Height = min;
+            if (AutoSize) {
+                Height = GetPreferredSize(Size.Empty).Height;
+            }
+        }
+
+        /// <inheritdoc />
+        public override Size GetPreferredSize(Size proposedSize) => new Size(Width, Dpi.Scale(this, _cardHeight));
+
+        /// <summary>Whether the card sizes its height to <see cref="CardHeight"/>. Turn it off to give it a size of your own.</summary>
+        [Browsable(true)]
+        [EditorBrowsable(EditorBrowsableState.Always)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+        [DefaultValue(true)]
+        public override bool AutoSize {
+            get => base.AutoSize;
+            set { base.AutoSize = value; ApplyIntrinsicSize(); }
+        }
+
+        /// <summary>The height AutoSize gives the card, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The height AutoSize gives the card, in 96-DPI px.")]
+        [DefaultValue(DefaultCardHeight)]
+        public int CardHeight {
+            get => _cardHeight;
+            set { _cardHeight = Math.Max(1, value); ApplyIntrinsicSize(); Invalidate(); }
+        }
+
+        /// <summary>The side of the leading icon tile, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The side of the leading icon tile, in 96-DPI px.")]
+        [DefaultValue(40)]
+        public int IconBoxSize {
+            get => _iconBoxSize;
+            set { _iconBoxSize = Math.Max(0, value); Invalidate(); }
+        }
+
+        /// <summary>The space between the card's edges and its content, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The space between the card's edges and its content, in 96-DPI px.")]
+        [DefaultValue(14)]
+        public int HorizontalPadding {
+            get => _horizontalPadding;
+            set { _horizontalPadding = Math.Max(0, value); Invalidate(); }
+        }
+
+        /// <summary>The radio's diameter, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The radio's diameter, in 96-DPI px.")]
+        [DefaultValue(20)]
+        public int RadioSize {
+            get => _radioSize;
+            set { _radioSize = Math.Max(1, value); Invalidate(); }
+        }
+
+        /// <summary>The description line's font. The title uses <see cref="Control.Font"/>. Null follows <see cref="TypeScale.BodySmall"/>.</summary>
+        [Category("Material Design")]
+        [Description("The description line's font. The title uses Font. Null follows the type scale's BodySmall.")]
+        [DefaultValue(null)]
+        public Font? DescriptionFont {
+            get => _descriptionFont;
+            set { _descriptionFont = value; Invalidate(); }
+        }
+
+        /// <summary>The trailing detail text's font. Null follows <see cref="TypeScale.BodySmall"/>.</summary>
+        [Category("Material Design")]
+        [Description("The trailing detail text's font. Null follows the type scale's BodySmall.")]
+        [DefaultValue(null)]
+        public Font? DetailFont {
+            get => _detailFont;
+            set { _detailFont = value; Invalidate(); }
+        }
+
+        /// <summary>The accent chip or suffix font. Null follows <see cref="TypeScale.LabelMedium"/>.</summary>
+        [Category("Material Design")]
+        [Description("The accent chip or suffix font. Null follows the type scale's LabelMedium.")]
+        [DefaultValue(null)]
+        public Font? AccentFont {
+            get => _accentFont;
+            set { _accentFont = value; Invalidate(); }
+        }
+
+        /// <inheritdoc />
+        protected override void OnFontChanged(EventArgs e) {
+            base.OnFontChanged(e);
+            Invalidate();
         }
 
         /// <inheritdoc />
         protected override void Dispose(bool disposing) {
             if (disposing) {
                 _selection.Dispose();
+                _hover?.Dispose();
             }
             base.Dispose(disposing);
         }
 
-        /// <summary>Whether the card is the selected one. Setting it does not raise <see cref="SelectedChanged"/>, so a host can keep a group in sync.</summary>
+        /// <summary>
+        /// Whether the card is the selected one. Selecting a radio card unchooses the others of its group; every change
+        /// raises <see cref="SelectedChanged"/>, as a click does.
+        /// </summary>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool IsSelected {
@@ -108,6 +220,15 @@ namespace Material3.WinForms.Controls {
                 _selected = value;
                 _selection.To(_selected ? 1f : 0f);
                 UpdateSurface();
+                if (_selected && _indicator != MaterialOptionIndicator.Check && Parent != null) {
+                    foreach (Control sibling in Parent.Controls) {
+                        if (sibling is MaterialOptionCard other && !ReferenceEquals(other, this)
+                            && other._indicator != MaterialOptionIndicator.Check && other.GroupName == GroupName) {
+                            other.IsSelected = false;
+                        }
+                    }
+                }
+                SelectedChanged?.Invoke(this);
             }
         }
 
@@ -194,16 +315,34 @@ namespace Material3.WinForms.Controls {
             set { _fallbackGlyph = value ?? MaterialIcons.DeployedCode; Invalidate(); }
         }
 
-        /// <summary>Selects the card and raises <see cref="SelectedChanged"/>, as a click does.</summary>
-        public void SelectCard() {
-            if (_selected) {
-                return;
-            }
-            _selected = true;
-            _selection.To(1f);
-            UpdateSurface();
-            SelectedChanged?.Invoke(this);
+        private MaterialOptionIndicator _indicator = MaterialOptionIndicator.Radio;
+        private MaterialTone _tone = MaterialTone.Neutral;
+
+        /// <summary>How the card shows that it is chosen. A radio or bare card unchooses the others of its group; a check card toggles on its own.</summary>
+        [Category("Material Design")]
+        [Description("How the card shows that it is chosen.")]
+        [DefaultValue(MaterialOptionIndicator.Radio)]
+        public MaterialOptionIndicator Indicator {
+            get => _indicator;
+            set { _indicator = value; Invalidate(); }
         }
+
+        /// <summary>Tints the outline of a card that is not chosen yet — a warning or an error about that option.</summary>
+        [Category("Material Design")]
+        [Description("Tints the outline of a card that is not chosen yet.")]
+        [DefaultValue(MaterialTone.Neutral)]
+        public MaterialTone Tone {
+            get => _tone;
+            set { _tone = value; UpdateSurface(); }
+        }
+
+        /// <summary>The cards that choose one between them; null groups every radio card under the same parent.</summary>
+        [Category("Material Design")]
+        [Description("The cards that choose one between them; empty groups every radio card under the same parent.")]
+        [DefaultValue(null)]
+        public string? GroupName { get; set; }
+
+        private void OnCardClick() => IsSelected = _indicator == MaterialOptionIndicator.Check ? !_selected : true;
 
         /// <inheritdoc />
         protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); _hovered = true; UpdateSurface(); }
@@ -211,12 +350,28 @@ namespace Material3.WinForms.Controls {
         protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); _hovered = false; UpdateSurface(); }
 
         private void UpdateSurface() {
-            Color baseColor = _selected ? MaterialColors.SurfaceContainerHigh : MaterialColors.SurfaceContainer;
-            BackColor = _hovered
-                ? ArgbExtensions.Overlay(baseColor, MaterialColors.OnSurface, StateLayers.Hover)
-                : baseColor;
-            OutlineColor = _selected ? MaterialColors.Primary : MaterialColors.OutlineVariant;
+            ApplySurfaceColor();
+            OutlineColor = _selected ? MaterialColors.Primary
+                : _tone == MaterialTone.Warning ? MaterialColors.Warning
+                : _tone == MaterialTone.Error ? MaterialColors.Error
+                : MaterialColors.OutlineVariant;
             Invalidate();
+        }
+
+        // Each hover-fade frame only invalidates, so the fill is re-read on every background paint.
+        private void ApplySurfaceColor() {
+            Color baseColor = _selected ? MaterialColors.SurfaceContainerHigh : MaterialColors.SurfaceContainer;
+            double hover = _hover?.Resolve(_hovered, false, Enabled) ?? 0;
+            Color fill = hover > 0 ? ArgbExtensions.Overlay(baseColor, MaterialColors.OnSurface, hover) : baseColor;
+            if (BackColor != fill) {
+                BackColor = fill;
+            }
+        }
+
+        /// <inheritdoc />
+        protected override void OnPaintBackground(PaintEventArgs pevent) {
+            ApplySurfaceColor();
+            base.OnPaintBackground(pevent);
         }
 
         /// <inheritdoc />
@@ -226,8 +381,10 @@ namespace Material3.WinForms.Controls {
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
 
-            int pad = Dpi.Scale(this, Pad);
-            int iconBox = Dpi.Scale(this, IconBox);
+            int pad = Dpi.Scale(this, _horizontalPadding);
+            int iconBox = Dpi.Scale(this, _iconBoxSize);
+            Font descriptionFont = _descriptionFont ?? TypeScale.BodySmall;
+            Font detailFont = _detailFont ?? TypeScale.BodySmall;
             var iconRect = new Rectangle(pad, (Height - iconBox) / 2, iconBox, iconBox);
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
             g.PixelOffsetMode = PixelOffsetMode.HighQuality;
@@ -243,7 +400,7 @@ namespace Material3.WinForms.Controls {
                     using (var brush = new SolidBrush(_selected ? MaterialColors.PrimaryContainer : MaterialColors.SurfaceContainerHighest)) {
                         g.FillPath(brush, path);
                     }
-                    int glyphPx = Dpi.Scale(this, 22);
+                    int glyphPx = iconBox * 22 / 40;
                     Bitmap glyph = MaterialIconRenderer.Render(_fallbackGlyph, glyphPx, MaterialColors.OnSurfaceVariant);
                     g.DrawImageUnscaled(
                         glyph,
@@ -253,52 +410,54 @@ namespace Material3.WinForms.Controls {
                 }
             }
 
-            int textLeft = pad + iconBox + Dpi.Scale(this, 14);
-            int textRight = Width - Dpi.Scale(this, RadioArea) - Dpi.Scale(this, 8);
+            int textLeft = pad + iconBox + Dpi.Scale(this, _horizontalPadding);
+            int textRight = Width - Dpi.Scale(this, RadioArea) - Dpi.Scale(this, Spacing.Space2);
             using (var nearFmt = new StringFormat(StringFormat.GenericTypographic) {
                 Alignment = StringAlignment.Near,
                 LineAlignment = StringAlignment.Center,
             }) {
                 int detailWidth = 0;
                 if (!string.IsNullOrEmpty(_detailText)) {
-                    SizeF measured = g.MeasureString(_detailText, TypeScale.BodySmall, int.MaxValue, StringFormat.GenericTypographic);
-                    detailWidth = (int)Math.Ceiling(measured.Width) + Dpi.Scale(this, 10);
+                    SizeF measured = g.MeasureString(_detailText, detailFont, int.MaxValue, StringFormat.GenericTypographic);
+                    detailWidth = (int)Math.Ceiling(measured.Width) + Dpi.Scale(this, DetailGap);
                     using (var brush = new SolidBrush(MaterialColors.OnSurfaceVariant))
                     using (var rightFmt = new StringFormat(StringFormat.GenericTypographic) {
                         Alignment = StringAlignment.Far,
                         LineAlignment = StringAlignment.Center,
                     }) {
-                        g.DrawString(_detailText, TypeScale.BodySmall, brush,
+                        g.DrawString(_detailText, detailFont, brush,
                             new RectangleF(textRight - detailWidth, 0, detailWidth, Height), rightFmt);
                     }
                 }
 
-                float titleY = Dpi.Scale(this, 13f);
-                SizeF titleSize = g.MeasureString(_title, TypeScale.TitleMedium, int.MaxValue, StringFormat.GenericTypographic);
+                int lineGap = Dpi.Scale(this, 2);
+                int titleHeight = Math.Max(Font.Height, Dpi.Scale(this, TitleMinHeight));
+                float titleY = (Height - titleHeight - descriptionFont.Height - lineGap) / 2f;
+                SizeF titleSize = g.MeasureString(_title, Font, int.MaxValue, StringFormat.GenericTypographic);
                 using (var brush = new SolidBrush(MaterialColors.OnSurface)) {
-                    g.DrawString(_title, TypeScale.TitleMedium, brush,
-                        new RectangleF(textLeft, titleY, textRight - detailWidth - textLeft, Dpi.Scale(this, 22)), nearFmt);
+                    g.DrawString(_title, Font, brush,
+                        new RectangleF(textLeft, titleY, textRight - detailWidth - textLeft, titleHeight), nearFmt);
                 }
                 if (_accentContainer != null && _accentContent != null && !string.IsNullOrEmpty(_accentChipText)) {
-                    var chipStyle = ChipRenderer.ResolveAccent(
+                    ChipRenderer.Style chipStyle = ChipRenderer.ResolveAccent(
                         _accentContainer(), _accentContent(), _accentOutline?.Invoke(), Enabled);
                     var chipMetrics = new ChipRenderer.Metrics {
-                        Height = Dpi.Scale(this, 20),
-                        PadX = Dpi.Scale(this, 8),
-                        IconPx = Dpi.Scale(this, 13),
-                        IconGap = Dpi.Scale(this, 4),
+                        Height = Dpi.Scale(this, BadgeHeight),
+                        PadX = Dpi.Scale(this, Spacing.Space2),
+                        IconPx = Dpi.Scale(this, BadgeIcon),
+                        IconGap = Dpi.Scale(this, Spacing.Space1),
                         OutlineWidth = Dpi.Scale(this, 1f),
-                        Font = TypeScale.LabelMedium,
+                        Font = _accentFont ?? TypeScale.LabelMedium,
                     };
                     int chipWidth = ChipRenderer.Measure(g, _accentChipText, _accentChipGlyph != null, chipMetrics);
-                    int chipX = (int)(textLeft + titleSize.Width) + Dpi.Scale(this, 6);
-                    int chipY = (int)titleY + (Dpi.Scale(this, 22) - chipMetrics.Height) / 2;
+                    int chipX = (int)(textLeft + titleSize.Width) + Dpi.Scale(this, BadgeGap);
+                    int chipY = (int)titleY + (titleHeight - chipMetrics.Height) / 2;
                     ChipRenderer.Draw(g, _accentChipText, _accentChipGlyph, null, chipStyle, chipMetrics, chipX, chipY, chipWidth);
                 }
                 else if (!string.IsNullOrEmpty(_accentSuffix)) {
                     using (var brush = new SolidBrush(MaterialColors.Primary)) {
-                        g.DrawString(" · " + _accentSuffix, TypeScale.LabelMedium, brush,
-                            new RectangleF(textLeft + titleSize.Width, titleY + Dpi.Scale(this, 1f), Dpi.Scale(this, 200), Dpi.Scale(this, 20)), nearFmt);
+                        g.DrawString(" · " + _accentSuffix, _accentFont ?? TypeScale.LabelMedium, brush,
+                            new RectangleF(textLeft + titleSize.Width, titleY + Dpi.Scale(this, 1f), Dpi.Scale(this, BadgeMaxWidth), Dpi.Scale(this, BadgeHeight)), nearFmt);
                     }
                 }
 
@@ -309,26 +468,44 @@ namespace Material3.WinForms.Controls {
                     FormatFlags = StringFormatFlags.NoWrap,
                 })
                 using (var brush = new SolidBrush(MaterialColors.OnSurfaceVariant)) {
-                    g.DrawString(_description, TypeScale.BodySmall, brush,
-                        new RectangleF(textLeft, Dpi.Scale(this, 35f), textRight - textLeft, Dpi.Scale(this, 20)), descFmt);
+                    g.DrawString(_description, descriptionFont, brush,
+                        new RectangleF(textLeft, titleY + titleHeight + lineGap, textRight - textLeft, descriptionFont.Height), descFmt);
                 }
             }
 
-            DrawRadio(g);
+            DrawIndicator(g);
         }
 
-        private void DrawRadio(Graphics g) {
-            int diameter = Dpi.Scale(this, 20);
+        private void DrawIndicator(Graphics g) {
+            if (_indicator == MaterialOptionIndicator.None) {
+                return;
+            }
+
+            int diameter = Dpi.Scale(this, _radioSize);
             int cx = Width - Dpi.Scale(this, RadioArea) / 2 - Dpi.Scale(this, 2);
             int cy = Height / 2;
             var outer = new Rectangle(cx - diameter / 2, cy - diameter / 2, diameter, diameter);
             float selectionProgress = _selection.Current;
+            if (_indicator == MaterialOptionIndicator.Check) {
+                using (var pen = new Pen(MaterialColors.Outline, Dpi.Scale(this, 2f))) {
+                    g.DrawEllipse(pen, outer);
+                }
+                if (selectionProgress > 0.01f) {
+                    float d = diameter * selectionProgress;
+                    using (var brush = new SolidBrush(MaterialColors.Primary)) {
+                        g.FillEllipse(brush, cx - d / 2f, cy - d / 2f, d, d);
+                    }
+                    int glyph = Math.Max(1, (int)(diameter * 0.7f * selectionProgress));
+                    g.DrawImageUnscaled(MaterialIconRenderer.Render(MaterialIcons.Check, glyph, MaterialColors.OnPrimary), cx - glyph / 2, cy - glyph / 2);
+                }
+                return;
+            }
             Color ringColor = ArgbExtensions.Overlay(MaterialColors.Outline, MaterialColors.Primary, selectionProgress);
             using (var pen = new Pen(ringColor, Dpi.Scale(this, 2f))) {
                 g.DrawEllipse(pen, outer);
             }
             if (selectionProgress > 0.01f) {
-                float innerDiameter = Dpi.Scale(this, 10f) * selectionProgress;
+                float innerDiameter = diameter / 2f * selectionProgress;
                 var inner = new RectangleF(cx - innerDiameter / 2f, cy - innerDiameter / 2f, innerDiameter, innerDiameter);
                 using (var brush = new SolidBrush(MaterialColors.Primary)) {
                     g.FillEllipse(brush, inner);

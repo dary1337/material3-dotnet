@@ -22,7 +22,7 @@ namespace Material3.Core {
 
         /// <summary>Palette matching the hue and chroma of the given color.</summary>
         public static TonalPalette FromColor(Argb color) {
-            Hct hct = Hct.FromColor(color);
+            var hct = Hct.FromColor(color);
             return new TonalPalette(hct.Hue, hct.Chroma);
         }
 

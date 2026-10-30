@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
+using System.Linq;
 using System.Windows.Forms;
 using Material3.WinForms.Drawing;
 using Material3.WinForms.Theming;
@@ -15,25 +16,72 @@ namespace Material3.WinForms.Controls {
     public sealed class NavigationItem {
         /// <summary>Creates a destination with a label and a Material Symbols glyph.</summary>
         public NavigationItem(string label, string glyph) {
-            Label = label ?? string.Empty;
-            Glyph = glyph ?? string.Empty;
+            _label = label ?? string.Empty;
+            _glyph = glyph ?? string.Empty;
         }
 
-        /// <summary>The text under or beside the glyph.</summary>
-        public string Label { get; }
+        private string _label;
+        private string _glyph;
+
+        /// <summary>The text under or beside the glyph. Setting it repaints the destination, e.g. on a language switch.</summary>
+        public string Label {
+            get => _label;
+            set { _label = value ?? string.Empty; Changed?.Invoke(); }
+        }
 
         /// <summary>Material Symbols key.</summary>
-        public string Glyph { get; }
+        public string Glyph {
+            get => _glyph;
+            set { _glyph = value ?? string.Empty; Changed?.Invoke(); }
+        }
+
+        private int _badgeCount;
+        private bool _isBusy;
+        private MaterialTone _badgeTone = MaterialTone.Error;
+        private string? _selectedGlyph;
+
+        internal event Action? Changed;
 
         /// <summary>Badge count rendered over the icon; 0 hides the badge, negatives show a dot.</summary>
-        public int BadgeCount { get; set; }
+        public int BadgeCount {
+            get => _badgeCount;
+            set { _badgeCount = value; Changed?.Invoke(); }
+        }
+
+        /// <summary>The badge's colour; M3 badges are <see cref="MaterialTone.Error"/>.</summary>
+        public MaterialTone BadgeTone {
+            get => _badgeTone;
+            set { _badgeTone = value; Changed?.Invoke(); }
+        }
+
+        /// <summary>Work still running behind the destination: a spinner takes the badge's place.</summary>
+        public bool IsBusy {
+            get => _isBusy;
+            set { _isBusy = value; Changed?.Invoke(); }
+        }
+
+        /// <summary>The glyph while the destination is selected — typically the filled form of <see cref="Glyph"/>. Null keeps <see cref="Glyph"/>.</summary>
+        public string? SelectedGlyph {
+            get => _selectedGlyph;
+            set { _selectedGlyph = value; Changed?.Invoke(); }
+        }
+
+        internal string GlyphFor(bool selected) => selected && !string.IsNullOrEmpty(_selectedGlyph) ? _selectedGlyph! : Glyph;
     }
 
     /// <summary>Shared selection/hover plumbing for the three navigation containers; subclasses supply geometry and painting.</summary>
     [ToolboxItem(false)]
     public abstract class MaterialNavigationBase : Control {
+        private const int BusyBadge = 12;
+        private const int DotBadge = 7;
+        private const int LargeBadgeHeight = 16;
+
+        private Font? _badgeFont;
         private protected readonly List<NavigationItem> Items = new List<NavigationItem>();
         private protected int HotIndex = -1;
+        private protected readonly ItemHoverFade Hover;
+        private protected readonly AnimatedValue Indicator;
+        private readonly BusySpinner _spinner;
         private int _selectedIndex = -1;
 
         /// <summary>Raised when a different destination is selected.</summary>
@@ -47,7 +95,51 @@ namespace Material3.WinForms.Controls {
                     | ControlStyles.ResizeRedraw,
                 true);
             MaterialCursors.Apply(this, MaterialCursors.Pointer);
+            AutoSize = true;
+            Hover = new ItemHoverFade(this);
+            Indicator = new AnimatedValue(this, factor: 0.22f, threshold: 0.01f);
+            Indicator.SnapTo(1f);
+            _spinner = new BusySpinner(this);
             ThemeHook.Attach(this, () => { ApplyTheme(); Invalidate(); });
+        }
+
+        private void Track(NavigationItem item) {
+            item.Changed += OnItemChanged;
+            OnItemChanged();
+        }
+
+        private void OnItemChanged() {
+            _spinner.Run(Items.Any(i => i.IsBusy));
+            Invalidate();
+        }
+
+        /// <inheritdoc />
+        protected override void Dispose(bool disposing) {
+            if (disposing) {
+                Hover.Dispose();
+                Indicator.Dispose();
+                _spinner.Dispose();
+                foreach (NavigationItem item in Items) {
+                    item.Changed -= OnItemChanged;
+                }
+            }
+            base.Dispose(disposing);
+        }
+
+        /// <summary>Whether the container sizes its docked side to its own token. Turn it off to give it a size of your own.</summary>
+        [Browsable(true)]
+        [EditorBrowsable(EditorBrowsableState.Always)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+        [DefaultValue(true)]
+        public override bool AutoSize {
+            get => base.AutoSize;
+            set { base.AutoSize = value; ApplyIntrinsicSize(); }
+        }
+
+        /// <inheritdoc />
+        protected override void OnFontChanged(EventArgs e) {
+            base.OnFontChanged(e);
+            Invalidate();
         }
 
         /// <inheritdoc />
@@ -81,6 +173,8 @@ namespace Material3.WinForms.Controls {
                     return;
                 }
                 _selectedIndex = value;
+                Indicator.SnapTo(0f);
+                Indicator.To(1f);
                 SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
                 Invalidate();
             }
@@ -88,16 +182,13 @@ namespace Material3.WinForms.Controls {
 
         /// <summary>Appends a destination.</summary>
         public void AddItem(string label, string glyph) {
-            Items.Add(new NavigationItem(label, glyph));
-            if (_selectedIndex < 0) {
-                _selectedIndex = 0;
-            }
-            Invalidate();
+            AddItem(new NavigationItem(label, glyph));
         }
 
         /// <summary>Appends a destination.</summary>
         public void AddItem(NavigationItem item) {
             Items.Add(item);
+            Track(item);
             if (_selectedIndex < 0) {
                 _selectedIndex = 0;
             }
@@ -106,7 +197,12 @@ namespace Material3.WinForms.Controls {
 
         /// <summary>Removes every destination.</summary>
         public void ClearItems() {
+            foreach (NavigationItem item in Items) {
+                item.Changed -= OnItemChanged;
+            }
+
             Items.Clear();
+            _spinner.Run(false);
             _selectedIndex = -1;
             Invalidate();
         }
@@ -133,7 +229,7 @@ namespace Material3.WinForms.Controls {
             int hit = HitTest(e.Location);
             if (hit != HotIndex) {
                 HotIndex = hit;
-                Invalidate();
+                Hover.SetHot(hit);
             }
         }
 
@@ -142,7 +238,7 @@ namespace Material3.WinForms.Controls {
             base.OnMouseLeave(e);
             if (HotIndex != -1) {
                 HotIndex = -1;
-                Invalidate();
+                Hover.SetHot(-1);
             }
         }
 
@@ -157,30 +253,66 @@ namespace Material3.WinForms.Controls {
             }
         }
 
-        private protected static void PaintBadge(Control owner, Graphics g, Rectangle iconRect, int count) {
+        /// <summary>The badge count's font. Null follows <see cref="TypeScale.LabelSmall"/>.</summary>
+        [Category("Material Design")]
+        [Description("The badge count's font. Null follows the type scale's LabelSmall.")]
+        [DefaultValue(null)]
+        public Font? BadgeFont {
+            get => _badgeFont;
+            set { _badgeFont = value; Invalidate(); }
+        }
+
+        private protected Rectangle GrowFromCentre(Rectangle pill) {
+            float t = (float)Motion.EmphasizedDecelerate.Evaluate(Indicator.Current);
+            int width = Math.Max(pill.Height, (int)Math.Round(pill.Width * t));
+            return new Rectangle(pill.X + (pill.Width - width) / 2, pill.Y, width, pill.Height);
+        }
+
+        private static (Color fill, Color text) BadgeColors(MaterialTone tone) {
+            switch (tone) {
+                case MaterialTone.Neutral: return (MaterialColors.OnSurfaceVariant, MaterialColors.SurfaceContainerHighest);
+                case MaterialTone.Accent: return (MaterialColors.Primary, MaterialColors.OnPrimary);
+                case MaterialTone.Success: return (MaterialColors.Success, MaterialColors.OnSuccess);
+                case MaterialTone.Warning: return (MaterialColors.Warning, MaterialColors.OnWarning);
+                default: return (MaterialColors.Error, MaterialColors.OnError);
+            }
+        }
+
+        private protected void PaintBadge(Graphics g, Rectangle iconRect, NavigationItem item) {
+            if (item.IsBusy) {
+                int s = Dpi.Scale(this, BusyBadge);
+                _spinner.Paint(g, new Rectangle(iconRect.Right - s / 2, iconRect.Y - s / 2, s, s), MaterialColors.Primary);
+                return;
+            }
+            PaintBadge(g, iconRect, item.BadgeCount, item.BadgeTone);
+        }
+
+        private protected void PaintBadge(Graphics g, Rectangle iconRect, int count, MaterialTone tone = MaterialTone.Error) {
+            Font badgeFont = _badgeFont ?? TypeScale.LabelSmall;
+            (Color badgeFill, Color badgeText) = BadgeColors(tone);
             if (count == 0) {
                 return;
             }
             if (count < 0) {
-                using (var brush = new SolidBrush(MaterialColors.Error)) {
-                    g.FillEllipse(brush, iconRect.Right - Dpi.Scale(owner, 5), iconRect.Y - Dpi.Scale(owner, 2), Dpi.Scale(owner, 7), Dpi.Scale(owner, 7));
+                using (var brush = new SolidBrush(badgeFill)) {
+                    g.FillEllipse(brush, iconRect.Right - Dpi.Scale(this, 5), iconRect.Y - Dpi.Scale(this, 2), Dpi.Scale(this, DotBadge), Dpi.Scale(this, DotBadge));
                 }
                 return;
             }
             string text = count > 999 ? "999+" : count.ToString();
-            SizeF size = g.MeasureString(text, TypeScale.LabelSmall, int.MaxValue, StringFormat.GenericTypographic);
-            int w = Math.Max(Dpi.Scale(owner, 16), (int)Math.Ceiling(size.Width) + Dpi.Scale(owner, 8));
-            var rect = new Rectangle(iconRect.Right - w / 2 - Dpi.Scale(owner, 2), iconRect.Y - Dpi.Scale(owner, 7), w, Dpi.Scale(owner, 16));
+            SizeF size = g.MeasureString(text, badgeFont, int.MaxValue, StringFormat.GenericTypographic);
+            int w = Math.Max(Dpi.Scale(this, LargeBadgeHeight), (int)Math.Ceiling(size.Width) + Dpi.Scale(this, Spacing.Space2));
+            var rect = new Rectangle(iconRect.Right - w / 2 - Dpi.Scale(this, 2), iconRect.Y - Dpi.Scale(this, 7), w, Dpi.Scale(this, LargeBadgeHeight));
             using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(rect, Shape.Full))
-            using (var fill = new SolidBrush(MaterialColors.Error)) {
+            using (var fill = new SolidBrush(badgeFill)) {
                 g.FillPath(fill, path);
             }
-            using (var brush = new SolidBrush(MaterialColors.OnError))
+            using (var brush = new SolidBrush(badgeText))
             using (var fmt = new StringFormat(StringFormat.GenericTypographic) {
                 Alignment = StringAlignment.Center,
                 LineAlignment = StringAlignment.Center,
             }) {
-                g.DrawString(text, TypeScale.LabelSmall, brush, rect, fmt);
+                g.DrawString(text, badgeFont, brush, rect, fmt);
             }
         }
     }
@@ -189,20 +321,63 @@ namespace Material3.WinForms.Controls {
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialNavigationBar : MaterialNavigationBase {
-        private const int BarHeight = 64;
-        private const int IconPx = 22;
-        private const int PillWidth = 56;
-        private const int PillHeight = 30;
+        private const int DefaultBarHeight = 64;
+
+        private int _barHeight = DefaultBarHeight;
+        private int _iconSize = 24;
+        private int _pillWidth = 64;
+        private int _pillHeight = 32;
 
         /// <summary>Initializes a new instance of the <see cref="MaterialNavigationBar"/> class.</summary>
         public MaterialNavigationBar() {
-            Height = BarHeight;
+            Height = DefaultBarHeight;
             Dock = DockStyle.Bottom;
+            TypeRole.Follow(this, () => TypeScale.LabelMedium);
         }
 
         private protected override void ApplyIntrinsicSize() {
-            Height = Dpi.Scale(this, BarHeight);
+            if (AutoSize) {
+                Height = Dpi.Scale(this, _barHeight);
+            }
         }
+
+        /// <summary>The height AutoSize gives the bar, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The height AutoSize gives the bar, in 96-DPI px.")]
+        [DefaultValue(DefaultBarHeight)]
+        public int BarHeight {
+            get => _barHeight;
+            set { _barHeight = Math.Max(1, value); ApplyIntrinsicSize(); Invalidate(); }
+        }
+
+        /// <summary>A destination glyph's side, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("A destination glyph's side, in 96-DPI px.")]
+        [DefaultValue(24)]
+        public int IconSize {
+            get => _iconSize;
+            set { _iconSize = Math.Max(0, value); Invalidate(); }
+        }
+
+        /// <summary>The active indicator's width, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The active indicator's width, in 96-DPI px.")]
+        [DefaultValue(64)]
+        public int PillWidth {
+            get => _pillWidth;
+            set { _pillWidth = Math.Max(1, value); Invalidate(); }
+        }
+
+        /// <summary>The active indicator's height, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The active indicator's height, in 96-DPI px.")]
+        [DefaultValue(32)]
+        public int PillHeight {
+            get => _pillHeight;
+            set { _pillHeight = Math.Max(1, value); Invalidate(); }
+        }
+
+
 
         private protected override void ApplyTheme() {
             BackColor = MaterialColors.SurfaceContainer;
@@ -230,35 +405,36 @@ namespace Material3.WinForms.Controls {
                 bool active = i == SelectedIndex;
 
                 int iconCx = rect.X + rect.Width / 2;
-                int pillWidth = Dpi.Scale(this, PillWidth);
-                int pillHeight = Dpi.Scale(this, PillHeight);
-                int iconPx = Dpi.Scale(this, IconPx);
-                var pill = new Rectangle(iconCx - pillWidth / 2, Dpi.Scale(this, 8), pillWidth, pillHeight);
+                int pillWidth = Dpi.Scale(this, _pillWidth);
+                int pillHeight = Dpi.Scale(this, _pillHeight);
+                int iconPx = Dpi.Scale(this, _iconSize);
+                var pill = new Rectangle(iconCx - pillWidth / 2, Dpi.Scale(this, Spacing.Space2), pillWidth, pillHeight);
                 if (active) {
+                    pill = GrowFromCentre(pill);
                     using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(pill, Shape.Full))
                     using (var brush = new SolidBrush(MaterialColors.SecondaryContainer)) {
                         g.FillPath(brush, path);
                     }
                 }
-                else if (i == HotIndex) {
+                else if (Hover.Opacity(i) > 0) {
                     using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(pill, Shape.Full))
                     using (var brush = new SolidBrush(Color.FromArgb(
-                        (int)(StateLayers.Hover * 255), MaterialColors.OnSurface))) {
+                        (int)(Hover.Opacity(i) * 255), MaterialColors.OnSurface))) {
                         g.FillPath(brush, path);
                     }
                 }
 
                 Color glyphColor = active ? MaterialColors.OnSecondaryContainer : MaterialColors.OnSurfaceVariant;
                 var iconRect = new Rectangle(iconCx - iconPx / 2, pill.Y + (pillHeight - iconPx) / 2, iconPx, iconPx);
-                Bitmap icon = MaterialIconRenderer.Render(item.Glyph, iconPx, glyphColor);
+                Bitmap icon = MaterialIconRenderer.Render(item.GlyphFor(active), iconPx, glyphColor);
                 g.DrawImageUnscaled(icon, iconRect.X, iconRect.Y);
-                PaintBadge(this, g, iconRect, item.BadgeCount);
+                PaintBadge(g, iconRect, item);
 
                 Color labelColor = active ? MaterialColors.OnSurface : MaterialColors.OnSurfaceVariant;
                 using (var brush = new SolidBrush(labelColor))
                 using (var fmt = new StringFormat(StringFormat.GenericTypographic) { Alignment = StringAlignment.Center }) {
-                    g.DrawString(item.Label, TypeScale.LabelMedium, brush,
-                        new RectangleF(rect.X, pill.Bottom + Dpi.Scale(this, 4), rect.Width, Dpi.Scale(this, 16)), fmt);
+                    g.DrawString(item.Label, Font, brush,
+                        new RectangleF(rect.X, pill.Bottom + Dpi.Scale(this, Spacing.Space1), rect.Width, Dpi.Scale(this, Spacing.Space4)), fmt);
                 }
             }
         }
@@ -268,26 +444,85 @@ namespace Material3.WinForms.Controls {
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialNavigationRail : MaterialNavigationBase {
-        private const int RailWidth = 80;
-        private const int ItemHeight = 60;
-        private const int TopPad = 12;
-        private const int IconPx = 22;
-        private const int PillWidth = 52;
-        private const int PillHeight = 30;
+        private const int DefaultRailWidth = 80;
+
+        private int _railWidth = DefaultRailWidth;
+        private int _itemHeight = 60;
+        private int _topPadding = 12;
+        private int _iconSize = 24;
+        private int _pillWidth = 56;
+        private int _pillHeight = 32;
 
         /// <summary>Initializes a new instance of the <see cref="MaterialNavigationRail"/> class.</summary>
         public MaterialNavigationRail() {
-            Width = RailWidth;
+            Width = DefaultRailWidth;
             Dock = DockStyle.Left;
+            TypeRole.Follow(this, () => TypeScale.LabelMedium);
         }
 
         private protected override void ApplyIntrinsicSize() {
-            Width = Dpi.Scale(this, RailWidth);
+            if (AutoSize) {
+                Width = Dpi.Scale(this, _railWidth);
+            }
+        }
+
+        /// <summary>The width AutoSize gives the rail, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The width AutoSize gives the rail, in 96-DPI px.")]
+        [DefaultValue(DefaultRailWidth)]
+        public int RailWidth {
+            get => _railWidth;
+            set { _railWidth = Math.Max(1, value); ApplyIntrinsicSize(); Invalidate(); }
+        }
+
+        /// <summary>One destination's height, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("One destination's height, in 96-DPI px.")]
+        [DefaultValue(60)]
+        public int ItemHeight {
+            get => _itemHeight;
+            set { _itemHeight = Math.Max(1, value); Invalidate(); }
+        }
+
+        /// <summary>The space above the first destination, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The space above the first destination, in 96-DPI px.")]
+        [DefaultValue(12)]
+        public int TopPadding {
+            get => _topPadding;
+            set { _topPadding = Math.Max(0, value); Invalidate(); }
+        }
+
+        /// <summary>A destination glyph's side, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("A destination glyph's side, in 96-DPI px.")]
+        [DefaultValue(24)]
+        public int IconSize {
+            get => _iconSize;
+            set { _iconSize = Math.Max(0, value); Invalidate(); }
+        }
+
+        /// <summary>The active indicator's width, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The active indicator's width, in 96-DPI px.")]
+        [DefaultValue(56)]
+        public int PillWidth {
+            get => _pillWidth;
+            set { _pillWidth = Math.Max(1, value); Invalidate(); }
+        }
+
+        /// <summary>The active indicator's height, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The active indicator's height, in 96-DPI px.")]
+        [DefaultValue(32)]
+        public int PillHeight {
+            get => _pillHeight;
+            set { _pillHeight = Math.Max(1, value); Invalidate(); }
         }
 
         private protected override Rectangle ItemRect(int index) {
-            int itemHeight = Dpi.Scale(this, ItemHeight);
-            return new Rectangle(0, Dpi.Scale(this, TopPad) + index * itemHeight, Width, itemHeight);
+            int itemHeight = Dpi.Scale(this, _itemHeight);
+            return new Rectangle(0, Dpi.Scale(this, _topPadding) + index * itemHeight, Width, itemHeight);
         }
 
         /// <inheritdoc />
@@ -303,35 +538,36 @@ namespace Material3.WinForms.Controls {
                 bool active = i == SelectedIndex;
 
                 int iconCx = rect.X + rect.Width / 2;
-                int pillWidth = Dpi.Scale(this, PillWidth);
-                int pillHeight = Dpi.Scale(this, PillHeight);
-                int iconPx = Dpi.Scale(this, IconPx);
-                var pill = new Rectangle(iconCx - pillWidth / 2, rect.Y + Dpi.Scale(this, 4), pillWidth, pillHeight);
+                int pillWidth = Dpi.Scale(this, _pillWidth);
+                int pillHeight = Dpi.Scale(this, _pillHeight);
+                int iconPx = Dpi.Scale(this, _iconSize);
+                var pill = new Rectangle(iconCx - pillWidth / 2, rect.Y + Dpi.Scale(this, Spacing.Space1), pillWidth, pillHeight);
                 if (active) {
+                    pill = GrowFromCentre(pill);
                     using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(pill, Shape.Full))
                     using (var brush = new SolidBrush(MaterialColors.SecondaryContainer)) {
                         g.FillPath(brush, path);
                     }
                 }
-                else if (i == HotIndex) {
+                else if (Hover.Opacity(i) > 0) {
                     using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(pill, Shape.Full))
                     using (var brush = new SolidBrush(Color.FromArgb(
-                        (int)(StateLayers.Hover * 255), MaterialColors.OnSurface))) {
+                        (int)(Hover.Opacity(i) * 255), MaterialColors.OnSurface))) {
                         g.FillPath(brush, path);
                     }
                 }
 
                 Color glyphColor = active ? MaterialColors.OnSecondaryContainer : MaterialColors.OnSurfaceVariant;
                 var iconRect = new Rectangle(iconCx - iconPx / 2, pill.Y + (pillHeight - iconPx) / 2, iconPx, iconPx);
-                Bitmap icon = MaterialIconRenderer.Render(item.Glyph, iconPx, glyphColor);
+                Bitmap icon = MaterialIconRenderer.Render(item.GlyphFor(active), iconPx, glyphColor);
                 g.DrawImageUnscaled(icon, iconRect.X, iconRect.Y);
-                PaintBadge(this, g, iconRect, item.BadgeCount);
+                PaintBadge(g, iconRect, item);
 
                 Color labelColor = active ? MaterialColors.OnSurface : MaterialColors.OnSurfaceVariant;
                 using (var brush = new SolidBrush(labelColor))
                 using (var fmt = new StringFormat(StringFormat.GenericTypographic) { Alignment = StringAlignment.Center }) {
-                    g.DrawString(item.Label, TypeScale.LabelMedium, brush,
-                        new RectangleF(rect.X, pill.Bottom + Dpi.Scale(this, 4), rect.Width, Dpi.Scale(this, 16)), fmt);
+                    g.DrawString(item.Label, Font, brush,
+                        new RectangleF(rect.X, pill.Bottom + Dpi.Scale(this, Spacing.Space1), rect.Width, Dpi.Scale(this, Spacing.Space4)), fmt);
                 }
             }
         }
@@ -341,23 +577,79 @@ namespace Material3.WinForms.Controls {
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialNavigationDrawer : MaterialNavigationBase {
-        private const int DrawerWidth = 280;
-        private const int ItemHeight = 48;
+        private const int DefaultDrawerWidth = 280;
         private const int EdgePad = 12;
-        private const int IconPx = 20;
-        private const int IconGap = 12;
 
         private string _headline = string.Empty;
+        private int _drawerWidth = DefaultDrawerWidth;
+        private int _itemHeight = 56;
+        private int _iconSize = 24;
+        private int _iconGap = 12;
+        private Font? _headlineFont;
 
         /// <summary>Initializes a new instance of the <see cref="MaterialNavigationDrawer"/> class.</summary>
         public MaterialNavigationDrawer() {
-            Width = DrawerWidth;
+            Width = DefaultDrawerWidth;
             Dock = DockStyle.Left;
             Padding = new Padding(EdgePad);
+            TypeRole.Follow(this, () => TypeScale.LabelLarge);
         }
 
         private protected override void ApplyIntrinsicSize() {
-            Width = Dpi.Scale(this, DrawerWidth);
+            if (AutoSize) {
+                Width = Dpi.Scale(this, _drawerWidth);
+            }
+        }
+
+        /// <summary>The width AutoSize gives the drawer, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The width AutoSize gives the drawer, in 96-DPI px.")]
+        [DefaultValue(DefaultDrawerWidth)]
+        public int DrawerWidth {
+            get => _drawerWidth;
+            set { _drawerWidth = Math.Max(1, value); ApplyIntrinsicSize(); Invalidate(); }
+        }
+
+        /// <summary>One destination's height, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("One destination's height, in 96-DPI px.")]
+        [DefaultValue(56)]
+        public int ItemHeight {
+            get => _itemHeight;
+            set { _itemHeight = Math.Max(1, value); Invalidate(); }
+        }
+
+        /// <summary>A destination glyph's side, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("A destination glyph's side, in 96-DPI px.")]
+        [DefaultValue(24)]
+        public int IconSize {
+            get => _iconSize;
+            set { _iconSize = Math.Max(0, value); Invalidate(); }
+        }
+
+        /// <summary>The gap between a glyph and its label, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The gap between a glyph and its label, in 96-DPI px.")]
+        [DefaultValue(12)]
+        public int IconGap {
+            get => _iconGap;
+            set { _iconGap = Math.Max(0, value); Invalidate(); }
+        }
+
+        /// <summary>The headline's font. The labels use <see cref="Control.Font"/>. Null follows <see cref="TypeScale.TitleSmall"/>.</summary>
+        [Category("Material Design")]
+        [Description("The headline's font. The labels use Font. Null follows the type scale's TitleSmall.")]
+        [DefaultValue(null)]
+        public Font? HeadlineFont {
+            get => _headlineFont;
+            set { _headlineFont = value; Invalidate(); }
+        }
+
+        /// <inheritdoc />
+        protected override void OnPaddingChanged(EventArgs e) {
+            base.OnPaddingChanged(e);
+            Invalidate();
         }
 
         /// <summary>Small section title above the destinations.</summary>
@@ -373,12 +665,11 @@ namespace Material3.WinForms.Controls {
             BackColor = MaterialColors.SurfaceContainerLow;
         }
 
-        private int ListTop => Dpi.Scale(this, EdgePad) + (string.IsNullOrEmpty(_headline) ? 0 : Dpi.Scale(this, 36));
+        private int ListTop => Padding.Top + (string.IsNullOrEmpty(_headline) ? 0 : (_headlineFont ?? TypeScale.TitleSmall).Height + Dpi.Scale(this, Spacing.Space4));
 
         private protected override Rectangle ItemRect(int index) {
-            int edgePad = Dpi.Scale(this, EdgePad);
-            int itemHeight = Dpi.Scale(this, ItemHeight);
-            return new Rectangle(edgePad, ListTop + index * (itemHeight + Dpi.Scale(this, 4)), Width - edgePad * 2, itemHeight);
+            int itemHeight = Dpi.Scale(this, _itemHeight);
+            return new Rectangle(Padding.Left, ListTop + index * (itemHeight + Dpi.Scale(this, Spacing.Space1)), Width - Padding.Horizontal, itemHeight);
         }
 
         /// <inheritdoc />
@@ -390,7 +681,7 @@ namespace Material3.WinForms.Controls {
 
             if (!string.IsNullOrEmpty(_headline)) {
                 using (var brush = new SolidBrush(MaterialColors.OnSurfaceVariant)) {
-                    g.DrawString(_headline, TypeScale.TitleSmall, brush, Dpi.Scale(this, EdgePad + 8), Dpi.Scale(this, EdgePad + 6));
+                    g.DrawString(_headline, _headlineFont ?? TypeScale.TitleSmall, brush, Padding.Left + Dpi.Scale(this, Spacing.Space2), Padding.Top + Dpi.Scale(this, 6));
                 }
             }
 
@@ -401,31 +692,31 @@ namespace Material3.WinForms.Controls {
 
                 using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(rect, Shape.Full)) {
                     if (active) {
-                        using (var brush = new SolidBrush(MaterialColors.SecondaryContainer)) {
+                        using (var brush = new SolidBrush(Color.FromArgb((int)(255 * Indicator.Current), MaterialColors.SecondaryContainer))) {
                             g.FillPath(brush, path);
                         }
                     }
-                    else if (i == HotIndex) {
+                    else if (Hover.Opacity(i) > 0) {
                         using (var brush = new SolidBrush(Color.FromArgb(
-                            (int)(StateLayers.Hover * 255), MaterialColors.OnSurface))) {
+                            (int)(Hover.Opacity(i) * 255), MaterialColors.OnSurface))) {
                             g.FillPath(brush, path);
                         }
                     }
                 }
 
                 Color content = active ? MaterialColors.OnSecondaryContainer : MaterialColors.OnSurfaceVariant;
-                int iconPx = Dpi.Scale(this, IconPx);
-                int iconGap = Dpi.Scale(this, IconGap);
-                var iconRect = new Rectangle(rect.X + Dpi.Scale(this, 16), rect.Y + (rect.Height - iconPx) / 2, iconPx, iconPx);
-                Bitmap icon = MaterialIconRenderer.Render(item.Glyph, iconPx, content);
+                int iconPx = Dpi.Scale(this, _iconSize);
+                int iconGap = Dpi.Scale(this, _iconGap);
+                var iconRect = new Rectangle(rect.X + Dpi.Scale(this, Spacing.Space4), rect.Y + (rect.Height - iconPx) / 2, iconPx, iconPx);
+                Bitmap icon = MaterialIconRenderer.Render(item.GlyphFor(active), iconPx, content);
                 g.DrawImageUnscaled(icon, iconRect.X, iconRect.Y);
-                PaintBadge(this, g, iconRect, item.BadgeCount);
+                PaintBadge(g, iconRect, item);
 
                 Color label = active ? MaterialColors.OnSecondaryContainer : MaterialColors.OnSurface;
                 using (var brush = new SolidBrush(label))
                 using (var fmt = new StringFormat(StringFormat.GenericTypographic) { LineAlignment = StringAlignment.Center }) {
-                    g.DrawString(item.Label, TypeScale.LabelLarge, brush,
-                        new RectangleF(iconRect.Right + iconGap, rect.Y, rect.Right - iconRect.Right - iconGap - Dpi.Scale(this, 12), rect.Height), fmt);
+                    g.DrawString(item.Label, Font, brush,
+                        new RectangleF(iconRect.Right + iconGap, rect.Y, rect.Right - iconRect.Right - iconGap - Dpi.Scale(this, Spacing.Space3), rect.Height), fmt);
                 }
             }
         }
