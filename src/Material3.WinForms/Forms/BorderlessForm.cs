@@ -123,7 +123,6 @@ namespace Material3.WinForms.Forms {
         private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
 
         private bool _aeroEnabled;
-        private int _cachedCaptionHeight = -1;
 
         private Size _normalSize;
         private bool _haveNormalSize;
@@ -142,16 +141,10 @@ namespace Material3.WinForms.Forms {
                 | ControlStyles.ResizeRedraw, true);
             Font = DefaultUiFont;
             BackColor = MaterialColors.Surface;
-            ControlAdded += OnControlsChanged;
-            ControlRemoved += OnControlsChanged;
             ThemeHook.Attach(this, () => {
                 BackColor = MaterialColors.Surface;
                 Invalidate(true);
             });
-        }
-
-        private void OnControlsChanged(object? sender, ControlEventArgs e) {
-            _cachedCaptionHeight = -1;
         }
 
         private readonly Dictionary<Control, EdgeHitForwarder> _forwarders = new Dictionary<Control, EdgeHitForwarder>();
@@ -412,19 +405,14 @@ namespace Material3.WinForms.Forms {
             return HTCLIENT;
         }
 
+        // Read on every hit test: the bar's height moves with a DPI change or a new BarHeight.
         private int GetCaptionHeight() {
-            if (_cachedCaptionHeight >= 0) {
-                return _cachedCaptionHeight;
-            }
-            int found = 0;
             foreach (Control c in Controls) {
                 if (c is MaterialTitleBar bar) {
-                    found = bar.Height;
-                    break;
+                    return bar.Height;
                 }
             }
-            _cachedCaptionHeight = found;
-            return found;
+            return 0;
         }
 
         private static Point ScreenPoint(IntPtr lParam) {

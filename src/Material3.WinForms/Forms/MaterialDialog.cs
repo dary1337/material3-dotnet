@@ -352,6 +352,10 @@ namespace Material3.WinForms.Forms {
             }
 
             if (!string.IsNullOrEmpty(_titleText)) {
+                int titleHeight;
+                using (var measure = MeasureContext.For(this)) {
+                    titleHeight = (int)Math.Ceiling(measure.Graphics.MeasureString(_titleText, Headline, innerWidth).Height);
+                }
                 var title = new MaterialLabel {
                     AutoSize = false,
                     Font = Headline,
@@ -359,7 +363,7 @@ namespace Material3.WinForms.Forms {
                     Text = _titleText,
                     Location = new Point(Pad, y),
                     Width = innerWidth,
-                    Height = Headline.Height + Dpi.Scale(this, Spacing.Space1),
+                    Height = Math.Max(Headline.Height, titleHeight) + Dpi.Scale(this, Spacing.Space1),
                     BackColor = Color.Transparent,
                 };
                 Controls.Add(title);
