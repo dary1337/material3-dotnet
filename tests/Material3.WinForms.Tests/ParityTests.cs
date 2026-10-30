@@ -430,6 +430,25 @@ namespace Material3.WinForms.Tests {
         }
 
         [Fact]
+        public void AWheelOverANestedPanelStaysWithItUntilItsEndThenReachesTheOuterOne() {
+            using var outer = new MaterialScrollPanel { Size = new Size(200, 200) };
+            var inner = new MaterialScrollPanel { Bounds = new Rectangle(0, 0, 180, 100) };
+            var row = new Panel { Bounds = new Rectangle(0, 0, 160, 400) };
+            inner.ContentPanel.Controls.Add(row);
+            outer.ContentPanel.Controls.Add(inner);
+            outer.ContentPanel.Controls.Add(new Panel { Bounds = new Rectangle(0, 100, 180, 400) });
+            const int Up = 120;
+            const int Down = -120;
+
+            Assert.False(MaterialScrollPanel.DefersTo(row, outer, Up));
+            Assert.True(MaterialScrollPanel.DefersTo(row, outer, Down));
+            inner.HandleWheel(Down * 50);
+            Assert.False(MaterialScrollPanel.DefersTo(row, outer, Down));
+            Assert.True(MaterialScrollPanel.DefersTo(row, outer, Up));
+            Assert.False(MaterialScrollPanel.DefersTo(outer.ContentPanel, outer, Down));
+        }
+
+        [Fact]
         public void AHoldButtonCommitsOnlyAfterTheWholeHold() {
             using var hold = new Material3.WinForms.Forms.HoldButton("Reset", TimeSpan.FromMilliseconds(60), destructive: true);
             int committed = 0;

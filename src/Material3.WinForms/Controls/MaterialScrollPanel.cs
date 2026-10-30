@@ -597,19 +597,109 @@ namespace Material3.WinForms.Controls {
             base.Dispose(disposing);
         }
 
+        private bool CanScroll(int wheelDelta) {
+            if (!HasOverflow) {
+                return false;
+            }
+
+            return wheelDelta > 0 ? _scrollOffset > 0 : _scrollOffset < ContentPanel.Height - ClientSize.Height;
+        }
+
+        // A scrollable control between the pointer and this panel takes the wheel while it can still move that way; at its
+        // end the wheel passes on to the panel, as a browser chains nested scrolling.
+        internal static bool DefersTo(Control? under, Control owner, int wheelDelta) {
+            for (Control? c = under; c != null && !ReferenceEquals(c, owner); c = c.Parent) {
+                if (NativeScroll.CanMove(c, wheelDelta)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static class NativeScroll {
+            private const int SB_VERT = 1;
+            private const int SIF_ALL = 0x17;
+
+            [StructLayout(LayoutKind.Sequential)]
+            private struct ScrollInfo {
+                public int Size;
+                public int Mask;
+                public int Min;
+                public int Max;
+                public int Page;
+                public int Pos;
+                public int TrackPos;
+            }
+
+            [DllImport("user32.dll")]
+            private static extern bool GetScrollInfo(IntPtr hwnd, int bar, ref ScrollInfo info);
+
+            public static bool CanMove(Control c, int wheelDelta) {
+                switch (c) {
+                    case MaterialScrollPanel inner:
+                        return inner.CanScroll(wheelDelta);
+                    case DataGridView grid:
+                        return CanMove(grid, wheelDelta);
+                    case ScrollableControl scrollable when scrollable.AutoScroll:
+                        VScrollProperties bar = scrollable.VerticalScroll;
+                        return bar.Visible && (wheelDelta > 0 ? bar.Value > bar.Minimum : bar.Value < bar.Maximum - bar.LargeChange + 1);
+                    case TextBoxBase box when box.Multiline:
+                    case ListBox _:
+                    case ListView _:
+                    case TreeView _:
+                        return CanMoveNative(c, wheelDelta);
+                    default:
+                        return false;
+                }
+            }
+
+            private static bool CanMove(DataGridView grid, int wheelDelta) {
+                if (wheelDelta > 0) {
+                    return grid.VerticalScrollingOffset > 0;
+                }
+
+                int last = grid.Rows.GetLastRow(DataGridViewElementStates.Visible);
+                return last >= 0 && grid.GetRowDisplayRectangle(last, true).Height < grid.Rows[last].Height;
+            }
+
+            private static bool CanMoveNative(Control c, int wheelDelta) {
+                if (!c.IsHandleCreated) {
+                    return false;
+                }
+
+                var info = new ScrollInfo { Size = Marshal.SizeOf(typeof(ScrollInfo)), Mask = SIF_ALL };
+                if (!GetScrollInfo(c.Handle, SB_VERT, ref info) || info.Max - info.Min + 1 <= info.Page) {
+                    return false;
+                }
+
+                return wheelDelta > 0 ? info.Pos > info.Min : info.Pos < info.Max - Math.Max(info.Page, 1) + 1;
+            }
+        }
+
+        // Application holds message filters for good, and a panel removed from its form keeps its handle on the parking
+        // window, so the filter reaches the panel weakly.
         private sealed class WheelMessageFilter : IMessageFilter {
             private const int WM_MOUSEWHEEL = 0x020A;
-            private readonly MaterialScrollPanel _owner;
+            private readonly WeakReference<MaterialScrollPanel> _owner;
 
             public WheelMessageFilter(MaterialScrollPanel owner) {
-                _owner = owner;
+                _owner = new WeakReference<MaterialScrollPanel>(owner);
             }
 
             public bool PreFilterMessage(ref Message m) {
-                if (m.Msg != WM_MOUSEWHEEL || !_owner.IsHandleCreated || !_owner.Visible) {
+                if (m.Msg != WM_MOUSEWHEEL) {
                     return false;
                 }
-                Form? top = _owner.FindForm();
+
+                if (!_owner.TryGetTarget(out MaterialScrollPanel? owner)) {
+                    Application.RemoveMessageFilter(this);
+                    return false;
+                }
+
+                if (!owner.IsHandleCreated || !owner.Visible) {
+                    return false;
+                }
+                Form? top = owner.FindForm();
                 if (top == null || Form.ActiveForm != top) {
                     return false;
                 }
@@ -618,30 +708,17 @@ namespace Material3.WinForms.Controls {
                     (short)(lParam & 0xFFFF),
                     (short)((lParam >> 16) & 0xFFFF)
                 );
-                Rectangle screenBounds = _owner.RectangleToScreen(_owner.ClientRectangle);
-                if (!screenBounds.Contains(screenPoint) || ScrollsItself(screenPoint)) {
+                Rectangle screenBounds = owner.RectangleToScreen(owner.ClientRectangle);
+                int delta = (short)((m.WParam.ToInt64() >> 16) & 0xFFFF);
+                if (!screenBounds.Contains(screenPoint) || DefersTo(Control.FromChildHandle(WindowFromPoint(screenPoint)), owner, delta)) {
                     return false;
                 }
-                int delta = (short)((m.WParam.ToInt64() >> 16) & 0xFFFF);
-                _owner.HandleWheel(delta);
+                owner.HandleWheel(delta);
                 return true;
             }
 
-            [System.Runtime.InteropServices.DllImport("user32.dll")]
+            [DllImport("user32.dll")]
             private static extern IntPtr WindowFromPoint(Point point);
-
-            // A scrollable control under the pointer, between it and this panel, takes the wheel first.
-            private bool ScrollsItself(Point screenPoint) {
-                for (var c = Control.FromChildHandle(WindowFromPoint(screenPoint)); c != null && !ReferenceEquals(c, _owner); c = c.Parent) {
-                    if ((c is MaterialScrollPanel inner && inner.HasOverflow)
-                        || (c is TextBoxBase box && box.Multiline)
-                        || c is ListBox || c is ListView || c is TreeView || c is DataGridView
-                        || (c is ScrollableControl scrollable && scrollable.AutoScroll && scrollable.VerticalScroll.Visible)) {
-                        return true;
-                    }
-                }
-                return false;
-            }
         }
     }
 }
