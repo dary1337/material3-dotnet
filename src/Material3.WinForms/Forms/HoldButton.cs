@@ -55,7 +55,7 @@ namespace Material3.WinForms.Forms {
             return new Size(Math.Max(Dpi.Scale(this, MinWidth), text.Width + Dpi.Scale(this, Spacing.Space6 * 2)), Dpi.Scale(this, ComponentSizes.ControlHeight));
         }
 
-        private void Begin() {
+        internal void Begin() {
             if (_committed || _held.IsRunning || IsBusy || !Enabled) {
                 return;
             }
@@ -65,7 +65,7 @@ namespace Material3.WinForms.Forms {
             _tick.Start();
         }
 
-        private void Release() {
+        internal void Release() {
             if (_committed || !_held.IsRunning) {
                 return;
             }
@@ -74,7 +74,7 @@ namespace Material3.WinForms.Forms {
             _shake.Restart();
         }
 
-        private void OnTick(object? sender, EventArgs e) {
+        internal void OnTick(object? sender, EventArgs e) {
             if (_held.IsRunning && _held.Elapsed >= _hold) {
                 _held.Reset();
                 _tick.Stop();

@@ -53,6 +53,8 @@ namespace Material3.WinForms.Controls {
         private Bitmap? _buffer;
         private readonly BusySpinner _busy;
         private Timer? _shine;
+
+        internal bool IsShining => _shine != null;
         private readonly Stopwatch _shineClock = new Stopwatch();
         private Form? _shineForm;
 
@@ -273,7 +275,7 @@ namespace Material3.WinForms.Controls {
             set { _outlineColor = value; Invalidate(); }
         }
 
-        private Color Accent => _accent?.Invoke() ?? MaterialColors.Primary;
+        internal Color Accent => _accent?.Invoke() ?? MaterialColors.Primary;
         private Color OnAccent => _onAccent?.Invoke() ?? MaterialColors.OnPrimary;
 
         private bool Toned => _tone != MaterialTone.Neutral;

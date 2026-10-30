@@ -43,8 +43,7 @@ namespace Material3.WinForms.Tests {
         [InlineData("No such page", "Color roles")]
         public void AStartPageMatchesIgnoringCaseOrFallsBackToTheFirst(string asked, string shown) {
             using var form = new GalleryForm(asked);
-            string current = (string)typeof(GalleryForm).GetField("_currentPage", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(form)!;
-            Assert.Equal(shown, current);
+            Assert.Equal(shown, form.CurrentPage);
         }
 
         [Fact]

@@ -39,6 +39,8 @@ namespace Material3.WinForms.Gallery {
         private int _lastContentWidth = -1;
         private string _currentPage = PageColors;
 
+        internal string CurrentPage => _currentPage;
+
         private const string PageColors = "Color roles";
         private const string PageSizes = "Sizes & Text";
 

@@ -26,6 +26,8 @@ namespace Material3.WinForms.Controls {
         private const int SwatchGap = 10;
 
         private readonly TextBox _hex;
+
+        internal TextBox HexBox => _hex;
         private Color _color = Color.Black;
         private bool _showAlpha = true;
         private bool _readOnly;
@@ -170,7 +172,7 @@ namespace Material3.WinForms.Controls {
             Invalidate();
         }
 
-        private void CommitHex() {
+        internal void CommitHex() {
             if (!Locked && ColorMath.TryParseHex(_hex.Text, out Argb parsed)) {
                 Color c = parsed.ToGdi();
                 if (!_showAlpha) {

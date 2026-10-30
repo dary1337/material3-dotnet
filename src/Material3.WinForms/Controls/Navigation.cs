@@ -82,6 +82,8 @@ namespace Material3.WinForms.Controls {
         private protected readonly ItemHoverFade Hover;
         private protected readonly AnimatedValue Indicator;
         private readonly BusySpinner _spinner;
+
+        internal BusySpinner Spinner => _spinner;
         private int _selectedIndex = -1;
 
         /// <summary>Raised when a different destination is selected.</summary>

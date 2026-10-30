@@ -342,7 +342,7 @@ namespace Material3.WinForms.Controls {
         [DefaultValue(null)]
         public string? GroupName { get; set; }
 
-        private void OnCardClick() => IsSelected = _indicator == MaterialOptionIndicator.Check ? !_selected : true;
+        internal void OnCardClick() => IsSelected = _indicator == MaterialOptionIndicator.Check ? !_selected : true;
 
         /// <inheritdoc />
         protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); _hovered = true; UpdateSurface(); }

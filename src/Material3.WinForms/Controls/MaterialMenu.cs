@@ -14,6 +14,14 @@ namespace Material3.WinForms.Controls {
     public sealed class MaterialMenu : IDisposable {
         private readonly List<Entry> _entries = new List<Entry>();
         private MenuPopup? _popup;
+
+        internal IReadOnlyList<Entry> Entries => _entries;
+
+        // An unshown popup can stand in for an open one, so the select's keys are checked with no window on screen.
+        internal MenuPopup? Popup {
+            get => _popup;
+            set => _popup = value;
+        }
         private int _itemHeight = ComponentSizes.ControlHeight;
         private int _separatorHeight = 9;
         private int _horizontalPadding = 12;

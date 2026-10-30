@@ -25,7 +25,7 @@ namespace Material3.WinForms.Controls {
         private const int LabelGap = 3;
         private const int LabelIndent = 2;
 
-        private sealed class Row {
+        internal sealed class Row {
             public PlainEntry Entry = null!;
             public MaterialIconButton? Up, Down, Remove;
         }
@@ -257,7 +257,9 @@ namespace Material3.WinForms.Controls {
             return button;
         }
 
-        private void MoveRow(Row row, int by) {
+        internal Row RowAt(int index) => _rows[index];
+
+        internal void MoveRow(Row row, int by) {
             int from = _rows.IndexOf(row), to = from + by;
             if (to < 0 || to >= _rows.Count) {
                 return;
@@ -270,7 +272,7 @@ namespace Material3.WinForms.Controls {
             Changed();
         }
 
-        private void Remove(Row row) {
+        internal void Remove(Row row) {
             _rows.Remove(row);
             Dispose(row);
             Rebuild();

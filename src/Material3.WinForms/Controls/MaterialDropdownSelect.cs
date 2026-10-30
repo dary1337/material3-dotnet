@@ -20,6 +20,8 @@ namespace Material3.WinForms.Controls {
     public sealed class MaterialDropdownSelect : Control {
         private readonly List<DropdownItem> _items = new List<DropdownItem>();
         private readonly MaterialMenu _menu = new MaterialMenu();
+
+        internal MaterialMenu Menu => _menu;
         private readonly StateLayerFade _layer;
         private int _selectedIndex = -1;
         private int _headerHeight = ComponentSizes.ControlHeight;

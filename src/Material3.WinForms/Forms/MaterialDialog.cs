@@ -195,7 +195,7 @@ namespace Material3.WinForms.Forms {
             _actions.Add(button);
         }
 
-        private async Task RunAsync(DialogResult result, Func<Task> work, Action<bool> showBusy, Control owner) {
+        internal async Task RunAsync(DialogResult result, Func<Task> work, Action<bool> showBusy, Control owner) {
             if (_working) {
                 return;
             }

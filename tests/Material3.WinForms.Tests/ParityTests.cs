@@ -48,8 +48,7 @@ namespace Material3.WinForms.Tests {
             using var button = new MaterialButton { IsShiny = true, Text = "Go" };
             form.Controls.Add(button);
             form.CreateControl();
-            object? timer = typeof(MaterialButton).GetField("_shine", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(button);
-            Assert.Null(timer);
+            Assert.False(button.IsShining);
         }
 
         [Fact]
@@ -92,7 +91,7 @@ namespace Material3.WinForms.Tests {
         [InlineData(MaterialInputKind.Text, "12", 'a', true)]
         public void ATextFieldFiltersWhatItsKindCannotBecome(MaterialInputKind kind, string start, char typed, bool accepted) {
             using var field = new MaterialTextField { InputKind = kind, Text = start };
-            var editor = (TextBox)typeof(MaterialTextField).GetField("_editor", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(field)!;
+            TextBox editor = field.Editor;
             editor.SelectionStart = editor.TextLength;
             var e = new KeyPressEventArgs(typed);
             editor.GetType().GetMethod("OnKeyPress", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(editor, new object[] { e });
@@ -246,25 +245,25 @@ namespace Material3.WinForms.Tests {
             using var field = new MaterialColorField { Color = Color.FromArgb(0x40, 1, 2, 3), ShowAlpha = false };
             int changes = 0;
             field.ColorChanged += (s, e) => changes++;
-            var hex = (TextBox)typeof(MaterialColorField).GetField("_hex", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(field)!;
+            TextBox hex = field.HexBox;
             hex.Text = "#FF8800";
-            typeof(MaterialColorField).GetMethod("CommitHex", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(field, null);
+            field.CommitHex();
             Assert.Equal(Color.FromArgb(0x40, 0xFF, 0x88, 0x00).ToArgb(), field.Color.ToArgb());
             Assert.Equal(1, changes);
             Assert.Equal("#FF8800", field.HexText);
 
             hex.Text = "not a colour";
-            typeof(MaterialColorField).GetMethod("CommitHex", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(field, null);
+            field.CommitHex();
             Assert.Equal("#FF8800", hex.Text);
         }
 
         [Fact]
         public void AReadOnlyCaptionHidesTheHexAndRefusesEdits() {
             using var field = new MaterialColorField { Color = Color.Red, ReadOnlyCaption = "Follows the accent" };
-            var hex = (TextBox)typeof(MaterialColorField).GetField("_hex", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(field)!;
+            TextBox hex = field.HexBox;
             Assert.False(hex.Visible);
             hex.Text = "#00FF00";
-            typeof(MaterialColorField).GetMethod("CommitHex", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(field, null);
+            field.CommitHex();
             Assert.Equal(Color.Red.ToArgb(), field.Color.ToArgb());
         }
 
@@ -294,18 +293,13 @@ namespace Material3.WinForms.Tests {
             list.ValuesChanged += (s, e) => changes++;
             list.AddRow();
             Assert.Equal(new[] { "a", "b", "" }, list.Values);
-            typeof(MaterialValueListEditor).GetMethod("MoveRow", BindingFlags.Instance | BindingFlags.NonPublic)!
-                .Invoke(list, new[] { RowAt(list, 1), (object)(-1) });
+            list.MoveRow(list.RowAt(1), -1);
             Assert.Equal(new[] { "b", "a", "" }, list.Values);
             Assert.True(list.EntryAt(0).TabIndex < list.EntryAt(1).TabIndex, "Tab does not follow the moved rows");
-            typeof(MaterialValueListEditor).GetMethod("Remove", BindingFlags.Instance | BindingFlags.NonPublic)!
-                .Invoke(list, new[] { RowAt(list, 2) });
+            list.Remove(list.RowAt(2));
             Assert.Equal(new[] { "b", "a" }, list.Values);
             Assert.Equal(3, changes);
         }
-
-        private static object RowAt(MaterialValueListEditor list, int index) =>
-            ((System.Collections.IList)typeof(MaterialValueListEditor).GetField("_rows", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(list)!)[index]!;
 
         [Fact]
         public void AnIntegerListIsInvalidOnlyWithANonNumberInIt() {
@@ -387,11 +381,7 @@ namespace Material3.WinForms.Tests {
         public async System.Threading.Tasks.Task AFailedWorkingActionClosesWithAbortAndKeepsTheFailure() {
             using var dialog = new Material3.WinForms.Forms.MaterialDialog { TitleText = "Delete?" };
             dialog.AddAction("Delete", DialogResult.OK, MaterialButtonVariant.Tonal, () => throw new InvalidOperationException("locked"), MaterialTone.Error);
-            MethodInfo run = typeof(Material3.WinForms.Forms.MaterialDialog).GetMethod("RunAsync", BindingFlags.Instance | BindingFlags.NonPublic)!;
-            var task = (System.Threading.Tasks.Task)run.Invoke(dialog, new object[] {
-                DialogResult.OK, new Func<System.Threading.Tasks.Task>(() => throw new InvalidOperationException("locked")),
-                new Action<bool>(_ => { }), dialog })!;
-            await task;
+            await dialog.RunAsync(DialogResult.OK, () => throw new InvalidOperationException("locked"), _ => { }, dialog);
             Assert.Equal(DialogResult.Abort, dialog.DialogResult);
             Assert.Equal("locked", dialog.WorkFailure?.Message);
         }
@@ -444,15 +434,14 @@ namespace Material3.WinForms.Tests {
             using var hold = new Material3.WinForms.Forms.HoldButton("Reset", TimeSpan.FromMilliseconds(60), destructive: true);
             int committed = 0;
             hold.Committed += (s, e) => committed++;
-            MethodInfo Method(string name) => typeof(Material3.WinForms.Forms.HoldButton).GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic)!;
-            Method("Begin").Invoke(hold, null);
-            Method("Release").Invoke(hold, null);
-            Method("OnTick").Invoke(hold, new object?[] { null, EventArgs.Empty });
+            hold.Begin();
+            hold.Release();
+            hold.OnTick(null, EventArgs.Empty);
             Assert.Equal(0, committed);
 
-            Method("Begin").Invoke(hold, null);
+            hold.Begin();
             System.Threading.Thread.Sleep(90);
-            Method("OnTick").Invoke(hold, new object?[] { null, EventArgs.Empty });
+            hold.OnTick(null, EventArgs.Empty);
             Assert.Equal(1, committed);
         }
 
@@ -464,10 +453,10 @@ namespace Material3.WinForms.Tests {
             MethodInfo Method(string name) => typeof(Material3.WinForms.Forms.HoldButton).GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic)!;
             Assert.True((bool)Method("IsInputKey").Invoke(hold, new object[] { Keys.Enter })!);
             Assert.True((bool)Method("IsInputKey").Invoke(hold, new object[] { Keys.Space })!);
-            Method("Begin").Invoke(hold, null);
+            hold.Begin();
             Method("OnLostFocus").Invoke(hold, new object[] { EventArgs.Empty });
             System.Threading.Thread.Sleep(90);
-            Method("OnTick").Invoke(hold, new object?[] { null, EventArgs.Empty });
+            hold.OnTick(null, EventArgs.Empty);
             Assert.Equal(0, committed);
         }
 
@@ -475,8 +464,7 @@ namespace Material3.WinForms.Tests {
         public void AChipSizedByHandPaintsAtItsOwnHeight() {
             using var chip = new MaterialChip { Text = "Tag", AutoSize = false, Width = 120, Height = 50 };
             _ = chip.Handle;
-            object metrics = typeof(MaterialChip).GetMethod("BuildMetrics", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(chip, null)!;
-            Assert.Equal(50, (int)metrics.GetType().GetField("Height")!.GetValue(metrics)!);
+            Assert.Equal(50, chip.BuildMetrics().Height);
         }
 
         [Fact]
@@ -511,21 +499,20 @@ namespace Material3.WinForms.Tests {
             using var select = new MaterialDropdownSelect();
             select.AddItem("Day", "d");
             select.AddItem("Week", "w");
-            var menu = (MaterialMenu)typeof(MaterialDropdownSelect).GetField("_menu", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(select)!;
+            MaterialMenu menu = select.Menu;
             void Key(Keys key) => typeof(MaterialDropdownSelect).GetMethod("OnKeyDown", BindingFlags.Instance | BindingFlags.NonPublic)!
                 .Invoke(select, new object[] { new KeyEventArgs(key) });
             menu.AddChoice("Day", true, () => { });
             menu.AddChoice("Week", false, () => { });
             // An unshown popup stands in for the open menu, so no window appears on screen.
-            typeof(MaterialMenu).GetField("_popup", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(menu, new MaterialMenu.MenuPopup(menu, _ => { }));
+            menu.Popup = new MaterialMenu.MenuPopup(menu, _ => { });
             Assert.True(menu.IsOpen);
             Assert.True((bool)typeof(MaterialDropdownSelect).GetMethod("IsInputKey", BindingFlags.Instance | BindingFlags.NonPublic)!
                 .Invoke(select, new object[] { Keys.Escape })!);
             Key(Keys.Down);
             Assert.Equal(1, select.SelectedIndex);
-            var entries = (System.Collections.IList)typeof(MaterialMenu).GetField("_entries", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(menu)!;
-            Assert.True(((MaterialMenu.Entry)entries[1]!).Selected);
-            Assert.False(((MaterialMenu.Entry)entries[0]!).Selected);
+            Assert.True(menu.Entries[1].Selected);
+            Assert.False(menu.Entries[0].Selected);
             Key(Keys.Escape);
             Assert.False(menu.IsOpen);
         }
@@ -535,8 +522,7 @@ namespace Material3.WinForms.Tests {
             using var rail = new MaterialNavigationRail();
             var sync = new NavigationItem("Sync", "refresh") { SelectedGlyph = "check" };
             rail.AddItem(sync);
-            object spinner = typeof(MaterialNavigationBase).GetField("_spinner", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(rail)!;
-            bool Spinning() => (bool)spinner.GetType().GetProperty("IsRunning")!.GetValue(spinner)!;
+            bool Spinning() => rail.Spinner.IsRunning;
             Assert.False(Spinning());
             sync.IsBusy = true;
             Assert.True(Spinning());
@@ -554,7 +540,7 @@ namespace Material3.WinForms.Tests {
             var c = new MaterialOptionCard("C", "third") { Indicator = MaterialOptionIndicator.Check };
             host.Controls.AddRange(new Control[] { a, b, c });
             void Click(MaterialOptionCard card) =>
-                typeof(MaterialOptionCard).GetMethod("OnCardClick", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(card, null);
+                card.OnCardClick();
             Click(a);
             Click(b);
             Click(c);
@@ -672,7 +658,7 @@ namespace Material3.WinForms.Tests {
             using var button = new MaterialButton { Variant = MaterialButtonVariant.Filled };
             button.SetAccent(() => live, () => Color.White);
             live = Color.Blue;
-            seen = (Color)typeof(MaterialButton).GetProperty("Accent", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(button)!;
+            seen = button.Accent;
             Assert.Equal(Color.Blue, seen);
         }
 

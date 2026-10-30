@@ -225,7 +225,7 @@ namespace Material3.WinForms.Controls {
         private bool ShowsLeading => ShowsCheck || _leadingImage != null || !string.IsNullOrEmpty(_leadingIcon);
         private bool ShowsRemove => _kind == MaterialChipKind.Input;
 
-        private ChipRenderer.Metrics BuildMetrics() => new ChipRenderer.Metrics {
+        internal ChipRenderer.Metrics BuildMetrics() => new ChipRenderer.Metrics {
             Height = AutoSize || !IsHandleCreated ? Dpi.Scale(this, _chipHeight) : Math.Max(1, Height),
             PadX = Dpi.Scale(this, _horizontalPadding),
             IconPx = Dpi.Scale(this, _iconSize),
