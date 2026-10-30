@@ -515,16 +515,16 @@ namespace Material3.WinForms.Tests {
 
         [Fact]
         public void AnOpenSelectFollowsTheArrowsAndClosesOnEscape() {
+            using var host = new Form();
             using var select = new MaterialDropdownSelect();
+            host.Controls.Add(select);
+            _ = select.Handle;
             select.AddItem("Day", "d");
             select.AddItem("Week", "w");
             MaterialMenu menu = select.Menu;
             void Key(Keys key) => typeof(MaterialDropdownSelect).GetMethod("OnKeyDown", BindingFlags.Instance | BindingFlags.NonPublic)!
                 .Invoke(select, new object[] { new KeyEventArgs(key) });
-            menu.AddChoice("Day", true, () => { });
-            menu.AddChoice("Week", false, () => { });
-            // An unshown popup stands in for the open menu, so no window appears on screen.
-            menu.Popup = new MaterialMenu.MenuPopup(menu, _ => { });
+            Key(Keys.Enter);
             Assert.True(menu.IsOpen);
             Assert.True((bool)typeof(MaterialDropdownSelect).GetMethod("IsInputKey", BindingFlags.Instance | BindingFlags.NonPublic)!
                 .Invoke(select, new object[] { Keys.Escape })!);
