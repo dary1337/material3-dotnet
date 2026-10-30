@@ -13,7 +13,7 @@ using Material3.WinForms.Typography;
 namespace Material3.WinForms.Controls {
     /// <summary>Material 3 tooltips: attach with <see cref="SetTooltip(Control, string)"/> or <see cref="SetTooltip(Control, string, string)"/>; one shared popup appears after a hover delay and hides on leave/press/scroll.</summary>
     public static class MaterialTooltip {
-        private const int DefaultShowDelay = 550;
+        private const int DefaultShowDelay = 1;
         private static int _horizontalPadding = 8;
         private static int _verticalPadding = 4;
         private static int _maxWidth = 320;
@@ -27,7 +27,7 @@ namespace Material3.WinForms.Controls {
         private static TipPopup? _popup;
         private static Control? _pendingSource;
 
-        /// <summary>The hover time before a tooltip appears, in milliseconds.</summary>
+        /// <summary>The hover time before a tooltip appears, in milliseconds. By default it appears at once, as in WPF.</summary>
         public static int ShowDelay {
             get => Delay.Interval;
             set => Delay.Interval = Math.Max(1, value);
