@@ -29,8 +29,14 @@ namespace Material3.Wpf {
 
         /// <inheritdoc />
         protected override double EaseInCore(double t) {
-            if (t <= 0) return 0;
-            if (t >= 1) return 1;
+            if (t <= 0) {
+                return 0;
+            }
+
+            if (t >= 1) {
+                return 1;
+            }
+
             return Comp(SolveX(t, X1, X2), Y1, Y2);
         }
 
@@ -49,9 +55,15 @@ namespace Material3.Wpf {
             double u = x;
             for (int i = 0; i < 8; i++) {
                 double err = Comp(u, x1, x2) - x;
-                if (Math.Abs(err) < 1e-5) break;
+                if (Math.Abs(err) < 1e-5) {
+                    break;
+                }
+
                 double d = Deriv(u, x1, x2);
-                if (Math.Abs(d) < 1e-6) break;
+                if (Math.Abs(d) < 1e-6) {
+                    break;
+                }
+
                 u -= err / d;
             }
             return u < 0 ? 0 : u > 1 ? 1 : u;

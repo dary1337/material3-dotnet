@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
@@ -46,8 +47,13 @@ namespace Material3.WinForms.Forms {
         private const int DWMWA_NCRENDERING_POLICY = 2;
         private const int DWMNCRP_ENABLED = 2;
 
+        private int _resizeBorderThickness = 4;
+
         /// <summary>The width of the resize zone along each edge, in 96-DPI pixels.</summary>
-        public const int ResizeBorderThickness = 4;
+        public int ResizeBorderThickness {
+            get => _resizeBorderThickness;
+            set => _resizeBorderThickness = Math.Max(0, value);
+        }
 
         internal const int HTTRANSPARENT = -1;
         internal const int HTCLIENT = 1;
@@ -95,7 +101,7 @@ namespace Material3.WinForms.Forms {
             public uint dwFlags;
         }
 
-        private const uint MONITOR_DEFAULTTONULL = 0;
+        private const uint MONITOR_DEFAULTTONEAREST = 2;
 
         [DllImport("dwmapi.dll")]
         private static extern int DwmExtendFrameIntoClientArea(IntPtr hWnd, ref MARGINS pMarInset);
@@ -109,11 +115,14 @@ namespace Material3.WinForms.Forms {
         [DllImport("user32.dll")]
         private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint flags);
 
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool IsZoomed(IntPtr hwnd);
+
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
 
         private bool _aeroEnabled;
-        private int _cachedCaptionHeight = -1;
 
         private Size _normalSize;
         private bool _haveNormalSize;
@@ -132,16 +141,80 @@ namespace Material3.WinForms.Forms {
                 | ControlStyles.ResizeRedraw, true);
             Font = DefaultUiFont;
             BackColor = MaterialColors.Surface;
-            ControlAdded += OnControlsChanged;
-            ControlRemoved += OnControlsChanged;
             ThemeHook.Attach(this, () => {
                 BackColor = MaterialColors.Surface;
                 Invalidate(true);
             });
         }
 
-        private void OnControlsChanged(object? sender, ControlEventArgs e) {
-            _cachedCaptionHeight = -1;
+        private readonly Dictionary<Control, EdgeHitForwarder> _forwarders = new Dictionary<Control, EdgeHitForwarder>();
+
+        /// <inheritdoc />
+        protected override void OnControlAdded(ControlEventArgs e) {
+            base.OnControlAdded(e);
+            if (e.Control != null) {
+                Track(e.Control);
+            }
+        }
+
+        /// <inheritdoc />
+        protected override void OnControlRemoved(ControlEventArgs e) {
+            base.OnControlRemoved(e);
+            if (e.Control != null) {
+                Untrack(e.Control);
+            }
+        }
+
+        private void OnNestedAdded(object? sender, ControlEventArgs e) {
+            if (e.Control != null) {
+                Track(e.Control);
+            }
+        }
+
+        private void OnNestedRemoved(object? sender, ControlEventArgs e) {
+            if (e.Control != null) {
+                Untrack(e.Control);
+            }
+        }
+
+        // A child HWND answers WM_NCHITTEST itself, so without this a docked child would swallow the resize edge.
+        private void Track(Control control) {
+            if (_forwarders.ContainsKey(control)) {
+                return;
+            }
+
+            _forwarders[control] = new EdgeHitForwarder(this, control);
+            control.ControlAdded += OnNestedAdded;
+            control.ControlRemoved += OnNestedRemoved;
+            foreach (Control child in control.Controls) {
+                Track(child);
+            }
+        }
+
+        private void Untrack(Control control) {
+            if (!_forwarders.TryGetValue(control, out EdgeHitForwarder? forwarder)) {
+                return;
+            }
+
+            _forwarders.Remove(control);
+            forwarder.Detach();
+            control.ControlAdded -= OnNestedAdded;
+            control.ControlRemoved -= OnNestedRemoved;
+            foreach (Control child in control.Controls) {
+                Untrack(child);
+            }
+        }
+
+        /// <summary>The area docked and anchored children lay out in: inset by the 1px window frame while the window is not maximized.</summary>
+        public override Rectangle DisplayRectangle {
+            get {
+                Rectangle area = base.DisplayRectangle;
+                if (WindowState == FormWindowState.Normal) {
+                    area.Inflate(-1, -1);
+                }
+
+                return area;
+            }
         }
 
         /// <inheritdoc />
@@ -202,7 +275,7 @@ namespace Material3.WinForms.Forms {
             switch (m.Msg) {
                 case WM_WINDOWPOSCHANGING:
                     if (_wasMinimized && _haveNormalSize) {
-                        var wp = Marshal.PtrToStructure<WINDOWPOS>(m.LParam);
+                        WINDOWPOS wp = Marshal.PtrToStructure<WINDOWPOS>(m.LParam);
                         int dw = wp.cx - _normalSize.Width;
                         int dh = wp.cy - _normalSize.Height;
                         if ((wp.flags & SWP_NOSIZE) == 0 && (dw != 0 || dh != 0)
@@ -221,7 +294,8 @@ namespace Material3.WinForms.Forms {
                     if (sizeType == SIZE_MINIMIZED) {
                         _wasMinimized = true;
                         _prevWindowState = FormWindowState.Minimized;
-                    } else if (sizeType == SIZE_RESTORED && WindowState == FormWindowState.Normal) {
+                    }
+                    else if (sizeType == SIZE_RESTORED && WindowState == FormWindowState.Normal) {
                         if (_prevWindowState == FormWindowState.Maximized && _haveNormalSize) {
                             _restoring = true;
                             BeginInvoke((Action)(() => {
@@ -233,7 +307,8 @@ namespace Material3.WinForms.Forms {
                                 }
                                 _restoring = false;
                             }));
-                        } else if (!_restoring && !_wasMinimized) {
+                        }
+                        else if (!_restoring && !_wasMinimized) {
                             _normalSize = Size;
                             _haveNormalSize = true;
                         }
@@ -245,7 +320,8 @@ namespace Material3.WinForms.Forms {
                             }));
                         }
                         _prevWindowState = FormWindowState.Normal;
-                    } else {
+                    }
+                    else {
                         _wasMinimized = false;
                         _prevWindowState = WindowState;
                     }
@@ -253,9 +329,9 @@ namespace Material3.WinForms.Forms {
 
                 case WM_NCCALCSIZE:
                     if (m.WParam != IntPtr.Zero) {
-                        if (WindowState == FormWindowState.Maximized) {
-                            var p = Marshal.PtrToStructure<NCCALCSIZE_PARAMS>(m.LParam);
-                            IntPtr hmon = MonitorFromWindow(Handle, MONITOR_DEFAULTTONULL);
+                        if (IsZoomed(Handle)) {
+                            NCCALCSIZE_PARAMS p = Marshal.PtrToStructure<NCCALCSIZE_PARAMS>(m.LParam);
+                            IntPtr hmon = MonitorFromWindow(Handle, MONITOR_DEFAULTTONEAREST);
                             if (hmon != IntPtr.Zero) {
                                 var mi = new MONITORINFO { cbSize = Marshal.SizeOf<MONITORINFO>() };
                                 if (GetMonitorInfo(hmon, ref mi)) {
@@ -270,10 +346,7 @@ namespace Material3.WinForms.Forms {
                     break;
 
                 case WM_NCHITTEST:
-                    long lParam = m.LParam.ToInt64();
-                    short sx = unchecked((short)(lParam & 0xFFFF));
-                    short sy = unchecked((short)((lParam >> 16) & 0xFFFF));
-                    Point clientPt = PointToClient(new Point(sx, sy));
+                    Point clientPt = PointToClient(ScreenPoint(m.LParam));
                     int hit = ResolveHit(clientPt.X, clientPt.Y);
                     if (hit != HTCLIENT) {
                         m.Result = (IntPtr)hit;
@@ -288,19 +361,42 @@ namespace Material3.WinForms.Forms {
             if (EnableEdgeResize && WindowState == FormWindowState.Normal) {
                 int w = ClientSize.Width;
                 int h = ClientSize.Height;
-                int t = ResizeBorderThickness;
+                int t = Dpi.Scale(this, _resizeBorderThickness);
                 bool onLeft = x >= 0 && x < t;
                 bool onRight = x >= w - t && x < w;
                 bool onTop = y >= 0 && y < t;
                 bool onBottom = y >= h - t && y < h;
-                if (onTop && onLeft) return HTTOPLEFT;
-                if (onTop && onRight) return HTTOPRIGHT;
-                if (onBottom && onLeft) return HTBOTTOMLEFT;
-                if (onBottom && onRight) return HTBOTTOMRIGHT;
-                if (onLeft) return HTLEFT;
-                if (onRight) return HTRIGHT;
-                if (onTop) return HTTOP;
-                if (onBottom) return HTBOTTOM;
+                if (onTop && onLeft) {
+                    return HTTOPLEFT;
+                }
+
+                if (onTop && onRight) {
+                    return HTTOPRIGHT;
+                }
+
+                if (onBottom && onLeft) {
+                    return HTBOTTOMLEFT;
+                }
+
+                if (onBottom && onRight) {
+                    return HTBOTTOMRIGHT;
+                }
+
+                if (onLeft) {
+                    return HTLEFT;
+                }
+
+                if (onRight) {
+                    return HTRIGHT;
+                }
+
+                if (onTop) {
+                    return HTTOP;
+                }
+
+                if (onBottom) {
+                    return HTBOTTOM;
+                }
             }
             int captionH = GetCaptionHeight();
             if (captionH > 0 && y >= 0 && y < captionH) {
@@ -309,35 +405,70 @@ namespace Material3.WinForms.Forms {
             return HTCLIENT;
         }
 
+        // Read on every hit test: the bar's height moves with a DPI change or a new BarHeight.
         private int GetCaptionHeight() {
-            if (_cachedCaptionHeight >= 0) {
-                return _cachedCaptionHeight;
-            }
-            int found = 0;
             foreach (Control c in Controls) {
                 if (c is MaterialTitleBar bar) {
-                    found = bar.Height;
-                    break;
+                    return bar.Height;
                 }
             }
-            _cachedCaptionHeight = found;
-            return found;
+            return 0;
+        }
+
+        private static Point ScreenPoint(IntPtr lParam) {
+            long v = lParam.ToInt64();
+            return new Point(unchecked((short)(v & 0xFFFF)), unchecked((short)((v >> 16) & 0xFFFF)));
+        }
+
+        private sealed class EdgeHitForwarder : NativeWindow {
+            private readonly BorderlessForm _form;
+            private readonly Control _control;
+
+            public EdgeHitForwarder(BorderlessForm form, Control control) {
+                _form = form;
+                _control = control;
+                control.HandleCreated += OnHandleCreated;
+                control.HandleDestroyed += OnHandleDestroyed;
+                if (control.IsHandleCreated) {
+                    AssignHandle(control.Handle);
+                }
+            }
+
+            public void Detach() {
+                _control.HandleCreated -= OnHandleCreated;
+                _control.HandleDestroyed -= OnHandleDestroyed;
+                if (Handle != IntPtr.Zero) {
+                    ReleaseHandle();
+                }
+            }
+
+            private void OnHandleCreated(object? sender, EventArgs e) => AssignHandle(_control.Handle);
+
+            private void OnHandleDestroyed(object? sender, EventArgs e) => ReleaseHandle();
+
+            protected override void WndProc(ref Message m) {
+                if (m.Msg == WM_NCHITTEST) {
+                    Point inForm = _form.PointToClient(ScreenPoint(m.LParam));
+                    int hit = _form.ResolveHit(inForm.X, inForm.Y);
+                    if (hit >= HTLEFT && hit <= HTBOTTOMRIGHT) {
+                        m.Result = (IntPtr)HTTRANSPARENT;
+                        return;
+                    }
+                }
+                base.WndProc(ref m);
+            }
         }
 
         /// <summary>
-        /// Panel that returns HTTRANSPARENT for WM_NCHITTEST in zones owned by the form
-        /// (edges, titlebar) — Windows then cascades the hit-test to the form, whose
-        /// DefWindowProc runs native resize/drag via WS_THICKFRAME. Use this for any
-        /// opaque child that covers the form's edge or caption area (typically the content wrap).
+        /// Panel that lets the form's caption area show through it: WM_NCHITTEST in that zone returns HTTRANSPARENT, so
+        /// the form runs the native drag, snap and double-click-to-maximize. Use it for a child that covers the caption.
+        /// The resize edges need nothing — they are forwarded for every child automatically.
         /// </summary>
         public sealed class HitTestForwardingPanel : Panel {
             /// <inheritdoc />
             protected override void WndProc(ref Message m) {
                 if (m.Msg == WM_NCHITTEST && FindForm() is BorderlessForm bf) {
-                    long lParam = m.LParam.ToInt64();
-                    short sx = unchecked((short)(lParam & 0xFFFF));
-                    short sy = unchecked((short)((lParam >> 16) & 0xFFFF));
-                    Point inForm = bf.PointToClient(new Point(sx, sy));
+                    Point inForm = bf.PointToClient(ScreenPoint(m.LParam));
                     int hit = bf.ResolveHit(inForm.X, inForm.Y);
                     if (hit != HTCLIENT) {
                         m.Result = (IntPtr)HTTRANSPARENT;

@@ -1,0 +1,7 @@
+# Checkouts get the CRLF that .editorconfig asks for on any OS, so the CI format check does not depend on core.autocrlf
+* text=auto eol=crlf
+
+*.png binary
+*.ico binary
+*.gif binary
+*.webp binary

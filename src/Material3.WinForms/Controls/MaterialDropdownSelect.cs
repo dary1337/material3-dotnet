@@ -2,202 +2,138 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Text;
 using System.Windows.Forms;
+using Material3.Core;
+using Material3.WinForms.Drawing;
 using Material3.WinForms.Theming;
 using Material3.WinForms.Tokens;
+using Material3.WinForms.Typography;
 
 namespace Material3.WinForms.Controls {
-    /// <summary>Inline dropdown select that grows its own height to reveal the option list rather than opening a popup window.</summary>
+    /// <summary>
+    /// M3 select field: shows the picked option and opens the options in a menu centred under it, at least as wide as
+    /// the field. The menu does not take focus from the window.
+    /// </summary>
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
-    public sealed class MaterialDropdownSelect : UserControl, IMessageFilter {
-        private readonly MaterialRoundedPanel _header;
-        private readonly Label _selectedLabel;
-        private readonly Label _chevronLabel;
-        private readonly MaterialRoundedPanel _listHost;
-        private readonly FlowLayoutPanel _listFlow;
-
+    public sealed class MaterialDropdownSelect : Control {
         private readonly List<DropdownItem> _items = new List<DropdownItem>();
-        private readonly List<MaterialRoundedButton> _optionButtons = new List<MaterialRoundedButton>();
+        private readonly MaterialMenu _menu = new MaterialMenu();
 
-        private bool _isOpen;
-        private bool _messageFilterActive;
+        internal MaterialMenu Menu => _menu;
+        private readonly StateLayerFade _layer;
         private int _selectedIndex = -1;
-        private int _listChromeHeight;
-        private bool _layoutSafe;
-
-        private static readonly int HeaderHeight = ComponentSizes.DropdownHeight;
+        private int _headerHeight = ComponentSizes.ControlHeight;
+        private int _optionHeight = ComponentSizes.ControlHeight;
+        private int _cornerRadius = Shape.ExtraSmall;
+        private bool _hovered;
+        private bool _reopenGuard;
 
         /// <summary>Initializes a new instance of the <see cref="MaterialDropdownSelect"/> class.</summary>
         public MaterialDropdownSelect() {
-            BackColor = MaterialColors.Surface;
+            SetStyle(
+                ControlStyles.AllPaintingInWmPaint
+                    | ControlStyles.UserPaint
+                    | ControlStyles.OptimizedDoubleBuffer
+                    | ControlStyles.ResizeRedraw
+                    | ControlStyles.SupportsTransparentBackColor,
+                true);
+            BackColor = Color.Transparent;
             Margin = new Padding(0, 0, 0, 8);
-
-            _header = new MaterialRoundedPanel(Shape.Medium) {
-                BackColor = MaterialColors.SurfaceContainer,
-                Cursor = MaterialCursors.Pointer,
-                Dock = DockStyle.None,
-                Height = HeaderHeight,
-                Padding = new Padding(12, 8, 12, 8),
-            };
-
-            _header.OutlineColor = MaterialColors.OutlineVariant;
-
-            var headerLayout = new Panel {
-                Cursor = MaterialCursors.Pointer,
-                Dock = DockStyle.Fill,
-                Margin = Padding.Empty,
-                Padding = Padding.Empty,
-            };
-
-            _selectedLabel = new Label {
-                AutoEllipsis = true,
-                AutoSize = false,
-                Cursor = MaterialCursors.Pointer,
-                ForeColor = MaterialColors.OnSurface,
-                Text = string.Empty,
-                TextAlign = ContentAlignment.MiddleLeft,
-            };
-
-            _chevronLabel = new Label {
-                AutoSize = false,
-                Cursor = MaterialCursors.Pointer,
-                ForeColor = MaterialColors.OnSurfaceVariant,
-                Padding = new Padding(0, 2, 0, 0),
-                Text = "▼",
-                TextAlign = ContentAlignment.MiddleRight,
-                UseCompatibleTextRendering = false,
-            };
-
-            headerLayout.Controls.Add(_selectedLabel);
-            headerLayout.Controls.Add(_chevronLabel);
-            headerLayout.Layout += OnHeaderLayout;
-            _header.Controls.Add(headerLayout);
-
-            _listHost = new MaterialRoundedPanel(Shape.Medium) {
-                BackColor = MaterialColors.SurfaceContainerHigh,
-                Dock = DockStyle.None,
-                Padding = new Padding(6, 6, 6, 6),
-                Visible = false,
-            };
-
-            _listHost.OutlineColor = MaterialColors.OutlineVariant;
-
-            _listFlow = new FlowLayoutPanel {
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                BackColor = Color.Transparent,
-                Dock = DockStyle.Fill,
-                FlowDirection = FlowDirection.TopDown,
-                Margin = Padding.Empty,
-                Padding = Padding.Empty,
-                WrapContents = false,
-            };
-
-            _listHost.Controls.Add(_listFlow);
-
-            Controls.Add(_listHost);
-            Controls.Add(_header);
-            _header.BringToFront();
-
-            _header.MouseClick += OnHeaderClicked;
-            headerLayout.MouseClick += OnHeaderClicked;
-            _selectedLabel.MouseClick += OnHeaderClicked;
-            _chevronLabel.MouseClick += OnHeaderClicked;
-
-            Disposed += OnDisposed;
-
-            ThemeHook.Attach(this, ApplyTheme);
-
-            _layoutSafe = true;
-            Width = 320;
-            Height = HeaderHeight;
+            Size = new Size(320, ComponentSizes.ControlHeight);
+            AutoSize = true;
+            TabStop = true;
+            MaterialCursors.Apply(this, MaterialCursors.Pointer);
+            TypeRole.Follow(this, () => TypeScale.BodyMedium);
+            _layer = new StateLayerFade(this);
+            _menu.Closed += OnMenuClosed;
+            ThemeHook.Attach(this, Invalidate);
         }
 
-        private void ApplyTheme() {
-            BackColor = MaterialColors.Surface;
-            _header.BackColor = MaterialColors.SurfaceContainer;
-            _header.OutlineColor = MaterialColors.OutlineVariant;
-            _selectedLabel.ForeColor = MaterialColors.OnSurface;
-            _chevronLabel.ForeColor = MaterialColors.OnSurfaceVariant;
-            _listHost.BackColor = MaterialColors.SurfaceContainerHigh;
-            _listHost.OutlineColor = MaterialColors.OutlineVariant;
-            foreach (MaterialRoundedButton button in _optionButtons) {
-                button.BackColor = MaterialColors.SurfaceContainerHigh;
-                button.ForeColor = MaterialColors.OnSurface;
-                button.HoverColor = MaterialColors.SurfaceContainerHighest;
-            }
-            Invalidate(true);
+        /// <summary>Whether the field sizes its height to <see cref="HeaderHeight"/>. Turn it off to give it a size of your own.</summary>
+        [Browsable(true)]
+        [EditorBrowsable(EditorBrowsableState.Always)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+        [DefaultValue(true)]
+        public override bool AutoSize {
+            get => base.AutoSize;
+            set { base.AutoSize = value; ApplyIntrinsicHeight(); }
+        }
+
+        /// <summary>The field's height, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The field's height, in 96-DPI px.")]
+        [DefaultValue(ComponentSizes.ControlHeight)]
+        public int HeaderHeight {
+            get => _headerHeight;
+            set { _headerHeight = Math.Max(1, value); ApplyIntrinsicHeight(); Invalidate(); }
+        }
+
+        /// <summary>One option row's height in the open menu, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("One option row's height in the open menu, in 96-DPI px.")]
+        [DefaultValue(ComponentSizes.ControlHeight)]
+        public int OptionHeight {
+            get => _optionHeight;
+            set => _optionHeight = Math.Max(1, value);
+        }
+
+        /// <summary>The field's corner radius, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The field's corner radius, in 96-DPI px.")]
+        [DefaultValue(Shape.ExtraSmall)]
+        public int CornerRadius {
+            get => _cornerRadius;
+            set { _cornerRadius = Math.Max(0, value); Invalidate(); }
         }
 
         /// <summary>Raised when a different option is picked.</summary>
         public event EventHandler? SelectedIndexChanged;
 
-        /// <summary>The index of the picked option, or -1.</summary>
+        /// <summary>The index of the picked option, or -1. Setting -1 clears the pick.</summary>
+        /// <exception cref="ArgumentOutOfRangeException">The value is below -1 or past the last option.</exception>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public int SelectedIndex => _selectedIndex;
+        public int SelectedIndex {
+            get => _selectedIndex;
+            set {
+                if (value < -1 || value >= _items.Count) {
+                    throw new ArgumentOutOfRangeException(nameof(value));
+                }
+
+                SelectIndex(value);
+            }
+        }
 
         /// <summary>The tag of the picked option, or null.</summary>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public object? SelectedTag =>
-            _selectedIndex >= 0 && _selectedIndex < _items.Count
-                ? _items[_selectedIndex].Tag
-                : null;
+            _selectedIndex >= 0 && _selectedIndex < _items.Count ? _items[_selectedIndex].Tag : null;
 
-        /// <summary>Removes every option.</summary>
+        /// <summary>Removes every option, raising <see cref="SelectedIndexChanged"/> when one was picked.</summary>
         public void ClearItems() {
-            foreach (MaterialRoundedButton button in _optionButtons) {
-                button.Dispose();
-            }
-
-            _optionButtons.Clear();
+            _menu.Close();
+            bool hadPick = _selectedIndex >= 0;
             _items.Clear();
-            _listFlow.Controls.Clear();
             _selectedIndex = -1;
-            _selectedLabel.Text = string.Empty;
-            Collapse();
-            UpdateLayoutMetrics();
+            Invalidate();
+            if (hadPick) {
+                MaterialAccessible.Notify(this, AccessibleEvents.ValueChange);
+                SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
+            }
         }
 
-        /// <summary>Appends an option showing <paramref name="displayText"/> and carrying <paramref name="tag"/>.</summary>
+        /// <summary>
+        /// Appends an option showing <paramref name="displayText"/> and carrying <paramref name="tag"/>. The first option
+        /// added to an empty field is picked, and that raises <see cref="SelectedIndexChanged"/>.
+        /// </summary>
         public void AddItem(string displayText, object tag) {
-            var item = new DropdownItem(displayText, tag);
-            _items.Add(item);
-
-            var button = new MaterialRoundedButton(10, MaterialColors.SurfaceContainerHighest) {
-                AutoSize = false,
-                BackColor = MaterialColors.SurfaceContainerHigh,
-                Cursor = MaterialCursors.Pointer,
-                FlatAppearance = { BorderSize = 0 },
-                ForeColor = MaterialColors.OnSurface,
-                Margin = new Padding(0, 2, 0, 2),
-                Padding = new Padding(12, 8, 12, 8),
-                Tag = _items.Count - 1,
-                Text = displayText,
-                TextAlign = ContentAlignment.MiddleLeft,
-                UseCompatibleTextRendering = false,
-            };
-
-            button.MouseEnter += (sender, args) => {
-                button.BackColor = MaterialColors.SurfaceContainerHighest;
-            };
-
-            button.MouseLeave += (sender, args) => {
-                button.BackColor = MaterialColors.SurfaceContainerHigh;
-            };
-
-            button.Click += OnOptionClicked;
-
-            _optionButtons.Add(button);
-            _listFlow.Controls.Add(button);
-
-            UpdateOptionWidths();
-            UpdateLayoutMetrics();
-
+            _items.Add(new DropdownItem(displayText ?? string.Empty, tag));
             if (_selectedIndex < 0) {
-                SelectIndex(0, notify: false);
+                SelectIndex(0);
             }
         }
 
@@ -205,211 +141,204 @@ namespace Material3.WinForms.Controls {
         public bool SelectByTag(object tag) {
             for (int i = 0; i < _items.Count; i++) {
                 if (Equals(_items[i].Tag, tag)) {
-                    SelectIndex(i, notify: false);
+                    SelectIndex(i);
                     return true;
                 }
             }
             return false;
         }
 
+        /// <summary>Renames the option at <paramref name="index"/>, keeping its tag and the selection.</summary>
+        public void SetItemText(int index, string text) {
+            if (index < 0 || index >= _items.Count) {
+                throw new ArgumentOutOfRangeException(nameof(index));
+            }
+
+            _items[index].DisplayText = text ?? string.Empty;
+            Invalidate();
+        }
+
+        /// <inheritdoc />
+        public override Size GetPreferredSize(Size proposedSize) => new Size(Width, Dpi.Scale(this, _headerHeight));
+
         /// <inheritdoc />
         protected override void OnHandleCreated(EventArgs e) {
             base.OnHandleCreated(e);
-            UpdateLayoutMetrics();
+            ApplyIntrinsicHeight();
         }
 
         /// <inheritdoc />
         protected override void OnDpiChangedAfterParent(EventArgs e) {
             base.OnDpiChangedAfterParent(e);
-            UpdateOptionWidths();
-            UpdateLayoutMetrics();
+            ApplyIntrinsicHeight();
         }
 
         /// <inheritdoc />
-        protected override void OnResize(EventArgs e) {
-            base.OnResize(e);
-            UpdateOptionWidths();
-            LayoutChrome();
-        }
-
-        private void LayoutChrome() {
-            if (!_layoutSafe) {
-                return;
-            }
-
-            int w = Math.Max(0, ClientSize.Width);
-            int headerHeight = Dpi.Scale(this, HeaderHeight);
-            _header.SetBounds(0, 0, w, headerHeight);
-            _listHost.SetBounds(0, headerHeight, w, _listChromeHeight);
+        protected override void OnFontChanged(EventArgs e) {
+            base.OnFontChanged(e);
+            Invalidate();
         }
 
         /// <inheritdoc />
-        protected override void OnLayout(LayoutEventArgs levent) {
-            base.OnLayout(levent);
-            LayoutChrome();
-        }
+        protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); _hovered = true; Invalidate(); }
 
-        private void OnDisposed(object? sender, EventArgs e) {
-            RemoveMessageFilterSafe();
-        }
+        /// <inheritdoc />
+        protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); _hovered = false; Invalidate(); }
 
-        private void OnHeaderLayout(object? sender, LayoutEventArgs e) {
-            Panel? panel = sender as Panel;
-            if (panel == null || panel.ClientSize.Height <= 0) {
-                return;
-            }
-
-            Font font = _chevronLabel.Font ?? DefaultFont;
-            int chevronWidth = TextRenderer.MeasureText(_chevronLabel.Text, font).Width + Dpi.Scale(this, 12);
-            int h = panel.ClientSize.Height;
-            int gap = Dpi.Scale(this, 8);
-            _chevronLabel.SetBounds(panel.ClientSize.Width - chevronWidth, 0, chevronWidth, h);
-            _selectedLabel.SetBounds(
-                0,
-                0,
-                Math.Max(0, panel.ClientSize.Width - chevronWidth - gap),
-                h
-            );
-        }
-        bool IMessageFilter.PreFilterMessage(ref Message m) {
-            if (!_isOpen || !IsHandleCreated) {
-                return false;
-            }
-
-            const int WM_LBUTTONDOWN = 0x0201;
-            const int WM_RBUTTONDOWN = 0x0204;
-            if (m.Msg != WM_LBUTTONDOWN && m.Msg != WM_RBUTTONDOWN) {
-                return false;
-            }
-
-            Point cursor = Cursor.Position;
-            Rectangle bounds = RectangleToScreen(ClientRectangle);
-            if (!bounds.Contains(cursor)) {
-                if (IsHandleCreated && !IsDisposed) {
-                    BeginInvoke(
-                        new Action(() => {
-                            if (_isOpen) {
-                                Collapse();
-                            }
-                        })
-                    );
-                }
-            }
-
-            return false;
-        }
-
-        private void RemoveMessageFilterSafe() {
-            if (!_messageFilterActive) {
-                return;
-            }
-
-            Application.RemoveMessageFilter(this);
-            _messageFilterActive = false;
-        }
-
-        private void OnHeaderClicked(object? sender, MouseEventArgs e) {
+        /// <inheritdoc />
+        protected override void OnMouseDown(MouseEventArgs e) {
+            base.OnMouseDown(e);
             if (e.Button != MouseButtons.Left) {
                 return;
             }
 
-            Toggle();
+            Focus();
+            if (_reopenGuard) {
+                _reopenGuard = false;
+                return;
+            }
+            Open();
         }
 
-        private void OnOptionClicked(object? sender, EventArgs e) {
-            Control? control = sender as Control;
-            if (control != null && control.Tag is int index) {
-                SelectIndex(index, notify: true);
-                Collapse();
+        /// <inheritdoc />
+        protected override AccessibleObject CreateAccessibilityInstance() =>
+            new MaterialAccessible(this, AccessibleRole.ComboBox, () => _menu.IsOpen ? AccessibleStates.Expanded : AccessibleStates.Collapsed,
+                null, () => _selectedIndex >= 0 ? _items[_selectedIndex].DisplayText : null, TextKey.Open, Open);
+
+        /// <inheritdoc />
+        protected override bool IsInputKey(Keys keyData) =>
+            keyData == Keys.Down || keyData == Keys.Up
+            || (_menu.IsOpen && (keyData == Keys.Escape || keyData == Keys.Enter))
+            || base.IsInputKey(keyData);
+
+        /// <inheritdoc />
+        protected override void OnKeyDown(KeyEventArgs e) {
+            base.OnKeyDown(e);
+            if (_menu.IsOpen && (e.KeyCode == Keys.Escape || e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space)) {
+                _menu.Close();
+                e.Handled = true;
+            }
+            else if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space || (e.Alt && e.KeyCode == Keys.Down)) {
+                Open();
+                e.Handled = true;
+            }
+            else if (e.KeyCode == Keys.Down || e.KeyCode == Keys.Up) {
+                SelectIndex(_selectedIndex + (e.KeyCode == Keys.Down ? 1 : -1));
+                _menu.MarkSelected(_selectedIndex);
+                e.Handled = true;
             }
         }
 
-        private void Toggle() {
-            if (_items.Count == 0) {
+        /// <inheritdoc />
+        protected override void OnGotFocus(EventArgs e) { base.OnGotFocus(e); Invalidate(); }
+
+        /// <inheritdoc />
+        protected override void OnLostFocus(EventArgs e) {
+            base.OnLostFocus(e);
+            _menu.Close();
+            Invalidate();
+        }
+
+        private void Open() {
+            if (_items.Count == 0 || _menu.IsOpen) {
                 return;
             }
 
-            if (_isOpen) {
-                Collapse();
+            _menu.ClearItems();
+            _menu.ItemHeight = _optionHeight;
+            _menu.CornerRadius = _cornerRadius;
+            _menu.Font = Font;
+            for (int i = 0; i < _items.Count; i++) {
+                int index = i;
+                _menu.AddChoice(_items[i].DisplayText, i == _selectedIndex, () => SelectIndex(index));
             }
-            else {
-                Expand();
-            }
+            _menu.Show(this);
+            Invalidate();
         }
 
-        private void Expand() {
-            if (_isOpen || _items.Count == 0) {
+        // The outside click that closes the menu is the same press that lands on the field; it must not reopen it.
+        private void OnMenuClosed() {
+            if (IsDisposed) {
                 return;
             }
 
-            _isOpen = true;
-            _listHost.Visible = true;
-            if (!_messageFilterActive) {
-                Application.AddMessageFilter(this);
-                _messageFilterActive = true;
-            }
-
-            UpdateOptionWidths();
-            UpdateLayoutMetrics();
+            _reopenGuard = IsHandleCreated && ClientRectangle.Contains(PointToClient(Cursor.Position))
+                && (MouseButtons & MouseButtons.Left) != 0;
+            Invalidate();
         }
 
-        private void Collapse() {
-            if (!_isOpen) {
-                return;
-            }
-
-            _isOpen = false;
-            _listHost.Visible = false;
-            RemoveMessageFilterSafe();
-            UpdateLayoutMetrics();
-        }
-
-        private void SelectIndex(int index, bool notify) {
-            if (index < 0 || index >= _items.Count) {
+        private void SelectIndex(int index) {
+            if (index < -1 || index >= _items.Count || index == _selectedIndex) {
                 return;
             }
 
             _selectedIndex = index;
-            _selectedLabel.Text = _items[index].DisplayText;
+            Invalidate();
+            MaterialAccessible.Notify(this, AccessibleEvents.ValueChange);
+            SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
+        }
 
-            if (notify) {
-                SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
+        private void ApplyIntrinsicHeight() {
+            if (AutoSize) {
+                Height = GetPreferredSize(Size.Empty).Height;
             }
         }
 
-        private void UpdateOptionWidths() {
-            int innerWidth = Math.Max(0, Width - _listHost.Padding.Horizontal);
-            _listFlow.SuspendLayout();
-            _listFlow.Width = innerWidth;
-            foreach (MaterialRoundedButton button in _optionButtons) {
-                button.Width = innerWidth;
-                button.Height = Dpi.Scale(this, 42);
+        /// <inheritdoc />
+        protected override void OnPaint(PaintEventArgs e) {
+            Graphics g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+            using (var bg = new SolidBrush(BackColor.A > 0 ? BackColor : Parent?.BackColor ?? MaterialColors.Surface)) {
+                g.FillRectangle(bg, ClientRectangle);
             }
 
-            _listFlow.ResumeLayout(performLayout: true);
+            bool open = _menu.IsOpen;
+            Color fill = MaterialColors.SurfaceContainer;
+            double layer = _layer.Resolve(_hovered && !open, false, Enabled);
+            if (layer > 0) {
+                fill = ArgbExtensions.Overlay(fill, MaterialColors.OnSurface, layer);
+            }
+
+            var rect = new Rectangle(0, 0, Width - 1, Height - 1);
+            using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(rect, Dpi.Scale(this, _cornerRadius))) {
+                using (var brush = new SolidBrush(fill)) {
+                    g.FillPath(brush, path);
+                }
+                Color outline = open || Focused ? MaterialColors.Primary : MaterialColors.OutlineVariant;
+                using (var pen = new Pen(outline, Dpi.Scale(this, 1f))) {
+                    g.DrawPath(pen, path);
+                }
+            }
+
+            int padX = Dpi.Scale(this, Spacing.Space3);
+            int chevronPx = Dpi.Scale(this, ComponentSizes.IconMedium);
+            Color content = Enabled ? MaterialColors.OnSurface : MaterialColors.OnSurfaceMuted;
+            Bitmap chevron = MaterialIconRenderer.Render(MaterialIcons.ChevronDown, chevronPx,
+                Enabled ? MaterialColors.OnSurfaceVariant : MaterialColors.OnSurfaceMuted);
+            g.DrawImageUnscaled(chevron, Width - padX - chevronPx, (Height - chevronPx) / 2);
+
+            if (_selectedIndex >= 0) {
+                using (var brush = new SolidBrush(content))
+                using (var fmt = new StringFormat(StringFormat.GenericTypographic) {
+                    LineAlignment = StringAlignment.Center,
+                    Trimming = StringTrimming.EllipsisCharacter,
+                    FormatFlags = StringFormatFlags.NoWrap,
+                }) {
+                    g.DrawString(_items[_selectedIndex].DisplayText, Font, brush,
+                        new RectangleF(padX, 0, Math.Max(0, Width - padX * 2 - chevronPx - Dpi.Scale(this, Spacing.Space2)), Height), fmt);
+                }
+            }
         }
 
-        private void UpdateLayoutMetrics() {
-            _header.Height = Dpi.Scale(this, HeaderHeight);
-
-            if (_isOpen) {
-                _listChromeHeight = Math.Max(
-                    _listFlow.PreferredSize.Height + _listHost.Padding.Vertical,
-                    1
-                );
-                _listHost.Visible = true;
+        /// <inheritdoc />
+        protected override void Dispose(bool disposing) {
+            if (disposing) {
+                _menu.Closed -= OnMenuClosed;
+                _menu.Dispose();
+                _layer.Dispose();
             }
-            else {
-                _listChromeHeight = 0;
-                _listHost.Visible = false;
-            }
-
-            int totalHeight = Dpi.Scale(this, HeaderHeight) + _listChromeHeight;
-            if (Height != totalHeight) {
-                Height = totalHeight;
-            }
-
-            LayoutChrome();
+            base.Dispose(disposing);
         }
 
         private sealed class DropdownItem {
@@ -418,7 +347,7 @@ namespace Material3.WinForms.Controls {
                 Tag = tag;
             }
 
-            public string DisplayText { get; }
+            public string DisplayText { get; set; }
             public object Tag { get; }
         }
     }

@@ -11,9 +11,12 @@ using System.Reflection;
 namespace Material3.WinForms.Drawing {
     /// <summary>
     /// Renders embedded Material Symbols SVG icons to tinted bitmaps, cached by (key, size, color).
-    /// Returned <see cref="Bitmap"/> instances are shared cache entries — callers must not dispose them.
+    /// Returned <see cref="Bitmap"/> instances are shared cache entries — callers must not dispose them. The cache
+    /// forgets its tints on every theme change and when it grows past a bound; a bitmap a caller still holds stays valid.
     /// </summary>
     public static class MaterialIconRenderer {
+        private const int MaxTints = 1024;
+
         private static readonly Dictionary<string, Bitmap> Cache =
             new Dictionary<string, Bitmap>(StringComparer.Ordinal);
         private static readonly Dictionary<string, Glyph?> GlyphCache =
@@ -22,6 +25,15 @@ namespace Material3.WinForms.Drawing {
             new Dictionary<string, string>(StringComparer.Ordinal);
         private static readonly object Gate = new object();
 
+        // Dropped, not disposed: a dialog's PictureBox or an app may still hold one, and the finalizer frees the rest.
+        static MaterialIconRenderer() => Theming.ThemeManager.ThemeChanged += (s, e) => Forget();
+
+        private static void Forget() {
+            lock (Gate) {
+                Cache.Clear();
+            }
+        }
+
         private sealed class Glyph {
             internal GraphicsPath Path = null!;
             internal RectangleF ViewBox;
@@ -29,7 +41,7 @@ namespace Material3.WinForms.Drawing {
 
         /// <summary>
         /// Registers a consumer SVG under <paramref name="key"/> so <see cref="Render"/> renders it like a
-        /// bundled icon. Markup must use the grammar <see cref="SvgGlyph"/> supports (no arcs/gradients).
+        /// bundled icon. Markup must use the grammar <see cref="SvgGlyph"/> supports (paths only, no gradients).
         /// </summary>
         public static void Register(string key, string svgMarkup) {
             if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(svgMarkup)) {
@@ -56,6 +68,9 @@ namespace Material3.WinForms.Drawing {
                 }
 
                 Bitmap result = RenderUncached(key, size, color);
+                if (Cache.Count >= MaxTints) {
+                    Cache.Clear();
+                }
                 Cache[cacheKey] = result;
                 return result;
             }
@@ -77,7 +92,7 @@ namespace Material3.WinForms.Drawing {
                     return (Bitmap)raw.Clone();
                 }
                 var resized = new Bitmap(size, size, PixelFormat.Format32bppArgb);
-                using (Graphics g = Graphics.FromImage(resized)) {
+                using (var g = Graphics.FromImage(resized)) {
                     g.InterpolationMode = InterpolationMode.HighQualityBicubic;
                     g.PixelOffsetMode = PixelOffsetMode.HighQuality;
                     g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -92,7 +107,7 @@ namespace Material3.WinForms.Drawing {
             RectangleF vb = glyph.ViewBox;
             float scaleX = renderSize / vb.Width;
             float scaleY = renderSize / vb.Height;
-            using (Graphics g = Graphics.FromImage(bmp))
+            using (var g = Graphics.FromImage(bmp))
             using (var path = (GraphicsPath)glyph.Path.Clone())
             using (var transform = new Matrix(scaleX, 0, 0, scaleY, -vb.X * scaleX, -vb.Y * scaleY))
             using (var brush = new SolidBrush(color)) {
@@ -128,7 +143,7 @@ namespace Material3.WinForms.Drawing {
 
                 if (resourceName != null) {
                     using (Stream? stream = assembly.GetManifestResourceStream(resourceName))
-                    using (var reader = stream != null ? new StreamReader(stream) : null) {
+                    using (StreamReader? reader = stream != null ? new StreamReader(stream) : null) {
                         if (reader != null) {
                             (GraphicsPath path, RectangleF viewBox)? parsed = SvgGlyph.Parse(reader.ReadToEnd());
                             if (parsed != null) {

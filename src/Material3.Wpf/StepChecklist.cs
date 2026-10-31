@@ -4,9 +4,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
+using Material3.Core;
 
 namespace Material3.Wpf {
     /// <summary>
@@ -15,8 +17,8 @@ namespace Material3.Wpf {
     /// </summary>
     /// <remarks>
     /// Moving <see cref="ActiveIndex"/> forward morphs every step it passes into the done state, so a jump of
-    /// several steps still reads as each of them finishing. Uses the <c>Check</c> and <c>Close</c> glyphs, resolved
-    /// through <see cref="PathIcon.Register(string,string)"/>.
+    /// several steps still reads as each of them finishing. Uses the built-in <c>Check</c> and <c>Close</c> glyphs
+    /// unless the app registers its own through <see cref="PathIcon.Register(string,string)"/>.
     /// </remarks>
     [TemplatePart(Name = PartRows, Type = typeof(Panel))]
     public class StepChecklist : Control {
@@ -34,7 +36,7 @@ namespace Material3.Wpf {
 
         /// <summary>Creates an empty checklist.</summary>
         public StepChecklist() {
-            Unloaded += (_, __) => { foreach (Row r in _rows) StopSpin(r); };
+            Unloaded += (_, __) => { foreach (Row r in _rows) { StopSpin(r); } };
             Loaded += (_, __) => Render(ActiveIndex, morph: false);
         }
 
@@ -125,7 +127,10 @@ namespace Material3.Wpf {
 
         private static void OnActiveChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             var self = (StepChecklist)d;
-            if (self._resetting) return;
+            if (self._resetting) {
+                return;
+            }
+
             self._resetting = true;
             try { self.SetCurrentValue(ErrorIndexProperty, -1); }
             finally { self._resetting = false; }
@@ -134,59 +139,82 @@ namespace Material3.Wpf {
 
         private static void OnErrorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             var self = (StepChecklist)d;
-            if (!self._resetting) self.Render(self.ActiveIndex, morph: false);
+            if (!self._resetting) {
+                self.Render(self.ActiveIndex, morph: false);
+            }
         }
 
         private void Build() {
-            foreach (Row old in _rows) StopSpin(old);
+            foreach (Row old in _rows) {
+                StopSpin(old);
+            }
+
             _rows.Clear();
-            if (_host == null) return;
+            if (_host == null) {
+                return;
+            }
+
             _host.Children.Clear();
             foreach (string step in Steps ?? Enumerable.Empty<string>()) {
-                Row row = MakeRow(step);
+                Row row = MakeRow(step, this);
                 _rows.Add(row);
                 _host.Children.Add(row.Line);
             }
         }
 
-        private static Row MakeRow(string step) {
+        private static Row MakeRow(string step, StepChecklist owner) {
             var ring = new Ellipse { Width = IndicatorSize, Height = IndicatorSize, StrokeThickness = 2 };
             var fill = new Ellipse { Width = IndicatorSize, Height = IndicatorSize, Visibility = Visibility.Collapsed };
             var spin = new RotateTransform(0);
             var arc = new Ellipse {
-                Width = IndicatorSize, Height = IndicatorSize, StrokeThickness = ArcThickness,
+                Width = IndicatorSize,
+                Height = IndicatorSize,
+                StrokeThickness = ArcThickness,
                 StrokeDashArray = new DoubleCollection { ArcDash, ArcGap },
-                Visibility = Visibility.Collapsed, RenderTransformOrigin = new Point(0.5, 0.5), RenderTransform = spin,
+                Visibility = Visibility.Collapsed,
+                RenderTransformOrigin = new Point(0.5, 0.5),
+                RenderTransform = spin,
             };
             var checkScale = new ScaleTransform(1, 1);
             var check = new PathIcon {
-                Glyph = "Check", Width = 12, Height = 12, Visibility = Visibility.Collapsed,
-                HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
-                RenderTransformOrigin = new Point(0.5, 0.5), RenderTransform = checkScale,
+                Glyph = "Check",
+                Width = 12,
+                Height = 12,
+                Visibility = Visibility.Collapsed,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                RenderTransformOrigin = new Point(0.5, 0.5),
+                RenderTransform = checkScale,
             };
-            check.SetResourceReference(PathIcon.ForegroundProperty, "OnSuccess");
+            check.SetResourceReference(PathIcon.ForegroundProperty, nameof(ColorScheme.OnSuccess));
             var crossScale = new ScaleTransform(1, 1);
             var cross = new PathIcon {
-                Glyph = "Close", Width = 12, Height = 12, Visibility = Visibility.Collapsed,
-                HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
-                RenderTransformOrigin = new Point(0.5, 0.5), RenderTransform = crossScale,
-            };
-            cross.SetResourceReference(PathIcon.ForegroundProperty, "OnError");
-
-            var indicator = new Grid {
-                Width = IndicatorSize, Height = IndicatorSize, Margin = new Thickness(0, 0, 12, 0),
+                Glyph = "Close",
+                Width = 12,
+                Height = 12,
+                Visibility = Visibility.Collapsed,
+                HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
+                RenderTransformOrigin = new Point(0.5, 0.5),
+                RenderTransform = crossScale,
             };
+            cross.SetResourceReference(PathIcon.ForegroundProperty, nameof(ColorScheme.OnError));
+
+            var indicator = new Grid { Width = IndicatorSize, Height = IndicatorSize };
             indicator.Children.Add(ring);
             indicator.Children.Add(fill);
             indicator.Children.Add(arc);
             indicator.Children.Add(check);
             indicator.Children.Add(cross);
 
-            var text = new TextBlock { Text = step, FontSize = 14, VerticalAlignment = VerticalAlignment.Center };
-            var line = new DockPanel { Height = 26 };
-            DockPanel.SetDock(indicator, Dock.Left);
-            line.Children.Add(indicator);
+            var scaled = new Viewbox { Child = indicator, VerticalAlignment = VerticalAlignment.Center };
+            scaled.SetBinding(FrameworkElement.WidthProperty, new Binding { Path = new PropertyPath("(0).Width", Metrics.IndicatorSizeProperty), Source = owner });
+            scaled.SetBinding(FrameworkElement.HeightProperty, new Binding { Path = new PropertyPath("(0).Height", Metrics.IndicatorSizeProperty), Source = owner });
+            scaled.SetBinding(FrameworkElement.MarginProperty, new Binding { Path = new PropertyPath(Metrics.GlyphMarginProperty), Source = owner });
+            var text = new TextBlock { Text = step, VerticalAlignment = VerticalAlignment.Center };
+            var line = new DockPanel { Margin = new Thickness(0, 4, 0, 4) };
+            DockPanel.SetDock(scaled, Dock.Left);
+            line.Children.Add(scaled);
             line.Children.Add(text);
             return new Row { Ring = ring, Fill = fill, Arc = arc, Check = check, Cross = cross, Spin = spin, CheckScale = checkScale, CrossScale = crossScale, Text = text, Line = line };
         }
@@ -196,35 +224,52 @@ namespace Material3.Wpf {
             for (int i = 0; i < _rows.Count; i++) {
                 Row r = _rows[i];
                 if (error >= 0) {
-                    if (i == error) ShowError(r, morph: IsLoaded && !r.Failed);
-                    else if (i < error) ShowDone(r);
-                    else ShowPending(r);
+                    if (i == error) {
+                        ShowError(r, morph: IsLoaded && !r.Failed);
+                    }
+                    else if (i < error) {
+                        ShowDone(r);
+                    }
+                    else {
+                        ShowPending(r);
+                    }
                 }
                 else if (i < active) {
-                    if (morph && IsLoaded && i >= Math.Max(0, previousActive) && !r.Done) MorphToDone(r);
-                    else ShowDone(r);
+                    if (morph && IsLoaded && i >= Math.Max(0, previousActive) && !r.Done) {
+                        MorphToDone(r);
+                    }
+                    else {
+                        ShowDone(r);
+                    }
                 }
-                else if (i == active) ShowActive(r);
-                else ShowPending(r);
+                else if (i == active) {
+                    ShowActive(r);
+                }
+                else {
+                    ShowPending(r);
+                }
             }
         }
 
         private void ShowActive(Row r) {
             StopMorph(r);
             r.Failed = false;
-            if (IsLoaded) StartSpin(r);
+            if (IsLoaded) {
+                StartSpin(r);
+            }
+
             r.Done = false;
             r.Ring.Visibility = Visibility.Visible;
             r.Ring.StrokeThickness = ArcThickness;
-            r.Ring.SetResourceReference(Shape.StrokeProperty, "SurfaceContainerHighest");
+            r.Ring.SetResourceReference(Shape.StrokeProperty, nameof(ColorScheme.SurfaceContainerHighest));
             r.Fill.Visibility = Visibility.Collapsed;
             r.Arc.Visibility = Visibility.Visible;
             r.Arc.StrokeThickness = ArcThickness;
-            r.Arc.SetResourceReference(Shape.StrokeProperty, "Primary");
+            r.Arc.SetResourceReference(Shape.StrokeProperty, nameof(ColorScheme.Primary));
             r.Arc.StrokeDashArray = new DoubleCollection { ArcDash, ArcGap };
             r.Check.Visibility = Visibility.Collapsed;
             r.Cross.Visibility = Visibility.Collapsed;
-            r.Text.SetResourceReference(TextBlock.ForegroundProperty, "OnSurface");
+            r.Text.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurface));
         }
 
         private static void ShowPending(Row r) {
@@ -234,12 +279,12 @@ namespace Material3.Wpf {
             r.Done = false;
             r.Ring.Visibility = Visibility.Visible;
             r.Ring.StrokeThickness = 2;
-            r.Ring.SetResourceReference(Shape.StrokeProperty, "OutlineVariant");
+            r.Ring.SetResourceReference(Shape.StrokeProperty, nameof(ColorScheme.OutlineVariant));
             r.Fill.Visibility = Visibility.Collapsed;
             r.Arc.Visibility = Visibility.Collapsed;
             r.Check.Visibility = Visibility.Collapsed;
             r.Cross.Visibility = Visibility.Collapsed;
-            r.Text.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceMuted");
+            r.Text.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurfaceMuted));
         }
 
         private static void ShowDone(Row r) {
@@ -251,11 +296,11 @@ namespace Material3.Wpf {
             r.Arc.Visibility = Visibility.Collapsed;
             r.Fill.Visibility = Visibility.Visible;
             r.Fill.Opacity = 1;
-            r.Fill.SetResourceReference(Shape.FillProperty, "Success");
+            r.Fill.SetResourceReference(Shape.FillProperty, nameof(ColorScheme.Success));
             r.Check.Visibility = Visibility.Visible;
             r.CheckScale.ScaleX = r.CheckScale.ScaleY = 1;
             r.Cross.Visibility = Visibility.Collapsed;
-            r.Text.SetResourceReference(TextBlock.ForegroundProperty, "OnSurface");
+            r.Text.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurface));
         }
 
         private static void ShowError(Row r, bool morph) {
@@ -268,11 +313,14 @@ namespace Material3.Wpf {
             r.Check.Visibility = Visibility.Collapsed;
             r.Fill.Visibility = Visibility.Visible;
             r.Fill.Opacity = 1;
-            r.Fill.SetResourceReference(Shape.FillProperty, "Error");
+            r.Fill.SetResourceReference(Shape.FillProperty, nameof(ColorScheme.Error));
             r.Cross.Visibility = Visibility.Visible;
             r.CrossScale.ScaleX = r.CrossScale.ScaleY = 1;
-            r.Text.SetResourceReference(TextBlock.ForegroundProperty, "Error");
-            if (!morph) return;
+            r.Text.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.Error));
+            if (!morph) {
+                return;
+            }
+
             r.Fill.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, Motion.Ms(135)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn } });
             var pop = new DoubleAnimation(0, 1, Motion.Ms(160)) { EasingFunction = new BackEase { Amplitude = 0.4, EasingMode = EasingMode.EaseOut } };
             r.CrossScale.BeginAnimation(ScaleTransform.ScaleXProperty, pop);
@@ -280,7 +328,10 @@ namespace Material3.Wpf {
         }
 
         private static void StartSpin(Row r) {
-            if (r.Spinning) return;
+            if (r.Spinning) {
+                return;
+            }
+
             r.Spinning = true;
             r.Spin.BeginAnimation(RotateTransform.AngleProperty,
                 new DoubleAnimation(0, 360, new Duration(TimeSpan.FromMilliseconds(800))) { RepeatBehavior = RepeatBehavior.Forever });
@@ -307,15 +358,15 @@ namespace Material3.Wpf {
             r.Done = true;
             r.Ring.Visibility = Visibility.Collapsed;
             r.Cross.Visibility = Visibility.Collapsed;
-            r.Text.SetResourceReference(TextBlock.ForegroundProperty, "OnSurface");
+            r.Text.SetResourceReference(TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurface));
 
             r.Arc.Visibility = Visibility.Visible;
             r.Arc.StrokeThickness = ArcThickness;
-            r.Arc.SetResourceReference(Shape.StrokeProperty, "Success");
+            r.Arc.SetResourceReference(Shape.StrokeProperty, nameof(ColorScheme.Success));
             r.Arc.StrokeDashArray = new DoubleCollection { FullRingDash, 0 };
 
             r.Fill.Visibility = Visibility.Visible;
-            r.Fill.SetResourceReference(Shape.FillProperty, "Success");
+            r.Fill.SetResourceReference(Shape.FillProperty, nameof(ColorScheme.Success));
             r.Fill.Opacity = 0;
             r.Check.Visibility = Visibility.Visible;
             r.CheckScale.ScaleX = r.CheckScale.ScaleY = 0;

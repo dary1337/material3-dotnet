@@ -1,10 +1,11 @@
 using System;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
-using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Material3.Core;
 using Material3.WinForms.Drawing;
 using Material3.WinForms.Theming;
 using Material3.WinForms.Tokens;
@@ -15,14 +16,18 @@ namespace Material3.WinForms.Controls {
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialSearchBar : Control {
-        private const int BarHeight = 48;
-        private const int PadX = 16;
-        private const int IconPx = 20;
-        private const int IconGap = 12;
+        private const int DefaultBarHeight = ComponentSizes.ControlHeight;
 
-        private readonly TextBox _editor;
-        private string _placeholder = "Search";
+        private int _barHeight = DefaultBarHeight;
+        private int _horizontalPadding = Spacing.Space4;
+        private int _iconSize = ComponentSizes.IconMedium;
+        private int _iconGap = Spacing.Space3;
+        private int _cornerRadius = Shape.Full;
+
+        private readonly FilteredTextBox _editor;
+        private string? _placeholder;
         private bool _hovered;
+        private readonly StateLayerFade _layer;
         private bool _clearHovered;
 
         /// <summary>Raised on every edit of the query.</summary>
@@ -32,20 +37,19 @@ namespace Material3.WinForms.Controls {
 
         /// <summary>Initializes a new instance of the <see cref="MaterialSearchBar"/> class.</summary>
         public MaterialSearchBar() {
+            _layer = new StateLayerFade(this);
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
                     | ControlStyles.UserPaint
                     | ControlStyles.OptimizedDoubleBuffer
                     | ControlStyles.ResizeRedraw,
                 true);
-            Height = BarHeight;
+            Height = DefaultBarHeight;
             Width = 320;
+            AutoSize = true;
             MaterialCursors.Apply(this, MaterialCursors.IBeam);
 
-            _editor = new TextBox {
-                BorderStyle = BorderStyle.None,
-                Font = TypeScale.BodyLarge,
-            };
+            _editor = new FilteredTextBox { BorderStyle = BorderStyle.None };
             _editor.TextChanged += (s, e) => {
                 QueryChanged?.Invoke(this, EventArgs.Empty);
                 Invalidate();
@@ -59,10 +63,13 @@ namespace Material3.WinForms.Controls {
             };
             _editor.GotFocus += (s, e) => Invalidate();
             _editor.LostFocus += (s, e) => Invalidate();
-            _editor.HandleCreated += (s, e) => ApplyPlaceholder();
             Controls.Add(_editor);
+            ApplyPlaceholder();
 
             Click += (s, e) => _editor.Focus();
+            TypeRole.Follow(this, () => TypeScale.BodyMedium);
+            HandleBound.Attach(this, h => LibraryText.Changed += h, h => LibraryText.Changed -= h,
+                () => OnLibraryTextChanged(this, EventArgs.Empty));
             ThemeHook.Attach(this, ApplyTheme);
             ApplyTheme();
             LayoutEditor();
@@ -71,40 +78,130 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override void OnHandleCreated(EventArgs e) {
             base.OnHandleCreated(e);
-            Height = Dpi.Scale(this, BarHeight);
+            ApplyIntrinsicHeight();
             LayoutEditor();
         }
 
         /// <inheritdoc />
         protected override void OnDpiChangedAfterParent(EventArgs e) {
             base.OnDpiChangedAfterParent(e);
-            Height = Dpi.Scale(this, BarHeight);
+            ApplyIntrinsicHeight();
             LayoutEditor();
         }
 
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-        private static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, string lParam);
-
-        private const int EM_SETCUEBANNER = 0x1501;
-
-        private void ApplyPlaceholder() {
-            if (_editor.IsHandleCreated) {
-                SendMessage(_editor.Handle, EM_SETCUEBANNER, (IntPtr)1, _placeholder);
+        private void ApplyIntrinsicHeight() {
+            if (AutoSize) {
+                Height = GetPreferredSize(Size.Empty).Height;
             }
         }
 
-        /// <summary>Hint text shown while the query is empty.</summary>
+        /// <inheritdoc />
+        public override Size GetPreferredSize(Size proposedSize) => new Size(Width, Dpi.Scale(this, _barHeight));
+
+        /// <summary>Whether the bar sizes its height to <see cref="BarHeight"/>. Turn it off to give it a size of your own.</summary>
+        [Browsable(true)]
+        [EditorBrowsable(EditorBrowsableState.Always)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+        [DefaultValue(true)]
+        public override bool AutoSize {
+            get => base.AutoSize;
+            set { base.AutoSize = value; ApplyIntrinsicHeight(); }
+        }
+
+        /// <summary>The height AutoSize gives the bar, in 96-DPI px.</summary>
         [Category("Material Design")]
-        [Description("Hint text shown while the query is empty.")]
-        [DefaultValue("Search")]
+        [Description("The height AutoSize gives the bar, in 96-DPI px.")]
+        [DefaultValue(DefaultBarHeight)]
+        public int BarHeight {
+            get => _barHeight;
+            set { _barHeight = Math.Max(1, value); ApplyIntrinsicHeight(); Invalidate(); }
+        }
+
+        /// <summary>The space between the bar's ends and its glyphs, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The space between the bar's ends and its glyphs, in 96-DPI px.")]
+        [DefaultValue(Spacing.Space4)]
+        public int HorizontalPadding {
+            get => _horizontalPadding;
+            set { _horizontalPadding = Math.Max(0, value); LayoutEditor(); Invalidate(); }
+        }
+
+        /// <summary>The side of the search and clear glyphs, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The side of the search and clear glyphs, in 96-DPI px.")]
+        [DefaultValue(ComponentSizes.IconMedium)]
+        public int IconSize {
+            get => _iconSize;
+            set { _iconSize = Math.Max(0, value); LayoutEditor(); Invalidate(); }
+        }
+
+        /// <summary>The gap between a glyph and the query, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The gap between a glyph and the query, in 96-DPI px.")]
+        [DefaultValue(Spacing.Space3)]
+        public int IconGap {
+            get => _iconGap;
+            set { _iconGap = Math.Max(0, value); LayoutEditor(); Invalidate(); }
+        }
+
+        /// <summary>The container's corner radius; the default is a full pill, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The container's corner radius; the default is a full pill, in 96-DPI px.")]
+        [DefaultValue(Shape.Full)]
+        public int CornerRadius {
+            get => _cornerRadius;
+            set { _cornerRadius = Math.Max(0, value); Invalidate(); }
+        }
+
+        /// <inheritdoc />
+        protected override void OnFontChanged(EventArgs e) {
+            base.OnFontChanged(e);
+            if (_editor != null) {
+                _editor.Font = Font;
+            }
+
+            LayoutEditor();
+        }
+
+        private void OnLibraryTextChanged(object? sender, EventArgs e) {
+            if (_placeholder != null || IsDisposed) {
+                return;
+            }
+
+            if (IsHandleCreated && InvokeRequired) {
+                BeginInvoke(new Action(ApplyPlaceholder));
+            }
+            else {
+                ApplyPlaceholder();
+            }
+        }
+
+        /// <inheritdoc />
+        protected override void Dispose(bool disposing) {
+            if (disposing) {
+                _layer.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        private void ApplyPlaceholder() => _editor.Cue = Placeholder;
+
+        /// <summary>Hint text shown while the query is empty. Null shows the library's own, <see cref="TextKey.Search"/>.</summary>
+        [Category("Material Design")]
+        [Description("Hint text shown while the query is empty. Null shows the library's own.")]
+        [AllowNull]
         public string Placeholder {
-            get => _placeholder;
+            get => _placeholder ?? LibraryText.Get(TextKey.Search);
             set {
-                _placeholder = value ?? string.Empty;
+                _placeholder = value;
                 ApplyPlaceholder();
                 Invalidate();
             }
         }
+
+        private bool ShouldSerializePlaceholder() => _placeholder != null;
+
+        private void ResetPlaceholder() => Placeholder = null;
 
         /// <summary>The current query text.</summary>
         [Browsable(false)]
@@ -120,7 +217,7 @@ namespace Material3.WinForms.Controls {
         public TextBox Editor => _editor;
 
         private void ApplyTheme() {
-            BackColor = ResolveParentColor();
+            BackColor = SurfaceBehind.Of(this);
             _editor.BackColor = MaterialColors.SurfaceContainerHigh;
             _editor.ForeColor = MaterialColors.OnSurface;
             Invalidate();
@@ -134,8 +231,8 @@ namespace Material3.WinForms.Controls {
 
         private Rectangle ClearRect {
             get {
-                int iconPx = Dpi.Scale(this, IconPx);
-                return new Rectangle(Width - Dpi.Scale(this, PadX) - iconPx, (Height - iconPx) / 2, iconPx, iconPx);
+                int iconPx = Dpi.Scale(this, _iconSize);
+                return new Rectangle(Width - Dpi.Scale(this, _horizontalPadding) - iconPx, (Height - iconPx) / 2, iconPx, iconPx);
             }
         }
 
@@ -151,8 +248,8 @@ namespace Material3.WinForms.Controls {
             if (_editor == null) {
                 return;
             }
-            int left = Dpi.Scale(this, PadX) + Dpi.Scale(this, IconPx) + Dpi.Scale(this, IconGap);
-            int right = Width - Dpi.Scale(this, PadX) - Dpi.Scale(this, IconPx) - Dpi.Scale(this, IconGap);
+            int left = Dpi.Scale(this, _horizontalPadding) + Dpi.Scale(this, _iconSize) + Dpi.Scale(this, _iconGap);
+            int right = Width - Dpi.Scale(this, _horizontalPadding) - Dpi.Scale(this, _iconSize) - Dpi.Scale(this, _iconGap);
             _editor.SetBounds(left, (Height - _editor.Height) / 2, Math.Max(20, right - left), _editor.Height);
         }
 
@@ -172,7 +269,7 @@ namespace Material3.WinForms.Controls {
             bool over = ShowsClear && ClearRect.Contains(e.Location);
             if (over != _clearHovered) {
                 _clearHovered = over;
-                Cursor = over ? MaterialCursors.Pointer : Cursors.IBeam;
+                Cursor = over ? MaterialCursors.Pointer : MaterialCursors.IBeam;
                 Invalidate();
             }
         }
@@ -192,14 +289,15 @@ namespace Material3.WinForms.Controls {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
-            g.Clear(ResolveParentColor());
+            g.Clear(SurfaceBehind.Of(this));
 
             Color container = MaterialColors.SurfaceContainerHigh;
-            if (Enabled && _hovered && !_editor.Focused) {
-                container = ArgbExtensions.Overlay(container, MaterialColors.OnSurface, StateLayers.Hover);
+            double hoverLayer = _layer.Resolve(_hovered && !_editor.Focused, false, Enabled);
+            if (hoverLayer > 0) {
+                container = ArgbExtensions.Overlay(container, MaterialColors.OnSurface, hoverLayer);
             }
             var rect = new Rectangle(0, 0, Width - 1, Height - 1);
-            using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(rect, Shape.Full))
+            using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(rect, Dpi.Scale(this, _cornerRadius)))
             using (var brush = new SolidBrush(container)) {
                 g.FillPath(brush, path);
             }
@@ -207,9 +305,9 @@ namespace Material3.WinForms.Controls {
                 _editor.BackColor = container;
             }
 
-            int iconPx = Dpi.Scale(this, IconPx);
+            int iconPx = Dpi.Scale(this, _iconSize);
             Bitmap search = MaterialIconRenderer.Render(MaterialIcons.Search, iconPx, MaterialColors.OnSurfaceVariant);
-            g.DrawImageUnscaled(search, Dpi.Scale(this, PadX), (Height - iconPx) / 2);
+            g.DrawImageUnscaled(search, Dpi.Scale(this, _horizontalPadding), (Height - iconPx) / 2);
 
             if (ShowsClear) {
                 Rectangle clear = ClearRect;
@@ -220,20 +318,11 @@ namespace Material3.WinForms.Controls {
                         g.FillEllipse(brush, Rectangle.Inflate(clear, infl, infl));
                     }
                 }
-                int closePx = Dpi.Scale(this, 16);
+                int closePx = Dpi.Scale(this, Math.Max(1, _iconSize - 4));
                 Bitmap close = MaterialIconRenderer.Render(MaterialIcons.Close, closePx, MaterialColors.OnSurfaceVariant);
                 int closeOffset = (clear.Width - closePx) / 2;
                 g.DrawImageUnscaled(close, clear.X + closeOffset, clear.Y + closeOffset);
             }
-        }
-
-        private Color ResolveParentColor() {
-            for (Control? p = Parent; p != null; p = p.Parent) {
-                if (p.BackColor.A > 0) {
-                    return p.BackColor;
-                }
-            }
-            return MaterialColors.Surface;
         }
     }
 }

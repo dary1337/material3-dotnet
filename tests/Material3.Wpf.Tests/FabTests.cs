@@ -38,7 +38,9 @@ namespace Material3.Wpf.Tests {
 
         private static Fab Shown(System.Windows.Window w, FabSize size, string? label) {
             var fab = new Fab {
-                Size = size, Glyph = "Add", Content = label,
+                Size = size,
+                Glyph = "Add",
+                Content = label,
                 HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
                 VerticalAlignment = System.Windows.VerticalAlignment.Top,
             };

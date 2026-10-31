@@ -18,6 +18,17 @@ namespace Material3.Wpf.Tests {
         });
 
         [Fact]
+        public void ARowLeftToItsContentFitsItsLongestLabelWithTheCheck() => Ui.InWindow(w => {
+            SegmentedButton row = Row(w, "Bold", "Italic", "Underline");
+            row.MultiSelect = true;
+            Segment(row, 2).IsChecked = true;
+            Ui.Settle(w);
+            SegmentedItem longest = Segment(row, 2);
+            longest.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
+            Assert.True(longest.ActualWidth >= longest.DesiredSize.Width - 0.5, $"{longest.ActualWidth} < {longest.DesiredSize.Width}");
+        });
+
+        [Fact]
         public void MultiSelectKeepsThemAll() => Ui.InWindow(w => {
             SegmentedButton row = Row(w, "Day", "Week", "Month");
             row.MultiSelect = true;
@@ -122,6 +133,32 @@ namespace Material3.Wpf.Tests {
 
             Assert.Equal(w.FindResource("OnSecondaryContainer"), Segment(row, 0).Foreground);
             Assert.Equal(w.FindResource("OnSurface"), Segment(row, 1).Foreground);
+        });
+
+        [Fact]
+        public void OnlyTheSelectedSegmentShowsTheCheck() => Ui.InWindow(w => {
+            SegmentedButton row = Row(w, "Day", "Week");
+            Segment(row, 1).IsChecked = true;
+            Ui.Settle(w);
+
+            System.Windows.Visibility Check(int i) => ((PathIcon)Segment(row, i).Template.FindName("check", Segment(row, i))).Visibility;
+            Assert.Equal(System.Windows.Visibility.Collapsed, Check(0));
+            Assert.Equal(System.Windows.Visibility.Visible, Check(1));
+        });
+
+        [Fact]
+        public void SegmentsShareTheWidthEquallyAndSelectingDoesNotReflow() => Ui.InWindow(w => {
+            SegmentedButton row = Row(w, "Day", "Week", "Month");
+            row.Width = 300;
+            Ui.Settle(w);
+            Assert.All(new[] { 0, 1, 2 }, i => Assert.Equal((300 - 2) / 3.0, Segment(row, i).ActualWidth, 1));
+
+            row.ClearValue(System.Windows.FrameworkElement.WidthProperty);
+            Ui.Settle(w);
+            double before = row.ActualWidth;
+            Segment(row, 2).IsChecked = true;
+            Ui.Settle(w);
+            Assert.Equal(before, row.ActualWidth, 1);
         });
 
         private static SegmentedButton Row(System.Windows.Window w, params string[] labels) {

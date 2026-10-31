@@ -28,18 +28,20 @@ namespace Material3.Wpf.Tests {
 
         [Fact]
         public void HsvRoundTripsEveryChannel() {
-            for (int r = 0; r < 256; r += 15)
-            for (int g = 0; g < 256; g += 15)
-            for (int b = 0; b < 256; b += 15) {
-                Color c = Color.FromArgb(200, (byte)r, (byte)g, (byte)b);
-                (double h, double s, double v) = ColorField.ToHsv(c);
-                Assert.Equal(c, ColorField.FromHsv(h, s, v, 200));
+            for (int r = 0; r < 256; r += 15) {
+                for (int g = 0; g < 256; g += 15) {
+                    for (int b = 0; b < 256; b += 15) {
+                        var c = Color.FromArgb(200, (byte)r, (byte)g, (byte)b);
+                        (double h, double s, double v) = ColorField.ToHsv(c);
+                        Assert.Equal(c, ColorField.FromHsv(h, s, v, 200));
+                    }
+                }
             }
         }
 
         [Fact]
         public void HexShowsAlphaOnlyWhenAsked() {
-            Color c = Color.FromArgb(0x40, 0x12, 0xAB, 0xEF);
+            var c = Color.FromArgb(0x40, 0x12, 0xAB, 0xEF);
             Assert.Equal("#4012ABEF", ColorField.ToHex(c, withAlpha: true));
             Assert.Equal("#12ABEF", ColorField.ToHex(c, withAlpha: false));
         }
@@ -59,7 +61,7 @@ namespace Material3.Wpf.Tests {
         [Fact]
         public void TheHexBoxCommitsOnEnterAndRefusesNonsense() => Ui.InWindow(w => {
             ColorField field = Field(w, Colors.Black);
-            var hex = Part<TextBox>(field, "PART_Hex");
+            TextBox hex = Part<TextBox>(field, "PART_Hex");
 
             hex.Text = "#3366CC";
             Enter(hex);
@@ -75,7 +77,7 @@ namespace Material3.Wpf.Tests {
         public void WithoutTheAlphaRailAPastedAlphaIsIgnored() => Ui.InWindow(w => {
             ColorField field = Field(w, Colors.Black);
             field.ShowAlpha = false;
-            var hex = Part<TextBox>(field, "PART_Hex");
+            TextBox hex = Part<TextBox>(field, "PART_Hex");
 
             hex.Text = "#203366CC";
             Enter(hex);

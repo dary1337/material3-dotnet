@@ -34,8 +34,12 @@ namespace Material3.Wpf.Tests {
             IntPtr.Size == 8 ? GetWindowLongPtr64(hwnd, GwlExStyle).ToInt64() : GetWindowLong32(hwnd, GwlExStyle);
 
         private static void SetExStyle(IntPtr hwnd, long style) {
-            if (IntPtr.Size == 8) SetWindowLongPtr64(hwnd, GwlExStyle, (IntPtr)style);
-            else SetWindowLong32(hwnd, GwlExStyle, (int)style);
+            if (IntPtr.Size == 8) {
+                SetWindowLongPtr64(hwnd, GwlExStyle, (IntPtr)style);
+            }
+            else {
+                SetWindowLong32(hwnd, GwlExStyle, (int)style);
+            }
         }
 
         [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
@@ -62,14 +66,21 @@ namespace Material3.Wpf.Tests {
                 try { body(); }
                 catch (Exception e) { err = e; }
                 finally {
-                    if (moved) SetThreadDesktop(previous);
-                    if (isolated != IntPtr.Zero) CloseDesktop(isolated);
+                    if (moved) {
+                        SetThreadDesktop(previous);
+                    }
+
+                    if (isolated != IntPtr.Zero) {
+                        CloseDesktop(isolated);
+                    }
                 }
             });
             t.SetApartmentState(ApartmentState.STA);
             t.Start();
             t.Join();
-            if (err != null) ExceptionDispatchInfo.Capture(err).Throw();
+            if (err != null) {
+                ExceptionDispatchInfo.Capture(err).Throw();
+            }
         }
 
         internal static void InWindow(Action<Window> body, bool transparent = false, bool withControls = true) =>
@@ -77,8 +88,13 @@ namespace Material3.Wpf.Tests {
                 Window? w = null;
                 try {
                     w = new Window {
-                        Width = 500, Height = 400, Left = -5000, Top = -5000,
-                        WindowStyle = WindowStyle.None, ShowInTaskbar = false, ShowActivated = false,
+                        Width = 500,
+                        Height = 400,
+                        Left = -5000,
+                        Top = -5000,
+                        WindowStyle = WindowStyle.None,
+                        ShowInTaskbar = false,
+                        ShowActivated = false,
                         AllowsTransparency = transparent,
                     };
                     w.SourceInitialized += (s, e) => {
@@ -109,8 +125,13 @@ namespace Material3.Wpf.Tests {
             queue.Enqueue(root);
             while (queue.Count > 0) {
                 DependencyObject d = queue.Dequeue();
-                if (!ReferenceEquals(d, root) && d is T hit) yield return hit;
-                for (int i = 0; i < VisualTreeHelper.GetChildrenCount(d); i++) queue.Enqueue(VisualTreeHelper.GetChild(d, i));
+                if (!ReferenceEquals(d, root) && d is T hit) {
+                    yield return hit;
+                }
+
+                for (int i = 0; i < VisualTreeHelper.GetChildrenCount(d); i++) {
+                    queue.Enqueue(VisualTreeHelper.GetChild(d, i));
+                }
             }
         }
 
@@ -126,7 +147,10 @@ namespace Material3.Wpf.Tests {
         internal static void SpinUntil(Window w, Func<bool> done, string because, Action? each = null, int timeoutMs = 10000) {
             DateTime end = DateTime.UtcNow.AddMilliseconds(timeoutMs);
             while (!done()) {
-                if (DateTime.UtcNow > end) throw new TimeoutException(because);
+                if (DateTime.UtcNow > end) {
+                    throw new TimeoutException(because);
+                }
+
                 Pump(w);
                 each?.Invoke();
                 Thread.Sleep(5);

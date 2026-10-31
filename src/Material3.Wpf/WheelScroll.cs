@@ -26,7 +26,10 @@ namespace Material3.Wpf {
 
         /// <summary>Installs the class handler for every <see cref="ScrollViewer"/> in the app. Idempotent.</summary>
         public static void Register() {
-            if (_registered) return;
+            if (_registered) {
+                return;
+            }
+
             _registered = true;
             EventManager.RegisterClassHandler(typeof(ScrollViewer), UIElement.MouseWheelEvent, new MouseWheelEventHandler(OnWheel));
         }
@@ -35,9 +38,18 @@ namespace Material3.Wpf {
             delta / NotchDelta * (wheelLines < 0 ? viewportHeight : wheelLines * LinePx);
 
         private static void OnWheel(object sender, MouseWheelEventArgs e) {
-            if (e.Handled || !(sender is ScrollViewer sv)) return;
-            if (sv.CanContentScroll && !(ItemsHost(sv) is VirtualizingWrapPanel)) return;
-            if (sv.ScrollableHeight <= 0) return;
+            if (e.Handled || !(sender is ScrollViewer sv)) {
+                return;
+            }
+
+            if (sv.CanContentScroll && !(ItemsHost(sv) is VirtualizingWrapPanel)) {
+                return;
+            }
+
+            if (sv.ScrollableHeight <= 0) {
+                return;
+            }
+
             double step = Step(e.Delta, SystemParameters.WheelScrollLines, sv.ViewportHeight);
             double basis = Pending.TryGetValue(sv, out Request? last) && sv.VerticalOffset == last.From ? last.Target : sv.VerticalOffset;
             double target = Math.Max(0, Math.Min(sv.ScrollableHeight, basis - step));
@@ -52,9 +64,17 @@ namespace Material3.Wpf {
             queue.Enqueue(sv);
             while (queue.Count > 0) {
                 DependencyObject d = queue.Dequeue();
-                if (d is Panel p && p.IsItemsHost) return p;
-                if (d is ScrollViewer inner && !ReferenceEquals(inner, sv)) continue;
-                for (int i = 0; i < VisualTreeHelper.GetChildrenCount(d); i++) queue.Enqueue(VisualTreeHelper.GetChild(d, i));
+                if (d is Panel p && p.IsItemsHost) {
+                    return p;
+                }
+
+                if (d is ScrollViewer inner && !ReferenceEquals(inner, sv)) {
+                    continue;
+                }
+
+                for (int i = 0; i < VisualTreeHelper.GetChildrenCount(d); i++) {
+                    queue.Enqueue(VisualTreeHelper.GetChild(d, i));
+                }
             }
             return null;
         }

@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
 using System.Windows.Forms;
+using Material3.Core;
 using Material3.WinForms.Drawing;
 using Material3.WinForms.Theming;
 using Material3.WinForms.Tokens;
@@ -26,32 +27,26 @@ namespace Material3.WinForms.Controls {
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialChip : Control {
-        private const int ChipHeight = 32;
-        private const int PadX = 12;
-        private const int IconPx = 18;
-        private const int IconGap = 8;
         private const int RemoveBox = 18;
+
+        private int _chipHeight = ComponentSizes.AssistChipHeight;
+        private int _horizontalPadding = Spacing.Space3;
+        private int _iconSize = ComponentSizes.IconSmall;
+        private int _iconGap = Spacing.Space2;
+        private int _cornerRadius = Shape.Small;
 
         private MaterialChipKind _kind = MaterialChipKind.Assist;
         private string _leadingIcon = string.Empty;
         private Image? _leadingImage;
         private bool _selected;
         private bool _hovered;
+        private readonly StateLayerFade _layer;
         private bool _pressed;
         private bool _removeHovered;
         private bool _pill;
-        private AccentColors? _accent;
-
-        private readonly struct AccentColors {
-            public AccentColors(Color container, Color content, Color? outline) {
-                Container = container;
-                Content = content;
-                Outline = outline;
-            }
-            public Color Container { get; }
-            public Color Content { get; }
-            public Color? Outline { get; }
-        }
+        private Func<Color>? _accentContainer;
+        private Func<Color>? _accentContent;
+        private Func<Color>? _accentOutline;
 
         /// <summary>Fully-rounded (pill) corners instead of the default 8 dp Small shape.</summary>
         [Category("Material Design")]
@@ -62,6 +57,68 @@ namespace Material3.WinForms.Controls {
             set { _pill = value; Invalidate(); }
         }
 
+        /// <summary>Whether the chip sizes itself to its label and glyphs. Turn it off to give it a size of your own.</summary>
+        [Browsable(true)]
+        [EditorBrowsable(EditorBrowsableState.Always)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+        [DefaultValue(true)]
+        public override bool AutoSize {
+            get => base.AutoSize;
+            set { base.AutoSize = value; AutoSizeToContent(); }
+        }
+
+        /// <summary>The chip's height, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The chip's height, in 96-DPI px.")]
+        [DefaultValue(ComponentSizes.AssistChipHeight)]
+        public int ChipHeight {
+            get => _chipHeight;
+            set { _chipHeight = Math.Max(1, value); AutoSizeToContent(); Invalidate(); }
+        }
+
+        /// <summary>The space at each end of the chip, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The space at each end of the chip, in 96-DPI px.")]
+        [DefaultValue(Spacing.Space3)]
+        public int HorizontalPadding {
+            get => _horizontalPadding;
+            set { _horizontalPadding = Math.Max(0, value); AutoSizeToContent(); Invalidate(); }
+        }
+
+        /// <summary>The leading glyph's side, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The leading glyph's side, in 96-DPI px.")]
+        [DefaultValue(ComponentSizes.IconSmall)]
+        public int IconSize {
+            get => _iconSize;
+            set { _iconSize = Math.Max(0, value); AutoSizeToContent(); Invalidate(); }
+        }
+
+        /// <summary>The gap between the glyph and the label, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The gap between the glyph and the label, in 96-DPI px.")]
+        [DefaultValue(Spacing.Space2)]
+        public int IconGap {
+            get => _iconGap;
+            set { _iconGap = Math.Max(0, value); AutoSizeToContent(); Invalidate(); }
+        }
+
+        /// <summary>The corner radius when the chip is not a <see cref="Pill"/>, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The corner radius when the chip is not a Pill, in 96-DPI px.")]
+        [DefaultValue(Shape.Small)]
+        public int CornerRadius {
+            get => _cornerRadius;
+            set { _cornerRadius = Math.Max(0, value); Invalidate(); }
+        }
+
+        /// <inheritdoc />
+        protected override void OnFontChanged(EventArgs e) {
+            base.OnFontChanged(e);
+            AutoSizeToContent();
+            Invalidate();
+        }
+
         /// <summary>Raised by input chips when the trailing ✕ is clicked. The host removes the control.</summary>
         public event EventHandler? Removed;
 
@@ -70,6 +127,8 @@ namespace Material3.WinForms.Controls {
 
         /// <summary>Initializes a new instance of the <see cref="MaterialChip"/> class.</summary>
         public MaterialChip() {
+            FocusRing.Attach(this);
+            _layer = new StateLayerFade(this);
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
                     | ControlStyles.UserPaint
@@ -78,7 +137,9 @@ namespace Material3.WinForms.Controls {
                 true);
             BackColor = Color.Transparent;
             MaterialCursors.Apply(this, MaterialCursors.Pointer);
-            Height = ChipHeight;
+            Height = ComponentSizes.AssistChipHeight;
+            AutoSize = true;
+            TypeRole.Follow(this, () => TypeScale.LabelLarge);
             ThemeHook.Attach(this, Invalidate);
         }
 
@@ -86,13 +147,22 @@ namespace Material3.WinForms.Controls {
         /// (Warning, Error, Success, brand, …). Pass a transparent <paramref name="container"/>
         /// with an <paramref name="outline"/> for an outlined accent chip.</summary>
         public void SetAccent(Color container, Color content, Color? outline = null) {
-            _accent = new AccentColors(container, content, outline);
+            Color? fixedOutline = outline;
+            SetAccent(() => container, () => content, fixedOutline.HasValue ? () => fixedOutline.Value : (Func<Color>?)null);
+        }
+
+        /// <summary>Color-getter overload: pass theme roles (e.g. <c>() =&gt; MaterialColors.WarningContainer</c>)
+        /// so the chip re-reads them on every paint and follows theme changes.</summary>
+        public void SetAccent(Func<Color> container, Func<Color> content, Func<Color>? outline = null) {
+            _accentContainer = container ?? throw new ArgumentNullException(nameof(container));
+            _accentContent = content ?? throw new ArgumentNullException(nameof(content));
+            _accentOutline = outline;
             Invalidate();
         }
 
-        /// <summary>Returns to theme-driven colors after a <see cref="SetAccent"/> override.</summary>
+        /// <summary>Returns to theme-driven colors after a <see cref="SetAccent(Color, Color, Color?)"/> override.</summary>
         public void ClearAccent() {
-            _accent = null;
+            _accentContainer = _accentContent = _accentOutline = null;
             Invalidate();
         }
 
@@ -134,6 +204,7 @@ namespace Material3.WinForms.Controls {
                     return;
                 }
                 _selected = value;
+                MaterialAccessible.Notify(this, AccessibleEvents.StateChange);
                 SelectedChanged?.Invoke(this, EventArgs.Empty);
                 AutoSizeToContent();
                 Invalidate();
@@ -157,24 +228,26 @@ namespace Material3.WinForms.Controls {
         private bool ShowsLeading => ShowsCheck || _leadingImage != null || !string.IsNullOrEmpty(_leadingIcon);
         private bool ShowsRemove => _kind == MaterialChipKind.Input;
 
-        private ChipRenderer.Metrics BuildMetrics() => new ChipRenderer.Metrics {
-            Height = Dpi.Scale(this, ChipHeight),
-            PadX = Dpi.Scale(this, PadX),
-            IconPx = Dpi.Scale(this, IconPx),
-            IconGap = Dpi.Scale(this, IconGap),
+        internal ChipRenderer.Metrics BuildMetrics() => new ChipRenderer.Metrics {
+            Height = AutoSize || !IsHandleCreated ? Dpi.Scale(this, _chipHeight) : Math.Max(1, Height),
+            PadX = Dpi.Scale(this, _horizontalPadding),
+            IconPx = Dpi.Scale(this, _iconSize),
+            IconGap = Dpi.Scale(this, _iconGap),
             OutlineWidth = Dpi.Scale(this, 1f),
-            Font = TypeScale.LabelLarge,
+            CornerRadius = Math.Max(1, Dpi.Scale(this, _cornerRadius)),
+            Font = Font,
         };
 
         private void AutoSizeToContent() {
-            if (!IsHandleCreated) {
+            if (!IsHandleCreated || !AutoSize) {
                 return;
             }
-            using (Graphics g = CreateGraphics()) {
+            using (var measure = MeasureContext.For(this)) {
+                Graphics g = measure.Graphics;
                 ChipRenderer.Metrics metrics = BuildMetrics();
                 int width = ChipRenderer.Measure(g, Text, ShowsLeading, metrics);
                 if (ShowsRemove) {
-                    width += Dpi.Scale(this, RemoveBox) + Dpi.Scale(this, IconGap);
+                    width += Dpi.Scale(this, RemoveBox) + Dpi.Scale(this, _iconGap);
                 }
                 Width = width;
                 Height = metrics.Height;
@@ -189,7 +262,7 @@ namespace Material3.WinForms.Controls {
 
         private Rectangle RemoveRect {
             get {
-                int padX = Dpi.Scale(this, PadX);
+                int padX = Dpi.Scale(this, _horizontalPadding);
                 int removeBox = Dpi.Scale(this, RemoveBox);
                 return new Rectangle(
                     Width - padX - removeBox + Dpi.Scale(this, 2), (Height - removeBox) / 2, removeBox, removeBox);
@@ -251,6 +324,43 @@ namespace Material3.WinForms.Controls {
 
         /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
+            PaintContent(e);
+            if (Focused && ShowFocusCues) {
+                FocusRing.Paint(e.Graphics, this, ClientRectangle, Dpi.Scale(this, _cornerRadius));
+            }
+        }
+
+        /// <inheritdoc />
+        protected override AccessibleObject CreateAccessibilityInstance() =>
+            new MaterialAccessible(this, _kind == MaterialChipKind.Filter ? AccessibleRole.CheckButton : AccessibleRole.PushButton, () => _kind == MaterialChipKind.Filter && IsSelected ? AccessibleStates.Checked : AccessibleStates.None, () => Text, null, _kind == MaterialChipKind.Input ? TextKey.Remove : TextKey.Press, Activate);
+
+        /// <inheritdoc />
+        protected override void OnKeyDown(KeyEventArgs e) {
+            base.OnKeyDown(e);
+            if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space) {
+                Activate();
+                e.Handled = true;
+            }
+            else if (ShowsRemove && (e.KeyCode == Keys.Delete || e.KeyCode == Keys.Back)) {
+                Removed?.Invoke(this, EventArgs.Empty);
+                e.Handled = true;
+            }
+        }
+
+        // The keyboard and a screen reader press the chip the way a click on its body does.
+        private void Activate() {
+            if (_kind == MaterialChipKind.Filter) {
+                IsSelected = !IsSelected;
+            }
+            else if (_kind == MaterialChipKind.Input) {
+                Removed?.Invoke(this, EventArgs.Empty);
+            }
+            else {
+                OnClick(EventArgs.Empty);
+            }
+        }
+
+        private void PaintContent(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
@@ -258,32 +368,33 @@ namespace Material3.WinForms.Controls {
                 g.FillRectangle(bg, ClientRectangle);
             }
 
-            AccentColors ac = _accent.GetValueOrDefault();
-            bool accent = _accent.HasValue;
+            bool accent = _accentContainer != null;
+            Color accentContent = accent ? _accentContent!() : Color.Empty;
+            Color? accentOutline = _accentOutline?.Invoke();
             Color container =
-                accent && Enabled ? ac.Container
+                accent && Enabled ? _accentContainer!()
                 : ShowsCheck ? MaterialColors.SecondaryContainer
                 : Color.Transparent;
             Color content = !Enabled
                 ? MaterialColors.OnSurfaceMuted
-                : accent ? ac.Content
+                : accent ? accentContent
                 : ShowsCheck ? MaterialColors.OnSecondaryContainer : MaterialColors.OnSurfaceVariant;
             Color label = !Enabled
                 ? MaterialColors.OnSurfaceMuted
-                : accent ? ac.Content
+                : accent ? accentContent
                 : ShowsCheck ? MaterialColors.OnSecondaryContainer : MaterialColors.OnSurface;
 
             Color? outline = null;
-            if (container.A < 255 || (accent && Enabled && ac.Outline.HasValue)) {
+            if (container.A < 255 || (accent && Enabled && accentOutline.HasValue)) {
                 outline = !Enabled ? MaterialColors.OnSurfaceMuted
-                    : accent ? (ac.Outline ?? ac.Content)
+                    : accent ? (accentOutline ?? accentContent)
                     : MaterialColors.Outline;
             }
 
             Color? stateOverlay = null;
-            if (Enabled && (_hovered || _pressed)) {
-                double layer = _pressed ? StateLayers.Pressed : StateLayers.Hover;
-                Color baseColor = container.A > 0 ? container : ResolveParentColor();
+            double layer = _layer.Resolve(_hovered, _pressed, Enabled);
+            if (layer > 0) {
+                Color baseColor = container.A > 0 ? container : SurfaceBehind.Of(this);
                 stateOverlay = ArgbExtensions.Overlay(baseColor, label, layer);
             }
 
@@ -318,13 +429,12 @@ namespace Material3.WinForms.Controls {
             }
         }
 
-        private Color ResolveParentColor() {
-            for (Control? p = Parent; p != null; p = p.Parent) {
-                if (p.BackColor.A > 0) {
-                    return p.BackColor;
-                }
+        /// <inheritdoc />
+        protected override void Dispose(bool disposing) {
+            if (disposing) {
+                _layer.Dispose();
             }
-            return MaterialColors.Surface;
+            base.Dispose(disposing);
         }
     }
 }

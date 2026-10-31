@@ -13,7 +13,10 @@ namespace Material3.Wpf {
 
         /// <summary>Whether to let an open or close through: an open that lands right after a close is the same click that closed the popup.</summary>
         public bool Allow(bool opening, bool currentlyOpen) {
-            if (opening && !currentlyOpen && _closed && (uint)(Environment.TickCount - _closedTick) < 250) return false;
+            if (opening && !currentlyOpen && _closed && (uint)(Environment.TickCount - _closedTick) < 250) {
+                return false;
+            }
+
             if (!opening && currentlyOpen) { _closed = true; _closedTick = Environment.TickCount; }
             return true;
         }
@@ -26,9 +29,14 @@ namespace Material3.Wpf {
 
         /// <summary>Opens <paramref name="popup"/>, unless the click that would open it just closed it.</summary>
         public static void Open(Popup popup) {
-            if (popup == null || popup.IsOpen) return;
+            if (popup == null || popup.IsOpen) {
+                return;
+            }
+
             ToggleGuard g = Guards.GetValue(popup, Hook);
-            if (g.Allow(true, false)) popup.IsOpen = true;
+            if (g.Allow(true, false)) {
+                popup.IsOpen = true;
+            }
         }
 
         private static ToggleGuard Hook(Popup popup) {

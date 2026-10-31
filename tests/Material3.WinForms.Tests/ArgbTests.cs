@@ -12,13 +12,13 @@ namespace Material3.WinForms.Tests {
         [InlineData(256, 255)]
         [InlineData(300, 255)]
         public void FromArgb_ClampsEveryChannelTo0_255(int input, int expected) {
-            Argb rgb = Argb.FromArgb(input, input, input);
+            var rgb = Argb.FromArgb(input, input, input);
             Assert.Equal((byte)255, rgb.A);
             Assert.Equal((byte)expected, rgb.R);
             Assert.Equal((byte)expected, rgb.G);
             Assert.Equal((byte)expected, rgb.B);
 
-            Argb argb = Argb.FromArgb(input, input, input, input);
+            var argb = Argb.FromArgb(input, input, input, input);
             Assert.Equal((byte)expected, argb.A);
             Assert.Equal((byte)expected, argb.R);
             Assert.Equal((byte)expected, argb.G);
@@ -27,7 +27,7 @@ namespace Material3.WinForms.Tests {
 
         [Fact]
         public void FromArgb_InRangeChannels_PackToInt() {
-            Argb c = Argb.FromArgb(0x12, 0x34, 0x56, 0x78);
+            var c = Argb.FromArgb(0x12, 0x34, 0x56, 0x78);
             Assert.Equal(0x12345678, c.ToInt());
         }
     }

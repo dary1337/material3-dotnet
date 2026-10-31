@@ -15,8 +15,73 @@ namespace Material3.WinForms.Controls {
         private readonly List<Entry> _entries = new List<Entry>();
         private MenuPopup? _popup;
 
+        internal IReadOnlyList<Entry> Entries => _entries;
+
+        private int _itemHeight = ComponentSizes.ControlHeight;
+        private int _separatorHeight = 9;
+        private int _horizontalPadding = 12;
+        private int _iconSize = 18;
+        private int _iconGap = 12;
+        private int _minWidth = 132;
+        private int _maxWidth = 360;
+        private int _cornerRadius = Shape.Medium;
+
         /// <summary>Raised with the item index after the popup closes from a click.</summary>
         public event Action<int>? ItemClicked;
+
+        /// <summary>A row's height, in 96-DPI px. Applies from the next <see cref="Show(Point)"/>.</summary>
+        public int ItemHeight {
+            get => _itemHeight;
+            set => _itemHeight = Math.Max(1, value);
+        }
+
+        /// <summary>A divider row's height, in 96-DPI px. Applies from the next <see cref="Show(Point)"/>.</summary>
+        public int SeparatorHeight {
+            get => _separatorHeight;
+            set => _separatorHeight = Math.Max(1, value);
+        }
+
+        /// <summary>The space between the popup's edges and a row's content, in 96-DPI px. Applies from the next <see cref="Show(Point)"/>.</summary>
+        public int HorizontalPadding {
+            get => _horizontalPadding;
+            set => _horizontalPadding = Math.Max(0, value);
+        }
+
+        /// <summary>A row glyph's side, in 96-DPI px. Applies from the next <see cref="Show(Point)"/>.</summary>
+        public int IconSize {
+            get => _iconSize;
+            set => _iconSize = Math.Max(1, value);
+        }
+
+        /// <summary>The gap between a row glyph and its text, in 96-DPI px. Applies from the next <see cref="Show(Point)"/>.</summary>
+        public int IconGap {
+            get => _iconGap;
+            set => _iconGap = Math.Max(0, value);
+        }
+
+        /// <summary>The popup's minimum width, in 96-DPI px. Applies from the next <see cref="Show(Point)"/>.</summary>
+        public int MinWidth {
+            get => _minWidth;
+            set => _minWidth = Math.Max(0, value);
+        }
+
+        /// <summary>The popup's maximum width, in 96-DPI px. Applies from the next <see cref="Show(Point)"/>.</summary>
+        public int MaxWidth {
+            get => _maxWidth;
+            set => _maxWidth = Math.Max(1, value);
+        }
+
+        /// <summary>The popup's corner radius, in 96-DPI px. Applies from the next <see cref="Show(Point)"/>.</summary>
+        public int CornerRadius {
+            get => _cornerRadius;
+            set => _cornerRadius = Math.Max(0, value);
+        }
+
+        /// <summary>A row's text font. Null follows <see cref="TypeScale.BodyMedium"/>.</summary>
+        public Font? Font { get; set; }
+
+        /// <summary>The shortcut hint's font. Null follows <see cref="TypeScale.BodySmall"/>.</summary>
+        public Font? ShortcutFont { get; set; }
 
         /// <summary>Appends a row with an optional glyph, action, shortcut hint and enabled state.</summary>
         public void AddItem(string text, string? glyph = null, Action? onClick = null, string? shortcut = null, bool enabled = true) {
@@ -29,6 +94,22 @@ namespace Material3.WinForms.Controls {
             });
         }
 
+        internal void AddChoice(string text, bool selected, Action onClick) {
+            _entries.Add(new Entry { Text = text ?? string.Empty, OnClick = onClick, Selected = selected });
+        }
+
+        internal bool IsOpen => _popup != null;
+
+        internal void MarkSelected(int index) {
+            for (int i = 0; i < _entries.Count; i++) {
+                _entries[i].Selected = i == index;
+            }
+
+            _popup?.Invalidate();
+        }
+
+        internal event Action? Closed;
+
         /// <summary>Appends a divider.</summary>
         public void AddSeparator() {
             _entries.Add(new Entry { IsSeparator = true });
@@ -39,12 +120,17 @@ namespace Material3.WinForms.Controls {
             _entries.Clear();
         }
 
-        /// <summary>Opens the menu below the anchor, left edges aligned.</summary>
+        /// <summary>Opens the menu centred below the anchor and at least as wide as it; above it when below would clip.</summary>
         public void Show(Control anchor) {
             if (anchor == null || !anchor.IsHandleCreated) {
                 return;
             }
-            Show(anchor.PointToScreen(new Point(0, anchor.Height + 2)));
+            Close();
+            if (_entries.Count == 0) {
+                return;
+            }
+            _popup = Track(new MenuPopup(this, OnPopupClicked));
+            _popup.ShowBelow(anchor.RectangleToScreen(anchor.ClientRectangle), anchor.FindForm());
         }
 
         /// <summary>Opens the menu at a screen location (e.g. cursor position for context menus).</summary>
@@ -53,14 +139,25 @@ namespace Material3.WinForms.Controls {
             if (_entries.Count == 0) {
                 return;
             }
-            _popup = new MenuPopup(_entries, OnPopupClicked);
-            _popup.ShowAt(screenLocation);
+            _popup = Track(new MenuPopup(this, OnPopupClicked));
+            _popup.ShowAt(screenLocation, null);
         }
 
         /// <summary>Closes the popup if open.</summary>
         public void Close() {
             _popup?.CloseAndDispose();
             _popup = null;
+        }
+
+        private MenuPopup Track(MenuPopup popup) {
+            popup.FormClosed += (s, e) => {
+                if (ReferenceEquals(_popup, popup)) {
+                    _popup = null;
+                }
+
+                Closed?.Invoke();
+            };
+            return popup;
         }
 
         private void OnPopupClicked(int index) {
@@ -82,65 +179,96 @@ namespace Material3.WinForms.Controls {
             public Action? OnClick;
             public bool Enabled = true;
             public bool IsSeparator;
+            public bool Selected;
         }
 
-        private sealed class MenuPopup : Form, IMessageFilter {
-            private const int ItemHeight = 40;
-            private const int SeparatorHeight = 9;
-            private const int PadX = 12;
-            private const int IconPx = 18;
-            private const int IconGap = 12;
-            private const int MinWidth = 132;
-            private const int MaxWidth = 360;
-
+        internal sealed class MenuPopup : PopupWindow, IMessageFilter {
+            private const int RowInset = 4;
+            private const int AnchorGap = 2;
             private readonly List<Entry> _entries;
+            private readonly int _itemHeight;
+            private readonly int _separatorHeight;
+            private readonly int _horizontalPadding;
+            private readonly int _iconSize;
+            private readonly int _iconGap;
+            private readonly int _minWidth;
+            private readonly int _maxWidth;
+            private readonly int _cornerRadius;
+            private readonly Font _textFont;
+            private readonly Font _hintFont;
             private readonly Action<int> _onClicked;
             private int _hotIndex = -1;
+            private readonly ItemHoverFade _hover;
 
-            public MenuPopup(List<Entry> entries, Action<int> onClicked) {
-                _entries = entries;
+            public MenuPopup(MaterialMenu menu, Action<int> onClicked) {
+                _entries = menu._entries;
+                _itemHeight = menu.ItemHeight;
+                _separatorHeight = menu.SeparatorHeight;
+                _horizontalPadding = menu.HorizontalPadding;
+                _iconSize = menu.IconSize;
+                _iconGap = menu.IconGap;
+                _minWidth = menu.MinWidth;
+                _maxWidth = Math.Max(menu.MaxWidth, menu.MinWidth);
+                _cornerRadius = menu.CornerRadius;
+                _textFont = menu.Font ?? TypeScale.BodyMedium;
+                _hintFont = menu.ShortcutFont ?? TypeScale.BodySmall;
                 _onClicked = onClicked;
-
-                FormBorderStyle = FormBorderStyle.None;
-                ShowInTaskbar = false;
-                StartPosition = FormStartPosition.Manual;
-                TopMost = true;
-                DoubleBuffered = true;
+                _hover = new ItemHoverFade(this);
+                _hotIndex = _entries.FindIndex(entry => entry.Selected);
                 BackColor = MaterialColors.SurfaceContainer;
-                SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer, true);
             }
 
-            protected override bool ShowWithoutActivation => true;
+            private int RowHeight(Entry entry) => Dpi.Scale(this, entry.IsSeparator ? _separatorHeight : _itemHeight);
 
             protected override CreateParams CreateParams {
                 get {
                     CreateParams cp = base.CreateParams;
-                    cp.ClassStyle |= 0x00020000;
-                    const int WS_EX_TOOLWINDOW = 0x80;
-                    const int WS_EX_NOACTIVATE = 0x08000000;
-                    cp.ExStyle |= WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE;
+                    const int CS_DROPSHADOW = 0x00020000;
+                    cp.ClassStyle |= CS_DROPSHADOW;
                     return cp;
                 }
             }
 
-            public void ShowAt(Point screenLocation) {
-                MeasureAndSize();
+            public void ShowAt(Point screenLocation, Form? owner) {
+                MeasureAndSize(0);
 
                 Rectangle screen = Screen.FromPoint(screenLocation).WorkingArea;
                 int x = Math.Max(screen.Left, Math.Min(screenLocation.X, screen.Right - Width));
-                int y = screenLocation.Y + Height > screen.Bottom
-                    ? Math.Max(screen.Top, screenLocation.Y - Height - Dpi.Scale(this, 4))
-                    : screenLocation.Y;
-                Location = new Point(x, y);
+                bool below = screenLocation.Y + Height <= screen.Bottom;
+                int y = below ? screenLocation.Y : Math.Max(screen.Top, screenLocation.Y - Height - Dpi.Scale(this, Spacing.Space1));
+                Open(new Point(x, y), below, owner);
+            }
 
+            public void ShowBelow(Rectangle anchor, Form? owner) {
+                MeasureAndSize(anchor.Width);
+                Point location = PlaceBelow(anchor, Size, Screen.FromRectangle(anchor).WorkingArea, Dpi.Scale(this, AnchorGap));
+                Open(location, location.Y >= anchor.Bottom, owner);
+            }
+
+            internal static Point PlaceBelow(Rectangle anchor, Size popup, Rectangle screen, int gap) {
+                int x = anchor.Left + (anchor.Width - popup.Width) / 2;
+                x = Math.Max(screen.Left, Math.Min(x, screen.Right - popup.Width));
+                int y = anchor.Bottom + gap;
+                if (y + popup.Height > screen.Bottom) {
+                    y = Math.Max(screen.Top, anchor.Top - gap - popup.Height);
+                }
+                return new Point(x, y);
+            }
+
+            private void Open(Point location, bool below, Form? owner) {
                 using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(
-                    new Rectangle(0, 0, Width, Height), Dpi.Scale(this, Shape.ExtraSmall))) {
+                    new Rectangle(0, 0, Width, Height), Dpi.Scale(this, _cornerRadius))) {
                     Region?.Dispose();
                     Region = new Region(path);
                 }
 
                 Application.AddMessageFilter(this);
-                Show();
+                ShowAnimated(location, below, owner);
+            }
+
+            protected override void OnFormClosed(FormClosedEventArgs e) {
+                Application.RemoveMessageFilter(this);
+                base.OnFormClosed(e);
             }
 
             public void CloseAndDispose() {
@@ -151,37 +279,34 @@ namespace Material3.WinForms.Controls {
                 }
             }
 
-            private void MeasureAndSize() {
-                int height = Dpi.Scale(this, 8);
-                int width = Dpi.Scale(this, MinWidth);
-                using (var bitmap = new Bitmap(1, 1)) {
-                    bitmap.SetResolution(DeviceDpi, DeviceDpi);
-                    using (Graphics g = Graphics.FromImage(bitmap)) {
+            private void MeasureAndSize(int anchorWidth) {
+                int height = Dpi.Scale(this, RowInset * 2);
+                int width = Math.Max(anchorWidth, Dpi.Scale(this, _minWidth));
+                using (var measure = MeasureContext.For(this)) {
+                    Graphics g = measure.Graphics;
                     foreach (Entry entry in _entries) {
+                        height += RowHeight(entry);
                         if (entry.IsSeparator) {
-                            height += Dpi.Scale(this, SeparatorHeight);
                             continue;
                         }
-                        height += Dpi.Scale(this, ItemHeight);
-                        float w = Dpi.Scale(this, PadX) * 2
-                            + g.MeasureString(entry.Text, TypeScale.BodyMedium, int.MaxValue, StringFormat.GenericTypographic).Width;
+                        float w = Dpi.Scale(this, _horizontalPadding) * 2
+                            + g.MeasureString(entry.Text, _textFont, int.MaxValue, StringFormat.GenericTypographic).Width;
                         if (!string.IsNullOrEmpty(entry.Glyph)) {
-                            w += Dpi.Scale(this, IconPx) + Dpi.Scale(this, IconGap);
+                            w += Dpi.Scale(this, _iconSize) + Dpi.Scale(this, _iconGap);
                         }
                         if (!string.IsNullOrEmpty(entry.Shortcut)) {
-                            w += Dpi.Scale(this, 24) + g.MeasureString(entry.Shortcut, TypeScale.BodySmall, int.MaxValue, StringFormat.GenericTypographic).Width;
+                            w += Dpi.Scale(this, Spacing.Space6) + g.MeasureString(entry.Shortcut, _hintFont, int.MaxValue, StringFormat.GenericTypographic).Width;
                         }
                         width = Math.Max(width, (int)Math.Ceiling(w));
                     }
-                    }
                 }
-                Size = new Size(Math.Min(width, Dpi.Scale(this, MaxWidth)), height);
+                Size = new Size(Math.Min(width, Math.Max(anchorWidth, Dpi.Scale(this, _maxWidth))), height);
             }
 
             private Rectangle ItemRect(int index) {
-                int y = Dpi.Scale(this, 4);
+                int y = Dpi.Scale(this, RowInset);
                 for (int i = 0; i < _entries.Count; i++) {
-                    int h = _entries[i].IsSeparator ? Dpi.Scale(this, SeparatorHeight) : Dpi.Scale(this, ItemHeight);
+                    int h = RowHeight(_entries[i]);
                     if (i == index) {
                         return new Rectangle(0, y, Width, h);
                     }
@@ -191,9 +316,9 @@ namespace Material3.WinForms.Controls {
             }
 
             private int HitTest(Point client) {
-                int y = Dpi.Scale(this, 4);
+                int y = Dpi.Scale(this, RowInset);
                 for (int i = 0; i < _entries.Count; i++) {
-                    int h = _entries[i].IsSeparator ? Dpi.Scale(this, SeparatorHeight) : Dpi.Scale(this, ItemHeight);
+                    int h = RowHeight(_entries[i]);
                     if (client.Y >= y && client.Y < y + h && !_entries[i].IsSeparator) {
                         return i;
                     }
@@ -202,10 +327,58 @@ namespace Material3.WinForms.Controls {
                 return -1;
             }
 
+            // The popup never takes focus, so its keys arrive at the window under it and are read here on the way. A text
+            // box under it keeps its Space, and Enter picks only a highlighted row, so a search field still submits.
+            internal bool OnKey(Keys key, bool typing = false) {
+                switch (key) {
+                    case Keys.Up:
+                    case Keys.Down:
+                        MoveHot(key == Keys.Down ? 1 : -1);
+                        return true;
+                    case Keys.Space when typing:
+                        return false;
+                    case Keys.Enter when _hotIndex < 0:
+                        return false;
+                    case Keys.Enter:
+                    case Keys.Space:
+                        if (_hotIndex >= 0 && _entries[_hotIndex].Enabled) {
+                            int chosen = _hotIndex;
+                            CloseAndDispose();
+                            _onClicked(chosen);
+                        }
+                        return true;
+                    case Keys.Escape:
+                        CloseAndDispose();
+                        return true;
+                    case Keys.Tab:
+                        CloseAndDispose();
+                        return false;
+                    default:
+                        return false;
+                }
+            }
+
+            private void MoveHot(int step) {
+                for (int i = 1; i <= _entries.Count; i++) {
+                    int candidate = ((_hotIndex < 0 ? (step > 0 ? -1 : 0) : _hotIndex) + step * i + _entries.Count * 2) % _entries.Count;
+                    if (!_entries[candidate].IsSeparator && _entries[candidate].Enabled) {
+                        _hotIndex = candidate;
+                        _hover.SetHot(candidate);
+                        Invalidate();
+                        return;
+                    }
+                }
+            }
+
             public bool PreFilterMessage(ref Message m) {
+                const int WM_KEYDOWN = 0x0100;
                 const int WM_LBUTTONDOWN = 0x0201;
                 const int WM_RBUTTONDOWN = 0x0204;
                 const int WM_NCLBUTTONDOWN = 0x00A1;
+                if (m.Msg == WM_KEYDOWN && Visible && !IsDisposed) {
+                    return OnKey((Keys)(int)m.WParam & Keys.KeyCode, Control.FromChildHandle(m.HWnd) is TextBoxBase);
+                }
+
                 if (m.Msg != WM_LBUTTONDOWN && m.Msg != WM_RBUTTONDOWN && m.Msg != WM_NCLBUTTONDOWN) {
                     return false;
                 }
@@ -220,7 +393,8 @@ namespace Material3.WinForms.Controls {
                 int hit = HitTest(e.Location);
                 if (hit != _hotIndex) {
                     _hotIndex = hit;
-                    Invalidate();
+                    _hover.SetHot(hit);
+                    Cursor = hit >= 0 && _entries[hit].Enabled && !_entries[hit].IsSeparator ? MaterialCursors.Pointer : MaterialCursors.Arrow;
                 }
             }
 
@@ -228,7 +402,7 @@ namespace Material3.WinForms.Controls {
                 base.OnMouseLeave(e);
                 if (_hotIndex != -1) {
                     _hotIndex = -1;
-                    Invalidate();
+                    _hover.SetHot(-1);
                 }
             }
 
@@ -259,27 +433,39 @@ namespace Material3.WinForms.Controls {
                         continue;
                     }
 
-                    Color content = entry.Enabled ? MaterialColors.OnSurface : MaterialColors.OnSurfaceMuted;
-                    if (i == _hotIndex && entry.Enabled) {
-                        using (var brush = new SolidBrush(ArgbExtensions.Overlay(
-                            MaterialColors.SurfaceContainer, MaterialColors.OnSurface, StateLayers.Hover))) {
-                            g.FillRectangle(brush, rect);
+                    Color content = !entry.Enabled ? MaterialColors.OnSurfaceMuted
+                        : entry.Selected ? MaterialColors.OnSecondaryContainer : MaterialColors.OnSurface;
+                    // The hover layer tints the row's own fill, so a selected row darkens instead of losing its colour.
+                    double hover = entry.Enabled ? _hover.Opacity(i) : 0;
+                    if (entry.Selected || hover > 0) {
+                        Color fill = entry.Selected ? MaterialColors.SecondaryContainer : MaterialColors.SurfaceContainer;
+                        if (hover > 0) {
+                            fill = ArgbExtensions.Overlay(fill, entry.Selected ? MaterialColors.OnSecondaryContainer : MaterialColors.OnSurface, hover);
+                        }
+                        // Concentric with the card: a row inset by 4 rounds by the card's radius less those 4. A card no
+                        // rounder than that inset (a select's, which keeps its field's shape) runs its rows edge to edge.
+                        int cardRadius = Dpi.Scale(this, _cornerRadius);
+                        int inset = cardRadius > Dpi.Scale(this, RowInset) ? Dpi.Scale(this, RowInset) : 0;
+                        int rowRadius = inset > 0 ? cardRadius - inset : 0;
+                        using (var brush = new SolidBrush(fill))
+                        using (GraphicsPath row = RoundedControlRenderer.GetFigurePath(Rectangle.Inflate(rect, -inset, 0), rowRadius)) {
+                            g.FillPath(brush, row);
                         }
                     }
 
-                    int padX = Dpi.Scale(this, PadX);
-                    int iconPx = Dpi.Scale(this, IconPx);
+                    int padX = Dpi.Scale(this, _horizontalPadding);
+                    int iconPx = Dpi.Scale(this, _iconSize);
                     float x = padX;
                     if (!string.IsNullOrEmpty(entry.Glyph)) {
                         Bitmap icon = MaterialIconRenderer.Render(entry.Glyph, iconPx,
                             entry.Enabled ? MaterialColors.OnSurfaceVariant : MaterialColors.OnSurfaceMuted);
                         g.DrawImageUnscaled(icon, (int)x, rect.Y + (rect.Height - iconPx) / 2);
-                        x += iconPx + Dpi.Scale(this, IconGap);
+                        x += iconPx + Dpi.Scale(this, _iconGap);
                     }
 
                     using (var brush = new SolidBrush(content))
                     using (var fmt = new StringFormat(StringFormat.GenericTypographic) { LineAlignment = StringAlignment.Center }) {
-                        g.DrawString(entry.Text, TypeScale.BodyMedium, brush,
+                        g.DrawString(entry.Text, _textFont, brush,
                             new RectangleF(x, rect.Y, Width - x - padX, rect.Height), fmt);
                     }
 
@@ -289,7 +475,7 @@ namespace Material3.WinForms.Controls {
                             LineAlignment = StringAlignment.Center,
                             Alignment = StringAlignment.Far,
                         }) {
-                            g.DrawString(entry.Shortcut, TypeScale.BodySmall, brush,
+                            g.DrawString(entry.Shortcut, _hintFont, brush,
                                 new RectangleF(0, rect.Y, Width - padX, rect.Height), fmt);
                         }
                     }
@@ -299,6 +485,7 @@ namespace Material3.WinForms.Controls {
             protected override void Dispose(bool disposing) {
                 if (disposing) {
                     Application.RemoveMessageFilter(this);
+                    _hover.Dispose();
                 }
                 base.Dispose(disposing);
             }

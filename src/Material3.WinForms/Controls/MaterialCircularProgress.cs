@@ -11,10 +11,11 @@ namespace Material3.WinForms.Controls {
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialCircularProgress : Control {
-        private const float StrokeWidth = 4f;
-        private const int FrameMs = 16;
+        private int _strokeWidth = 4;
+        private int _diameter = DefaultDiameter;
         private const float RotationPerFrame = 4.4f;
-        private const int DefaultDiameter = 48;
+        private const int DefaultDiameter = 40;
+        private const float IndicatorTrackGap = 4f;
 
         private bool _indeterminate;
         private int _value;
@@ -34,7 +35,8 @@ namespace Material3.WinForms.Controls {
                 true);
             BackColor = Color.Transparent;
             Size = new Size(DefaultDiameter, DefaultDiameter);
-            _timer = new Timer { Interval = FrameMs };
+            AutoSize = true;
+            _timer = new Timer { Interval = Motion.FrameIntervalMs };
             _timer.Tick += OnTick;
             ThemeHook.Attach(this, Invalidate);
         }
@@ -67,7 +69,8 @@ namespace Material3.WinForms.Controls {
                     return;
                 }
                 _value = normalized;
-                if (DesignMode || !Motion.AnimationsEnabled) {
+                MaterialAccessible.Notify(this, AccessibleEvents.ValueChange);
+                if (DesignMode || !Motion.IsAnimating) {
                     _displayValue = _value;
                     Invalidate();
                 }
@@ -76,7 +79,7 @@ namespace Material3.WinForms.Controls {
         }
 
         private void SyncTimer() {
-            if (DesignMode || !Motion.AnimationsEnabled) {
+            if (DesignMode || !Motion.IsAnimating) {
                 return;
             }
             bool needsFrames = _indeterminate || Math.Abs(_displayValue - _value) > 0.1f;
@@ -99,8 +102,43 @@ namespace Material3.WinForms.Controls {
         }
 
         private void ApplyIntrinsicSize() {
-            Size = new Size(Dpi.Scale(this, DefaultDiameter), Dpi.Scale(this, DefaultDiameter));
+            if (AutoSize) {
+                Size = GetPreferredSize(Size.Empty);
+            }
         }
+
+        /// <inheritdoc />
+        public override Size GetPreferredSize(Size proposedSize) => new Size(Dpi.Scale(this, _diameter), Dpi.Scale(this, _diameter));
+
+        /// <summary>Whether the ring sizes itself to <see cref="Diameter"/>. Turn it off to give it a size of your own.</summary>
+        [Browsable(true)]
+        [EditorBrowsable(EditorBrowsableState.Always)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+        [DefaultValue(true)]
+        public override bool AutoSize {
+            get => base.AutoSize;
+            set { base.AutoSize = value; ApplyIntrinsicSize(); }
+        }
+
+        /// <summary>The side AutoSize gives the ring, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The side AutoSize gives the ring, in 96-DPI px.")]
+        [DefaultValue(DefaultDiameter)]
+        public int Diameter {
+            get => _diameter;
+            set { _diameter = Math.Max(1, value); ApplyIntrinsicSize(); Invalidate(); }
+        }
+
+        /// <summary>The ring's stroke, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The ring's stroke, in 96-DPI px.")]
+        [DefaultValue(4)]
+        public int StrokeWidth {
+            get => _strokeWidth;
+            set { _strokeWidth = Math.Max(1, value); Invalidate(); }
+        }
+
+
 
         /// <inheritdoc />
         protected override void OnHandleDestroyed(EventArgs e) {
@@ -109,7 +147,7 @@ namespace Material3.WinForms.Controls {
         }
 
         private void OnTick(object? sender, EventArgs e) {
-            if (!Motion.AnimationsEnabled) {
+            if (!Motion.IsAnimating) {
                 _displayValue = _value;
                 _timer.Stop();
                 Invalidate();
@@ -136,6 +174,10 @@ namespace Material3.WinForms.Controls {
         }
 
         /// <inheritdoc />
+        protected override AccessibleObject CreateAccessibilityInstance() =>
+            new MaterialAccessible(this, AccessibleRole.ProgressBar, value: () => IsIndeterminate ? null : Value.ToString(System.Globalization.CultureInfo.CurrentCulture) + "%");
+
+        /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -143,7 +185,7 @@ namespace Material3.WinForms.Controls {
                 g.FillRectangle(bg, ClientRectangle);
             }
 
-            float stroke = Dpi.Scale(this, StrokeWidth);
+            float stroke = Dpi.Scale(this, (float)_strokeWidth);
             float inset = stroke / 2f + Dpi.Scale(this, 1f);
             float diameter = Math.Min(Width, Height) - inset * 2f;
             if (diameter <= 0) {
@@ -165,11 +207,20 @@ namespace Material3.WinForms.Controls {
                 return;
             }
 
-            using (var track = new Pen(MaterialColors.SurfaceContainerHighest, stroke)) {
-                g.DrawEllipse(track, rect.X, rect.Y, rect.Width, rect.Height);
-            }
-
             float fraction = _displayValue / 100f;
+            using (var track = new Pen(MaterialColors.SecondaryContainer, stroke) { StartCap = LineCap.Round, EndCap = LineCap.Round }) {
+                if (fraction <= 0.002f) {
+                    g.DrawEllipse(track, rect.X, rect.Y, rect.Width, rect.Height);
+                }
+                else if (fraction < 1f) {
+                    // The 4 dp gap is between the visible ends, so each round cap's half-stroke counts toward it.
+                    float gap = (Dpi.Scale(this, IndicatorTrackGap) + stroke) / (float)(Math.PI * rect.Width) * 360f;
+                    float sweep = 360f * (1f - fraction) - gap * 2f;
+                    if (sweep > 0) {
+                        g.DrawArc(track, rect, -90f + 360f * fraction + gap, sweep);
+                    }
+                }
+            }
             if (fraction > 0.002f) {
                 using (var pen = new Pen(active, stroke)) {
                     pen.StartCap = LineCap.Round;

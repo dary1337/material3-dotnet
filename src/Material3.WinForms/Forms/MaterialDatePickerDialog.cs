@@ -4,6 +4,8 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Text;
 using System.Globalization;
 using System.Windows.Forms;
+using Material3.Core;
+using Material3.Shared;
 using Material3.WinForms.Controls;
 using Material3.WinForms.Drawing;
 using Material3.WinForms.Theming;
@@ -12,26 +14,33 @@ using Material3.WinForms.Typography;
 
 namespace Material3.WinForms.Forms {
     /// <summary>
-    /// Material 3 date picker dialog (docked calendar): header with the formatted selection,
-    /// month navigation, a 7×6 day grid (today outlined, selection filled) and Cancel/OK
+    /// Material 3 docked date picker as a dialog: month and year steppers, a 7×6 day grid (today outlined, selection filled) and Cancel/OK
     /// actions. Read <see cref="Value"/> after <c>ShowDialog() == DialogResult.OK</c>.
+    /// Metrics are 96-DPI defaults and texts default to <see cref="LibraryText"/>; change them before showing the dialog.
     /// </summary>
     public sealed class MaterialDatePickerDialog : Form {
-        private const int DialogWidth = 328;
-        private const int Pad = 16;
-        private const int HeaderHeight = 96;
-        private const int NavHeight = 48;
-        private const int CellSize = 40;
-        private const int WeekdayRowHeight = 28;
-        private const int ActionsHeight = 56;
-
         private readonly CultureInfo _culture;
         private readonly DayOfWeek _firstDayOfWeek;
+        private readonly MaterialButton _cancel;
+        private readonly MaterialButton _ok;
         private DateTime _visibleMonth;
         private DateTime _value;
         private Point _hotCell = new Point(-1, -1);
-        private bool _prevHot;
-        private bool _nextHot;
+        private int _hotStep = -1;
+        private readonly ItemHoverFade _hover;
+        private const int StepKey = 100;
+        private const int NavButton = 40;
+        private static readonly int[] StepMonths = { -1, 1, -12, 12 };
+
+        // The M3 docked picker: 360 x 456 with no headline band; HeaderHeight above 0 brings the modal one's back.
+        private int _dialogWidth = 360;
+        private int _contentPadding = 12;
+        private int _headerHeight;
+        private int _navHeight = 56;
+        private int _cellSize = 48;
+        private int _weekdayRowHeight = 48;
+        private int _actionsHeight = 52;
+        private int _cornerRadius = Shape.Large;
 
         /// <summary>Initializes a new instance of the <see cref="MaterialDatePickerDialog"/> class.</summary>
         public MaterialDatePickerDialog() : this(DateTime.Today) { }
@@ -52,15 +61,80 @@ namespace Material3.WinForms.Forms {
             Opacity = 0d;
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer, true);
             FormDragAnywhere.Enable(this);
+            _hover = new ItemHoverFade(this);
 
-            int gridHeight = WeekdayRowHeight + CalendarMath.Rows * CellSize;
-            Size = new Size(DialogWidth, HeaderHeight + NavHeight + gridHeight + ActionsHeight + Pad);
-
-            BuildActions();
+            _cancel = new MaterialButton {
+                Variant = MaterialButtonVariant.Text,
+                AutoSize = true,
+                DialogResult = DialogResult.Cancel,
+            };
+            _ok = new MaterialButton {
+                Variant = MaterialButtonVariant.Text,
+                AutoSize = true,
+                DialogResult = DialogResult.OK,
+            };
+            _cancel.Click += (s, e) => { DialogResult = DialogResult.Cancel; Close(); };
+            _ok.Click += (s, e) => { DialogResult = DialogResult.OK; Close(); };
+            Controls.Add(_cancel);
+            Controls.Add(_ok);
+            AcceptButton = _ok;
+            CancelButton = _cancel;
+            ApplyMetrics();
         }
 
         /// <summary>The picked date (valid when the dialog result is OK).</summary>
         public DateTime Value => _value;
+
+        /// <summary>The caption above the selected date. Null uses <see cref="TextKey.SelectDate"/>.</summary>
+        public string? TitleText { get; set; }
+
+        /// <summary>The confirm button's text. Null uses <see cref="TextKey.Ok"/>.</summary>
+        public string? ConfirmText { get; set; }
+
+        /// <summary>The cancel button's text. Null uses <see cref="TextKey.Cancel"/>.</summary>
+        public string? CancelText { get; set; }
+
+        /// <summary>The header's date format. Null abbreviates the culture's month-day pattern after the weekday.</summary>
+        public string? HeaderFormat { get; set; }
+
+        /// <summary>The dialog's width, in 96-DPI px.</summary>
+        public int DialogWidth { get => _dialogWidth; set => _dialogWidth = Math.Max(1, value); }
+
+        /// <summary>The space between the dialog's edges and its content, in 96-DPI px.</summary>
+        public int ContentPadding { get => _contentPadding; set => _contentPadding = Math.Max(0, value); }
+
+        /// <summary>The modal picker's headline band, in 96-DPI px; 0, the default, is the docked picker without one.</summary>
+        public int HeaderHeight { get => _headerHeight; set => _headerHeight = Math.Max(0, value); }
+
+        /// <summary>The month and year stepper row's height, in 96-DPI px.</summary>
+        public int NavHeight { get => _navHeight; set => _navHeight = Math.Max(1, value); }
+
+        /// <summary>One day cell's side, in 96-DPI px.</summary>
+        public int CellSize { get => _cellSize; set => _cellSize = Math.Max(1, value); }
+
+        /// <summary>The weekday header row's height, in 96-DPI px.</summary>
+        public int WeekdayRowHeight { get => _weekdayRowHeight; set => _weekdayRowHeight = Math.Max(0, value); }
+
+        /// <summary>The action row's height, in 96-DPI px.</summary>
+        public int ActionsHeight { get => _actionsHeight; set => _actionsHeight = Math.Max(1, value); }
+
+        /// <summary>The dialog's corner radius, in 96-DPI px.</summary>
+        public int CornerRadius { get => _cornerRadius; set => _cornerRadius = Math.Max(0, value); }
+
+        /// <summary>The caption's font. Null follows <see cref="TypeScale.LabelLarge"/>.</summary>
+        public Font? TitleFont { get; set; }
+
+        /// <summary>The selected date's font. Null follows <see cref="TypeScale.HeadlineLarge"/>.</summary>
+        public Font? HeaderFont { get; set; }
+
+        /// <summary>The month and year labels' font. Null follows <see cref="TypeScale.LabelLarge"/>.</summary>
+        public Font? MonthFont { get; set; }
+
+        /// <summary>The weekday headers' font. Null follows <see cref="TypeScale.BodyLarge"/>.</summary>
+        public Font? WeekdayFont { get; set; }
+
+        /// <summary>The day numbers' font. Null follows <see cref="TypeScale.BodyLarge"/>.</summary>
+        public Font? DayFont { get; set; }
 
         /// <inheritdoc />
         protected override CreateParams CreateParams {
@@ -71,38 +145,45 @@ namespace Material3.WinForms.Forms {
             }
         }
 
-        private void BuildActions() {
-            var cancel = new MaterialButton {
-                Text = "Cancel",
-                Variant = MaterialButtonVariant.Text,
-                AutoSize = true,
-                DialogResult = DialogResult.Cancel,
-            };
-            var ok = new MaterialButton {
-                Text = "OK",
-                Variant = MaterialButtonVariant.Text,
-                AutoSize = true,
-                DialogResult = DialogResult.OK,
-            };
-            cancel.Click += (s, e) => { DialogResult = DialogResult.Cancel; Close(); };
-            ok.Click += (s, e) => { DialogResult = DialogResult.OK; Close(); };
+        private int S(int px) => Dpi.Scale(this, px);
 
-            ok.Location = new Point(Width - Pad - 64, Height - ActionsHeight + 8);
-            cancel.Location = new Point(ok.Left - 90, ok.Top);
-            Controls.Add(cancel);
-            Controls.Add(ok);
-            AcceptButton = ok;
-            CancelButton = cancel;
+        private int Pad => S(_contentPadding);
+
+        private int Cell => S(_cellSize);
+
+        private int Header => S(_headerHeight);
+
+        private int Nav => S(_navHeight);
+
+        private void ApplyMetrics() {
+            _cancel.Text = CancelText ?? LibraryText.Get(TextKey.Cancel);
+            _ok.Text = ConfirmText ?? LibraryText.Get(TextKey.Ok);
+            int gridHeight = S(_weekdayRowHeight) + CalendarMath.Rows * Cell;
+            int actions = S(_actionsHeight);
+            int width = Math.Max(S(_dialogWidth), CalendarMath.Columns * Cell + Pad * 2);
+            Size = new Size(width, Header + Nav + gridHeight + actions + Pad);
+
+            Size okSize = _ok.GetPreferredSize(Size.Empty);
+            Size cancelSize = _cancel.GetPreferredSize(Size.Empty);
+            int top = Height - Pad - actions + (actions - okSize.Height) / 2;
+            _ok.SetBounds(Width - Pad - okSize.Width, top, okSize.Width, okSize.Height);
+            _cancel.SetBounds(_ok.Left - S(8) - cancelSize.Width, top, cancelSize.Width, cancelSize.Height);
         }
 
         /// <inheritdoc />
         protected override void OnLoad(EventArgs e) {
+            ApplyMetrics();
             using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(
-                new Rectangle(0, 0, Width, Height), Shape.ExtraLarge)) {
+                new Rectangle(0, 0, Width, Height), S(_cornerRadius))) {
                 Region?.Dispose();
                 Region = new Region(path);
             }
             base.OnLoad(e);
+        }
+
+        /// <inheritdoc />
+        protected override void OnShown(EventArgs e) {
+            base.OnShown(e);
             _ = FormAnimation.OpenAsync(this);
         }
 
@@ -113,16 +194,129 @@ namespace Material3.WinForms.Forms {
                 Close();
                 return true;
             }
+            // The arrows walk the days and the page keys the months, as in the WPF picker; Enter is the accept button.
+            DateTime? next = keyData switch {
+                Keys.Left => CalendarMath.AddDaysClamped(_value, -1),
+                Keys.Right => CalendarMath.AddDaysClamped(_value, 1),
+                Keys.Up => CalendarMath.AddDaysClamped(_value, -7),
+                Keys.Down => CalendarMath.AddDaysClamped(_value, 7),
+                Keys.PageUp => CalendarMath.AddMonthsClamped(_value, -1),
+                Keys.PageDown => CalendarMath.AddMonthsClamped(_value, 1),
+                Keys.Shift | Keys.PageUp => CalendarMath.AddMonthsClamped(_value, -12),
+                Keys.Shift | Keys.PageDown => CalendarMath.AddMonthsClamped(_value, 12),
+                _ => (DateTime?)null,
+            };
+            if (next is DateTime date) {
+                Pick(date);
+                return true;
+            }
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
-        private Rectangle PrevRect => new Rectangle(Pad, HeaderHeight + (NavHeight - 32) / 2, 32, 32);
-        private Rectangle NextRect => new Rectangle(Width - Pad - 32, HeaderHeight + (NavHeight - 32) / 2, 32, 32);
+        private void Pick(DateTime date) {
+            if (date == _value) {
+                return;
+            }
+
+            _value = date;
+            _visibleMonth = new DateTime(date.Year, date.Month, 1);
+            Invalidate();
+            int child = ((PickerAccessible)AccessibilityObject).ChildOf(date);
+            MaterialAccessible.Notify(this, AccessibleEvents.Selection, child);
+            MaterialAccessible.Notify(this, AccessibleEvents.Focus, child);
+        }
+
+        /// <inheritdoc />
+        protected override AccessibleObject CreateAccessibilityInstance() => new PickerAccessible(this);
+
+        private DateTime ShownMonth => _visibleMonth;
+
+        private Rectangle DayRect(int day) {
+            (int row, int column) = CalendarMath.CellOfDay(_visibleMonth.Year, _visibleMonth.Month, day, _firstDayOfWeek);
+            Rectangle grid = GridOrigin;
+            return new Rectangle(grid.X + column * Cell, grid.Y + row * Cell, Cell, Cell);
+        }
+
+        // The days are drawn, not controls, so each one is a child of its own beside the buttons for a screen reader.
+        private sealed class PickerAccessible : ControlAccessibleObject {
+            private readonly MaterialDatePickerDialog _picker;
+
+            public PickerAccessible(MaterialDatePickerDialog picker) : base(picker) {
+                _picker = picker;
+            }
+
+            private int Days => DateTime.DaysInMonth(_picker.ShownMonth.Year, _picker.ShownMonth.Month);
+
+            public int ChildOf(DateTime date) => _picker.Controls.Count + date.Day - 1;
+
+            public override int GetChildCount() => _picker.Controls.Count + Days;
+
+            public override AccessibleObject? GetChild(int index) {
+                if (index < 0) {
+                    return null;
+                }
+
+                if (index < _picker.Controls.Count) {
+                    return _picker.Controls[index].AccessibilityObject;
+                }
+
+                int day = index - _picker.Controls.Count + 1;
+                return day <= Days ? new DayAccessible(this, _picker, day) : null;
+            }
+        }
+
+        private sealed class DayAccessible : AccessibleObject {
+            private readonly PickerAccessible _parent;
+            private readonly MaterialDatePickerDialog _picker;
+            private readonly DateTime _date;
+
+            public DayAccessible(PickerAccessible parent, MaterialDatePickerDialog picker, int day) {
+                _parent = parent;
+                _picker = picker;
+                _date = new DateTime(picker.ShownMonth.Year, picker.ShownMonth.Month, day);
+            }
+
+            public override string? Name {
+                get => _date.ToString(_picker._culture.DateTimeFormat.LongDatePattern, _picker._culture);
+                set { }
+            }
+
+            public override AccessibleRole Role => AccessibleRole.ListItem;
+
+            public override AccessibleStates State => AccessibleStates.Selectable | AccessibleStates.Focusable
+                | (_date == _picker._value ? AccessibleStates.Selected | AccessibleStates.Focused : AccessibleStates.None);
+
+            public override AccessibleObject Parent => _parent;
+
+            public override Rectangle Bounds => _picker.RectangleToScreen(_picker.DayRect(_date.Day));
+
+            public override string DefaultAction => LibraryText.Get(TextKey.Select);
+
+            public override void DoDefaultAction() => _picker.Pick(_date);
+        }
+
+        // Month back, month on, year back, year on: the month stepper fills the left half, the year one the right.
+        private Rectangle StepRect(int step) {
+            int size = S(NavButton);
+            int half = (Width - Pad * 2) / 2;
+            int left = Pad + (step >= 2 ? half : 0);
+            int x = step % 2 == 0 ? left : left + half - size;
+            return new Rectangle(x, Header + (Nav - size) / 2, size, size);
+        }
+
+        private int StepAt(Point client) {
+            for (int step = 0; step < StepMonths.Length; step++) {
+                if (StepRect(step).Contains(client)) {
+                    return step;
+                }
+            }
+            return -1;
+        }
 
         private Rectangle GridOrigin {
             get {
-                int gridWidth = CalendarMath.Columns * CellSize;
-                return new Rectangle((Width - gridWidth) / 2, HeaderHeight + NavHeight + WeekdayRowHeight, gridWidth, CalendarMath.Rows * CellSize);
+                int gridWidth = CalendarMath.Columns * Cell;
+                return new Rectangle((Width - gridWidth) / 2, Header + Nav + S(_weekdayRowHeight), gridWidth, CalendarMath.Rows * Cell);
             }
         }
 
@@ -131,19 +325,18 @@ namespace Material3.WinForms.Forms {
             if (!grid.Contains(client)) {
                 return new Point(-1, -1);
             }
-            return new Point((client.X - grid.X) / CellSize, (client.Y - grid.Y) / CellSize);
+            return new Point((client.X - grid.X) / Cell, (client.Y - grid.Y) / Cell);
         }
 
         /// <inheritdoc />
         protected override void OnMouseMove(MouseEventArgs e) {
             base.OnMouseMove(e);
             Point cell = CellAt(e.Location);
-            bool prev = PrevRect.Contains(e.Location);
-            bool next = NextRect.Contains(e.Location);
-            if (cell != _hotCell || prev != _prevHot || next != _nextHot) {
+            int step = StepAt(e.Location);
+            if (cell != _hotCell || step != _hotStep) {
                 _hotCell = cell;
-                _prevHot = prev;
-                _nextHot = next;
+                _hotStep = step;
+                _hover.SetHot(step >= 0 ? StepKey + step : cell.X >= 0 ? cell.Y * CalendarMath.Columns + cell.X : -1);
                 Invalidate();
             }
         }
@@ -152,7 +345,8 @@ namespace Material3.WinForms.Forms {
         protected override void OnMouseLeave(EventArgs e) {
             base.OnMouseLeave(e);
             _hotCell = new Point(-1, -1);
-            _prevHot = _nextHot = false;
+            _hotStep = -1;
+            _hover.SetHot(-1);
             Invalidate();
         }
 
@@ -162,13 +356,9 @@ namespace Material3.WinForms.Forms {
             if (e.Button != MouseButtons.Left) {
                 return;
             }
-            if (PrevRect.Contains(e.Location)) {
-                _visibleMonth = CalendarMath.AddMonthsClamped(_visibleMonth, -1);
-                Invalidate();
-                return;
-            }
-            if (NextRect.Contains(e.Location)) {
-                _visibleMonth = CalendarMath.AddMonthsClamped(_visibleMonth, 1);
+            int step = StepAt(e.Location);
+            if (step >= 0) {
+                _visibleMonth = CalendarMath.AddMonthsClamped(_visibleMonth, StepMonths[step]);
                 Invalidate();
                 return;
             }
@@ -176,8 +366,7 @@ namespace Material3.WinForms.Forms {
             if (cell.X >= 0) {
                 int day = CalendarMath.DayAtCell(_visibleMonth.Year, _visibleMonth.Month, cell.Y, cell.X, _firstDayOfWeek);
                 if (day > 0) {
-                    _value = new DateTime(_visibleMonth.Year, _visibleMonth.Month, day);
-                    Invalidate();
+                    Pick(new DateTime(_visibleMonth.Year, _visibleMonth.Month, day));
                 }
             }
         }
@@ -189,58 +378,73 @@ namespace Material3.WinForms.Forms {
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
             g.Clear(MaterialColors.SurfaceContainerHigh);
 
-            PaintHeader(g);
+            if (_headerHeight > 0) {
+                PaintHeader(g);
+            }
             PaintNav(g);
             PaintWeekdays(g);
             PaintGrid(g);
 
             using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(
-                new Rectangle(0, 0, Width - 1, Height - 1), Shape.ExtraLarge))
-            using (var pen = new Pen(MaterialColors.OutlineVariant, 1f)) {
+                new Rectangle(0, 0, Width - 1, Height - 1), S(_cornerRadius)))
+            using (var pen = new Pen(MaterialColors.OutlineVariant, Dpi.Scale(this, 1f))) {
                 g.DrawPath(pen, path);
             }
         }
 
+        private string FormatHeader() {
+            string pattern = HeaderFormat
+                ?? "ddd, " + _culture.DateTimeFormat.MonthDayPattern.Replace("MMMM", "MMM");
+            return _value.ToString(pattern, _culture);
+        }
+
         private void PaintHeader(Graphics g) {
+            Font caption = TitleFont ?? TypeScale.LabelLarge;
+            Font headline = HeaderFont ?? TypeScale.HeadlineLarge;
             using (var brush = new SolidBrush(MaterialColors.OnSurfaceVariant)) {
-                g.DrawString("Select date", TypeScale.LabelMedium, brush, Pad + 8, 20);
+                g.DrawString(TitleText ?? LibraryText.Get(TextKey.SelectDate), caption, brush, Pad + S(8), S(20));
             }
-            string formatted = _value.ToString("ddd, MMM d", _culture);
             using (var brush = new SolidBrush(MaterialColors.OnSurface)) {
-                g.DrawString(formatted, TypeScale.HeadlineMedium, brush, Pad + 6, 42);
+                g.DrawString(FormatHeader(), headline, brush, Pad + S(6), S(20) + caption.Height + S(6));
             }
-            using (var pen = new Pen(MaterialColors.OutlineVariant, 1f)) {
-                g.DrawLine(pen, 0, HeaderHeight - 1, Width, HeaderHeight - 1);
+            using (var pen = new Pen(MaterialColors.OutlineVariant, Dpi.Scale(this, 1f))) {
+                g.DrawLine(pen, 0, Header - 1, Width, Header - 1);
             }
         }
 
         private void PaintNav(Graphics g) {
-            string month = _visibleMonth.ToString("MMMM yyyy", _culture);
+            string month = _culture.DateTimeFormat.GetAbbreviatedMonthName(_visibleMonth.Month);
+            string year = _visibleMonth.ToString("yyyy", _culture);
             using (var brush = new SolidBrush(MaterialColors.OnSurfaceVariant))
             using (var fmt = new StringFormat(StringFormat.GenericTypographic) {
                 Alignment = StringAlignment.Center,
                 LineAlignment = StringAlignment.Center,
             }) {
-                g.DrawString(month, TypeScale.TitleSmall, brush,
-                    new RectangleF(0, HeaderHeight, Width, NavHeight), fmt);
+                Font font = MonthFont ?? TypeScale.LabelLarge;
+                g.DrawString(month, font, brush, Between(StepRect(0), StepRect(1)), fmt);
+                g.DrawString(year, font, brush, Between(StepRect(2), StepRect(3)), fmt);
             }
 
-            PaintNavChevron(g, PrevRect, _prevHot, pointLeft: true);
-            PaintNavChevron(g, NextRect, _nextHot, pointLeft: false);
+            for (int step = 0; step < StepMonths.Length; step++) {
+                PaintNavChevron(g, StepRect(step), _hover.Opacity(StepKey + step), pointLeft: step % 2 == 0);
+            }
         }
 
-        private static void PaintNavChevron(Graphics g, Rectangle rect, bool hot, bool pointLeft) {
-            if (hot) {
+        private static RectangleF Between(Rectangle back, Rectangle on) =>
+            new RectangleF(back.Right, back.Y, on.Left - back.Right, back.Height);
+
+        private void PaintNavChevron(Graphics g, Rectangle rect, double hover, bool pointLeft) {
+            if (hover > 0) {
                 using (var brush = new SolidBrush(Color.FromArgb(
-                    (int)(StateLayers.Hover * 255), MaterialColors.OnSurface))) {
+                    (int)(hover * 255), MaterialColors.OnSurface))) {
                     g.FillEllipse(brush, rect);
                 }
             }
             float cx = rect.X + rect.Width / 2f;
             float cy = rect.Y + rect.Height / 2f;
-            float s = 5f;
+            float s = Dpi.Scale(this, 5f);
             float dir = pointLeft ? 1f : -1f;
-            using (var pen = new Pen(MaterialColors.OnSurfaceVariant, 1.8f)) {
+            using (var pen = new Pen(MaterialColors.OnSurfaceVariant, Dpi.Scale(this, 1.8f))) {
                 pen.StartCap = LineCap.Round;
                 pen.EndCap = LineCap.Round;
                 g.DrawLines(pen, new[] {
@@ -252,16 +456,20 @@ namespace Material3.WinForms.Forms {
         }
 
         private void PaintWeekdays(Graphics g) {
+            if (_weekdayRowHeight == 0) {
+                return;
+            }
             string[] headers = CalendarMath.WeekdayHeaders(_firstDayOfWeek, _culture);
             Rectangle grid = GridOrigin;
+            Font font = WeekdayFont ?? TypeScale.BodyLarge;
             using (var brush = new SolidBrush(MaterialColors.OnSurfaceVariant))
             using (var fmt = new StringFormat(StringFormat.GenericTypographic) {
                 Alignment = StringAlignment.Center,
                 LineAlignment = StringAlignment.Center,
             }) {
                 for (int c = 0; c < CalendarMath.Columns; c++) {
-                    g.DrawString(headers[c], TypeScale.BodySmall, brush,
-                        new RectangleF(grid.X + c * CellSize, HeaderHeight + NavHeight, CellSize, WeekdayRowHeight), fmt);
+                    g.DrawString(headers[c], font, brush,
+                        new RectangleF(grid.X + c * Cell, Header + Nav, Cell, S(_weekdayRowHeight)), fmt);
                 }
             }
         }
@@ -271,6 +479,10 @@ namespace Material3.WinForms.Forms {
             DateTime today = DateTime.Today;
             bool monthHasSelection = _value.Year == _visibleMonth.Year && _value.Month == _visibleMonth.Month;
             bool monthHasToday = today.Year == _visibleMonth.Year && today.Month == _visibleMonth.Month;
+            Font font = DayFont ?? TypeScale.BodyLarge;
+            int cellSize = Cell;
+            // A day is a 40 px circle centred in its 48 px cell.
+            int inset = Math.Max(1, cellSize * 4 / 48);
 
             using (var fmt = new StringFormat(StringFormat.GenericTypographic) {
                 Alignment = StringAlignment.Center,
@@ -282,12 +494,12 @@ namespace Material3.WinForms.Forms {
                         if (day == 0) {
                             continue;
                         }
-                        var cell = new Rectangle(grid.X + col * CellSize, grid.Y + row * CellSize, CellSize, CellSize);
-                        var circle = Rectangle.Inflate(cell, -3, -3);
+                        var cell = new Rectangle(grid.X + col * cellSize, grid.Y + row * cellSize, cellSize, cellSize);
+                        var circle = Rectangle.Inflate(cell, -inset, -inset);
 
                         bool isSelected = monthHasSelection && day == _value.Day;
                         bool isToday = monthHasToday && day == today.Day;
-                        bool isHot = _hotCell.X == col && _hotCell.Y == row;
+                        double hover = _hover.Opacity(row * CalendarMath.Columns + col);
 
                         Color text = MaterialColors.OnSurface;
                         if (isSelected) {
@@ -297,14 +509,14 @@ namespace Material3.WinForms.Forms {
                             text = MaterialColors.OnPrimary;
                         }
                         else {
-                            if (isHot) {
+                            if (hover > 0) {
                                 using (var brush = new SolidBrush(Color.FromArgb(
-                                    (int)(StateLayers.Hover * 255), MaterialColors.OnSurface))) {
+                                    (int)(hover * 255), MaterialColors.OnSurface))) {
                                     g.FillEllipse(brush, circle);
                                 }
                             }
                             if (isToday) {
-                                using (var pen = new Pen(MaterialColors.Primary, 1f)) {
+                                using (var pen = new Pen(MaterialColors.Primary, Dpi.Scale(this, 1f))) {
                                     g.DrawEllipse(pen, circle);
                                 }
                                 text = MaterialColors.Primary;
@@ -312,11 +524,19 @@ namespace Material3.WinForms.Forms {
                         }
 
                         using (var brush = new SolidBrush(text)) {
-                            g.DrawString(day.ToString(_culture), TypeScale.BodyMedium, brush, cell, fmt);
+                            g.DrawString(day.ToString(_culture), font, brush, cell, fmt);
                         }
                     }
                 }
             }
+        }
+
+        /// <inheritdoc />
+        protected override void Dispose(bool disposing) {
+            if (disposing) {
+                _hover.Dispose();
+            }
+            base.Dispose(disposing);
         }
     }
 }

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFrameworks>net472;net8.0-windows</TargetFrameworks>
     <UseWindowsForms>true</UseWindowsForms>
     <LangVersion>10.0</LangVersion>
     <Nullable>enable</Nullable>
@@ -17,6 +17,15 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Material3.WinForms\Material3.WinForms.csproj" />
     <ProjectReference Include="..\..\src\Material3.Core\Material3.Core.csproj" />
+  </ItemGroup>
+
+  <!-- The gallery ships for .NET Framework only, so its smoke tests run there. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <ProjectReference Include="..\..\samples\Material3.WinForms.Gallery\Material3.WinForms.Gallery.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' != 'net472'">
+    <Compile Remove="GallerySmokeTests.cs" />
   </ItemGroup>
 
 </Project>

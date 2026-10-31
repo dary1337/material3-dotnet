@@ -26,8 +26,12 @@ namespace Material3.Wpf.Tests {
         private static void Once(Window owner, Action<Window> act) {
             void Poll() {
                 Window? dialog = owner.OwnedWindows.Cast<Window>().FirstOrDefault(d => d.IsLoaded);
-                if (dialog == null) owner.Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(Poll));
-                else act(dialog);
+                if (dialog == null) {
+                    owner.Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(Poll));
+                }
+                else {
+                    act(dialog);
+                }
             }
             owner.Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(Poll));
         }
@@ -42,8 +46,11 @@ namespace Material3.Wpf.Tests {
             });
 
         private static DialogOptions ThreeWay() => new DialogOptions {
-            Title = "Unsaved changes", Body = "Save them first?",
-            ConfirmText = "Save", SecondaryText = "Discard", CancelText = "Cancel",
+            Title = "Unsaved changes",
+            Body = "Save them first?",
+            ConfirmText = "Save",
+            SecondaryText = "Discard",
+            CancelText = "Cancel",
         };
 
         [Fact]
@@ -62,6 +69,13 @@ namespace Material3.Wpf.Tests {
         public void EscapeCancels() => Ui.InWindow(w => {
             Once(w, Escape);
             Assert.Equal(DialogChoice.Cancel, Dialog.Show(w, ThreeWay()));
+        });
+
+        [Fact]
+        public void ContentCanDismissTheDialogThatHostsIt() => Ui.InWindow(w => {
+            var link = new Button { Content = "Read more" };
+            Once(w, d => Dialog.Dismiss(Ui.Descendants<Button>(d).First(b => Equals(b.Content, "Read more"))));
+            Assert.Equal(DialogChoice.Cancel, Dialog.Show(w, new DialogOptions { Title = "Move", Content = link, ConfirmText = "Move", CancelText = "Cancel" }));
         });
 
         [Fact]
@@ -93,7 +107,10 @@ namespace Material3.Wpf.Tests {
             });
 
             DialogChoice choice = Dialog.Show(w, new DialogOptions {
-                Title = "Delete the project?", ConfirmText = "Delete", CancelText = "Cancel", Destructive = true,
+                Title = "Delete the project?",
+                ConfirmText = "Delete",
+                CancelText = "Cancel",
+                Destructive = true,
                 ConfirmWork = () => work.Task,
             });
 
@@ -105,15 +122,16 @@ namespace Material3.Wpf.Tests {
         public void AFailureInTheWorkReachesTheCaller() => Ui.InWindow(w => {
             Once(w, d => Click(d, "Delete"));
             var options = new DialogOptions {
-                Title = "Delete the project?", ConfirmText = "Delete",
+                Title = "Delete the project?",
+                ConfirmText = "Delete",
                 ConfirmWork = async () => {
                     await Task.Yield();
                     throw new InvalidOperationException("locked");
                 },
             };
 
-            var ex = Assert.Throws<InvalidOperationException>(() => Dialog.Show(w, options));
-            Assert.Equal("locked", ex.Message);
+            Assert.Equal(DialogChoice.Failed, Dialog.Show(w, options, out Exception? failure));
+            Assert.Equal("locked", Assert.IsType<InvalidOperationException>(failure).Message);
             Assert.Empty(w.OwnedWindows);
         });
 
@@ -124,7 +142,9 @@ namespace Material3.Wpf.Tests {
                 new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = UIElement.PreviewMouseLeftButtonDownEvent }));
 
             DialogChoice choice = Dialog.Show(w, new DialogOptions {
-                Title = "Reset every setting?", ConfirmText = "Hold to reset", CancelText = "Cancel",
+                Title = "Reset every setting?",
+                ConfirmText = "Hold to reset",
+                CancelText = "Cancel",
                 HoldToConfirm = TimeSpan.FromMilliseconds(100),
                 ConfirmWork = async () => { await Task.Delay(50); ran = true; },
             });

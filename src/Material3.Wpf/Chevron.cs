@@ -19,7 +19,10 @@ namespace Material3.Wpf {
         public static bool GetIsOpen(DependencyObject element) => (bool)element.GetValue(IsOpenProperty);
 
         private static void OnIsOpenChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-            if (!(d is UIElement element)) return;
+            if (!(d is UIElement element)) {
+                return;
+            }
+
             RotateTransform rotate = EnsureRotate(element);
             element.RenderTransformOrigin = new Point(0.5, 0.5);
             bool open = (bool)e.NewValue;
@@ -27,7 +30,10 @@ namespace Material3.Wpf {
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
             };
             spin.Completed += (_, __) => {
-                if (GetIsOpen(d) != open) return;
+                if (GetIsOpen(d) != open) {
+                    return;
+                }
+
                 rotate.BeginAnimation(RotateTransform.AngleProperty, null);
                 rotate.Angle = open ? 180 : 0;
             };
@@ -36,10 +42,17 @@ namespace Material3.Wpf {
 
         private static RotateTransform EnsureRotate(UIElement element) {
             Transform current = element.RenderTransform;
-            if (current is RotateTransform own && !own.IsFrozen) return own;
+            if (current is RotateTransform own && !own.IsFrozen) {
+                return own;
+            }
+
             if (current is TransformGroup group && !group.IsFrozen) {
-                foreach (Transform t in group.Children)
-                    if (t is RotateTransform mine && !mine.IsFrozen) return mine;
+                foreach (Transform t in group.Children) {
+                    if (t is RotateTransform mine && !mine.IsFrozen) {
+                        return mine;
+                    }
+                }
+
                 var appended = new RotateTransform();
                 group.Children.Add(appended);
                 return appended;

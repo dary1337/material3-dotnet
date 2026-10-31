@@ -1,12 +1,14 @@
 using System;
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
+using Material3.Core;
 
 namespace Material3.Wpf {
     /// <summary>A themed M3 tooltip that the native <see cref="ToolTip"/> can't be: one reused <see cref="Popup"/>
@@ -43,10 +45,14 @@ namespace Material3.Wpf {
         [ThreadStatic] private static TextBlock? _label;
         [ThreadStatic] private static TextBlock? _title;
         [ThreadStatic] private static Border? _border;
+        [ThreadStatic] private static Border? _shadow;
         [ThreadStatic] private static bool _closing;
 
         private static void OnTextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-            if (!(d is FrameworkElement fe)) return;
+            if (!(d is FrameworkElement fe)) {
+                return;
+            }
+
             fe.MouseEnter -= OnEnter;
             fe.MouseLeave -= OnLeave;
             fe.Unloaded -= OnUnloaded;
@@ -54,13 +60,19 @@ namespace Material3.Wpf {
                 fe.MouseEnter += OnEnter;
                 fe.MouseLeave += OnLeave;
                 fe.Unloaded += OnUnloaded;
-                if (fe.IsMouseOver) ShowFor(fe);
+                if (fe.IsMouseOver) {
+                    ShowFor(fe);
+                }
             }
-            else CloseIfTarget(fe);
+            else {
+                CloseIfTarget(fe);
+            }
         }
 
         private static void OnTitleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-            if (d is FrameworkElement fe && _popup != null && _popup.IsOpen && ReferenceEquals(_popup.PlacementTarget, fe)) ShowFor(fe);
+            if (d is FrameworkElement fe && _popup != null && _popup.IsOpen && ReferenceEquals(_popup.PlacementTarget, fe)) {
+                ShowFor(fe);
+            }
         }
 
         private static void OnUnloaded(object sender, RoutedEventArgs e) => CloseIfTarget(sender as FrameworkElement);
@@ -73,21 +85,77 @@ namespace Material3.Wpf {
 
         private static void ShowFor(FrameworkElement fe) {
             string? text = GetText(fe);
-            if (string.IsNullOrEmpty(text)) return;
+            if (string.IsNullOrEmpty(text)) {
+                return;
+            }
+
             Ensure();
+            Popup popup = _popup!;
+            bool glide = popup.IsOpen && popup.PlacementTarget is FrameworkElement from && !ReferenceEquals(from, fe)
+                && from.IsVisible && Motion.AnimationsEnabled;
+            Point? before = glide ? CardCentre(popup) : null;
             _closing = false;
             _label!.Text = text;
-            Dress(GetTitle(fe));
-            _popup!.IsOpen = false;
-            _popup.PlacementTarget = fe;
-            _popup.IsOpen = true;
+            Dress(fe, GetTitle(fe));
+            // Placement reads the card's measured size; measure now or the first frame is placed for the previous text.
+            popup.Child.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            if (glide && before != null) {
+                Motion.SettlePopupContent(popup);
+                Retarget(popup, fe);
+                popup.Child.UpdateLayout();
+                Point? after = CardCentre(popup);
+                if (after != null) {
+                    Glide(popup, before.Value - after.Value);
+                }
+
+                return;
+            }
+            popup.IsOpen = false;
+            Retarget(popup, fe);
+            popup.IsOpen = true;
+        }
+
+        private static void Retarget(Popup popup, FrameworkElement target) {
+            popup.BeginAnimation(Popup.HorizontalOffsetProperty, null);
+            popup.BeginAnimation(Popup.VerticalOffsetProperty, null);
+            popup.HorizontalOffset = 0;
+            popup.VerticalOffset = 0;
+            popup.PlacementTarget = target;
+            // An open Popup repositions on an offset change, not on a new PlacementTarget.
+            if (popup.IsOpen) {
+                popup.HorizontalOffset = 1;
+                popup.HorizontalOffset = 0;
+            }
+        }
+
+        private static Point? CardCentre(Popup popup) =>
+            popup.Child != null && PresentationSource.FromVisual(popup.Child) != null
+                ? popup.Child.PointToScreen(new Point(popup.Child.RenderSize.Width / 2, 0))
+                : null;
+
+        // Starts the popup where it was and eases it to its new place, so moving between neighbours reads as one tip.
+        private static void Glide(Popup popup, Vector deviceOffset) {
+            Matrix toDip = PresentationSource.FromVisual(popup.Child)?.CompositionTarget?.TransformFromDevice ?? Matrix.Identity;
+            Vector offset = toDip.Transform(deviceOffset);
+            Duration duration = Motion.Ms(200);
+            IEasingFunction? ease = Motion.Ease("M3EmphasizedDecelerate");
+            popup.HorizontalOffset = offset.X;
+            popup.VerticalOffset = offset.Y;
+            popup.BeginAnimation(Popup.HorizontalOffsetProperty, new DoubleAnimation(offset.X, 0, duration) { EasingFunction = ease });
+            popup.BeginAnimation(Popup.VerticalOffsetProperty, new DoubleAnimation(offset.Y, 0, duration) { EasingFunction = ease });
         }
 
         private static void OnLeave(object sender, MouseEventArgs e) {
-            if (_popup == null || !_popup.IsOpen || _closing) return;
+            if (_popup == null || !_popup.IsOpen || _closing) {
+                return;
+            }
+
             _closing = true;
             Motion.AnimatePopupClose(_popup, () => {
-                if (!_closing) return;
+                if (!_closing) {
+                    return;
+                }
+
                 _closing = false;
                 _popup!.IsOpen = false;
                 _popup.PlacementTarget = null;
@@ -95,30 +163,37 @@ namespace Material3.Wpf {
         }
 
         private static void Ensure() {
-            if (_popup != null) return;
-            _label = new TextBlock {
-                FontFamily = new FontFamily("Segoe UI"), FontSize = 12, TextWrapping = TextWrapping.Wrap, MaxWidth = 320,
-            };
-            _title = new TextBlock {
-                FontFamily = new FontFamily("Segoe UI"), FontSize = 14, FontWeight = FontWeights.SemiBold,
-                TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 4),
-            };
+            if (_popup != null) {
+                return;
+            }
+
+            _label = new TextBlock();
+            _title = new TextBlock();
             var stack = new StackPanel();
             stack.Children.Add(_title);
             stack.Children.Add(_label);
             _border = new Border {
-                BorderThickness = new Thickness(1), IsHitTestVisible = false,
-                Effect = new DropShadowEffect { BlurRadius = 14, ShadowDepth = 0, Opacity = 0.55 },
+                IsHitTestVisible = false,
                 Child = stack,
             };
-            Themed(_title, TextBlock.ForegroundProperty, "OnSurface", Colors.White);
-            Themed(_border, Border.BorderBrushProperty, "OutlineVariant", Color.FromRgb(0x49, 0x45, 0x4F));
+            // The rich tip's shadow is a layer of its own: an Effect on the card would rasterize its text.
+            _shadow = new Border { IsHitTestVisible = false };
+            _shadow.SetBinding(Border.BackgroundProperty, new Binding(nameof(Border.Background)) { Source = _border });
+            _shadow.SetBinding(Border.CornerRadiusProperty, new Binding(nameof(Border.CornerRadius)) { Source = _border });
+            Undress();
             var room = new Border {
-                Padding = new Thickness(ShadowRoom), Background = Brushes.Transparent,
-                IsHitTestVisible = false, SnapsToDevicePixels = true, UseLayoutRounding = true, Child = _border,
+                Padding = new Thickness(ShadowRoom),
+                Background = Brushes.Transparent,
+                IsHitTestVisible = false,
+                SnapsToDevicePixels = true,
+                UseLayoutRounding = true,
+                Child = new Grid { Children = { _shadow, _border } },
             };
             _popup = new Popup {
-                AllowsTransparency = true, StaysOpen = true, Placement = PlacementMode.Custom, Child = room,
+                AllowsTransparency = true,
+                StaysOpen = true,
+                Placement = PlacementMode.Custom,
+                Child = room,
             };
             _popup.CustomPopupPlacementCallback = Place;
             Motion.SetScaleOnOpen(_popup, true);
@@ -130,51 +205,115 @@ namespace Material3.Wpf {
 
         internal static Popup? Current => _popup;
 
-        private static void Dress(string? title) {
+        // The look without a theme's tip styles; a tip shown over a styled target first must come back to it.
+        private static void Undress() {
+            _border!.ClearValue(FrameworkElement.StyleProperty);
+            _label!.ClearValue(FrameworkElement.StyleProperty);
+            _title!.ClearValue(FrameworkElement.StyleProperty);
+            _label.TextWrapping = TextWrapping.Wrap;
+            _label.FontSize = TipLook.Plain.FontSize;
+            _label.MaxWidth = TipLook.Plain.MaxWidth;
+            _label.SetResourceReference(TextBlock.FontFamilyProperty, ResourceKeys.FontFamily);
+            _title.FontSize = TipLook.Rich.FontSize;
+            _title.TextWrapping = TextWrapping.Wrap;
+            _title.Margin = new Thickness(0, 0, 0, 4);
+            _title.SetResourceReference(TextBlock.FontFamilyProperty, ResourceKeys.FontFamily);
+            _title.SetResourceReference(TextBlock.FontWeightProperty, ResourceKeys.FontWeightMedium);
+            _border.BorderThickness = new Thickness(1);
+            Themed(_title, TextBlock.ForegroundProperty, nameof(ColorScheme.OnSurface), Colors.White);
+            Themed(_border, Border.BorderBrushProperty, nameof(ColorScheme.OutlineVariant), Color.FromRgb(0x49, 0x45, 0x4F));
+        }
+
+        private static void Dress(FrameworkElement target, string? title) {
             bool rich = !string.IsNullOrEmpty(title);
             _title!.Text = title ?? string.Empty;
             _title.Visibility = rich ? Visibility.Visible : Visibility.Collapsed;
-            _label!.FontSize = rich ? 14 : 12;
-            _label.MaxWidth = rich ? 312 : 320;
+            if (target.TryFindResource(rich ? ResourceKeys.RichTipCard : ResourceKeys.TipCard) is Style card
+                && target.TryFindResource(rich ? ResourceKeys.RichTipText : ResourceKeys.TipText) is Style text
+                && target.TryFindResource(ResourceKeys.TipTitle) is Style head) {
+                foreach (DependencyProperty p in new[] { Border.CornerRadiusProperty, Border.PaddingProperty, Border.BackgroundProperty, Border.BorderBrushProperty, Border.BorderThicknessProperty, UIElement.EffectProperty }) {
+                    _border!.ClearValue(p);
+                }
+
+                foreach (DependencyProperty p in new[] { TextBlock.FontFamilyProperty, TextBlock.FontSizeProperty, TextBlock.FontWeightProperty, FrameworkElement.MaxWidthProperty, TextBlock.ForegroundProperty, FrameworkElement.MarginProperty, TextBlock.TextWrappingProperty }) {
+                    _label!.ClearValue(p);
+                    _title.ClearValue(p);
+                }
+                _border!.Style = card;
+                _shadow!.Effect = rich ? target.TryFindResource(ResourceKeys.Elevation2) as Effect ?? TipLook.Shadow() : null;
+                _label!.Style = text;
+                _title.Style = head;
+                _label.TextAlignment = TextAlignment.Left;
+                return;
+            }
+            Undress();
+            TipLook look = rich ? TipLook.Rich : TipLook.Plain;
+            _label!.FontSize = look.FontSize;
+            _label.MaxWidth = look.MaxWidth;
             _label.TextAlignment = TextAlignment.Left;
-            _border!.CornerRadius = new CornerRadius(rich ? 12 : 8);
-            _border.Padding = rich ? new Thickness(16, 12, 16, 14) : new Thickness(10, 7, 10, 7);
-            Themed(_label, TextBlock.ForegroundProperty, rich ? "OnSurfaceVariant" : "OnSurface", Colors.White);
-            Themed(_border, Border.BackgroundProperty, rich ? "SurfaceContainer" : "SurfaceContainerHighest", Color.FromRgb(0x2D, 0x2C, 0x2E));
+            _border!.CornerRadius = look.CornerRadius;
+            _border.Padding = look.Padding;
+            _border.BorderThickness = new Thickness(1);
+            _shadow!.Effect = rich ? TipLook.Shadow() : null;
+            Themed(_label, TextBlock.ForegroundProperty, rich ? nameof(ColorScheme.OnSurfaceVariant) : nameof(ColorScheme.OnSurface), Colors.White);
+            Themed(_border, Border.BackgroundProperty, rich ? nameof(ColorScheme.SurfaceContainer) : nameof(ColorScheme.SurfaceContainerHighest), Color.FromRgb(0x2D, 0x2C, 0x2E));
         }
 
         private static void LetTheMouseThrough(Popup popup) {
-            if (popup.Child == null || !(PresentationSource.FromVisual(popup.Child) is HwndSource source)) return;
-            IntPtr style = GetWindowLongPtr(source.Handle, GwlExStyle);
-            SetWindowLongPtr(source.Handle, GwlExStyle, new IntPtr(style.ToInt64() | WsExTransparent | WsExNoActivate));
+            if (popup.Child == null || !(PresentationSource.FromVisual(popup.Child) is HwndSource source)) {
+                return;
+            }
+
+            long style = WindowLongs.Get(source.Handle, WindowLongs.ExStyle);
+            WindowLongs.Set(source.Handle, WindowLongs.ExStyle, style | WsExTransparent | WsExNoActivate);
         }
 
-        private const int GwlExStyle = -20;
         private const long WsExTransparent = 0x20, WsExNoActivate = 0x08000000;
 
-        [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
-        private static extern IntPtr GetWindowLongPtr64(IntPtr hWnd, int index);
-        [DllImport("user32.dll", EntryPoint = "GetWindowLongW")]
-        private static extern int GetWindowLong32(IntPtr hWnd, int index);
-        [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW")]
-        private static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int index, IntPtr value);
-        [DllImport("user32.dll", EntryPoint = "SetWindowLongW")]
-        private static extern int SetWindowLong32(IntPtr hWnd, int index, int value);
-
-        private static IntPtr GetWindowLongPtr(IntPtr h, int index) =>
-            IntPtr.Size == 8 ? GetWindowLongPtr64(h, index) : new IntPtr(GetWindowLong32(h, index));
-
-        private static void SetWindowLongPtr(IntPtr h, int index, IntPtr value) {
-            if (IntPtr.Size == 8) SetWindowLongPtr64(h, index, value);
-            else SetWindowLong32(h, index, value.ToInt32());
-        }
-
         private static void Themed(FrameworkElement el, DependencyProperty prop, string key, Color fallback) {
-            if (Application.Current?.TryFindResource(key) is SolidColorBrush) el.SetResourceReference(prop, key);
-            else el.SetValue(prop, new SolidColorBrush(fallback));
+            if (Application.Current?.TryFindResource(key) is SolidColorBrush) {
+                el.SetResourceReference(prop, key);
+            }
+            else {
+                var brush = new SolidColorBrush(fallback);
+                brush.Freeze();
+                el.SetValue(prop, brush);
+            }
         }
 
-        private static CustomPopupPlacement[] Place(Size popup, Size target, Point offset) => new[] {
+        // The look without the library's theme; a test pins it to the TipCard / RichTipCard styles.
+        internal readonly struct TipLook {
+            public static readonly TipLook Plain = new TipLook(new CornerRadius(4), new Thickness(8, 4, 8, 4), 12, 320);
+            public static readonly TipLook Rich = new TipLook(new CornerRadius(12), new Thickness(16, 12, 16, 14), 14, 312);
+
+            public readonly CornerRadius CornerRadius;
+            public readonly Thickness Padding;
+            public readonly double FontSize;
+            public readonly double MaxWidth;
+
+            private TipLook(CornerRadius cornerRadius, Thickness padding, double fontSize, double maxWidth) {
+                CornerRadius = cornerRadius;
+                Padding = padding;
+                FontSize = fontSize;
+                MaxWidth = maxWidth;
+            }
+
+            private static readonly DropShadowEffect SharedShadow = Frozen(new DropShadowEffect { BlurRadius = 12, ShadowDepth = 2, Direction = 270, Opacity = 0.24 });
+
+            public static DropShadowEffect Shadow() => SharedShadow;
+
+            private static DropShadowEffect Frozen(DropShadowEffect effect) {
+                effect.Freeze();
+                return effect;
+            }
+        }
+
+        private static CustomPopupPlacement[] Place(Size reported, Size target, Point offset) {
+            Size popup = _popup != null ? CenterPopup.Unscaled(_popup, reported) : reported;
+            return PlaceCentred(popup, target);
+        }
+
+        internal static CustomPopupPlacement[] PlaceCentred(Size popup, Size target) => new[] {
             new CustomPopupPlacement(
                 new Point((target.Width - popup.Width) / 2, -(popup.Height + GapAboveTarget - ShadowRoom)),
                 PopupPrimaryAxis.Horizontal),

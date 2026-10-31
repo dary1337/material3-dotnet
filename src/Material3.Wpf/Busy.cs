@@ -1,5 +1,6 @@
 using System;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 
@@ -10,7 +11,7 @@ namespace Material3.Wpf {
     /// <see cref="SpinWhileVisibleProperty"/> to spin a glyph that is already the spinner.
     /// </summary>
     public static class Busy {
-        /// <summary>The glyph the spinner swaps in. Register it on the icon set you feed <see cref="PathIcon"/>.</summary>
+        /// <summary>The glyph the spinner swaps in. Built in; an app's own registration replaces it.</summary>
         public const string SpinnerGlyph = "Loading";
 
         /// <summary>Identifies the IsBusy attached property.</summary>
@@ -19,8 +20,9 @@ namespace Material3.Wpf {
                 new PropertyMetadata(false, OnIsBusyChanged));
 
         /// <summary>
-        /// Replaces an <see cref="PathIcon"/>'s glyph with the spinner and rotates it; clearing it restores the
-        /// original glyph. Inert on any other element, so a template can bind it once and trigger off it.
+        /// Replaces an <see cref="PathIcon"/>'s glyph, or a <see cref="Button"/>'s leading glyph, with the spinner and
+        /// rotates it; a busy button also ignores clicks. Clearing it restores the original glyph. Inert on any other
+        /// element, so a template can bind it once and trigger off it.
         /// </summary>
         public static void SetIsBusy(DependencyObject element, bool value) => element.SetValue(IsBusyProperty, value);
 
@@ -45,7 +47,14 @@ namespace Material3.Wpf {
             DependencyProperty.RegisterAttached("SavedGlyph", typeof(string), typeof(Busy));
 
         private static void OnIsBusyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-            if (!(d is PathIcon icon)) return;
+            if (d is Button button) {
+                SetButtonBusy(button, (bool)e.NewValue);
+                return;
+            }
+            if (!(d is PathIcon icon)) {
+                return;
+            }
+
             if ((bool)e.NewValue) {
                 icon.SetValue(SavedGlyphProperty, icon.Glyph);
                 icon.SetCurrentValue(PathIcon.GlyphProperty, SpinnerGlyph);
@@ -57,11 +66,47 @@ namespace Material3.Wpf {
             }
         }
 
+        // A busy button swaps its leading glyph for the spinner and ignores clicks until the work is done.
+        private static void SetButtonBusy(Button button, bool busy) {
+            if (busy) {
+                button.SetValue(SavedGlyphProperty, ButtonContent.GetLeadingGlyph(button));
+                button.SetCurrentValue(ButtonContent.LeadingGlyphProperty, SpinnerGlyph);
+                button.PreviewMouseLeftButtonDown += SwallowMouse;
+                button.PreviewKeyDown += SwallowKey;
+                button.ApplyTemplate();
+                if (button.Template?.FindName("lead", button) is PathIcon lead) {
+                    Start(lead);
+                }
+
+                return;
+            }
+            if (button.Template?.FindName("lead", button) is PathIcon spinning) {
+                Stop(spinning);
+            }
+
+            button.PreviewMouseLeftButtonDown -= SwallowMouse;
+            button.PreviewKeyDown -= SwallowKey;
+            button.SetCurrentValue(ButtonContent.LeadingGlyphProperty, button.GetValue(SavedGlyphProperty));
+        }
+
+        private static void SwallowMouse(object sender, System.Windows.Input.MouseButtonEventArgs args) => args.Handled = true;
+
+        private static void SwallowKey(object sender, System.Windows.Input.KeyEventArgs args) {
+            if (args.Key == System.Windows.Input.Key.Space || args.Key == System.Windows.Input.Key.Enter) {
+                args.Handled = true;
+            }
+        }
+
         private static void OnSpinWhileVisibleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-            if (!(d is PathIcon icon)) return;
+            if (!(d is PathIcon icon)) {
+                return;
+            }
+
             if ((bool)e.NewValue) {
                 icon.IsVisibleChanged += OnSpinnerVisibleChanged;
-                if (icon.IsVisible) Start(icon);
+                if (icon.IsVisible) {
+                    Start(icon);
+                }
             }
             else {
                 icon.IsVisibleChanged -= OnSpinnerVisibleChanged;
@@ -71,8 +116,12 @@ namespace Material3.Wpf {
 
         private static void OnSpinnerVisibleChanged(object sender, DependencyPropertyChangedEventArgs e) {
             var icon = (PathIcon)sender;
-            if ((bool)e.NewValue) Start(icon);
-            else Stop(icon);
+            if ((bool)e.NewValue) {
+                Start(icon);
+            }
+            else {
+                Stop(icon);
+            }
         }
 
         private static void Start(PathIcon icon) {
@@ -85,8 +134,9 @@ namespace Material3.Wpf {
         }
 
         private static void Stop(PathIcon icon) {
-            if (icon.RenderTransform is RotateTransform rt && !rt.IsFrozen)
+            if (icon.RenderTransform is RotateTransform rt && !rt.IsFrozen) {
                 rt.BeginAnimation(RotateTransform.AngleProperty, null);
+            }
         }
     }
 }

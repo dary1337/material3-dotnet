@@ -51,7 +51,10 @@ namespace Material3.Wpf {
         /// <inheritdoc />
         protected override void OnRender(DrawingContext dc) {
             double t = StrokeThickness, w = ActualWidth, h = ActualHeight;
-            if (Stroke == null || t <= 0 || w <= t || h <= t) return;
+            if (Stroke == null || t <= 0 || w <= t || h <= t) {
+                return;
+            }
+
             double half = t / 2, left = half, top = half, right = w - half, bottom = h - half;
             double r = Math.Max(0, Math.Min(Radius, Math.Min(right - left, bottom - top) / 2));
             double gapFrom = Math.Max(left + r, GapStart), gapTo = Math.Min(right - r, GapStart + GapWidth);
@@ -69,7 +72,9 @@ namespace Material3.Wpf {
                 g.ArcTo(new Point(left, bottom - r), arc, 0, false, SweepDirection.Clockwise, true, false);
                 g.LineTo(new Point(left, top + r), true, false);
                 g.ArcTo(new Point(left + r, top), arc, 0, false, SweepDirection.Clockwise, true, false);
-                if (gap) g.LineTo(new Point(gapFrom, top), true, false);
+                if (gap) {
+                    g.LineTo(new Point(gapFrom, top), true, false);
+                }
             }
             geometry.Freeze();
             dc.DrawGeometry(null, new Pen(Stroke, t), geometry);

@@ -32,10 +32,10 @@ namespace Material3.Wpf {
 
         /// <summary>Identifies the <see cref="Placeholder"/> property.</summary>
         public static readonly DependencyProperty PlaceholderProperty = DependencyProperty.Register(
-            nameof(Placeholder), typeof(string), typeof(SearchBar), new PropertyMetadata(string.Empty));
+            nameof(Placeholder), typeof(string), typeof(SearchBar), new PropertyMetadata(null));
 
-        /// <summary>The hint shown while the query is empty.</summary>
-        public string Placeholder { get => (string)GetValue(PlaceholderProperty); set => SetValue(PlaceholderProperty, value); }
+        /// <summary>The hint shown while the query is empty. Null shows the library's <see cref="Material3.Core.TextKey.Search"/> text; empty shows none.</summary>
+        public string? Placeholder { get => (string?)GetValue(PlaceholderProperty); set => SetValue(PlaceholderProperty, value); }
 
         /// <summary>Raised whenever <see cref="Query"/> changes.</summary>
         public event EventHandler? QueryChanged;
@@ -49,12 +49,23 @@ namespace Material3.Wpf {
         /// <inheritdoc />
         public override void OnApplyTemplate() {
             base.OnApplyTemplate();
-            if (_editor != null) _editor.PreviewKeyDown -= OnEditorKey;
-            if (_clear != null) _clear.Click -= OnClear;
+            if (_editor != null) {
+                _editor.PreviewKeyDown -= OnEditorKey;
+            }
+
+            if (_clear != null) {
+                _clear.Click -= OnClear;
+            }
+
             _editor = GetTemplateChild(PartEditor) as TextBox;
             _clear = GetTemplateChild(PartClear) as ButtonBase;
-            if (_editor != null) _editor.PreviewKeyDown += OnEditorKey;
-            if (_clear != null) _clear.Click += OnClear;
+            if (_editor != null) {
+                _editor.PreviewKeyDown += OnEditorKey;
+            }
+
+            if (_clear != null) {
+                _clear.Click += OnClear;
+            }
         }
 
         /// <summary>Puts the caret in the field.</summary>
@@ -64,7 +75,10 @@ namespace Material3.Wpf {
 
         private static void OnQueryChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             var bar = (SearchBar)d;
-            if (bar.IsLoaded && string.IsNullOrEmpty(e.OldValue as string) && bar._clear is FrameworkElement clear) Motion.Pop(clear);
+            if (bar.IsLoaded && string.IsNullOrEmpty(e.OldValue as string) && bar._clear is FrameworkElement clear) {
+                Motion.Pop(clear);
+            }
+
             bar.QueryChanged?.Invoke(d, EventArgs.Empty);
         }
 

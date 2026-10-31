@@ -34,13 +34,15 @@ namespace Material3.Wpf.Tests {
         [Fact]
         public void AStringHeaderIsNotLeftTheFrameworkDefaultBlack() => Ui.InWindow(w => {
             var expander = new Expander {
-                Style = (Style)w.FindResource("M3Expander"), Header = "Advanced options", IsExpanded = true,
+                Style = (Style)w.FindResource("M3Expander"),
+                Header = "Advanced options",
+                IsExpanded = true,
                 Content = new TextBlock { Text = "Body" },
             };
             w.Content = expander;
             Ui.Settle(w);
 
-            var header = FindFirst<ContentPresenter>(expander);
+            ContentPresenter? header = FindFirst<ContentPresenter>(expander);
             Assert.NotNull(header);
             Assert.Equal(w.FindResource("OnSurface"), TextElement.GetForeground(header!));
         });
@@ -48,7 +50,9 @@ namespace Material3.Wpf.Tests {
         [Fact]
         public void TheDismissSitsOnTheBannersCentreLine() => Ui.InWindow(w => {
             var banner = new NoticeBanner {
-                Tone = Tone.Error, Glyph = "AlertCircle", Width = 560,
+                Tone = Tone.Error,
+                Glyph = "AlertCircle",
+                Width = 560,
                 Text = "The last run failed. Open the log to see which step stopped it.",
                 Actions = new Button { Content = "Show log", Style = (Style)w.FindResource("ErrorTonalButton"), MinHeight = 32 },
             };
@@ -86,7 +90,7 @@ namespace Material3.Wpf.Tests {
                 "the drawn position jumped to the value in the same frame");
 
             Ui.SpinUntil(w, () => Active(slider).Width > before + 10, "the drawn position never moved");
-            Ui.SpinUntil(w, () => Math.Abs(Active(slider).Width - Expected(slider, 80)) < 1.5,
+            Ui.SpinUntil(w, () => Math.Abs(Active(slider).Width - ActiveWidth(slider, 80)) < 1.5,
                 "the drawn position never arrived at the value");
         });
 
@@ -114,7 +118,7 @@ namespace Material3.Wpf.Tests {
         [Fact]
         public void TheThumbSitsOnTheValue() => Ui.InWindow(w => {
             Slider slider = Shown(w, value: 25);
-            Ui.SpinUntil(w, () => Math.Abs(Active(slider).Width - Expected(slider, 25)) < 1.5, "never settled");
+            Ui.SpinUntil(w, () => Math.Abs(Active(slider).Width - ActiveWidth(slider, 25)) < 1.5, "never settled");
 
             var thumb = (FrameworkElement)slider.Template.FindName("PART_Thumb", slider);
             double centre = Canvas.GetLeft(thumb) + thumb.Width / 2;
@@ -130,13 +134,32 @@ namespace Material3.Wpf.Tests {
             Ui.Settle(w);
 
             Assert.Equal(20, slider.Value);
-            Assert.Equal(Expected(slider, 20), Active(slider).Width, 1);
+            Assert.Equal(ActiveWidth(slider, 20), Active(slider).Width, 1);
+        });
+
+        [Fact]
+        public void TheTrackStopsAGapEitherSideOfTheHandleAndEndsInAStop() => Ui.InWindow(w => {
+            Slider slider = Shown(w, value: 50);
+            SliderMotion.SetIsAnimated(slider, false);
+            slider.Value = 40;
+            Ui.Settle(w);
+            var thumb = (Border)slider.Template.FindName("PART_Thumb", slider);
+            var inactive = (Border)slider.Template.FindName("PART_Inactive", slider);
+            double handleLeft = Canvas.GetLeft(thumb), handleRight = handleLeft + thumb.Width;
+            Assert.Equal(4, thumb.Width, 1);
+            Assert.Equal(6, handleLeft - Active(slider).Width, 1);
+            Assert.Equal(6, inactive.Margin.Left - handleRight, 1);
+            Assert.Equal(Visibility.Visible, ((FrameworkElement)slider.Template.FindName("PART_Stop", slider)).Visibility);
         });
 
         private static Slider Shown(Window w, double value) {
             var slider = new Slider {
-                Style = (Style)w.FindResource("M3Slider"), Maximum = 100, Value = value, Width = 300,
-                HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top,
+                Style = (Style)w.FindResource("M3Slider"),
+                Maximum = 100,
+                Value = value,
+                Width = 300,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top,
             };
             w.Content = slider;
             Ui.Settle(w);
@@ -146,11 +169,16 @@ namespace Material3.Wpf.Tests {
         private static Border Active(Slider slider) => (Border)slider.Template.FindName("PART_Active", slider);
 
         private static double Expected(Slider slider, double value) =>
-            10 + (value - slider.Minimum) / (slider.Maximum - slider.Minimum) * (slider.ActualWidth - 20);
+            2 + (value - slider.Minimum) / (slider.Maximum - slider.Minimum) * (slider.ActualWidth - 4);
+
+        // The active segment ends half the handle and the 6 px gap before the handle's centre.
+        private static double ActiveWidth(Slider slider, double value) => Expected(slider, value) - 2 - 6;
 
         private static CheckBox Checkbox(Window w) {
             var box = new CheckBox {
-                Style = (Style)w.FindResource("M3CheckBox"), IsThreeState = true, Content = "Include hidden files",
+                Style = (Style)w.FindResource("M3CheckBox"),
+                IsThreeState = true,
+                Content = "Include hidden files",
             };
             w.Content = new StackPanel { Children = { box } };
             Ui.Settle(w);
@@ -163,9 +191,14 @@ namespace Material3.Wpf.Tests {
             int count = VisualTreeHelper.GetChildrenCount(root);
             for (int i = 0; i < count; i++) {
                 DependencyObject child = VisualTreeHelper.GetChild(root, i);
-                if (child is T hit) return hit;
+                if (child is T hit) {
+                    return hit;
+                }
+
                 T? deeper = FindFirst<T>(child);
-                if (deeper != null) return deeper;
+                if (deeper != null) {
+                    return deeper;
+                }
             }
             return null;
         }

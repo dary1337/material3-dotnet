@@ -11,6 +11,11 @@ namespace Material3.Wpf {
     /// scaled uniformly to the control's size and painted with <see cref="Foreground"/> (which inherits
     /// like text), so one control serves any icon pack — Material Symbols, MDI, or custom.
     /// </summary>
+    /// <remarks>
+    /// The glyphs the library's own templates draw (<c>Check</c>, <c>Close</c>, the chevrons, <c>Loading</c> and the
+    /// dialog tones among them, see <see cref="BuiltInKeys"/>) are built in. A key registered by the app always wins, so
+    /// an app keeps one consistent icon set.
+    /// </remarks>
     public class PathIcon : FrameworkElement {
         private static readonly Dictionary<string, string> Paths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private static readonly Dictionary<string, Geometry> Cache = new Dictionary<string, Geometry>(StringComparer.OrdinalIgnoreCase);
@@ -23,8 +28,13 @@ namespace Material3.Wpf {
 
         /// <summary>Registers a whole glyph set at once.</summary>
         public static void Register(IDictionary<string, string> glyphs) {
-            foreach (KeyValuePair<string, string> kv in glyphs) Register(kv.Key, kv.Value);
+            foreach (KeyValuePair<string, string> kv in glyphs) {
+                Register(kv.Key, kv.Value);
+            }
         }
+
+        /// <summary>The keys that resolve with nothing registered.</summary>
+        public static IEnumerable<string> BuiltInKeys => BuiltInGlyphs.Keys;
 
         /// <summary>Identifies the <see cref="Glyph"/> dependency property.</summary>
         public static readonly DependencyProperty GlyphProperty = DependencyProperty.Register(
@@ -71,15 +81,28 @@ namespace Material3.Wpf {
         /// <inheritdoc />
         protected override void OnRender(DrawingContext dc) {
             string? key = Glyph;
-            if (string.IsNullOrEmpty(key)) return;
+            if (string.IsNullOrEmpty(key)) {
+                return;
+            }
+
             Geometry? geo = Resolve(key!);
-            if (geo == null) return;
+            double box = ViewBox > 0 ? ViewBox : 24;
+            if (geo == null) {
+                geo = BuiltInGlyphs.Resolve(key!);
+                if (geo == null) {
+                    return;
+                }
+
+                box = BuiltInGlyphs.Box;
+            }
 
             double w = ActualWidth, h = ActualHeight;
-            if (w <= 0 || h <= 0) return;
+            if (w <= 0 || h <= 0) {
+                return;
+            }
+
             Brush brush = Foreground ?? Brushes.Black;
 
-            double box = ViewBox > 0 ? ViewBox : 24;
             double scale = Math.Min(w / box, h / box);
             var tg = new TransformGroup();
             tg.Children.Add(new ScaleTransform(scale, scale));
@@ -90,8 +113,14 @@ namespace Material3.Wpf {
         }
 
         private static Geometry? Resolve(string key) {
-            if (Cache.TryGetValue(key, out Geometry? cached)) return cached;
-            if (!Paths.TryGetValue(key, out string? data)) return null;
+            if (Cache.TryGetValue(key, out Geometry? cached)) {
+                return cached;
+            }
+
+            if (!Paths.TryGetValue(key, out string? data)) {
+                return null;
+            }
+
             Geometry parsed;
             try { parsed = Geometry.Parse(data); }
             catch { return null; }

@@ -12,8 +12,8 @@ namespace Material3.WinForms.Tests {
         [InlineData(0x42, 0x85, 0xF4)]
         [InlineData(0x8E, 0x8C, 0x97)]
         public void MeasureThenSolve_RoundTripsCloseToOriginal(int r, int g, int b) {
-            Argb original = Argb.FromArgb(r, g, b);
-            Hct measured = Hct.FromColor(original);
+            var original = Argb.FromArgb(r, g, b);
+            var measured = Hct.FromColor(original);
             Argb resolved = Hct.From(measured.Hue, measured.Chroma, measured.Tone).ToColor();
 
             Assert.InRange(System.Math.Abs(resolved.R - original.R), 0, 4);
@@ -52,7 +52,7 @@ namespace Material3.WinForms.Tests {
         [InlineData(40, 0x34, 0x3D, 0xFF)]
         [InlineData(10, 0x00, 0x00, 0x6E)]
         public void PureBlueTonalLadder_MatchesReferenceImplementation(int tone, int r, int g, int b) {
-            TonalPalette palette = TonalPalette.FromColor(Argb.FromArgb(0, 0, 255));
+            var palette = TonalPalette.FromColor(Argb.FromArgb(0, 0, 255));
             Argb actual = palette.Tone(tone);
 
             Assert.InRange(System.Math.Abs(actual.R - r), 0, 2);

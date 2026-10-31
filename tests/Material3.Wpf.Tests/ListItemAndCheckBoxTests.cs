@@ -30,7 +30,8 @@ namespace Material3.Wpf.Tests {
         [Fact]
         public void TrailingContentWinsOverTrailingText() => Ui.InWindow(w => {
             ListTile both = Shown(w, new ListTile {
-                Headline = "Trash", TrailingText = "128",
+                Headline = "Trash",
+                TrailingText = "128",
                 Trailing = new CheckBox { Style = (Style)w.FindResource("M3Switch") },
             });
             Assert.Equal(Visibility.Collapsed, Slot(both, "trailingText").Visibility);
@@ -48,9 +49,17 @@ namespace Material3.Wpf.Tests {
 
             int hover = -1, selected = -1;
             for (int i = 0; i < row.Template.Triggers.Count; i++) {
-                if (!(row.Template.Triggers[i] is Trigger trigger)) continue;
-                if (trigger.Property == UIElement.IsMouseOverProperty) hover = i;
-                if (trigger.Property == ListTile.IsSelectedProperty) selected = i;
+                if (!(row.Template.Triggers[i] is Trigger trigger)) {
+                    continue;
+                }
+
+                if (trigger.Property == UIElement.IsMouseOverProperty) {
+                    hover = i;
+                }
+
+                if (trigger.Property == ListTile.IsSelectedProperty) {
+                    selected = i;
+                }
             }
             Assert.True(hover >= 0 && selected > hover, "the selected fill does not outrank the hover fill");
         });
@@ -86,8 +95,10 @@ namespace Material3.Wpf.Tests {
 
         private static CheckBox Checkbox(Window w, bool? isChecked) {
             var box = new CheckBox {
-                Style = (Style)w.FindResource("M3CheckBox"), IsThreeState = true,
-                IsChecked = isChecked, Content = "Include hidden files",
+                Style = (Style)w.FindResource("M3CheckBox"),
+                IsThreeState = true,
+                IsChecked = isChecked,
+                Content = "Include hidden files",
             };
             w.Content = new StackPanel { Children = { box } };
             Ui.Settle(w);

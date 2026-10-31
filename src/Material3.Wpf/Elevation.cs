@@ -24,7 +24,10 @@ namespace Material3.Wpf {
 
         /// <summary>The surface colour at a level: the scheme's tint composited over its base surface.</summary>
         public static Argb SurfaceAt(ColorScheme scheme, int level) {
-            if (scheme == null) throw new ArgumentNullException(nameof(scheme));
+            if (scheme == null) {
+                throw new ArgumentNullException(nameof(scheme));
+            }
+
             level = Clamp(level);
             return level == 0 ? scheme.Surface : ColorScheme.Overlay(scheme.Surface, scheme.SurfaceTint, TintOpacity[level]);
         }

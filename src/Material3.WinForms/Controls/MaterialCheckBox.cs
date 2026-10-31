@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
 using System.Windows.Forms;
+using Material3.Core;
 using Material3.WinForms.Drawing;
 using Material3.WinForms.Theming;
 using Material3.WinForms.Tokens;
@@ -14,12 +15,14 @@ namespace Material3.WinForms.Controls {
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public sealed class MaterialCheckBox : Control {
-        private const int BoxSize = 18;
-        private const int LabelGap = 10;
-        private const int HaloRadius = 18;
+        private int _boxSize = 18;
+        private int _labelGap = 10;
+        private int _haloRadius = 20;
+        private int _boxRadius = 4;
 
         private CheckState _state = CheckState.Unchecked;
         private bool _hovered;
+        private readonly StateLayerFade _layer;
         private bool _pressed;
         private readonly AnimatedValue _mark;
 
@@ -28,6 +31,8 @@ namespace Material3.WinForms.Controls {
 
         /// <summary>Initializes a new instance of the <see cref="MaterialCheckBox"/> class.</summary>
         public MaterialCheckBox() {
+            FocusRing.Attach(this);
+            _layer = new StateLayerFade(this);
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint
                     | ControlStyles.UserPaint
@@ -37,8 +42,10 @@ namespace Material3.WinForms.Controls {
                 true);
             BackColor = Color.Transparent;
             MaterialCursors.Apply(this, MaterialCursors.Pointer);
-            Size = new Size(140, 28);
+            Size = new Size(140, ComponentSizes.ControlHeight);
+            AutoSize = true;
             TabStop = true;
+            TypeRole.Follow(this, () => TypeScale.BodyMedium);
             _mark = new AnimatedValue(this, factor: 0.3f, threshold: 0.05f);
             ThemeHook.Attach(this, Invalidate);
         }
@@ -63,13 +70,96 @@ namespace Material3.WinForms.Controls {
                 }
                 _state = value;
                 _mark.To(_state == CheckState.Unchecked ? 0f : 1f);
+                MaterialAccessible.Notify(this, AccessibleEvents.StateChange);
                 CheckedChanged?.Invoke(this, EventArgs.Empty);
                 Invalidate();
             }
         }
 
+        /// <summary>The box's side, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The box's side, in 96-DPI px.")]
+        [DefaultValue(18)]
+        public int BoxSize {
+            get => _boxSize;
+            set { _boxSize = Math.Max(1, value); _prefDpi = -1; ApplyIntrinsicSize(); Invalidate(); }
+        }
+
+        /// <summary>The gap between the box and the label, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The gap between the box and the label, in 96-DPI px.")]
+        [DefaultValue(10)]
+        public int LabelGap {
+            get => _labelGap;
+            set { _labelGap = Math.Max(0, value); _prefDpi = -1; ApplyIntrinsicSize(); Invalidate(); }
+        }
+
+        /// <summary>The radius of the hover and press layer around the box, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The radius of the hover and press layer around the box, in 96-DPI px.")]
+        [DefaultValue(20)]
+        public int HaloRadius {
+            get => _haloRadius;
+            set { _haloRadius = Math.Max(0, value); _prefDpi = -1; ApplyIntrinsicSize(); Invalidate(); }
+        }
+
+        /// <summary>The box's corner radius, in 96-DPI px.</summary>
+        [Category("Material Design")]
+        [Description("The box's corner radius, in 96-DPI px.")]
+        [DefaultValue(4)]
+        public int BoxCornerRadius {
+            get => _boxRadius;
+            set { _boxRadius = Math.Max(0, value); Invalidate(); }
+        }
+
+        /// <inheritdoc />
+        protected override void OnFontChanged(EventArgs e) {
+            base.OnFontChanged(e);
+            _prefDpi = -1;
+            ApplyIntrinsicSize();
+            Invalidate();
+        }
+
+        /// <summary>Whether the control sizes itself to its box and label. Turn it off to give it a size of your own.</summary>
+        [Browsable(true)]
+        [EditorBrowsable(EditorBrowsableState.Always)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+        [DefaultValue(true)]
+        public override bool AutoSize {
+            get => base.AutoSize;
+            set { base.AutoSize = value; ApplyIntrinsicSize(); }
+        }
+
+        /// <inheritdoc />
+        protected override void OnHandleCreated(EventArgs e) {
+            base.OnHandleCreated(e);
+            ApplyIntrinsicSize();
+        }
+
+        /// <inheritdoc />
+        protected override void OnDpiChangedAfterParent(EventArgs e) {
+            base.OnDpiChangedAfterParent(e);
+            _prefDpi = -1;
+            ApplyIntrinsicSize();
+        }
+
+        private void ApplyIntrinsicSize() {
+            if (!AutoSize) {
+                return;
+            }
+
+            if (IsHandleCreated) {
+                Size = GetPreferredSize(Size.Empty);
+            }
+
+            Parent?.PerformLayout(this, nameof(PreferredSize));
+        }
+
         private string? _prefText;
         private int _prefDpi = -1;
+
+        // The hover halo is centred on the mark and wider than it; a control clips at its bounds.
+        private int HaloInset => Math.Max(0, Dpi.Scale(this, _haloRadius) - Dpi.Scale(this, _boxSize) / 2);
         private Size _prefSize;
 
         /// <inheritdoc />
@@ -78,16 +168,21 @@ namespace Material3.WinForms.Controls {
             if (_prefDpi == DeviceDpi && _prefText == text) {
                 return _prefSize;
             }
-            int width = Dpi.Scale(this, BoxSize + 10);
+            int inset = HaloInset;
+            int width = inset + Dpi.Scale(this, _boxSize);
             if (text.Length > 0) {
-                using (Graphics g = CreateGraphics()) {
-                    width += Dpi.Scale(this, LabelGap) + (int)Math.Ceiling(
-                        g.MeasureString(text, TypeScale.BodyMedium, int.MaxValue, StringFormat.GenericTypographic).Width);
+                using (var measure = MeasureContext.For(this)) {
+                    Graphics g = measure.Graphics;
+                    width += Dpi.Scale(this, _labelGap) + (int)Math.Ceiling(
+                        g.MeasureString(text, Font, int.MaxValue, StringFormat.GenericTypographic).Width);
                 }
+            }
+            else {
+                width += inset;
             }
             _prefText = text;
             _prefDpi = DeviceDpi;
-            _prefSize = new Size(width, Dpi.Scale(this, 28));
+            _prefSize = new Size(width, Math.Max(Dpi.Scale(this, ComponentSizes.ControlHeight), Math.Max(Font.Height, Dpi.Scale(this, _boxSize + 10))));
             return _prefSize;
         }
 
@@ -133,11 +228,23 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override void OnTextChanged(EventArgs e) {
             base.OnTextChanged(e);
+            ApplyIntrinsicSize();
             Invalidate();
         }
 
         /// <inheritdoc />
         protected override void OnPaint(PaintEventArgs e) {
+            PaintContent(e);
+            if (Focused && ShowFocusCues) {
+                FocusRing.Paint(e.Graphics, this, ClientRectangle, Dpi.Scale(this, Shape.Small));
+            }
+        }
+
+        /// <inheritdoc />
+        protected override AccessibleObject CreateAccessibilityInstance() =>
+            new MaterialAccessible(this, AccessibleRole.CheckButton, () => CheckState == CheckState.Checked ? AccessibleStates.Checked : CheckState == CheckState.Indeterminate ? AccessibleStates.Mixed : AccessibleStates.None, () => Text, null, TextKey.Toggle, Toggle);
+
+        private void PaintContent(PaintEventArgs e) {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
@@ -146,13 +253,13 @@ namespace Material3.WinForms.Controls {
             }
 
             float cy = Height / 2f;
-            int boxSize = Dpi.Scale(this, BoxSize);
-            int haloRadius = Dpi.Scale(this, HaloRadius);
-            var box = new Rectangle(Dpi.Scale(this, 4), (int)(cy - boxSize / 2f), boxSize, boxSize);
+            int boxSize = Dpi.Scale(this, _boxSize);
+            int haloRadius = Dpi.Scale(this, _haloRadius);
+            var box = new Rectangle(HaloInset, (int)(cy - boxSize / 2f), boxSize, boxSize);
             bool marked = _state != CheckState.Unchecked;
 
-            if (Enabled && (_hovered || _pressed)) {
-                double overlay = _pressed ? StateLayers.Pressed : StateLayers.Hover;
+            double overlay = _layer.Resolve(_hovered, _pressed, Enabled);
+            if (overlay > 0) {
                 Color haloBase = marked ? MaterialColors.Primary : MaterialColors.OnSurface;
                 using (var halo = new SolidBrush(Color.FromArgb((int)(overlay * 255), haloBase))) {
                     g.FillEllipse(halo, box.X + boxSize / 2f - haloRadius, cy - haloRadius, haloRadius * 2, haloRadius * 2);
@@ -164,7 +271,7 @@ namespace Material3.WinForms.Controls {
                 : MaterialColors.Primary;
             Color mark = Enabled ? MaterialColors.OnPrimary : MaterialColors.Surface;
 
-            using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(box, Dpi.Scale(this, 4))) {
+            using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(box, Dpi.Scale(this, _boxRadius))) {
                 if (marked) {
                     using (var brush = new SolidBrush(fill)) {
                         g.FillPath(brush, path);
@@ -205,8 +312,8 @@ namespace Material3.WinForms.Controls {
                 Color textColor = Enabled ? MaterialColors.OnSurface : MaterialColors.OnSurfaceMuted;
                 using (var brush = new SolidBrush(textColor))
                 using (var fmt = new StringFormat(StringFormat.GenericTypographic) { LineAlignment = StringAlignment.Center }) {
-                    int labelGap = Dpi.Scale(this, LabelGap);
-                    g.DrawString(Text, TypeScale.BodyMedium, brush,
+                    int labelGap = Dpi.Scale(this, _labelGap);
+                    g.DrawString(Text, Font, brush,
                         new RectangleF(box.Right + labelGap, 0, Width - box.Right - labelGap, Height), fmt);
                 }
             }
@@ -215,6 +322,7 @@ namespace Material3.WinForms.Controls {
         /// <inheritdoc />
         protected override void Dispose(bool disposing) {
             if (disposing) {
+                _layer.Dispose();
                 _mark.Dispose();
             }
             base.Dispose(disposing);

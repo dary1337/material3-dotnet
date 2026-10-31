@@ -12,17 +12,21 @@
 
   <PropertyGroup Label="Package">
     <PackageId>Material3.Wpf</PackageId>
-    <Version>0.10.0</Version>
+    <Version>0.11.0</Version>
     <Authors>dary1337</Authors>
-    <Description>Material 3 (Material You) for WPF: a runtime theme (ThemeManager) that generates the full M3 color-role scheme from one seed color (HCT) and publishes it as live DynamicResource brushes so the whole UI recolors on the fly, plus a set of themed M3 controls (filled/tonal/outlined/text buttons, icon button and icon toggle, FAB, filled and outlined text fields with a floating label, search bar, select, assist/filter/input/suggestion chips, tabs, badge, switch, radio, three-state checkbox, segmented button, slider, menus, plain and rich tooltips, scrollbar, linear and circular progress, card, list item, divider, expander, colour field, list and record editors, number input filter), a blocking M3 dialog, page furniture (PageHeader, NoticeBanner, EmptyState, PopupCard, Snackbar), elevation shadows and tinted surfaces, loading skeletons, the Busy spinner and a step checklist, an icon-set-agnostic PathIcon, and motion helpers. Built on Material3.Core.</Description>
+    <Description>Material 3 (Material You) for WPF: a runtime ThemeManager that builds the M3 color-role scheme from one seed (HCT) and publishes it as live DynamicResource brushes, plus the M3 control set, dialogs and pickers, a title bar, elevation, motion and an icon-set-agnostic PathIcon. Built on Material3.Core.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/dary1337/material3-dotnet</PackageProjectUrl>
     <RepositoryUrl>https://github.com/dary1337/material3-dotnet</RepositoryUrl>
     <EnablePackageValidation>true</EnablePackageValidation>
-    <PackageValidationBaselineVersion>0.9.0</PackageValidationBaselineVersion>
+    <PackageValidationBaselineVersion>0.10.0</PackageValidationBaselineVersion>
     <PackageTags>material3;material-you;material-design;wpf;theme;dark-mode;dynamic-color;hct</PackageTags>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\*.cs" LinkBase="Shared" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Material3.Core\Material3.Core.csproj" />

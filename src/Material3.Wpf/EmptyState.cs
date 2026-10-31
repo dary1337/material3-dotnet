@@ -39,6 +39,13 @@ namespace Material3.Wpf {
         /// <summary>The explanation under the title. Wraps.</summary>
         public string Text { get => (string)GetValue(TextProperty); set => SetValue(TextProperty, value); }
 
+        /// <summary>Identifies the <see cref="TextMaxWidth"/> property.</summary>
+        public static readonly DependencyProperty TextMaxWidthProperty = DependencyProperty.Register(
+            nameof(TextMaxWidth), typeof(double), typeof(EmptyState), new PropertyMetadata(360.0));
+
+        /// <summary>How wide the explanation runs before it wraps.</summary>
+        public double TextMaxWidth { get => (double)GetValue(TextMaxWidthProperty); set => SetValue(TextMaxWidthProperty, value); }
+
         /// <summary>Identifies the <see cref="Action"/> property.</summary>
         public static readonly DependencyProperty ActionProperty = DependencyProperty.Register(
             nameof(Action), typeof(object), typeof(EmptyState), new PropertyMetadata(null));

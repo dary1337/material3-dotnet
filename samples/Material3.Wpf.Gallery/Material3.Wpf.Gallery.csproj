@@ -14,6 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Material3.Core\Material3.Core.csproj" />
     <ProjectReference Include="..\..\src\Material3.Wpf\Material3.Wpf.csproj" />
+    <Resource Include="app.ico" />
   </ItemGroup>
 
   <!-- Single-file distributable: Costura.Fody embeds Material3.Core + Material3.Wpf into the .exe,
@@ -21,6 +22,17 @@
   <ItemGroup>
     <PackageReference Include="Costura.Fody" Version="6.0.0" PrivateAssets="all" />
     <PackageReference Include="Fody" Version="6.9.2" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- The library is embedded in the exe; a loose copy left next to it from an earlier build would load first. -->
+  <Target Name="DropEmbeddedLibraryCopies" AfterTargets="Build">
+    <Delete Files="$(OutDir)Material3.Core.dll;$(OutDir)Material3.Core.pdb;$(OutDir)Material3.Wpf.dll;$(OutDir)Material3.Wpf.pdb" />
+  </Target>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\GallerySpec.cs" Link="GallerySpec.cs" />
+    <Compile Include="..\Shared\GalleryGlyphs.cs" Link="GalleryGlyphs.cs" />
+    <InternalsVisibleTo Include="Material3.Wpf.Tests" />
   </ItemGroup>
 
 </Project>

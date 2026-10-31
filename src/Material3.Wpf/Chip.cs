@@ -1,10 +1,11 @@
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 
 namespace Material3.Wpf {
-        /// <summary>The size of a status <see cref="Chip"/>.</summary>
+    /// <summary>The size of a status <see cref="Chip"/>.</summary>
     public enum ChipSize {
         /// <summary>Annotates a list row.</summary>
         Dense,
@@ -78,6 +79,24 @@ namespace Material3.Wpf {
         /// <summary>Whether a filter chip is on. Binds two-way by default.</summary>
         public bool IsSelected { get => (bool)GetValue(IsSelectedProperty); set => SetValue(IsSelectedProperty, value); }
 
+        /// <summary>Identifies the <see cref="AccentContainer"/> dependency property.</summary>
+        public static readonly DependencyProperty AccentContainerProperty =
+            DependencyProperty.Register(nameof(AccentContainer), typeof(Brush), typeof(Chip), new PropertyMetadata(null, OnAccentChanged));
+        /// <summary>A fill of your own in place of the theme's, for a semantic or brand chip; null keeps the theme's.</summary>
+        public Brush? AccentContainer { get => (Brush?)GetValue(AccentContainerProperty); set => SetValue(AccentContainerProperty, value); }
+
+        /// <summary>Identifies the <see cref="AccentContent"/> dependency property.</summary>
+        public static readonly DependencyProperty AccentContentProperty =
+            DependencyProperty.Register(nameof(AccentContent), typeof(Brush), typeof(Chip), new PropertyMetadata(null, OnAccentChanged));
+        /// <summary>The label, glyph and state-layer colour that goes with <see cref="AccentContainer"/>; null keeps the theme's.</summary>
+        public Brush? AccentContent { get => (Brush?)GetValue(AccentContentProperty); set => SetValue(AccentContentProperty, value); }
+
+        /// <summary>Identifies the <see cref="AccentOutline"/> dependency property.</summary>
+        public static readonly DependencyProperty AccentOutlineProperty =
+            DependencyProperty.Register(nameof(AccentOutline), typeof(Brush), typeof(Chip), new PropertyMetadata(null, OnAccentChanged));
+        /// <summary>The border colour; null follows <see cref="AccentContainer"/> when that is set, else the theme's.</summary>
+        public Brush? AccentOutline { get => (Brush?)GetValue(AccentOutlineProperty); set => SetValue(AccentOutlineProperty, value); }
+
         /// <summary>Identifies the <see cref="Removed"/> routed event.</summary>
         public static readonly RoutedEvent RemovedEvent = EventManager.RegisterRoutedEvent(
             nameof(Removed), RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(Chip));
@@ -99,12 +118,48 @@ namespace Material3.Wpf {
         /// <inheritdoc />
         public override void OnApplyTemplate() {
             base.OnApplyTemplate();
-            if (_remove != null) _remove.Click -= OnRemoveClick;
+            if (_remove != null) {
+                _remove.Click -= OnRemoveClick;
+            }
+
             _remove = GetTemplateChild(PartRemove) as ButtonBase;
-            if (_remove != null) _remove.Click += OnRemoveClick;
+            if (_remove != null) {
+                _remove.Click += OnRemoveClick;
+            }
+
             _leading = GetTemplateChild(PartLeading) as FrameworkElement;
-            if (_leading != null) _leading.LayoutTransform = _leadingScale;
+            if (_leading != null) {
+                _leading.LayoutTransform = _leadingScale;
+            }
+
             UpdateLeading(animate: false);
+            ApplyAccent();
+        }
+
+        private static void OnAccentChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((Chip)d).ApplyAccent();
+
+        // Local values on the template parts outrank the template's own triggers, so an accent holds in every state.
+        private void ApplyAccent() {
+            Brush? container = AccentContainer, content = AccentContent, outline = AccentOutline ?? AccentContainer;
+            Paint("bg", Border.BackgroundProperty, container);
+            Paint("bg", Border.BorderBrushProperty, outline);
+            Paint("tx", TextBlock.ForegroundProperty, content);
+            Paint(PartLeading, PathIcon.ForegroundProperty, content);
+            Paint("ic", PathIcon.ForegroundProperty, content);
+            Paint("st", Border.BackgroundProperty, content);
+        }
+
+        private void Paint(string part, DependencyProperty property, Brush? brush) {
+            if (!(GetTemplateChild(part) is DependencyObject element)) {
+                return;
+            }
+
+            if (brush != null) {
+                element.SetValue(property, brush);
+            }
+            else {
+                element.ClearValue(property);
+            }
         }
 
         private static void OnLeadingChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
@@ -113,7 +168,7 @@ namespace Material3.Wpf {
         private void UpdateLeading(bool animate) {
             double to = Kind != ChipKind.Filter || IsSelected || Glyph != null ? 1 : 0;
             var grow = new DoubleAnimation(to, animate ? Motion.Ms(200) : Motion.Ms(0)) {
-                EasingFunction = TryFindResource("M3EmphasizedDecelerate") as IEasingFunction,
+                EasingFunction = TryFindResource(ResourceKeys.M3EmphasizedDecelerate) as IEasingFunction,
             };
             _leadingScale.BeginAnimation(ScaleTransform.ScaleXProperty, grow);
             _leading?.BeginAnimation(OpacityProperty, new DoubleAnimation(to, animate ? Motion.Ms(150) : Motion.Ms(0)));
@@ -126,8 +181,14 @@ namespace Material3.Wpf {
 
         /// <inheritdoc />
         protected override void OnClick() {
-            if (Kind == ChipKind.Status) return;
-            if (Kind == ChipKind.Filter) SetCurrentValue(IsSelectedProperty, !IsSelected);
+            if (Kind == ChipKind.Status) {
+                return;
+            }
+
+            if (Kind == ChipKind.Filter) {
+                SetCurrentValue(IsSelectedProperty, !IsSelected);
+            }
+
             base.OnClick();
         }
     }

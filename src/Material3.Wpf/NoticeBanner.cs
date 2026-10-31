@@ -5,7 +5,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 
 namespace Material3.Wpf {
-        /// <summary>
+    /// <summary>
     /// A full-width notice row: a glyph, a wrapping body, the caller's actions and a dismiss button.
     /// </summary>
     /// <remarks>
@@ -79,9 +79,14 @@ namespace Material3.Wpf {
         /// <inheritdoc />
         public override void OnApplyTemplate() {
             base.OnApplyTemplate();
-            if (_dismiss != null) _dismiss.Click -= OnDismissClick;
+            if (_dismiss != null) {
+                _dismiss.Click -= OnDismissClick;
+            }
+
             _dismiss = GetTemplateChild(PartDismiss) as ButtonBase;
-            if (_dismiss != null) _dismiss.Click += OnDismissClick;
+            if (_dismiss != null) {
+                _dismiss.Click += OnDismissClick;
+            }
         }
 
         private void OnDismissClick(object sender, RoutedEventArgs e) => Dismiss();

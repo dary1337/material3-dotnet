@@ -19,4 +19,9 @@
     <ProjectReference Include="..\..\src\Material3.Core\Material3.Core.csproj" />
   </ItemGroup>
 
+  <!-- The gallery is a net472 exe, so its spec test runs on that target only. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <ProjectReference Include="..\..\samples\Material3.Wpf.Gallery\Material3.Wpf.Gallery.csproj" />
+  </ItemGroup>
+
 </Project>

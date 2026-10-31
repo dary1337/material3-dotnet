@@ -25,7 +25,9 @@ namespace Material3.Wpf {
         protected override void OnOpened(EventArgs e) {
             base.OnOpened(e);
             Motion.AnimatePopupOpen(this);
-            if (WatchAnchor) PopupWatch.Watch(this);
+            if (WatchAnchor) {
+                PopupWatch.Watch(this);
+            }
         }
 
         private bool _closing;
@@ -36,19 +38,36 @@ namespace Material3.Wpf {
             var p = (AnimatedPopup)d;
             if ((bool)baseValue) {
                 bool wasClosing = p._closing;
-                p._done = false; p._closing = false; p._cycle++;
-                if (wasClosing) Motion.AnimatePopupOpen(p);
+                p._done = false;
+                p._closing = false;
+                p._cycle++;
+                if (wasClosing) {
+                    Motion.AnimatePopupOpen(p);
+                }
+
                 return true;
             }
             if (p._done) { p._done = false; return false; }
-            if (!p.IsOpen) return false;
-            if (p._closing) return true;
-            if (!(p.Child is FrameworkElement)) return false;
+            if (!p.IsOpen) {
+                return false;
+            }
+
+            if (p._closing) {
+                return true;
+            }
+
+            if (!(p.Child is FrameworkElement)) {
+                return false;
+            }
+
             p._closing = true;
             int cycle = p._cycle;
             Motion.AnimatePopupClose(p, () => {
                 p._closing = false;
-                if (p._cycle != cycle) return;
+                if (p._cycle != cycle) {
+                    return;
+                }
+
                 p._done = true;
                 p.SetCurrentValue(IsOpenProperty, false);
             });

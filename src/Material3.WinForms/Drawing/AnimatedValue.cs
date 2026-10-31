@@ -5,7 +5,7 @@ using Material3.WinForms.Tokens;
 namespace Material3.WinForms.Drawing {
     /// <summary>Shared exponential-ease scalar behind every owner-drawn control's tween (slider handle,
     /// switch thumb, progress fill, check mark, floating label). Snaps instead of easing when
-    /// <see cref="Motion.AnimationsEnabled"/> or <see cref="Animated"/> is off, or the owner has no handle.</summary>
+    /// <see cref="Motion.IsAnimating"/> or <see cref="Animated"/> is off, or the owner has no handle.</summary>
     internal sealed class AnimatedValue : IDisposable {
         private readonly Control _owner;
         private readonly float _factor;
@@ -19,7 +19,7 @@ namespace Material3.WinForms.Drawing {
         /// <param name="factor">Fraction of the remaining distance closed per frame (e.g. 0.25 ≈ M3 short4 at 60fps).</param>
         /// <param name="threshold">Distance to the target at which the glide snaps and stops.</param>
         /// <param name="intervalMs">Frame interval; 16 ms ≈ 60fps.</param>
-        public AnimatedValue(Control owner, float factor, float threshold, int intervalMs = 16) {
+        public AnimatedValue(Control owner, float factor, float threshold, int intervalMs = Motion.FrameIntervalMs) {
             _owner = owner;
             _factor = factor;
             _threshold = threshold;
@@ -30,7 +30,7 @@ namespace Material3.WinForms.Drawing {
         /// <summary>The current eased value — read this in OnPaint.</summary>
         public float Current => _current;
 
-        /// <summary>Per-instance switch on top of the global <see cref="Motion.AnimationsEnabled"/>; setting it false snaps.</summary>
+        /// <summary>Per-instance switch on top of the global <see cref="Motion.IsAnimating"/>; setting it false snaps.</summary>
         public bool Animated {
             get => _animated;
             set {
@@ -44,7 +44,7 @@ namespace Material3.WinForms.Drawing {
         /// <summary>Eases toward <paramref name="target"/>, or snaps if animation is off, no handle yet, or already within threshold.</summary>
         public void To(float target) {
             _target = target;
-            if (!_animated || !Motion.AnimationsEnabled || !_owner.IsHandleCreated
+            if (!_animated || !Motion.IsAnimating || !_owner.IsHandleCreated
                     || Math.Abs(_target - _current) < _threshold) {
                 Snap();
             }
@@ -69,7 +69,7 @@ namespace Material3.WinForms.Drawing {
 
         private void OnTick(object? sender, EventArgs e) {
             float delta = _target - _current;
-            if (!_animated || !Motion.AnimationsEnabled || Math.Abs(delta) < _threshold) {
+            if (!_animated || !Motion.IsAnimating || Math.Abs(delta) < _threshold) {
                 _current = _target;
                 _timer.Stop();
             }

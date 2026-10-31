@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using Material3.Core;
 
 namespace Material3.Wpf {
     /// <summary>
@@ -35,8 +36,10 @@ namespace Material3.Wpf {
         /// <summary>The block's corner radius. Match the element it stands in for.</summary>
         public CornerRadius CornerRadius { get => (CornerRadius)GetValue(CornerRadiusProperty); set => SetValue(CornerRadiusProperty, value); }
 
+        private const byte ShimmerAlpha = 28;
         private Border? _shimmer;
         private TranslateTransform? _sweep;
+        private GradientStop? _highlight;
 
         /// <inheritdoc />
         public override void OnApplyTemplate() {
@@ -47,39 +50,62 @@ namespace Material3.Wpf {
         }
 
         private void Sync() {
-            if (IsVisible) Start();
-            else Stop();
+            if (IsVisible) {
+                Start();
+            }
+            else {
+                Stop();
+            }
         }
 
         private void Start() {
-            if (_shimmer == null || _sweep != null) return;
-            Color on = (TryFindResource("OnSurface") as SolidColorBrush)?.Color ?? Colors.White;
-            Color highlight = Color.FromArgb(28, on.R, on.G, on.B);
-            Color clear = Color.FromArgb(0, on.R, on.G, on.B);
+            if (_shimmer == null || _sweep != null) {
+                return;
+            }
 
+            // A gradient background, not an opacity mask: a mask renders through a layer of its own every frame, about
+            // twice the cost for a list of rows that all shimmer at once.
             var brush = new LinearGradientBrush {
-                StartPoint = new Point(0, 0), EndPoint = new Point(1, 0),
+                StartPoint = new Point(0, 0),
+                EndPoint = new Point(1, 0),
                 SpreadMethod = GradientSpreadMethod.Repeat,
             };
-            brush.GradientStops.Add(new GradientStop(clear, 0.0));
-            brush.GradientStops.Add(new GradientStop(clear, 0.35));
-            brush.GradientStops.Add(new GradientStop(highlight, 0.5));
-            brush.GradientStops.Add(new GradientStop(clear, 0.65));
-            brush.GradientStops.Add(new GradientStop(clear, 1.0));
+            brush.GradientStops.Add(new GradientStop(Colors.Transparent, 0.0));
+            brush.GradientStops.Add(new GradientStop(Colors.Transparent, 0.35));
+            _highlight = new GradientStop(Highlight(), 0.5);
+            brush.GradientStops.Add(_highlight);
+            brush.GradientStops.Add(new GradientStop(Colors.Transparent, 0.65));
+            brush.GradientStops.Add(new GradientStop(Colors.Transparent, 1.0));
 
             _sweep = new TranslateTransform();
             brush.RelativeTransform = _sweep;
             _shimmer.Background = brush;
+            ThemeManager.ThemeChanged += OnThemeChanged;
             _sweep.BeginAnimation(TranslateTransform.XProperty,
                 new DoubleAnimation(0, 1, new Duration(TimeSpan.FromMilliseconds(1400))) { RepeatBehavior = RepeatBehavior.Forever });
         }
 
+        private Color Highlight() {
+            Color on = (TryFindResource(nameof(ColorScheme.OnSurface)) as SolidColorBrush)?.Color ?? Colors.White;
+            return Color.FromArgb(ShimmerAlpha, on.R, on.G, on.B);
+        }
+
+        // Held only while the sweep runs, so a hidden or unloaded skeleton is not kept by the static event.
+        private void OnThemeChanged(object? sender, EventArgs e) =>
+            Dispatcher.BeginInvoke(new Action(() => {
+                if (_highlight != null) {
+                    _highlight.Color = Highlight();
+                }
+            }));
+
         private void Stop() {
+            ThemeManager.ThemeChanged -= OnThemeChanged;
             if (_sweep != null) {
                 _sweep.BeginAnimation(TranslateTransform.XProperty, null);
                 _sweep = null;
             }
-            if (_shimmer != null) _shimmer.Background = null;
+            _highlight = null;
+            _shimmer?.ClearValue(Border.BackgroundProperty);
         }
     }
 }

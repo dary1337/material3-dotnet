@@ -27,7 +27,7 @@ namespace Material3.Core {
         private readonly Argb _color;
 
         private Hct(Argb color) {
-            Cam16 cam = Cam16.FromColor(color);
+            var cam = Cam16.FromColor(color);
             Hue = cam.Hue;
             Chroma = cam.Chroma;
             Tone = ColorUtils.LstarFromColor(color);

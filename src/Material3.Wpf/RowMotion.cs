@@ -12,13 +12,21 @@ namespace Material3.Wpf {
             items.ItemContainerGenerator.ContainerFromItem(item) as FrameworkElement;
 
         internal static void Added(ItemsControl? items, object item) {
-            if (!CanAnimate(items)) return;
+            if (!CanAnimate(items)) {
+                return;
+            }
+
             items!.UpdateLayout();
-            if (Container(items, item) is FrameworkElement row) Motion.GrowIn(row);
+            if (Container(items, item) is FrameworkElement row) {
+                Motion.GrowIn(row);
+            }
         }
 
         internal static void Remove(ItemsControl? items, object item, HashSet<object> leaving, Action remove) {
-            if (leaving.Contains(item)) return;
+            if (leaving.Contains(item)) {
+                return;
+            }
+
             if (!CanAnimate(items) || !(Container(items!, item) is FrameworkElement row)) {
                 remove();
                 return;
@@ -36,12 +44,19 @@ namespace Material3.Wpf {
                 return;
             }
             var before = new List<(object Item, Point At)>();
-            foreach (object item in affected)
-                if (Container(items!, item) is FrameworkElement row) before.Add((item, row.TranslatePoint(new Point(), items)));
+            foreach (object item in affected) {
+                if (Container(items!, item) is FrameworkElement row) {
+                    before.Add((item, row.TranslatePoint(new Point(), items)));
+                }
+            }
+
             move();
             items!.UpdateLayout();
-            foreach ((object item, Point at) in before)
-                if (Container(items, item) is FrameworkElement row) Motion.SlideFrom(row, at - row.TranslatePoint(new Point(), items));
+            foreach ((object item, Point at) in before) {
+                if (Container(items, item) is FrameworkElement row) {
+                    Motion.SlideFrom(row, at - row.TranslatePoint(new Point(), items));
+                }
+            }
         }
     }
 }

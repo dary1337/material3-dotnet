@@ -13,10 +13,10 @@ using Material3.WinForms.Typography;
 namespace Material3.WinForms.Forms {
     /// <summary>
     /// Reusable Material 3 basic dialog: leading icon, title, supporting text and right-aligned
-    /// text/filled actions on a rounded elevated surface (max-width 420, padding 24).
+    /// text/filled actions on a rounded elevated surface; every metric below is a 96-DPI default the app can change before showing it.
     /// </summary>
     public sealed class MaterialDialog : Form {
-        private readonly List<MaterialButton> _actions = new List<MaterialButton>();
+        private readonly List<Control> _actions = new List<Control>();
         private readonly List<(string text, string icon, Action onClick)> _links = new List<(string, string, Action)>();
         private string _iconGlyph = string.Empty;
         private Color _iconColor;
@@ -24,10 +24,13 @@ namespace Material3.WinForms.Forms {
         private string _bodyText = string.Empty;
         private MaterialButton? _defaultButton;
 
-        private static int Pad => Spacing.Dialog.Left;
-        private const int CornerRadius = Shape.LargeIncreased;
-        private static int WidthDefault => ComponentSizes.DialogMaxWidth;
-        private const int WidthExpanded = 560;
+        private int _dialogWidth = ComponentSizes.DialogMaxWidth;
+        private int _expandedWidth = 560;
+        private int _contentPadding = Spacing.Dialog.Left;
+        private int _cornerRadius = Shape.ExtraLarge;
+        private int _glyphSize = 26;
+        private int _actionGap = Spacing.Space2;
+        private bool _working;
 
         /// <summary>Initializes a new instance of the <see cref="MaterialDialog"/> class.</summary>
         public MaterialDialog() {
@@ -38,7 +41,7 @@ namespace Material3.WinForms.Forms {
             ForeColor = MaterialColors.OnSurface;
             Font = TypeScale.BodyMedium;
             _iconColor = MaterialColors.Primary;
-            Width = WidthDefault;
+            Width = ComponentSizes.DialogMaxWidth;
             DoubleBuffered = true;
             KeyPreview = true;
             Opacity = 0d;
@@ -63,6 +66,65 @@ namespace Material3.WinForms.Forms {
         public string TitleText { get => _titleText; set => _titleText = value ?? string.Empty; }
         /// <summary>The supporting text.</summary>
         public string BodyText { get => _bodyText; set => _bodyText = value ?? string.Empty; }
+
+        /// <summary>The dialog's width, in 96-DPI px.</summary>
+        public int DialogWidth {
+            get => _dialogWidth;
+            set => _dialogWidth = Math.Max(1, value);
+        }
+
+        /// <summary>The width a long body widens the dialog to, in 96-DPI px.</summary>
+        public int ExpandedWidth {
+            get => _expandedWidth;
+            set => _expandedWidth = Math.Max(1, value);
+        }
+
+        /// <summary>The space between the dialog's edges and its content, in 96-DPI px.</summary>
+        public int ContentPadding {
+            get => _contentPadding;
+            set => _contentPadding = Math.Max(0, value);
+        }
+
+        /// <summary>The dialog's corner radius, in 96-DPI px.</summary>
+        public int CornerRadius {
+            get => _cornerRadius;
+            set => _cornerRadius = Math.Max(0, value);
+        }
+
+        /// <summary>The side of the glyph above the title, in 96-DPI px.</summary>
+        public int GlyphSize {
+            get => _glyphSize;
+            set => _glyphSize = Math.Max(0, value);
+        }
+
+        /// <summary>The gap between action buttons, in 96-DPI px.</summary>
+        public int ActionGap {
+            get => _actionGap;
+            set => _actionGap = Math.Max(0, value);
+        }
+
+        /// <summary>The headline's font. Null follows <see cref="TypeScale.HeadlineSmall"/>.</summary>
+        public Font? TitleFont { get; set; }
+
+        /// <summary>The supporting text's font. Null follows <see cref="TypeScale.BodyMedium"/>.</summary>
+        public Font? BodyFont { get; set; }
+
+        private Font Headline => TitleFont ?? TypeScale.HeadlineSmall;
+
+        private Font Body => BodyFont ?? TypeScale.BodyMedium;
+
+        private int Pad => Dpi.Scale(this, _contentPadding);
+
+        private int TrackWidth => Dpi.Scale(this, MaterialScrollPanel.DefaultTrackWidth);
+
+        /// <summary>
+        /// The meaning the dialog carries, shown as a tinted glyph above the title while <see cref="Glyph"/> is empty.
+        /// Null shows no glyph.
+        /// </summary>
+        public MaterialTone? Tone { get; set; }
+
+        /// <summary>What the work of a working action threw; the dialog then closed with <see cref="DialogResult.Abort"/>.</summary>
+        public Exception? WorkFailure { get; private set; }
 
         /// <summary>Set by the action whose <c>tag</c> overload was clicked.</summary>
         public object? ResultTag { get; private set; }
@@ -92,18 +154,91 @@ namespace Material3.WinForms.Forms {
             }
         }
 
-        private MaterialButton BuildAction(string text, MaterialButtonVariant variant, Color accent, Color onAccent) {
+        /// <summary>Appends an action that closes the dialog with <paramref name="result"/>, tinted with <paramref name="tone"/> — an error tone for a destructive choice.</summary>
+        public void AddAction(string text, DialogResult result, MaterialButtonVariant variant, MaterialTone tone) {
+            MaterialButton button = BuildAction(text, variant, default, default, tone);
+            button.Click += (s, e) => { DialogResult = result; Close(); };
+            _actions.Add(button);
+            if (variant == MaterialButtonVariant.Filled) {
+                _defaultButton = button;
+            }
+        }
+
+        /// <summary>
+        /// Appends an action that runs <paramref name="work"/> before it closes with <paramref name="result"/>: its button
+        /// spins, the other actions and Esc are blocked, and a throw lands in <see cref="WorkFailure"/>.
+        /// </summary>
+        public void AddAction(string text, DialogResult result, MaterialButtonVariant variant, Func<Task> work, MaterialTone tone = MaterialTone.Neutral) {
+            if (work == null) {
+                throw new ArgumentNullException(nameof(work));
+            }
+
+            MaterialButton button = BuildAction(text, variant, default, default, tone);
+            button.Click += async (s, e) => await RunAsync(result, work, busy => button.IsBusy = busy, button);
+            _actions.Add(button);
+            if (variant == MaterialButtonVariant.Filled) {
+                _defaultButton = button;
+            }
+        }
+
+        /// <summary>
+        /// Appends a confirm that commits only after it is held for <paramref name="hold"/> — for a choice too costly
+        /// for a click. <paramref name="destructive"/> fills it with the error colour; <paramref name="work"/>, when
+        /// given, runs before the dialog closes, as with the working <see cref="AddAction(string, DialogResult, MaterialButtonVariant, Func{Task}, MaterialTone)"/>.
+        /// </summary>
+        public void AddHoldAction(string text, DialogResult result, TimeSpan hold, bool destructive = false, Func<Task>? work = null) {
+            var button = new HoldButton(text, hold, destructive);
+            button.Committed += async (s, e) => {
+                if (work == null) { DialogResult = result; Close(); return; }
+                await RunAsync(result, work, busy => button.IsBusy = busy, button);
+            };
+            _actions.Add(button);
+        }
+
+        internal async Task RunAsync(DialogResult result, Func<Task> work, Action<bool> showBusy, Control owner) {
+            if (_working) {
+                return;
+            }
+
+            _working = true;
+            foreach (Control action in _actions) {
+                if (!ReferenceEquals(action, owner)) {
+                    action.Enabled = false;
+                }
+            }
+            showBusy(true);
+            try { await work(); }
+            catch (Exception ex) { WorkFailure = ex; }
+            finally { _working = false; }
+            if (IsDisposed) {
+                return;
+            }
+
+            showBusy(false);
+            DialogResult = WorkFailure != null ? DialogResult.Abort : result;
+            Close();
+        }
+
+        private (string glyph, Color color) ToneGlyph(MaterialTone tone) {
+            switch (tone) {
+                case MaterialTone.Warning: return (MaterialIcons.Warning, MaterialColors.Warning);
+                case MaterialTone.Error: return (MaterialIcons.Error, MaterialColors.Error);
+                case MaterialTone.Success: return (MaterialIcons.CheckCircle, MaterialColors.Success);
+                case MaterialTone.Neutral: return (MaterialIcons.Info, MaterialColors.OnSurfaceVariant);
+                default: return (MaterialIcons.Info, MaterialColors.Primary);
+            }
+        }
+
+        private MaterialButton BuildAction(string text, MaterialButtonVariant variant, Color accent, Color onAccent, MaterialTone tone = MaterialTone.Neutral) {
             var button = new MaterialButton {
                 Text = text,
                 Variant = variant,
+                Tone = tone,
                 AutoSize = false,
-                Height = ComponentSizes.ButtonHeight,
             };
             if (accent.A > 0) {
                 button.SetAccent(accent, onAccent.A > 0 ? onAccent : MaterialColors.OnPrimary);
             }
-            Size size = TextRenderer.MeasureText(text, button.Font);
-            button.Width = size.Width + 40;
             return button;
         }
 
@@ -114,7 +249,6 @@ namespace Material3.WinForms.Forms {
             ApplyRoundedRegion();
             RecenterOnOwner();
             base.OnLoad(e);
-            _ = FormAnimation.OpenAsync(this);
         }
 
         private void RecenterOnOwner() {
@@ -130,6 +264,7 @@ namespace Material3.WinForms.Forms {
         /// <inheritdoc />
         protected override void OnShown(EventArgs e) {
             base.OnShown(e);
+            _ = FormAnimation.OpenAsync(this);
             if (_defaultButton != null) {
                 AcceptButton = _defaultButton;
                 _defaultButton.Focus();
@@ -146,6 +281,10 @@ namespace Material3.WinForms.Forms {
                 return;
             }
             if (e.CloseReason != CloseReason.UserClosing) {
+                return;
+            }
+            if (_working) {
+                e.Cancel = true;
                 return;
             }
             _pendingDialogResult = DialogResult;
@@ -165,20 +304,25 @@ namespace Material3.WinForms.Forms {
         }
 
         private void AdjustWidthForBody() {
+            Width = Dpi.Scale(this, _dialogWidth);
             if (string.IsNullOrEmpty(_bodyText)) {
                 return;
             }
-            int narrowInner = WidthDefault - Pad * 2 - MaterialScrollPanel.TrackWidth;
+            int narrowInner = Width - Pad * 2 - TrackWidth;
             int narrowHeight = MeasureBodyHeight(_bodyText, narrowInner);
             int cap = ComputeMaxBodyHeight();
             if (narrowHeight > cap * 3 / 2) {
-                Width = WidthExpanded;
+                Width = Math.Max(Width, Dpi.Scale(this, _expandedWidth));
             }
         }
 
         /// <inheritdoc />
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData) {
             if (keyData == Keys.Escape) {
+                if (_working) {
+                    return true;
+                }
+
                 DialogResult = DialogResult.Cancel;
                 Close();
                 return true;
@@ -191,35 +335,43 @@ namespace Material3.WinForms.Forms {
             int innerWidth = Width - Pad * 2;
             int y = Pad;
 
-            if (!string.IsNullOrEmpty(_iconGlyph)) {
+            (string glyph, Color glyphColor) = !string.IsNullOrEmpty(_iconGlyph) || Tone == null
+                ? (_iconGlyph, _iconColor)
+                : ToneGlyph(Tone.Value);
+            if (!string.IsNullOrEmpty(glyph) && _glyphSize > 0) {
+                int glyphPx = Dpi.Scale(this, _glyphSize);
                 var icon = new PictureBox {
                     BackColor = Color.Transparent,
-                    Image = MaterialIconRenderer.Render(_iconGlyph, 26, _iconColor),
+                    Image = MaterialIconRenderer.Render(glyph, glyphPx, glyphColor),
                     Location = new Point(Pad, y),
-                    Size = new Size(26, 26),
+                    Size = new Size(glyphPx, glyphPx),
                     SizeMode = PictureBoxSizeMode.Normal,
                 };
                 Controls.Add(icon);
-                y += 38;
+                y += glyphPx + Dpi.Scale(this, Spacing.Space3);
             }
 
             if (!string.IsNullOrEmpty(_titleText)) {
+                int titleHeight;
+                using (var measure = MeasureContext.For(this)) {
+                    titleHeight = (int)Math.Ceiling(measure.Graphics.MeasureString(_titleText, Headline, innerWidth).Height);
+                }
                 var title = new MaterialLabel {
                     AutoSize = false,
-                    Font = TypeScale.TitleLarge,
+                    Font = Headline,
                     ForeColor = MaterialColors.OnSurface,
                     Text = _titleText,
                     Location = new Point(Pad, y),
                     Width = innerWidth,
-                    Height = TypeScale.TitleLarge.Height + 4,
+                    Height = Math.Max(Headline.Height, titleHeight) + Dpi.Scale(this, Spacing.Space1),
                     BackColor = Color.Transparent,
                 };
                 Controls.Add(title);
-                y += title.Height + Spacing.Space2;
+                y += title.Height + Dpi.Scale(this, Spacing.Space2);
             }
 
             if (!string.IsNullOrEmpty(_bodyText)) {
-                int narrowWidth = Math.Max(40, innerWidth - MaterialScrollPanel.TrackWidth);
+                int narrowWidth = Math.Max(Dpi.Scale(this, 40), innerWidth - TrackWidth);
                 int narrowHeight = MeasureBodyHeight(_bodyText, narrowWidth);
                 int bodyCap = ComputeMaxBodyHeight();
 
@@ -227,7 +379,7 @@ namespace Material3.WinForms.Forms {
                     int simpleHeight = MeasureBodyHeight(_bodyText, innerWidth);
                     var body = new MaterialLabel {
                         AutoSize = false,
-                        Font = TypeScale.BodyMedium,
+                        Font = Body,
                         ForeColor = MaterialColors.OnSurfaceVariant,
                         Text = _bodyText,
                         Location = new Point(Pad, y),
@@ -248,7 +400,7 @@ namespace Material3.WinForms.Forms {
                     };
                     var body = new MaterialLabel {
                         AutoSize = false,
-                        Font = TypeScale.BodyMedium,
+                        Font = Body,
                         ForeColor = MaterialColors.OnSurfaceVariant,
                         Text = _bodyText,
                         Location = Point.Empty,
@@ -283,25 +435,26 @@ namespace Material3.WinForms.Forms {
                         Text = text,
                         Glyph = icon,
                         AutoSize = true,
-                        Height = ComponentSizes.TextButtonHeight,
-                        Margin = new Padding(0, 0, Spacing.Space2, 0),
+                        Margin = new Padding(0, 0, Dpi.Scale(this, _actionGap), 0),
                     };
                     Action captured = onClick;
                     link.Click += (s, e) => captured();
                     linkRow.Controls.Add(link);
                 }
                 Controls.Add(linkRow);
-                y += ComponentSizes.TextButtonHeight + Spacing.Space2;
+                y += linkRow.PreferredSize.Height + Dpi.Scale(this, Spacing.Space2);
             }
 
-            int buttonRowHeight = ComponentSizes.ButtonHeight;
+            int buttonRowHeight = 0;
             int x = Width - Pad;
             for (int i = _actions.Count - 1; i >= 0; i--) {
-                MaterialButton button = _actions[i];
+                Control button = _actions[i];
+                Controls.Add(button);
+                button.Size = button.GetPreferredSize(Size.Empty);
                 x -= button.Width;
                 button.Location = new Point(x, y);
-                x -= 8;
-                Controls.Add(button);
+                x -= Dpi.Scale(this, _actionGap);
+                buttonRowHeight = Math.Max(buttonRowHeight, button.Height);
             }
             y += buttonRowHeight + Pad;
 
@@ -309,22 +462,22 @@ namespace Material3.WinForms.Forms {
         }
 
         private int MeasureBodyHeight(string text, int width) {
-            using (Graphics g = CreateGraphics()) {
-                SizeF size = g.MeasureString(text, TypeScale.BodyMedium, width);
-                return (int)Math.Ceiling(size.Height) + 4;
+            using (var measure = MeasureContext.For(this)) {
+                Graphics g = measure.Graphics;
+                SizeF size = g.MeasureString(text, Body, width);
+                return (int)Math.Ceiling(size.Height) + Dpi.Scale(this, Spacing.Space1);
             }
         }
 
         private int ComputeMaxBodyHeight() {
             Screen? screen = Screen.FromControl(this) ?? Screen.PrimaryScreen;
             int screenH = screen?.WorkingArea.Height ?? 800;
-            const int reservedForChrome = 240;
-            return Math.Max(200, screenH - reservedForChrome);
+            return Math.Max(Dpi.Scale(this, 200), screenH - Dpi.Scale(this, 240));
         }
 
         private void ApplyRoundedRegion() {
             using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(
-                new Rectangle(0, 0, Width, Height), CornerRadius)) {
+                new Rectangle(0, 0, Width, Height), Dpi.Scale(this, _cornerRadius))) {
                 Region?.Dispose();
                 Region = new Region(path);
             }
@@ -335,8 +488,8 @@ namespace Material3.WinForms.Forms {
             base.OnPaint(e);
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
             using (GraphicsPath path = RoundedControlRenderer.GetFigurePath(
-                new Rectangle(0, 0, Width - 1, Height - 1), CornerRadius))
-            using (var pen = new Pen(MaterialColors.OutlineVariant, 1f)) {
+                new Rectangle(0, 0, Width - 1, Height - 1), Dpi.Scale(this, _cornerRadius)))
+            using (var pen = new Pen(MaterialColors.OutlineVariant, Dpi.Scale(this, 1f))) {
                 e.Graphics.DrawPath(pen, path);
             }
         }

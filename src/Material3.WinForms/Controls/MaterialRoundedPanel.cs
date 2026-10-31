@@ -10,6 +10,7 @@ namespace Material3.WinForms.Controls {
     [ToolboxItem(true)]
     [System.Drawing.ToolboxBitmap(typeof(Material3.WinForms.Dpi), "m3toolbox.png")]
     public class MaterialRoundedPanel : Panel {
+        private readonly int _defaultCornerRadius;
         private int _cornerRadius;
         private Color _outlineColor = Color.Transparent;
         private Size _lastRegionSize = Size.Empty;
@@ -21,6 +22,7 @@ namespace Material3.WinForms.Controls {
 
         /// <summary>Creates a panel with the given corner radius.</summary>
         public MaterialRoundedPanel(int cornerRadius) {
+            _defaultCornerRadius = cornerRadius;
             _cornerRadius = cornerRadius;
             DoubleBuffered = true;
             SetStyle(ControlStyles.ResizeRedraw, true);
@@ -35,19 +37,23 @@ namespace Material3.WinForms.Controls {
         /// <summary>The corner radius, in 96-DPI pixels.</summary>
         [Category("Material Design")]
         [Description("The corner radius, in 96-DPI pixels.")]
-        [DefaultValue(5)]
         public int CornerRadius {
             get => _cornerRadius;
             set {
-                _cornerRadius = value;
+                _cornerRadius = Math.Max(0, value);
                 _regionDirty = true;
                 Invalidate();
             }
         }
 
+        private bool ShouldSerializeCornerRadius() => _cornerRadius != _defaultCornerRadius;
+
+        private void ResetCornerRadius() => CornerRadius = _defaultCornerRadius;
+
         /// <summary>The 1px outline colour; <see cref="System.Drawing.Color.Transparent"/> hides it.</summary>
-        [Browsable(false)]
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        [Category("Material Design")]
+        [Description("The 1px outline colour; Transparent hides it.")]
+        [DefaultValue(typeof(Color), "Transparent")]
         public Color OutlineColor {
             get => _outlineColor;
             set {
@@ -70,7 +76,7 @@ namespace Material3.WinForms.Controls {
 
             EnsureRoundedRegion();
 
-            using (SolidBrush brush = new SolidBrush(BackColor)) {
+            using (var brush = new SolidBrush(BackColor)) {
                 pevent.Graphics.FillRectangle(brush, ClientRectangle);
             }
         }

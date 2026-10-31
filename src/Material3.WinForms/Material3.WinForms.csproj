@@ -12,14 +12,14 @@
 
   <PropertyGroup Label="Package">
     <PackageId>Material3.WinForms</PackageId>
-    <Version>0.10.0</Version>
+    <Version>0.11.0</Version>
     <Authors>dary1337</Authors>
     <Description>Material 3 (Material You) controls and design tokens for Windows Forms: dynamic color from a seed (HCT tonal palettes), light/dark themes with runtime switching, full type scale, elevation, state layers and motion tokens.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/dary1337/material3-dotnet</PackageProjectUrl>
     <RepositoryUrl>https://github.com/dary1337/material3-dotnet</RepositoryUrl>
     <EnablePackageValidation>true</EnablePackageValidation>
-    <PackageValidationBaselineVersion>0.9.0</PackageValidationBaselineVersion>
+    <PackageValidationBaselineVersion>0.10.0</PackageValidationBaselineVersion>
     <PackageTags>material3;material-you;material-design;winforms;theme;dark-mode;ui;controls</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
@@ -27,6 +27,10 @@
   <ItemGroup>
     <None Include="..\..\docs\nuget\WinForms.md" Pack="true" PackagePath="\README.md" />
     <InternalsVisibleTo Include="Material3.WinForms.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\*.cs" LinkBase="Shared" />
   </ItemGroup>
 
   <ItemGroup>

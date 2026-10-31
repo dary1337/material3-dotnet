@@ -10,7 +10,7 @@ namespace Material3.Wpf {
     /// everywhere. Easing comes from the M3* tokens in Motion.xaml (merge it); durations are inline per the M3 scale.
     /// </summary>
     public static class Motion {
-        private static IEasingFunction? Ease(string key) => Application.Current?.TryFindResource(key) as IEasingFunction;
+        internal static IEasingFunction? Ease(string key) => Application.Current?.TryFindResource(key) as IEasingFunction;
         internal static Duration Ms(int ms) => new Duration(TimeSpan.FromMilliseconds(IsAnimating ? ms : 0));
 
         /// <summary>
@@ -25,16 +25,25 @@ namespace Material3.Wpf {
 
         /// <summary>A row joining a list: its height grows from nothing while it fades in, so the rows below slide down.</summary>
         public static void GrowIn(FrameworkElement element) {
-            if (!IsAnimating) return;
+            if (!IsAnimating) {
+                return;
+            }
+
             var scale = new ScaleTransform(1, 0);
             element.LayoutTransform = scale;
+            HoldCrispText(element);
             var grow = new DoubleAnimation(0, 1, Ms(220)) { EasingFunction = Ease("M3EmphasizedDecelerate") };
             grow.Completed += (_, __) => {
-                if (ReferenceEquals(element.LayoutTransform, scale)) element.LayoutTransform = Transform.Identity;
+                if (ReferenceEquals(element.LayoutTransform, scale)) {
+                    element.LayoutTransform = Transform.Identity;
+                    ReleaseCrispText(element);
+                }
             };
             scale.BeginAnimation(ScaleTransform.ScaleYProperty, grow);
             element.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, 1, Ms(180)) {
-                BeginTime = TimeSpan.FromMilliseconds(40), FillBehavior = FillBehavior.Stop, EasingFunction = Ease("M3StandardDecelerate"),
+                BeginTime = TimeSpan.FromMilliseconds(40),
+                FillBehavior = FillBehavior.Stop,
+                EasingFunction = Ease("M3StandardDecelerate"),
             });
         }
 
@@ -46,11 +55,16 @@ namespace Material3.Wpf {
             if (!IsAnimating) { after(); return; }
             var scale = new ScaleTransform(1, 1);
             element.LayoutTransform = scale;
+            HoldCrispText(element);
             var shrink = new DoubleAnimation(1, 0, Ms(160)) { EasingFunction = Ease("M3EmphasizedAccelerate") };
             shrink.Completed += (_, __) => {
                 after();
                 scale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
-                if (ReferenceEquals(element.LayoutTransform, scale)) element.LayoutTransform = Transform.Identity;
+                if (ReferenceEquals(element.LayoutTransform, scale)) {
+                    element.LayoutTransform = Transform.Identity;
+                    ReleaseCrispText(element);
+                }
+
                 element.BeginAnimation(UIElement.OpacityProperty, null);
             };
             element.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(1, 0, Ms(120)) { EasingFunction = Ease("M3StandardAccelerate") });
@@ -62,13 +76,18 @@ namespace Material3.Wpf {
         /// a reordered row moving to its new place instead of jumping there.
         /// </summary>
         public static void SlideFrom(UIElement element, Vector offset) {
-            if (!IsAnimating || offset.Length < 0.5) return;
+            if (!IsAnimating || offset.Length < 0.5) {
+                return;
+            }
+
             var shift = new TranslateTransform(offset.X, offset.Y);
             element.RenderTransform = shift;
             var x = new DoubleAnimation(offset.X, 0, Ms(220)) { EasingFunction = Ease("M3EmphasizedDecelerate") };
             var y = new DoubleAnimation(offset.Y, 0, Ms(220)) { EasingFunction = Ease("M3EmphasizedDecelerate") };
             y.Completed += (_, __) => {
-                if (ReferenceEquals(element.RenderTransform, shift)) element.RenderTransform = Transform.Identity;
+                if (ReferenceEquals(element.RenderTransform, shift)) {
+                    element.RenderTransform = Transform.Identity;
+                }
             };
             shift.BeginAnimation(TranslateTransform.XProperty, x);
             shift.BeginAnimation(TranslateTransform.YProperty, y);
@@ -76,13 +95,20 @@ namespace Material3.Wpf {
 
         /// <summary>A small element arriving: it springs up from a smaller scale as it fades in. For a badge or a status mark.</summary>
         public static void Pop(FrameworkElement element) {
-            if (!IsAnimating) return;
+            if (!IsAnimating) {
+                return;
+            }
+
             element.RenderTransformOrigin = new Point(0.5, 0.5);
             var scale = new ScaleTransform(0.5, 0.5);
             element.RenderTransform = scale;
+            HoldCrispText(element);
             var grow = new DoubleAnimation(0.5, 1, Ms(220)) { EasingFunction = new BackEase { Amplitude = 0.45, EasingMode = EasingMode.EaseOut } };
             grow.Completed += (_, __) => {
-                if (ReferenceEquals(element.RenderTransform, scale)) element.RenderTransform = Transform.Identity;
+                if (ReferenceEquals(element.RenderTransform, scale)) {
+                    element.RenderTransform = Transform.Identity;
+                    ReleaseCrispText(element);
+                }
             };
             scale.BeginAnimation(ScaleTransform.ScaleXProperty, grow);
             scale.BeginAnimation(ScaleTransform.ScaleYProperty, grow.Clone());
@@ -96,6 +122,7 @@ namespace Material3.Wpf {
             card.RenderTransformOrigin = new Point(0.5, 0.5);
             var st = new ScaleTransform(0.96, 0.96);
             card.RenderTransform = st;
+            HoldCrispText(card);
             card.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, 1, Ms(140)) { EasingFunction = Ease("M3StandardDecelerate") });
             var s = new DoubleAnimation(0.96, 1, Ms(220)) { EasingFunction = Ease("M3EmphasizedDecelerate") };
             s.Completed += (_, __) => ReleaseCard(card, st);
@@ -113,6 +140,7 @@ namespace Material3.Wpf {
                 card.RenderTransformOrigin = new Point(0.5, 0.5);
                 st = card.RenderTransform as ScaleTransform ?? new ScaleTransform(1, 1);
                 card.RenderTransform = st;
+                HoldCrispText(card);
                 var s = new DoubleAnimation(1, 0.96, Ms(120)) { EasingFunction = Ease("M3EmphasizedAccelerate") };
                 st.BeginAnimation(ScaleTransform.ScaleXProperty, s);
                 st.BeginAnimation(ScaleTransform.ScaleYProperty, s);
@@ -122,7 +150,9 @@ namespace Material3.Wpf {
                 scrim.BeginAnimation(UIElement.OpacityProperty, null);
                 scrim.Visibility = Visibility.Collapsed;
                 after?.Invoke();
-                if (card != null) ReleaseCard(card, st!);
+                if (card != null) {
+                    ReleaseCard(card, st!);
+                }
             }
             var a = new DoubleAnimation(1, 0, Ms(120)) { EasingFunction = Ease("M3StandardAccelerate") };
             a.Completed += (_, __) => Finish();
@@ -133,9 +163,38 @@ namespace Material3.Wpf {
         private static void ReleaseCard(FrameworkElement card, ScaleTransform st) {
             st.BeginAnimation(ScaleTransform.ScaleXProperty, null);
             st.BeginAnimation(ScaleTransform.ScaleYProperty, null);
-            st.ScaleX = 1; st.ScaleY = 1;
+            st.ScaleX = 1;
+            st.ScaleY = 1;
+            if (ReferenceEquals(card.RenderTransform, st)) {
+                card.RenderTransform = Transform.Identity;
+            }
+
             card.BeginAnimation(UIElement.OpacityProperty, null);
             card.Opacity = 1;
+            ReleaseCrispText(card);
+        }
+
+        private static readonly DependencyProperty CrispTextProperty = DependencyProperty.RegisterAttached(
+            "CrispText", typeof(bool), typeof(Motion), new PropertyMetadata(false));
+
+        // Auto hinting draws scaling text blurred and keeps it so for about a second after the scale stops.
+        private static void HoldCrispText(FrameworkElement element) {
+            if ((bool)element.GetValue(CrispTextProperty)
+                || element.ReadLocalValue(TextOptions.TextHintingModeProperty) != DependencyProperty.UnsetValue) {
+                return;
+            }
+
+            element.SetValue(CrispTextProperty, true);
+            TextOptions.SetTextHintingMode(element, TextHintingMode.Fixed);
+        }
+
+        private static void ReleaseCrispText(FrameworkElement element) {
+            if (!(bool)element.GetValue(CrispTextProperty)) {
+                return;
+            }
+
+            element.ClearValue(CrispTextProperty);
+            element.ClearValue(TextOptions.TextHintingModeProperty);
         }
 
         private static readonly DependencyProperty CollapsingProperty = DependencyProperty.RegisterAttached(
@@ -149,7 +208,10 @@ namespace Material3.Wpf {
             banner.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(1, 0, Ms(120)));
             var ha = new DoubleAnimation(h, 0, Ms(200)) { EasingFunction = Ease("M3StandardAccelerate") };
             ha.Completed += (_, __) => {
-                if (!(bool)banner.GetValue(CollapsingProperty)) return;
+                if (!(bool)banner.GetValue(CollapsingProperty)) {
+                    return;
+                }
+
                 banner.SetValue(CollapsingProperty, false);
                 banner.BeginAnimation(FrameworkElement.HeightProperty, null);
                 banner.Visibility = Visibility.Collapsed;
@@ -173,25 +235,51 @@ namespace Material3.Wpf {
 
         /// <summary>Dropdown/menu popups: fade + scale the popup's content up on open. Wire from Popup.Opened.</summary>
         public static void AnimatePopupOpen(System.Windows.Controls.Primitives.Popup? popup) {
-            if (!(popup?.Child is FrameworkElement c)) return;
+            if (!(popup?.Child is FrameworkElement c)) {
+                return;
+            }
+
             c.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, 1, Ms(110)) { EasingFunction = Ease("M3StandardDecelerate") });
-            if (!GetScaleOnOpen(popup)) return;
+            if (!GetScaleOnOpen(popup)) {
+                return;
+            }
+
             c.RenderTransformOrigin = new Point(0.5, 0.5);
             var st = new ScaleTransform(0.96, 0.96);
             c.RenderTransform = st;
+            HoldCrispText(c);
             var s = new DoubleAnimation(0.96, 1, Ms(170)) { EasingFunction = Ease("M3EmphasizedDecelerate") };
+            s.Completed += (_, __) => ReleaseCrispText(c);
             st.BeginAnimation(ScaleTransform.ScaleXProperty, s);
             st.BeginAnimation(ScaleTransform.ScaleYProperty, s);
+        }
+
+        internal static void SettlePopupContent(System.Windows.Controls.Primitives.Popup popup) {
+            if (!(popup.Child is FrameworkElement c)) {
+                return;
+            }
+
+            c.BeginAnimation(UIElement.OpacityProperty, null);
+            c.SetCurrentValue(UIElement.OpacityProperty, 1.0);
+            if (c.RenderTransform is ScaleTransform st && !st.IsFrozen) {
+                st.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+                st.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+                st.ScaleX = 1;
+                st.ScaleY = 1;
+            }
+
+            ReleaseCrispText(c);
         }
 
         /// <summary>Dropdown/menu popups: fade + scale the content back down on close, then invoke <paramref name="after"/>
         /// (which actually closes the popup). Shorter than the open, per M3 (exit is quicker than enter).</summary>
         public static void AnimatePopupClose(System.Windows.Controls.Primitives.Popup? popup, Action after) {
             if (!(popup?.Child is FrameworkElement c)) { after(); return; }
-            var st = c.RenderTransform as ScaleTransform ?? new ScaleTransform(1, 1);
+            ScaleTransform st = c.RenderTransform as ScaleTransform ?? new ScaleTransform(1, 1);
             if (GetScaleOnOpen(popup)) {
                 c.RenderTransformOrigin = new Point(0.5, 0.5);
                 c.RenderTransform = st;
+                HoldCrispText(c);
                 var s = new DoubleAnimation(1, 0.96, Ms(120)) { EasingFunction = Ease("M3StandardAccelerate") };
                 st.BeginAnimation(ScaleTransform.ScaleXProperty, s);
                 st.BeginAnimation(ScaleTransform.ScaleYProperty, s);
@@ -199,11 +287,16 @@ namespace Material3.Wpf {
             var fade = new DoubleAnimation(1, 0, Ms(120)) { EasingFunction = Ease("M3StandardAccelerate") };
             fade.Completed += (_, __) => {
                 after();
-                if (popup.IsOpen) return;
+                if (popup.IsOpen) {
+                    return;
+                }
+
                 if (GetScaleOnOpen(popup)) {
                     st.BeginAnimation(ScaleTransform.ScaleXProperty, null);
                     st.BeginAnimation(ScaleTransform.ScaleYProperty, null);
-                    st.ScaleX = 1; st.ScaleY = 1;
+                    st.ScaleX = 1;
+                    st.ScaleY = 1;
+                    ReleaseCrispText(c);
                 }
                 c.BeginAnimation(UIElement.OpacityProperty, null);
                 c.Opacity = 1;
@@ -220,7 +313,10 @@ namespace Material3.Wpf {
             element.SetValue(FadeRunProperty, run);
             var a = new DoubleAnimation(0, 1, Ms(200)) { EasingFunction = Ease("M3StandardDecelerate") };
             a.Completed += (_, __) => {
-                if ((int)element.GetValue(FadeRunProperty) != run) return;
+                if ((int)element.GetValue(FadeRunProperty) != run) {
+                    return;
+                }
+
                 element.BeginAnimation(UIElement.OpacityProperty, null);
                 element.Opacity = 1;
             };
@@ -237,7 +333,10 @@ namespace Material3.Wpf {
                 banner.ClearValue(UIElement.OpacityProperty);
                 return;
             }
-            if (banner.Visibility == Visibility.Visible) return;
+            if (banner.Visibility == Visibility.Visible) {
+                return;
+            }
+
             banner.Opacity = 0;
             banner.Visibility = Visibility.Visible;
             banner.UpdateLayout();
@@ -280,7 +379,10 @@ namespace Material3.Wpf {
 
             var wa = new DoubleAnimation(from, to, Ms(180)) { EasingFunction = Ease("M3StandardDecelerate") };
             wa.Completed += (_, __) => {
-                if ((int)target.GetValue(SwapRunProperty) != run) return;
+                if ((int)target.GetValue(SwapRunProperty) != run) {
+                    return;
+                }
+
                 target.SetValue(SwapRunProperty, 0);
                 target.BeginAnimation(FrameworkElement.WidthProperty, null);
                 target.Width = double.NaN;
@@ -293,7 +395,10 @@ namespace Material3.Wpf {
             && el.HorizontalAlignment != HorizontalAlignment.Stretch;
 
         private static void CrossFadeLabel(DependencyObject target) {
-            if (!(FindPresenter(target) is UIElement presenter)) return;
+            if (!(FindPresenter(target) is UIElement presenter)) {
+                return;
+            }
+
             var fade = new DoubleAnimation(0, 1, Ms(160)) { EasingFunction = Ease("M3StandardDecelerate") };
             fade.Completed += (_, __) => {
                 presenter.BeginAnimation(UIElement.OpacityProperty, null);
@@ -306,8 +411,13 @@ namespace Material3.Wpf {
             int count = VisualTreeHelper.GetChildrenCount(root);
             for (int i = 0; i < count; i++) {
                 DependencyObject child = VisualTreeHelper.GetChild(root, i);
-                if (child is ContentPresenter presenter) return presenter;
-                if (FindPresenter(child) is ContentPresenter nested) return nested;
+                if (child is ContentPresenter presenter) {
+                    return presenter;
+                }
+
+                if (FindPresenter(child) is ContentPresenter nested) {
+                    return nested;
+                }
             }
             return null;
         }

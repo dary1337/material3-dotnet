@@ -55,12 +55,44 @@ namespace Material3.Wpf.Tests {
             Ui.SpinUntil(w, () => VisualTreeHelper.GetParent(card) == null, "the exit never took the card out of the tree");
             Assert.False(Modal.HasModal);
             Assert.Equal(1.0, card.Opacity, 3);
-            Assert.Equal(1.0, ((ScaleTransform)card.RenderTransform).ScaleX, 3);
+            Assert.Same(Transform.Identity, card.RenderTransform);
+            Assert.Equal(DependencyProperty.UnsetValue, card.ReadLocalValue(TextOptions.TextHintingModeProperty));
+        });
+
+        [Fact]
+        public void OpeningModal_DrawsItsTextCrispWhileItScales_ThenHandsHintingBack() => Ui.InWindow(w => {
+            var layer = new ModalLayer { Content = new Grid() };
+            w.Content = layer;
+            Ui.Settle(w);
+
+            var card = new Border { Width = 200, Height = 120, Child = new TextBlock { Text = "Title" } };
+            IModalHandle handle = Modal.Show(card);
+            Assert.Equal(TextHintingMode.Fixed, TextOptions.GetTextHintingMode(card));
+            Ui.SpinUntil(w, () => card.RenderTransform == Transform.Identity, "the card never settled");
+            Assert.Equal(DependencyProperty.UnsetValue, card.ReadLocalValue(TextOptions.TextHintingModeProperty));
+            handle.Close();
+            Ui.SpinUntil(w, () => VisualTreeHelper.GetParent(card) == null, "the exit never took the card out of the tree");
+        });
+
+        [Fact]
+        public void OpeningModal_KeepsTheContentsOwnHinting() => Ui.InWindow(w => {
+            var layer = new ModalLayer { Content = new Grid() };
+            w.Content = layer;
+            Ui.Settle(w);
+
+            var card = new Border { Width = 200, Height = 120 };
+            TextOptions.SetTextHintingMode(card, TextHintingMode.Animated);
+            IModalHandle handle = Modal.Show(card);
+            Ui.SpinUntil(w, () => card.RenderTransform == Transform.Identity, "the card never settled");
+            Assert.Equal(TextHintingMode.Animated, TextOptions.GetTextHintingMode(card));
+            handle.Close();
+            Ui.SpinUntil(w, () => VisualTreeHelper.GetParent(card) == null, "the exit never took the card out of the tree");
+            Assert.Equal(TextHintingMode.Animated, TextOptions.GetTextHintingMode(card));
         });
 
         [Fact]
         public void SwapContent_OnAContentSizedControl_GrowsFromItsLeadingEdge_AndHandsWidthBack() => Ui.InWindow(w => {
-            var button = NewButton("Show banner");
+            Button button = NewButton("Show banner");
             button.HorizontalAlignment = HorizontalAlignment.Left;
             var host = new Grid { Width = 400, HorizontalAlignment = HorizontalAlignment.Left, Children = { button } };
             w.Content = host;
@@ -74,7 +106,7 @@ namespace Material3.Wpf.Tests {
 
             Assert.Equal(LongLabel, button.Content);
             Assert.True(button.ActualWidth > before, "the button did not grow into the longer label");
-            var probe = NewButton(LongLabel);
+            Button probe = NewButton(LongLabel);
             probe.HorizontalAlignment = HorizontalAlignment.Left;
             host.Children.Add(probe);
             Ui.Settle(w);
@@ -83,7 +115,7 @@ namespace Material3.Wpf.Tests {
 
         [Fact]
         public void SwapContent_OnAStretchedControl_LeavesWidthAlone() => Ui.InWindow(w => {
-            var button = NewButton("Show banner");
+            Button button = NewButton("Show banner");
             var sibling = new Border { Width = 400, Height = 10, Visibility = Visibility.Collapsed };
             var host = new StackPanel { HorizontalAlignment = HorizontalAlignment.Left, Children = { sibling, button } };
             w.Content = host;
@@ -107,7 +139,7 @@ namespace Material3.Wpf.Tests {
 
         [Fact]
         public void SwapContent_CalledMidFlight_RetargetsInsteadOfFinishingTheOldRun() => Ui.InWindow(w => {
-            var button = NewButton("Show banner");
+            Button button = NewButton("Show banner");
             button.HorizontalAlignment = HorizontalAlignment.Left;
             var host = new Grid { Width = 400, HorizontalAlignment = HorizontalAlignment.Left, Children = { button } };
             w.Content = host;
