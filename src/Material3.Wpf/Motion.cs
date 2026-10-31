@@ -31,10 +31,12 @@ namespace Material3.Wpf {
 
             var scale = new ScaleTransform(1, 0);
             element.LayoutTransform = scale;
+            HoldCrispText(element);
             var grow = new DoubleAnimation(0, 1, Ms(220)) { EasingFunction = Ease("M3EmphasizedDecelerate") };
             grow.Completed += (_, __) => {
                 if (ReferenceEquals(element.LayoutTransform, scale)) {
                     element.LayoutTransform = Transform.Identity;
+                    ReleaseCrispText(element);
                 }
             };
             scale.BeginAnimation(ScaleTransform.ScaleYProperty, grow);
@@ -53,12 +55,14 @@ namespace Material3.Wpf {
             if (!IsAnimating) { after(); return; }
             var scale = new ScaleTransform(1, 1);
             element.LayoutTransform = scale;
+            HoldCrispText(element);
             var shrink = new DoubleAnimation(1, 0, Ms(160)) { EasingFunction = Ease("M3EmphasizedAccelerate") };
             shrink.Completed += (_, __) => {
                 after();
                 scale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
                 if (ReferenceEquals(element.LayoutTransform, scale)) {
                     element.LayoutTransform = Transform.Identity;
+                    ReleaseCrispText(element);
                 }
 
                 element.BeginAnimation(UIElement.OpacityProperty, null);
@@ -98,10 +102,12 @@ namespace Material3.Wpf {
             element.RenderTransformOrigin = new Point(0.5, 0.5);
             var scale = new ScaleTransform(0.5, 0.5);
             element.RenderTransform = scale;
+            HoldCrispText(element);
             var grow = new DoubleAnimation(0.5, 1, Ms(220)) { EasingFunction = new BackEase { Amplitude = 0.45, EasingMode = EasingMode.EaseOut } };
             grow.Completed += (_, __) => {
                 if (ReferenceEquals(element.RenderTransform, scale)) {
                     element.RenderTransform = Transform.Identity;
+                    ReleaseCrispText(element);
                 }
             };
             scale.BeginAnimation(ScaleTransform.ScaleXProperty, grow);
@@ -116,6 +122,7 @@ namespace Material3.Wpf {
             card.RenderTransformOrigin = new Point(0.5, 0.5);
             var st = new ScaleTransform(0.96, 0.96);
             card.RenderTransform = st;
+            HoldCrispText(card);
             card.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, 1, Ms(140)) { EasingFunction = Ease("M3StandardDecelerate") });
             var s = new DoubleAnimation(0.96, 1, Ms(220)) { EasingFunction = Ease("M3EmphasizedDecelerate") };
             s.Completed += (_, __) => ReleaseCard(card, st);
@@ -133,6 +140,7 @@ namespace Material3.Wpf {
                 card.RenderTransformOrigin = new Point(0.5, 0.5);
                 st = card.RenderTransform as ScaleTransform ?? new ScaleTransform(1, 1);
                 card.RenderTransform = st;
+                HoldCrispText(card);
                 var s = new DoubleAnimation(1, 0.96, Ms(120)) { EasingFunction = Ease("M3EmphasizedAccelerate") };
                 st.BeginAnimation(ScaleTransform.ScaleXProperty, s);
                 st.BeginAnimation(ScaleTransform.ScaleYProperty, s);
@@ -157,8 +165,36 @@ namespace Material3.Wpf {
             st.BeginAnimation(ScaleTransform.ScaleYProperty, null);
             st.ScaleX = 1;
             st.ScaleY = 1;
+            if (ReferenceEquals(card.RenderTransform, st)) {
+                card.RenderTransform = Transform.Identity;
+            }
+
             card.BeginAnimation(UIElement.OpacityProperty, null);
             card.Opacity = 1;
+            ReleaseCrispText(card);
+        }
+
+        private static readonly DependencyProperty CrispTextProperty = DependencyProperty.RegisterAttached(
+            "CrispText", typeof(bool), typeof(Motion), new PropertyMetadata(false));
+
+        // Auto hinting draws scaling text blurred and keeps it so for about a second after the scale stops.
+        private static void HoldCrispText(FrameworkElement element) {
+            if ((bool)element.GetValue(CrispTextProperty)
+                || element.ReadLocalValue(TextOptions.TextHintingModeProperty) != DependencyProperty.UnsetValue) {
+                return;
+            }
+
+            element.SetValue(CrispTextProperty, true);
+            TextOptions.SetTextHintingMode(element, TextHintingMode.Fixed);
+        }
+
+        private static void ReleaseCrispText(FrameworkElement element) {
+            if (!(bool)element.GetValue(CrispTextProperty)) {
+                return;
+            }
+
+            element.ClearValue(CrispTextProperty);
+            element.ClearValue(TextOptions.TextHintingModeProperty);
         }
 
         private static readonly DependencyProperty CollapsingProperty = DependencyProperty.RegisterAttached(
@@ -211,7 +247,9 @@ namespace Material3.Wpf {
             c.RenderTransformOrigin = new Point(0.5, 0.5);
             var st = new ScaleTransform(0.96, 0.96);
             c.RenderTransform = st;
+            HoldCrispText(c);
             var s = new DoubleAnimation(0.96, 1, Ms(170)) { EasingFunction = Ease("M3EmphasizedDecelerate") };
+            s.Completed += (_, __) => ReleaseCrispText(c);
             st.BeginAnimation(ScaleTransform.ScaleXProperty, s);
             st.BeginAnimation(ScaleTransform.ScaleYProperty, s);
         }
@@ -229,6 +267,8 @@ namespace Material3.Wpf {
                 st.ScaleX = 1;
                 st.ScaleY = 1;
             }
+
+            ReleaseCrispText(c);
         }
 
         /// <summary>Dropdown/menu popups: fade + scale the content back down on close, then invoke <paramref name="after"/>
@@ -239,6 +279,7 @@ namespace Material3.Wpf {
             if (GetScaleOnOpen(popup)) {
                 c.RenderTransformOrigin = new Point(0.5, 0.5);
                 c.RenderTransform = st;
+                HoldCrispText(c);
                 var s = new DoubleAnimation(1, 0.96, Ms(120)) { EasingFunction = Ease("M3StandardAccelerate") };
                 st.BeginAnimation(ScaleTransform.ScaleXProperty, s);
                 st.BeginAnimation(ScaleTransform.ScaleYProperty, s);
@@ -255,6 +296,7 @@ namespace Material3.Wpf {
                     st.BeginAnimation(ScaleTransform.ScaleYProperty, null);
                     st.ScaleX = 1;
                     st.ScaleY = 1;
+                    ReleaseCrispText(c);
                 }
                 c.BeginAnimation(UIElement.OpacityProperty, null);
                 c.Opacity = 1;
